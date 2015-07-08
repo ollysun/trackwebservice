@@ -1,0 +1,120 @@
+<?php
+
+class Status extends \Phalcon\Mvc\Model
+{
+    const ACTIVE = 1;
+    const INACTIVE = 2;
+    const REMOVED = 3;
+    const COLLECTED = 4;
+    const IN_TRANSIT = 5;
+    const DELIVERED = 6;
+    const CANCELLED = 7;
+    /**
+     *
+     * @var integer
+     */
+    protected $id;
+
+    /**
+     *
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * Method to set the value of field id
+     *
+     * @param integer $id
+     * @return $this
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field name
+     *
+     * @param string $name
+     * @return $this
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Returns the value of field id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Returns the value of field name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Initialize method for model.
+     */
+    public function initialize()
+    {
+        $this->hasMany('id', 'Address', 'status', array('alias' => 'Address'));
+        $this->hasMany('id', 'Admin', 'status', array('alias' => 'Admin'));
+        $this->hasMany('id', 'Bank_account', 'status', array('alias' => 'Bank_account'));
+        $this->hasMany('id', 'Branch', 'status', array('alias' => 'Branch'));
+        $this->hasMany('id', 'Branch_map', 'status', array('alias' => 'Branch_map'));
+        $this->hasMany('id', 'Company', 'status', array('alias' => 'Company'));
+        $this->hasMany('id', 'Company', 'status', array('alias' => 'Company'));
+        $this->hasMany('id', 'Company_user', 'status', array('alias' => 'Company_user'));
+        $this->hasMany('id', 'Company_user', 'status', array('alias' => 'Company_user'));
+        $this->hasMany('id', 'Corporate_lead', 'status', array('alias' => 'Corporate_lead'));
+        $this->hasMany('status_id', 'Country', 'status_id', array('alias' => 'Country'));
+        $this->hasMany('id', 'Parcel', 'status', array('alias' => 'Parcel'));
+        $this->hasMany('id', 'Parcel_history', 'status', array('alias' => 'Parcel_history'));
+        $this->hasMany('id', 'State', 'active_fg', array('alias' => 'State'));
+        $this->hasMany('id', 'User', 'status', array('alias' => 'User'));
+        $this->hasMany('id', 'User', 'status', array('alias' => 'User'));
+    }
+
+    /**
+     * @return Status[]
+     */
+    public static function find($parameters = array())
+    {
+        return parent::find($parameters);
+    }
+
+    /**
+     * @return Status
+     */
+    public static function findFirst($parameters = array())
+    {
+        return parent::findFirst($parameters);
+    }
+
+    /**
+     * Independent Column Mapping.
+     */
+    public function columnMap()
+    {
+        return array(
+            'id' => 'id', 
+            'name' => 'name'
+        );
+    }
+
+}
