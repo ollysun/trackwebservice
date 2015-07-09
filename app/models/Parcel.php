@@ -3,6 +3,9 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Parcel extends \Phalcon\Mvc\Model
 {
+    const TYPE_NORMAL = 1;
+    const TYPE_RETURN = 2;
+    const TYPE_EXPRESS = 3;
 
     /**
      *
@@ -665,6 +668,35 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setStatus(Status::COLLECTED);
     }
 
+    private function getParcelTypeLabel(){
+        $parcel_type_label = "X";
+        switch ($this->getParcelType()){
+            case self::TYPE_NORMAL:
+                $parcel_type_label = "N";
+                break;
+            case self::TYPE_EXPRESS:
+                $parcel_type_label = "E";
+                break;
+            case self::TYPE_RETURN:
+                $parcel_type_label = "R";
+                break;
+            default:
+                break;
+        }
+        return $parcel_type_label;
+    }
+
+    public function generateWaybillNumber($initial_branch_id){
+        $parcel_type_label = $this->getParcelTypeLabel();
+        $waybill_number = $this->getDeliveryType()
+            . $parcel_type_label
+            . str_pad($initial_branch_id, 3, '0', STR_PAD_LEFT)
+            . str_pad($this->getId(), 8, '0', STR_PAD_LEFT);
+
+        $this->setWaybillNumber($waybill_number);
+        $this->setModifiedDate('Y-m-d H:i:s');
+    }
+
     public static function fetchOne($id){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -865,6 +897,12 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_history->setTransaction($transaction);
                 $parcel_history->initData($this->getId(), $branch_id, 'Parcel received');
                 $check = $parcel_history->save();
+            }
+
+            //setting waybill number
+            if ($check){
+                $this->generateWaybillNumber($branch_id);
+                $check = $this->save();
             }
 
             if ($check){
