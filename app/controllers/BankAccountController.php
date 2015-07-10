@@ -1,7 +1,7 @@
 <?php
 
 
-class BankAccountController extends ControllerBase {
+class BankaccountController extends ControllerBase {
     public function addAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
