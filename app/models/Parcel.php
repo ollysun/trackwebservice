@@ -775,10 +775,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
-                if (isset($fetch_with['sender'])) $result['sender'] = $data[0]->sender->getData();
-                if (isset($fetch_with['sender_address'])) $result['sender_address'] = $data[0]->senderAddress->getData();
-                if (isset($fetch_with['receiver'])) $result['receiver'] = $data[0]->receiver->getData();
-                if (isset($fetch_with['receiver_address'])) $result['receiver_address'] = $data[0]->receiverAddress->getData();
+                if (isset($fetch_with['with_sender'])) $result['sender'] = $data[0]->sender->getData();
+                if (isset($fetch_with['with_sender_address'])) $result['sender_address'] = $data[0]->senderAddress->getData();
+                if (isset($fetch_with['with_receiver'])) $result['receiver'] = $data[0]->receiver->getData();
+                if (isset($fetch_with['with_receiver_address'])) $result['receiver_address'] = $data[0]->receiverAddress->getData();
             }
             $result[] = $parcel;
         }
