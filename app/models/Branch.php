@@ -251,4 +251,36 @@ class Branch extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'branch_type' => $this->getBranchType(),
+            'address' => $this->getAddress(),
+            'created_date' => $this->getCreatedDate(),
+            'modified_date' => $this->getModifiedDate(),
+            'status' => $this->getStatus()
+        );
+    }
+
+    /**
+     * @param $branch_id
+     * @return null | Branch
+     */
+    public static function getParentById($branch_id){
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('Branch.*')
+            ->from('Branch')
+            ->innerJoin('BranchMap', 'BranchMap.parent_id = Branch.id')
+            ->where('BranchMap.child_id = :branch_id:');
+
+        $data = $builder->getQuery()->execute(['branch_id' => $branch_id]);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        return $data[0];
+    }
 }
