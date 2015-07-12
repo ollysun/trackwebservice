@@ -47,6 +47,18 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
+    protected $from_branch_id;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $to_branch_id;
+
+    /**
+     *
+     * @var integer
+     */
     protected $status;
 
     /**
@@ -195,6 +207,32 @@ class Parcel extends \Phalcon\Mvc\Model
     public function setReceiverAddressId($receiver_address_id)
     {
         $this->receiver_address_id = $receiver_address_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field from_branch_id
+     *
+     * @param integer $from_branch_id
+     * @return $this
+     */
+    public function setFromBranchId($from_branch_id)
+    {
+        $this->from_branch_id = $from_branch_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field to_branch_id
+     *
+     * @param integer $to_branch_id
+     * @return $this
+     */
+    public function setToBranchId($to_branch_id)
+    {
+        $this->to_branch_id = $to_branch_id;
 
         return $this;
     }
@@ -429,6 +467,26 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field from_branch_id
+     *
+     * @return integer
+     */
+    public function getFromBranchId()
+    {
+        return $this->from_branch_id;
+    }
+
+    /**
+     * Returns the value of field to_branch_id
+     *
+     * @return int
+     */
+    public function getToBranchId()
+    {
+        return $this->to_branch_id;
+    }
+
+    /**
      * Returns the value of field status
      *
      * @return integer
@@ -569,6 +627,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('sender_address_id', 'Address', 'id', array('alias' => 'SenderAddress'));
         $this->belongsTo('receiver_id', 'User', 'id', array('alias' => 'Receiver'));
         $this->belongsTo('receiver_address_id', 'Address', 'id', array('alias' => 'ReceiverAddress'));
+        $this->belongsTo('from_branch_id', 'Branch', 'id', array('alias' => 'FromBranch'));
+        $this->belongsTo('to_branch_id', 'Branch', 'id', array('alias' => 'ToBranch'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('delivery_type', 'Delivery_type', 'id', array('alias' => 'Delivery_type'));
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
@@ -601,7 +661,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'sender_id' => 'sender_id', 
             'sender_address_id' => 'sender_address_id', 
             'receiver_id' => 'receiver_id', 
-            'receiver_address_id' => 'receiver_address_id', 
+            'receiver_address_id' => 'receiver_address_id',
+            'from_branch_id' => 'from_branch_id',
+            'to_branch_id' => 'to_branch_id',
             'status' => 'status', 
             'weight' => 'weight', 
             'amount_due' => 'amount_due', 
@@ -626,6 +688,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'sender_address_id' => $this->getSenderAddressId(),
             'receiver_id' => $this->getReceiverId(),
             'receiver_address_id' => $this->getReceiverAddressId(),
+            'from_branch_id' => $this->getFromBranchId(),
+            'to_branch_id' => $this->getToBranchId(),
             'status' => $this->getStatus(),
             'weight' => $this->getWeight(),
             'amount_due' => $this->getAmountDue(),
@@ -644,13 +708,15 @@ class Parcel extends \Phalcon\Mvc\Model
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
-        $shipping_type
+        $shipping_type, $from_branch_id, $to_branch_id, $status
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
         $this->setSenderAddressId($sender_address_id);
         $this->setReceiverId($receiver_id);
         $this->setReceiverAddressId($receiver_address_id);
+        $this->setFromBranchId($from_branch_id);
+        $this->setToBranchId($to_branch_id);
         $this->setWeight($weight);
         $this->setAmountDue($amount_due);
         $this->setCashOnDelivery($cash_on_delivery);
@@ -665,7 +731,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
-        $this->setStatus(Status::COLLECTED);
+        $this->setStatus($status);
     }
 
     private function getParcelTypeLabel(){
@@ -786,7 +852,8 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
-     * @param int $branch_id
+     * @param int $from_branch_id
+     * @param int $to_branch_id
      * @param array $sender
      * @param array $sender_address
      * @param array $receiver
@@ -795,7 +862,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param array $parcel_data
      * @return bool
      */
-    public function saveForm($branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data){
+    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -882,11 +949,13 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
             //finally saving the parcel
+
+            $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
                     $parcel_data['cash_on_delivery'], $parcel_data['delivery_amount'], $parcel_data['delivery_type'],
-                    $parcel_data['payment_type'], $parcel_data['shipping_type']
+                    $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status
                     );
                 $check = $this->save();
             }
@@ -895,13 +964,14 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($check){
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
-                $parcel_history->initData($this->getId(), $branch_id, 'Parcel received');
+                $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
+                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status);
                 $check = $parcel_history->save();
             }
 
             //setting waybill number
             if ($check){
-                $this->generateWaybillNumber($branch_id);
+                $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
             }
 
@@ -910,7 +980,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 return true;
             }
         } catch (Exception $e) {
-
+            var_dump($e->getMessage());exit();
         }
 
         $transactionManager->rollback();
