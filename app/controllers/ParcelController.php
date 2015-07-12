@@ -4,9 +4,9 @@
 class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
-        /**
-         * Sample data expected
-         * =====================
+//        /**
+//         * Sample data expected
+//         * =====================
          $sender = [
         'firstname' => 'ibrahim',
         'lastname' => 'mutiu',
@@ -52,24 +52,29 @@ class ParcelController extends ControllerBase {
         'weight' => 123.25,
         'amount_due' => 2000,
         'cash_on_delivery' => 1,
-        'delivery_amount' => 3000,
+        'cash_on_delivery_amount' => 3000,
         'delivery_type' => 2,
-        'payment_type' => 1,
-        'shipping_type' => 1
+        'payment_type' => 2,
+        'shipping_type' => 1,
+        'package_value' => 2000,
+        'no_of_package' => 3,
+        'other_info' => 'some other info',
+        'cash_amount' => 500,
+        'pos_amount' =>  1500,
         ];
 
         $to_hub = 1; // 0 if the delivery is within the EC, 1 if to be sent to HUB
-         */
+//         */
 
         $this->auth->allowOnly([Role::OFFICER]);
 
-        $sender = $this->request->getPost('sender');
-        $sender_address = $this->request->getPost('sender_address');
-        $receiver = $this->request->getPost('receiver');
-        $receiver_address = $this->request->getPost('receiver_address');
-        $bank_account = $this->request->getPost('bank_account');
-        $parcel = $this->request->getPost('parcel');
-        $to_hub = $this->request->getPost('to_hub');
+//        $sender = $this->request->getPost('sender');
+//        $sender_address = $this->request->getPost('sender_address');
+//        $receiver = $this->request->getPost('receiver');
+//        $receiver_address = $this->request->getPost('receiver_address');
+//        $bank_account = $this->request->getPost('bank_account');
+//        $parcel = $this->request->getPost('parcel');
+//        $to_hub = $this->request->getPost('to_hub');
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -92,6 +97,34 @@ class ParcelController extends ControllerBase {
 
             $to_branch_id = $to_branch->getId();
         }
+
+        //parcel no_of_package validation
+        $parcel['no_of_package'] = intval($parcel['no_of_package']);
+        if ($parcel['no_of_package'] < 1){
+            return $this->response->sendError(ResponseMessage::INVALID_PACKAGE_COUNT);
+        }
+
+        //parcel cash_amount and pos_amount sanitation
+        switch($parcel['payment_type']){
+            case PaymentType::CASH:
+                $parcel['cash_amount'] = $parcel['amount_due'];
+                $parcel['pos_amount'] = 0.0;
+                break;
+            case PaymentType::POS:
+                $parcel['cash_amount'] = 0.0;
+                $parcel['pos_amount'] = $parcel['amount_due'];
+                break;
+            case PaymentType::CASH_AND_POS:
+                if (!isset($parcel['cash_amount']) or !isset($parcel['pos_amount'])){
+                    return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
+                }else if ((bccomp($parcel['cash_amount'] + $parcel['pos_amount'], $parcel['amount_due'], 2) != 0)){
+                    return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
+                }
+                break;
+            default:
+                return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
+        }
+
 
         $parcel_obj = new Parcel();
         $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,

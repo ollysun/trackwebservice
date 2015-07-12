@@ -83,13 +83,31 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @var double
      */
-    protected $delivery_amount;
+    protected $cash_on_delivery_amount;
 
     /**
      *
      * @var integer
      */
     protected $delivery_type;
+
+    /**
+     *
+     * @var double
+     */
+    protected  $package_value;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $no_of_package;
+
+    /**
+     *
+     * @var string
+     */
+    protected $other_info;
 
     /**
      *
@@ -295,9 +313,9 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param double $delivery_amount
      * @return $this
      */
-    public function setDeliveryAmount($delivery_amount)
+    public function setCashOnDeliveryAmount($delivery_amount)
     {
-        $this->delivery_amount = $delivery_amount;
+        $this->cash_on_delivery_amount = $delivery_amount;
 
         return $this;
     }
@@ -311,6 +329,45 @@ class Parcel extends \Phalcon\Mvc\Model
     public function setDeliveryType($delivery_type)
     {
         $this->delivery_type = $delivery_type;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field package_value
+     *
+     * @param double $package_value
+     * @return $this
+     */
+    public function setPackageValue($package_value)
+    {
+        $this->package_value = $package_value;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field no_of_package
+     *
+     * @param integer $no_of_package
+     * @return $this
+     */
+    public function setNoOfPackage($no_of_package)
+    {
+        $this->no_of_package = $no_of_package;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field package_value
+     *
+     * @param double $other_info
+     * @return $this
+     */
+    public function setOtherInfo($other_info)
+    {
+        $this->other_info = Text::removeExtraSpaces($other_info);
 
         return $this;
     }
@@ -531,9 +588,9 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return double
      */
-    public function getDeliveryAmount()
+    public function getCashOnDeliveryAmount()
     {
-        return $this->delivery_amount;
+        return $this->cash_on_delivery_amount;
     }
 
     /**
@@ -544,6 +601,36 @@ class Parcel extends \Phalcon\Mvc\Model
     public function getDeliveryType()
     {
         return $this->delivery_type;
+    }
+
+    /**
+     * Returns the value of field package_value
+     *
+     * @return double
+     */
+    public function getPackageValue()
+    {
+        return $this->package_value;
+    }
+
+    /**
+     * Returns the value of field no_of_package
+     *
+     * @return integer
+     */
+    public function getNoOfPackage()
+    {
+        return $this->no_of_package;
+    }
+
+    /**
+     * Returns the value of field other_info
+     *
+     * @return string
+     */
+    public function getOtherInfo()
+    {
+        return $this->other_info;
     }
 
     /**
@@ -668,9 +755,12 @@ class Parcel extends \Phalcon\Mvc\Model
             'weight' => 'weight', 
             'amount_due' => 'amount_due', 
             'cash_on_delivery' => 'cash_on_delivery', 
-            'delivery_amount' => 'delivery_amount', 
-            'delivery_type' => 'delivery_type', 
-            'payment_type' => 'payment_type', 
+            'cash_on_delivery_amount' => 'cash_on_delivery_amount',
+            'delivery_type' => 'delivery_type',
+            'package_value' => 'package_value',
+            'no_of_package' => 'no_of_package',
+            'other_info' => 'other_info',
+            'payment_type' => 'payment_type',
             'shipping_type' => 'shipping_type', 
             'cash_amount' => 'cash_amount', 
             'pos_amount' => 'pos_amount', 
@@ -694,8 +784,11 @@ class Parcel extends \Phalcon\Mvc\Model
             'weight' => $this->getWeight(),
             'amount_due' => $this->getAmountDue(),
             'cash_on_delivery' => $this->getCashOnDelivery(),
-            'delivery_amount' => $this->getDeliveryAmount(),
+            'delivery_amount' => $this->getCashOnDeliveryAmount(),
             'delivery_type' => $this->getDeliveryType(),
+            'package_value' => $this->getPackageValue(),
+            'no_of_package' => $this->getNoOfPackage(),
+            'other_info' => $this->getOtherInfo(),
             'payment_type' => $this->getPaymentType(),
             'shipping_type' => $this->getShippingType(),
             'cash_amount' => $this->getCashAmount(),
@@ -708,7 +801,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
-        $shipping_type, $from_branch_id, $to_branch_id, $status
+        $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
+        $pos_amount
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -720,13 +814,16 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setWeight($weight);
         $this->setAmountDue($amount_due);
         $this->setCashOnDelivery($cash_on_delivery);
-        $this->setDeliveryAmount($delivery_amount);
+        $this->setCashOnDeliveryAmount($delivery_amount);
         $this->setDeliveryType($delivery_type);
         $this->setPaymentType($payment_type);
         $this->setShippingType($shipping_type);
-        $this->setCashAmount(0);
-        $this->setPosAmount(0);
+        $this->setCashAmount($cash_amount);
+        $this->setPosAmount($pos_amount);
         $this->setWaybillNumber(uniqid());
+        $this->setOtherInfo($other_info);
+        $this->setPackageValue($package_value);
+        $this->setNoOfPackage($no_of_package);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -995,8 +1092,10 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
-                    $parcel_data['cash_on_delivery'], $parcel_data['delivery_amount'], $parcel_data['delivery_type'],
-                    $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status
+                    $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
+                    $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
+                    $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
+                    $parcel_data['pos_amount']
                     );
                 $check = $this->save();
             }
