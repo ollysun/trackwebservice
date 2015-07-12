@@ -283,4 +283,11 @@ class Branch extends \Phalcon\Mvc\Model
 
         return $data[0];
     }
+
+    public static function fetchById($branch_id){
+        return Branch::findFirst(array(
+            'id = :id:',
+            'bind' => ['id' => $branch_id]
+        ));
+    }
 }

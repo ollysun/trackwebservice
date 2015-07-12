@@ -24,6 +24,17 @@ class AdminController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_EMAIL);
         }
 
+        $branch = Branch::fetchById($branch_id);
+        if ($branch == false){
+            return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
+        }
+
+        if ($role_id == Role::SWEEPER){
+            if ($branch->getBranchType() != BranchType::HUB){
+                return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB);
+            }
+        }
+
         $admin = Admin::fetchByIdentifier($email, $staff_id);
         if ($admin != false){
             if ($admin->getEmail() == $email){
