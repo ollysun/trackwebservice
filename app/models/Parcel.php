@@ -889,33 +889,33 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = [];
 
         //filters
-        if (isset($filter_by['to_branch_id'])){ $where[] = 'to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
-        if (isset($filter_by['from_branch_id'])){ $where[] = 'from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
-        if (isset($filter_by['parcel_type'])){ $where[] = 'parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
-        if (isset($filter_by['sender_id'])){ $where[] = 'sender_id = :sender_id:'; $bind['sender_id'] = $filter_by['sender_id'];}
-        if (isset($filter_by['sender_address_id'])){ $where[] = 'sender_address_id = :sender_address_id:'; $bind['sender_address_id'] = $filter_by['sender_address_id'];}
-        if (isset($filter_by['receiver_id'])){ $where[] = 'receiver_id = :receiver_id:'; $bind['receiver_id'] = $filter_by['receiver_id'];}
-        if (isset($filter_by['receiver_address_id'])){ $where[] = 'receiver_address_id = :receiver_address_id:'; $bind['receiver_address_id'] = $filter_by['receiver_address_id'];}
-        if (isset($filter_by['status'])){ $where[] = 'status = :status:'; $bind['status'] = $filter_by['status'];}
-        if (isset($filter_by['min_weight'])){ $where[] = 'weight >= :min_weight:'; $bind['min_weight'] = $filter_by['min_weight'];}
-        if (isset($filter_by['max_weight'])){ $where[] = 'weight <= :max_weight:'; $bind['max_weight'] = $filter_by['max_weight'];}
-        if (isset($filter_by['min_amount_due'])){ $where[] = 'amount_due >= :min_weight:'; $bind['min_amount_due'] = $filter_by['min_amount_due'];}
-        if (isset($filter_by['max_amount_due'])){ $where[] = 'amount_due <= :max_weight:'; $bind['max_amount_due'] = $filter_by['max_amount_due'];}
-        if (isset($filter_by['cash_on_delivery'])){ $where[] = 'cash_on_delivery = :cash_on_delivery:'; $bind['cash_on_delivery'] = $filter_by['cash_on_delivery'];}
-        if (isset($filter_by['min_delivery_amount'])){ $where[] = 'delivery_amount >= :min_delivery_amount:'; $bind['min_delivery_amount'] = $filter_by['min_delivery_amount'];}
-        if (isset($filter_by['max_delivery_amount'])){ $where[] = 'delivery_amount <= :max_delivery_amount:'; $bind['max_delivery_amount'] = $filter_by['max_delivery_amount'];}
-        if (isset($filter_by['delivery_type'])){ $where[] = 'delivery_type = :delivery_type:'; $bind['delivery_type'] = $filter_by['delivery_type'];}
-        if (isset($filter_by['payment_type'])){ $where[] = 'payment_type = :payment_type:'; $bind['payment_type'] = $filter_by['payment_type'];}
-        if (isset($filter_by['shipping_type'])){ $where[] = 'shipping_type = :shipping_type:'; $bind['shipping_type'] = $filter_by['shipping_type'];}
-        if (isset($filter_by['min_cash_amount'])){ $where[] = 'cash_amount >= :min_cash_amount:'; $bind['min_cash_amount'] = $filter_by['min_cash_amount'];}
-        if (isset($filter_by['max_cash_amount'])){ $where[] = 'cash_amount <= :max_cash_amount:'; $bind['max_cash_amount'] = $filter_by['max_cash_amount'];}
-        if (isset($filter_by['min_pos_amount'])){ $where[] = 'pos_amount >= :min_pos_amount:'; $bind['min_pos_amount'] = $filter_by['min_pos_amount'];}
-        if (isset($filter_by['max_pos_amount'])){ $where[] = 'pos_amount <= :max_pos_amount:'; $bind['max_pos_amount'] = $filter_by['max_pos_amount'];}
-        if (isset($filter_by['start_created_date'])){ $where[] = 'created_date >= :start_created_date:'; $bind['start_created_date'] = $filter_by['start_created_date'];}
-        if (isset($filter_by['end_created_date'])){ $where[] = 'created_date <= :end_created_date:'; $bind['end_created_date'] = $filter_by['end_created_date'];}
-        if (isset($filter_by['start_modified_date'])){ $where[] = 'modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date'];}
-        if (isset($filter_by['end_modified_date'])){ $where[] = 'modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date'];}
-        if (isset($filter_by['waybill_number'])){ $where[] = 'waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
+        if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
+        if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
+        if (isset($filter_by['parcel_type'])){ $where[] = 'Parcel.parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
+        if (isset($filter_by['sender_id'])){ $where[] = 'Parcel.sender_id = :sender_id:'; $bind['sender_id'] = $filter_by['sender_id'];}
+        if (isset($filter_by['sender_address_id'])){ $where[] = 'Parcel.sender_address_id = :sender_address_id:'; $bind['sender_address_id'] = $filter_by['sender_address_id'];}
+        if (isset($filter_by['receiver_id'])){ $where[] = 'Parcel.receiver_id = :receiver_id:'; $bind['receiver_id'] = $filter_by['receiver_id'];}
+        if (isset($filter_by['receiver_address_id'])){ $where[] = 'Parcel.receiver_address_id = :receiver_address_id:'; $bind['receiver_address_id'] = $filter_by['receiver_address_id'];}
+        if (isset($filter_by['status'])){ $where[] = 'Parcel.status = :status:'; $bind['status'] = $filter_by['status'];}
+        if (isset($filter_by['min_weight'])){ $where[] = 'Parcel.weight >= :min_weight:'; $bind['min_weight'] = $filter_by['min_weight'];}
+        if (isset($filter_by['max_weight'])){ $where[] = 'Parcel.weight <= :max_weight:'; $bind['max_weight'] = $filter_by['max_weight'];}
+        if (isset($filter_by['min_amount_due'])){ $where[] = 'Parcel.amount_due >= :min_weight:'; $bind['min_amount_due'] = $filter_by['min_amount_due'];}
+        if (isset($filter_by['max_amount_due'])){ $where[] = 'Parcel.amount_due <= :max_weight:'; $bind['max_amount_due'] = $filter_by['max_amount_due'];}
+        if (isset($filter_by['cash_on_delivery'])){ $where[] = 'Parcel.cash_on_delivery = :cash_on_delivery:'; $bind['cash_on_delivery'] = $filter_by['cash_on_delivery'];}
+        if (isset($filter_by['min_delivery_amount'])){ $where[] = 'Parcel.delivery_amount >= :min_delivery_amount:'; $bind['min_delivery_amount'] = $filter_by['min_delivery_amount'];}
+        if (isset($filter_by['max_delivery_amount'])){ $where[] = 'Parcel.delivery_amount <= :max_delivery_amount:'; $bind['max_delivery_amount'] = $filter_by['max_delivery_amount'];}
+        if (isset($filter_by['delivery_type'])){ $where[] = 'Parcel.delivery_type = :delivery_type:'; $bind['delivery_type'] = $filter_by['delivery_type'];}
+        if (isset($filter_by['payment_type'])){ $where[] = 'Parcel.payment_type = :payment_type:'; $bind['payment_type'] = $filter_by['payment_type'];}
+        if (isset($filter_by['shipping_type'])){ $where[] = 'Parcel.shipping_type = :shipping_type:'; $bind['shipping_type'] = $filter_by['shipping_type'];}
+        if (isset($filter_by['min_cash_amount'])){ $where[] = 'Parcel.cash_amount >= :min_cash_amount:'; $bind['min_cash_amount'] = $filter_by['min_cash_amount'];}
+        if (isset($filter_by['max_cash_amount'])){ $where[] = 'Parcel.cash_amount <= :max_cash_amount:'; $bind['max_cash_amount'] = $filter_by['max_cash_amount'];}
+        if (isset($filter_by['min_pos_amount'])){ $where[] = 'Parcel.pos_amount >= :min_pos_amount:'; $bind['min_pos_amount'] = $filter_by['min_pos_amount'];}
+        if (isset($filter_by['max_pos_amount'])){ $where[] = 'Parcel.pos_amount <= :max_pos_amount:'; $bind['max_pos_amount'] = $filter_by['max_pos_amount'];}
+        if (isset($filter_by['start_created_date'])){ $where[] = 'Parcel.created_date >= :start_created_date:'; $bind['start_created_date'] = $filter_by['start_created_date'];}
+        if (isset($filter_by['end_created_date'])){ $where[] = 'Parcel.created_date <= :end_created_date:'; $bind['end_created_date'] = $filter_by['end_created_date'];}
+        if (isset($filter_by['start_modified_date'])){ $where[] = 'Parcel.modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date'];}
+        if (isset($filter_by['end_modified_date'])){ $where[] = 'Parcel.modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date'];}
+        if (isset($filter_by['waybill_number'])){ $where[] = 'Parcel.waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
 
         return ['where' => $where, 'bind' => $bind];
     }
