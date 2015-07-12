@@ -2,7 +2,10 @@
 
 class BranchType extends \Phalcon\Mvc\Model
 {
-
+    const HQ = 1;
+    const HUB = 2;
+    const FEEDER = 3;
+    const EC = 4;
     /**
      *
      * @var integer
