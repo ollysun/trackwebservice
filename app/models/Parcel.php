@@ -787,14 +787,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
-        $obj = new Parcel();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Parcel')
-            ->limit($count, $offset);
-
+    private static function filterConditions($filter_by){
         $bind = [];
-        $columns = ['Parcel.*'];
         $where = [];
 
         //filters
@@ -826,6 +820,22 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['end_modified_date'])){ $where[] = 'modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date']; $builder->orderBy('modified_date');}
         if (isset($filter_by['waybill_number'])){ $where[] = 'waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
 
+        return ['where' => $where, 'bind' => $bind];
+    }
+
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
+        $obj = new Parcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Parcel')
+            ->limit($count, $offset);
+
+        $columns = ['Parcel.*'];
+
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
         //model hydration
         if (isset($fetch_with['with_to_branch'])){ $columns[] = 'ToBranch.*'; $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch'); }
         if (isset($fetch_with['with_from_branch'])){ $columns[] = 'FromBranch.*'; $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch'); }
@@ -855,6 +865,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $result[] = $parcel;
         }
         return $result;
+    }
+
+    public function parcelCount(){
+
     }
 
     /**
