@@ -3,6 +3,7 @@
 
 class ParcelController extends ControllerBase {
     public function addAction(){
+        //todo: must be tied to an EC Officer only
         /**
          * Sample data expected
          * =====================
@@ -56,6 +57,8 @@ class ParcelController extends ControllerBase {
         'payment_type' => 1,
         'shipping_type' => 1
         ];
+
+        $to_hub = 1; // 0 if the delivery is within the EC, 1 if to be sent to HUB
          */
 
         $this->auth->allowOnly([Role::OFFICER]);
@@ -66,14 +69,33 @@ class ParcelController extends ControllerBase {
         $receiver_address = $this->request->getPost('receiver_address');
         $bank_account = $this->request->getPost('bank_account');
         $parcel = $this->request->getPost('parcel');
+        $to_hub = $this->request->getPost('to_hub');
 
-        if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account))){
+        if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $auth_data = $this->auth->getData();
+
+        //Ensuring the officer is an EC officer
+        if ($auth_data['branch']['branch_type'] != BranchType::EC){
+            return $this->response->sendAccessDenied();
+        }
+
+        //determining destination branch
+        $to_branch_id = $auth_data['branch']['id'];
+        if ($to_hub > 0){
+            $to_branch = Branch::getParentById($auth_data['branch']['id']);
+            if ($to_branch == null){
+                return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+            }
+
+            $to_branch_id = $to_branch->getId();
+        }
+
         $parcel_obj = new Parcel();
-        $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel);
+        $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+            $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
         if ($check){
             return $this->response->sendSuccess(['id' => $parcel_obj->getId()]);
         }
@@ -167,5 +189,13 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
 
         return $this->response->sendSuccess(Parcel::fetchAll($offset, $count, $filter_by, $fetch_with));
+    }
+
+    public function countAction(){
+
+    }
+
+    public function moveAction(){
+
     }
 } 
