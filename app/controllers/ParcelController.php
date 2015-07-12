@@ -4,9 +4,9 @@
 class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
-//        /**
-//         * Sample data expected
-//         * =====================
+        /**
+         * Sample data expected
+         * =====================
          $sender = [
         'firstname' => 'ibrahim',
         'lastname' => 'mutiu',
@@ -64,17 +64,17 @@ class ParcelController extends ControllerBase {
         ];
 
         $to_hub = 1; // 0 if the delivery is within the EC, 1 if to be sent to HUB
-//         */
+         */
 
         $this->auth->allowOnly([Role::OFFICER]);
 
-//        $sender = $this->request->getPost('sender');
-//        $sender_address = $this->request->getPost('sender_address');
-//        $receiver = $this->request->getPost('receiver');
-//        $receiver_address = $this->request->getPost('receiver_address');
-//        $bank_account = $this->request->getPost('bank_account');
-//        $parcel = $this->request->getPost('parcel');
-//        $to_hub = $this->request->getPost('to_hub');
+        $sender = $this->request->getPost('sender');
+        $sender_address = $this->request->getPost('sender_address');
+        $receiver = $this->request->getPost('receiver');
+        $receiver_address = $this->request->getPost('receiver_address');
+        $bank_account = $this->request->getPost('bank_account');
+        $parcel = $this->request->getPost('parcel');
+        $to_hub = $this->request->getPost('to_hub');
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -130,7 +130,7 @@ class ParcelController extends ControllerBase {
         $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
         if ($check){
-            return $this->response->sendSuccess(['id' => $parcel_obj->getId()]);
+            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $parcel_obj->getWaybillNumber()]);
         }
         return $this->response->sendError();
     }
