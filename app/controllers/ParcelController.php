@@ -68,14 +68,59 @@ class ParcelController extends ControllerBase {
 
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
+//        $payload = '{
+//    "sender": {
+//        "firstname": "Rotimi",
+//        "lastname": "Akintewe",
+//        "phone": "+2348033438870",
+//        "email": "akintewe.rotimi@gmail.com"
+//    },
+//    "receiver": {
+//        "firstname": "Dapo",
+//        "lastname": "Olotu",
+//        "phone": "08012345679",
+//        "email": "dapo.olotu@gmail.com"
+//    },
+//    "sender_address": {
+//        "id": null,
+//        "street1": "6 Ilaro Street, Ijebu Ode",
+//        "street2": "",
+//        "city": "Lagos",
+//        "state_id": "LAGOS",
+//        "country_id": "1"
+//    },
+//    "receiver_address": {
+//        "id": null,
+//        "street1": "9, Ojo Street, Akoka",
+//        "street2": "",
+//        "city": "Lagos",
+//        "state_id": "LAGOS",
+//        "country_id": "1"
+//    },
+//    "parcel": {
+//        "to_hub": 1,
+//        "parcel_type": "2",
+//        "parcel_value": "23000",
+//        "weight": "120",
+//        "amount_due": "23000",
+//        "cash_on_delivery": 1,
+//        "cash_on_delivery_amount": "12000",
+//        "delivery_type": "2",
+//        "payment_type": "2",
+//        "shipping_type": "1",
+//        "other_info": "Other Info to see and talk about"
+//    },
+//    "is_corporate_lead": "true"
+//}';
+//        $payload = json_decode($payload, true);
+        $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
+        $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
+        $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
+        $receiver_address = (isset($payload['receiver_address'])) ? $payload['receiver_address'] : null;
+        $bank_account = (isset($payload['bank_account'])) ? $payload['bank_account'] : null;
+        $parcel = (isset($payload['parcel'])) ? $payload['parcel'] : null;
+        $to_hub = (isset($payload['to_hub'])) ? $payload['to_hub'] : null;
 
-        $sender = $payload['sender'];
-        $sender_address = $payload['sender_address'];
-        $receiver = $payload['receiver'];
-        $receiver_address = $payload['receiver_address'];
-        $bank_account = $payload['bank_account'];
-        $parcel = $payload['parcel'];
-        $to_hub = $payload['to_hub'];
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
