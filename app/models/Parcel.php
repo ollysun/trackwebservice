@@ -871,8 +871,25 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public function parcelCount(){
+    public static function parcelCount($filter_by){
+        $obj = new Parcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS parcel_count')
+            ->from('Parcel');
 
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        return intval($data[0]->parcel_count);
     }
 
     /**

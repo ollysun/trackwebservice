@@ -206,7 +206,15 @@ class ParcelController extends ControllerBase {
     }
 
     public function countAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
+        $filter_by = $this->getFilterParams();
+
+        $count = Parcel::parcelCount($filter_by);
+        if ($count === null){
+            return $this->response->sendError();
+        }
+        return $this->response->sendSuccess($count);
     }
 
     public function moveAction(){
