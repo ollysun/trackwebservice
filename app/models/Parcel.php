@@ -816,8 +816,8 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['max_pos_amount'])){ $where[] = 'pos_amount <= :max_pos_amount:'; $bind['max_pos_amount'] = $filter_by['max_pos_amount'];}
         if (isset($filter_by['start_created_date'])){ $where[] = 'created_date >= :start_created_date:'; $bind['start_created_date'] = $filter_by['start_created_date'];}
         if (isset($filter_by['end_created_date'])){ $where[] = 'created_date <= :end_created_date:'; $bind['end_created_date'] = $filter_by['end_created_date'];}
-        if (isset($filter_by['start_modified_date'])){ $where[] = 'modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date']; $builder->orderBy('modified_date');}
-        if (isset($filter_by['end_modified_date'])){ $where[] = 'modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date']; $builder->orderBy('modified_date');}
+        if (isset($filter_by['start_modified_date'])){ $where[] = 'modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date'];}
+        if (isset($filter_by['end_modified_date'])){ $where[] = 'modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date'];}
         if (isset($filter_by['waybill_number'])){ $where[] = 'waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
 
         return ['where' => $where, 'bind' => $bind];
@@ -835,6 +835,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
+            $builder->orderBy('modified_date');
+        }
 
         //model hydration
         if (isset($fetch_with['with_to_branch'])){ $columns[] = 'ToBranch.*'; $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch'); }
