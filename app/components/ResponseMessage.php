@@ -15,4 +15,6 @@ class ResponseMessage
     const INVALID_CRED = 'Invalid credentials entered';
     const NO_RECORD_FOUND = 'No record found';
     const EC_NOT_LINKED_TO_HUB = 'This EC is not linked to a Hub';
+    const SWEEPER_ONLY_TO_HUB = 'A sweeper can only attached to a hub';
+    const BRANCH_NOT_EXISTING = 'Branch does not exist';
 } 
