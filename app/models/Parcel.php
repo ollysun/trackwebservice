@@ -871,7 +871,6 @@ class Parcel extends \Phalcon\Mvc\Model
             ->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
             ->where('Parcel.id = :id:');
 
-//        var_dump($builder->getQuery());exit();
         $data = $builder->getQuery()->execute(['id' => $id]);
         if (count($data) == 0) return false;
 
@@ -1008,20 +1007,23 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
 
             //saving the sender's user info
-            $sender_obj = new User();
-            $is_existing = false;
             $sender_obj = User::fetchByPhone($sender['phone']);
-            $is_existing = ($sender_obj != false);
+            $is_existing = $sender_obj != false;
+            if (!$is_existing){
+                $sender_obj = new User();
+            }
             $sender_obj->setTransaction($transaction);
             $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_existing);
             $check = $sender_obj->save();
 
             //saving the receiver's user info
             $receiver_obj = new User();
-            $is_existing = false;
             if ($check) {
                 $receiver_obj = User::fetchByPhone($receiver['phone']);
-                $is_existing = ($receiver_obj != false);
+                $is_existing = $receiver_obj != false;
+                if (!$is_existing){
+                    $receiver_obj = new User();
+                }
                 $receiver_obj->setTransaction($transaction);
                 $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_existing);
                 $check = $receiver_obj->save();
@@ -1034,6 +1036,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if ($sender_address['id'] != null) {
                     $sender_addr_obj = Address::fetchById($sender_address['id']);
                     $is_existing = ($sender_addr_obj != false);
+                    if (!$is_existing){
+                        $sender_addr_obj = new Address();
+                    }
                 }
                 if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
                     $transactionManager->rollback();
@@ -1041,8 +1046,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $sender_addr_obj->setTransaction($transaction);
                 $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
-                    $sender_address['street_address1'], $sender_address['street_address2'], $sender_address['state_id'],
-                    $sender_address['country_id'], $sender_address['city'], $is_existing);
+                    $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
+                    intval($sender_address['country_id']), $sender_address['city'], $is_existing);
+
                 $check = $sender_addr_obj->save();
             }
 
@@ -1053,6 +1059,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if ($receiver_address['id'] != null) {
                     $receiver_addr_obj = Address::fetchById($receiver_address['id']);
                     $is_existing = ($receiver_addr_obj != false);
+                    if (!$is_existing){
+                        $receiver_addr_obj = new Address();
+                    }
                 }
                 if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
                     $transactionManager->rollback();
@@ -1060,7 +1069,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $receiver_addr_obj->setTransaction($transaction);
                 $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
-                    $receiver_address['street_address1'], $receiver_address['street_address2'], $receiver_address['state_id'],
+                    $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
                     $receiver_address['country_id'], $receiver_address['city'], $is_existing);
                 $check = $receiver_addr_obj->save();
             }
@@ -1073,6 +1082,9 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($bank_account['id'] != null) {
                         $bank_account_obj = BankAccount::fetchById($bank_account['id']);
                         $is_existing = ($bank_account_obj != false);
+                        if ($is_existing){
+                            $bank_account_obj = new BankAccount();
+                        }
                     }
                     if ($is_existing and ($bank_account_obj->getOwnerId() != $sender_obj->getId() OR $bank_account_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
                         $transactionManager->rollback();
@@ -1120,7 +1132,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 return true;
             }
         } catch (Exception $e) {
-            var_dump($e->getMessage());exit();
+
         }
 
         $transactionManager->rollback();
