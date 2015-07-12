@@ -2,7 +2,8 @@
 
 class ParcelHistory extends \Phalcon\Mvc\Model
 {
-
+    const MSG_FOR_SWEEPER = 'Parcel ready for sweeping';
+    const MSG_FOR_DELIVERY = 'Parcel ready for delivery';
     /**
      *
      * @var integer
@@ -20,6 +21,12 @@ class ParcelHistory extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $branch_id;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $admin_id;
 
     /**
      *
@@ -74,6 +81,19 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     public function setBranchId($branch_id)
     {
         $this->branch_id = $branch_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field admin_id
+     *
+     * @param integer $admin_id
+     * @return $this
+     */
+    public function setAdminId($admin_id)
+    {
+        $this->admin_id = $admin_id;
 
         return $this;
     }
@@ -148,6 +168,16 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field admin_id
+     *
+     * @return integer
+     */
+    public function getAdminId()
+    {
+        return $this->admin_id;
+    }
+
+    /**
      * Returns the value of field status
      *
      * @return integer
@@ -185,6 +215,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('parcel_id', 'Parcel', 'id', array('alias' => 'Parcel'));
         $this->belongsTo('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
+        $this->belongsTo('admin_id', 'Admin', 'id', array('alias' => 'Admin'));
     }
 
     /**
@@ -211,19 +242,21 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id', 
             'parcel_id' => 'parcel_id', 
-            'branch_id' => 'branch_id', 
+            'branch_id' => 'branch_id',
+            'admin_id' => 'admin_id',
             'status' => 'status', 
             'created_date' => 'created_date', 
             'description' => 'description'
         );
     }
 
-    public function initData($parcel_id, $branch_id, $description){
+    public function initData($parcel_id, $branch_id, $description, $admin_id, $status){
         $this->setParcelId($parcel_id);
         $this->setBranchId($branch_id);
         $this->setDescription($description);
+        $this->setAdminId($admin_id);
 
-        $this->setStatus(Status::ACTIVE);
+        $this->setStatus($status);
         $this->setCreatedDate(date('Y-m-d H:i:s'));
     }
 
