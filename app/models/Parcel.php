@@ -798,6 +798,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = [];
 
         //filters
+        if (isset($filter_by['to_branch_id'])){ $where[] = 'to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
+        if (isset($filter_by['from_branch_id'])){ $where[] = 'from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
         if (isset($filter_by['parcel_type'])){ $where[] = 'parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
         if (isset($filter_by['sender_id'])){ $where[] = 'sender_id = :sender_id:'; $bind['sender_id'] = $filter_by['sender_id'];}
         if (isset($filter_by['sender_address_id'])){ $where[] = 'sender_address_id = :sender_address_id:'; $bind['sender_address_id'] = $filter_by['sender_address_id'];}
@@ -825,6 +827,8 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['waybill_number'])){ $where[] = 'waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
 
         //model hydration
+        if (isset($fetch_with['with_to_branch'])){ $columns[] = 'ToBranch.*'; $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch'); }
+        if (isset($fetch_with['with_from_branch'])){ $columns[] = 'FromBranch.*'; $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch'); }
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
         if (isset($fetch_with['with_sender_address'])){ $columns[] = 'SenderAddress.*'; $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress'); }
@@ -841,6 +845,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
+                if (isset($fetch_with['with_to_branch'])) $parcel['to_branch'] = $item->toBranch->getData();
+                if (isset($fetch_with['with_from_branch'])) $parcel['from_branch'] = $item->fromBranch->getData();
                 if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
                 if (isset($fetch_with['with_sender_address'])) $parcel['sender_address'] = $item->senderAddress->getData();
                 if (isset($fetch_with['with_receiver'])) $parcel['receiver'] =$item->receiver->getData();

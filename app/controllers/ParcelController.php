@@ -124,6 +124,8 @@ class ParcelController extends ControllerBase {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
+        $to_branch_id = $this->request->getQuery('to_branch_id');
+        $from_branch_id = $this->request->getQuery('from_branch_id');
         $parcel_type = $this->request->getQuery('parcel_type');
         $sender_id = $this->request->getQuery('sender_id');
         $sender_address_id = $this->request->getQuery('sender_address_id');
@@ -150,12 +152,16 @@ class ParcelController extends ControllerBase {
         $end_modified_date = $this->request->getQuery('end_modified_date');
         $waybill_number = $this->request->getQuery('waybill_number');
 
+        $with_to_branch = $this->request->getQuery('with_to_branch');
+        $with_from_branch = $this->request->getQuery('with_from_branch');
         $with_sender = $this->request->getQuery('with_sender');
         $with_sender_address = $this->request->getQuery('with_sender_address');
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
 
         $filter_by = [];
+        if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
+        if (!is_null($from_branch_id)){ $filter_by['from_branch_id'] = $from_branch_id; }
         if (!is_null($parcel_type)){ $filter_by['parcel_type'] = $parcel_type; }
         if (!is_null($sender_id)){ $filter_by['sender_id'] = $sender_id; }
         if (!is_null($sender_address_id)){ $filter_by['sender_address_id'] = $sender_address_id; }
@@ -183,6 +189,8 @@ class ParcelController extends ControllerBase {
         if (!is_null($waybill_number)){ $filter_by['waybill_number'] = $waybill_number; }
 
         $fetch_with = [];
+        if (!is_null($with_to_branch)){ $fetch_with['with_to_branch'] = true; }
+        if (!is_null($with_from_branch)){ $fetch_with['with_from_branch'] = true; }
         if (!is_null($with_sender)){ $fetch_with['with_sender'] = true; }
         if (!is_null($with_receiver)){ $fetch_with['with_receiver'] = true; }
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
