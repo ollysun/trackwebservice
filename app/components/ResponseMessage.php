@@ -14,4 +14,5 @@ class ResponseMessage
     const EXISTING_STAFF_ID = 'Staff Id provided already exists';
     const INVALID_CRED = 'Invalid credentials entered';
     const NO_RECORD_FOUND = 'No record found';
+    const EC_NOT_LINKED_TO_HUB = 'This EC is not linked to a Hub';
 } 
