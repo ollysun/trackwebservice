@@ -77,7 +77,7 @@ class ParcelController extends ControllerBase {
         $parcel = $payload['parcel'];
         $to_hub = $payload['to_hub'];
 
-        if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account)) or $to_hub === null){
+        if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
