@@ -7,7 +7,7 @@ class ParcelController extends ControllerBase {
         /**
          * Sample data expected
          * =====================
-         $sender = [
+        $sender = [
         'firstname' => 'ibrahim',
         'lastname' => 'mutiu',
         'phone' => '2345072345566',
@@ -67,14 +67,15 @@ class ParcelController extends ControllerBase {
          */
 
         $this->auth->allowOnly([Role::OFFICER]);
+        $payload = $this->request->getJsonRawBody(true);
 
-        $sender = $this->request->getPost('sender');
-        $sender_address = $this->request->getPost('sender_address');
-        $receiver = $this->request->getPost('receiver');
-        $receiver_address = $this->request->getPost('receiver_address');
-        $bank_account = $this->request->getPost('bank_account');
-        $parcel = $this->request->getPost('parcel');
-        $to_hub = $this->request->getPost('to_hub');
+        $sender = $payload['sender'];
+        $sender_address = $payload['sender_address'];
+        $receiver = $payload['receiver'];
+        $receiver_address = $payload['receiver_address'];
+        $bank_account = $payload['bank_account'];
+        $parcel = $payload['parcel'];
+        $to_hub = $payload['to_hub'];
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address, $bank_account)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
