@@ -5,10 +5,13 @@ class Status extends \Phalcon\Mvc\Model
     const ACTIVE = 1;
     const INACTIVE = 2;
     const REMOVED = 3;
-    const COLLECTED = 4;
-    const IN_TRANSIT = 5;
-    const DELIVERED = 6;
-    const CANCELLED = 7;
+    const PARCEL_COLLECTED = 4;
+    const PARCEL_IN_TRANSIT = 5;
+    const PARCEL_DELIVERED = 6;
+    const PARCEL_CANCELLED = 7;
+    const PARCEL_FOR_SWEEPER = 8;
+    const PARCEL_ARRIVAL = 9;
+    const PARCEL_FOR_DELIVERY = 10;
     /**
      *
      * @var integer
