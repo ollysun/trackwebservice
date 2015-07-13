@@ -92,4 +92,20 @@ class AddressController extends ControllerBase {
 
         return $this->response->sendSuccess(Address::fetchAll($offset, $count, $filter_by));
     }
+
+    public function setDefaultAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $address_id = $this->request->getPost('address_id');
+
+        if ($address_id === null){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        $address = Address::fetchActive($address_id);
+        if ($address != false){
+            $address->setAsDefault();
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError();
+    }
 } 

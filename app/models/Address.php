@@ -2,6 +2,8 @@
 
 class Address extends \Phalcon\Mvc\Model
 {
+    const SQL_SET_NON_AS_DEFAULT = "UPDATE address SET is_default = 0, modified_date=:modified_date WHERE owner_id=:owner_id AND owner_type=:owner_type;";
+
     /**
      *
      * @var integer
@@ -61,6 +63,12 @@ class Address extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $country_id;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $is_default;
 
     /**
      *
@@ -199,6 +207,19 @@ class Address extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field is_default
+     *
+     * @param integer $is_default
+     * @return $this
+     */
+    public function setIsDefault($is_default)
+    {
+        $this->is_default = $is_default;
+
+        return $this;
+    }
+
+    /**
      * Method to set the value of field status
      *
      * @param integer $status
@@ -312,6 +333,16 @@ class Address extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field is_default
+     *
+     * @return integer
+     */
+    public function getIsDefault()
+    {
+        return $this->is_default;
+    }
+
+    /**
      * Returns the value of field status
      *
      * @return integer
@@ -363,7 +394,8 @@ class Address extends \Phalcon\Mvc\Model
             'modified_date' => 'modified_date', 
             'state_id' => 'state_id', 
             'city' => 'city', 
-            'country_id' => 'country_id', 
+            'country_id' => 'country_id',
+            'is_default' => 'is_default',
             'status' => 'status'
         );
     }
@@ -380,6 +412,7 @@ class Address extends \Phalcon\Mvc\Model
             'state_id' => $this->getStateId(),
             'city' => $this->getCity(),
             'country_id' => $this->getCountryId(),
+            'is_default' => $this->getIsDefault(),
             'status' => $this->getStatus()
         );
     }
@@ -392,6 +425,7 @@ class Address extends \Phalcon\Mvc\Model
         $this->setStateId($state_id);
         $this->setCountryId($country_id);
         $this->setCity($city);
+        $this->setIsDefault(0);
 
         $now = date('Y-m-d H:i:s');
         if (!$is_existing){
@@ -415,10 +449,40 @@ class Address extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public static function fetchActive($id, $owner_id, $owner_type){
+    public function setAsDefault(){
+        /**
+         * @var Phalcon\Db\Adapter\Pdo\Mysql $con
+         */
+        $obj = new self();
+        $con = $obj->getDI()->getDb();
+        $modified_date = date('Y-m-d H:i:s');
+        $check = $con->execute(self::SQL_SET_NON_AS_DEFAULT, ['modified_date'=> $modified_date, 'owner_type' => $this->getOwnerType(), 'owner_id' => $this->getOwnerId()]);
+        if ($check){
+            $this->setIsDefault(1);
+            $this->setModifiedDate($modified_date);
+            return $this->save();
+        }
+        return false;
+    }
+
+    public static function fetchActive($id, $owner_id=null, $owner_type=null){
+        $conditions = 'id = :id: AND owner_id = :owner_id: AND owner_type = :owner_type: AND status = :status:';
+        $bind = ['owner_id' => $owner_id, 'owner_type' => $owner_type, 'id' => $id, 'status' => Status::ACTIVE];
+        if ($owner_id == null OR $owner_type == null){
+            $bind = ['id' => $id, 'status' => Status::ACTIVE];
+            $conditions = 'id = :id: AND status = :status:';
+        }
+
         return Address::findFirst([
-            'id = :id: AND owner_id = :owner_id: AND owner_type = :owner_type:',
-            'bind' => ['owner_id' => $owner_id, 'owner_type' => $owner_type, 'id' => $id]
+            $conditions,
+            'bind' => $bind
+        ]);
+    }
+
+    public static function fetchDefault($owner_id, $owner_type){
+        return Address::findFirst([
+            'owner_id = :owner_id: AND owner_type = :owner_type: AND status = :status: AND is_default=1',
+            'bind' => ['owner_id' => $owner_id, 'owner_type' => $owner_type, 'status' => Status::ACTIVE]
         ]);
     }
 

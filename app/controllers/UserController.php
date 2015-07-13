@@ -13,7 +13,11 @@ class UserController extends ControllerBase {
 
         $user = User::fetchByPhone($phone);
         if ($user != false){
-            return $this->response->sendSuccess($user->getData());
+            $address = Address::fetchDefault($user->getId(), OWNER_TYPE_CUSTOMER);
+
+            $result = $user->getData();
+            $result['address'] = ($address == false) ? null : $address->getData();
+            return $this->response->sendSuccess($result);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
