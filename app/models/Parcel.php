@@ -1008,24 +1008,25 @@ class Parcel extends \Phalcon\Mvc\Model
 
             //saving the sender's user info
             $sender_obj = User::fetchByPhone($sender['phone']);
-            $is_existing = $sender_obj != false;
-            if (!$is_existing){
+            $is_sender_existing = $sender_obj != false;
+            if (!$is_sender_existing){
                 $sender_obj = new User();
             }
             $sender_obj->setTransaction($transaction);
-            $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_existing);
+            $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_sender_existing);
             $check = $sender_obj->save();
 
             //saving the receiver's user info
             $receiver_obj = new User();
+            $is_receiver_existing = false;
             if ($check) {
                 $receiver_obj = User::fetchByPhone($receiver['phone']);
-                $is_existing = $receiver_obj != false;
-                if (!$is_existing){
+                $is_receiver_existing = $receiver_obj != false;
+                if (!$is_receiver_existing){
                     $receiver_obj = new User();
                 }
                 $receiver_obj->setTransaction($transaction);
-                $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_existing);
+                $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_receiver_existing);
                 $check = $receiver_obj->save();
             }
 
@@ -1047,7 +1048,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $sender_addr_obj->setTransaction($transaction);
                 $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
-                    intval($sender_address['country_id']), $sender_address['city'], $is_existing);
+                    intval($sender_address['country_id']), $sender_address['city'], $is_existing, $is_sender_existing);
 
                 $check = $sender_addr_obj->save();
             }
@@ -1070,7 +1071,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $receiver_addr_obj->setTransaction($transaction);
                 $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
-                    $receiver_address['country_id'], $receiver_address['city'], $is_existing);
+                    $receiver_address['country_id'], $receiver_address['city'], $is_existing, $is_receiver_existing);
                 $check = $receiver_addr_obj->save();
             }
 
