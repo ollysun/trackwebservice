@@ -417,7 +417,7 @@ class Address extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city, $is_existing=false){
+    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city, $is_existing=false, $is_user_existing=true){
         $this->setOwnerId($owner_id);
         $this->setOwnerType($owner_type);
         $this->setStreetAddress1($street_address1);
@@ -425,7 +425,8 @@ class Address extends \Phalcon\Mvc\Model
         $this->setStateId($state_id);
         $this->setCountryId($country_id);
         $this->setCity($city);
-        $this->setIsDefault(0);
+        $is_default = ($is_user_existing) ? 0 : 1;
+        $this->setIsDefault($is_default);
 
         $now = date('Y-m-d H:i:s');
         if (!$is_existing){
