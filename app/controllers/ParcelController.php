@@ -4,68 +4,6 @@
 class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
-        /**
-         * Sample data expected
-         * =====================
-        $sender = [
-        'firstname' => 'ibrahim',
-        'lastname' => 'mutiu',
-        'phone' => '2345072345566',
-        'email' => null
-        ];
-
-        $receiver = [
-        'firstname' => 'biliki',
-        'lastname' => 'ali',
-        'phone' => '2345072341212',
-        'email' => 'biliki.ali@gmail.com'
-        ];
-
-        $sender_address = [
-        'id' => null,
-        'street_address1' => '2, Osborne way',
-        'street_address2' => 'Ikoyi, Lagos State',
-        'city' => 'Ikoyi',
-        'state_id' => '25',
-        'country_id' => '1'
-        ];
-
-        $receiver_address = [
-        'id' => null,
-        'street_address1' => '23, Apple Cresent',
-        'street_address2' => 'Mayitama, Abuja',
-        'city' => 'Ikoyi',
-        'state_id' => '15',
-        'country_id' => '1'
-        ];
-
-        $bank_account = [
-        'id' => null,
-        'bank_id' => 12,
-        'account_name' => 'Ibrahim ali',
-        'account_no'=> '324156424',
-        'sort_code'=> '1222432'
-        ];
-
-        $parcel = [
-        'parcel_type' => 1,
-        'weight' => 123.25,
-        'amount_due' => 2000,
-        'cash_on_delivery' => 1,
-        'cash_on_delivery_amount' => 3000,
-        'delivery_type' => 2,
-        'payment_type' => 2,
-        'shipping_type' => 1,
-        'package_value' => 2000,
-        'no_of_package' => 3,
-        'other_info' => 'some other info',
-        'cash_amount' => 500,
-        'pos_amount' =>  1500,
-        ];
-
-        $to_hub = 1; // 0 if the delivery is within the EC, 1 if to be sent to HUB
-         */
-
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
 //        $payload = '{
@@ -123,7 +61,7 @@ class ParcelController extends ControllerBase {
         $bank_account = (isset($payload['bank_account'])) ? $payload['bank_account'] : null;
         $parcel = (isset($payload['parcel'])) ? $payload['parcel'] : null;
         $to_hub = (isset($payload['to_hub'])) ? $payload['to_hub'] : null;
-
+        $is_corporate_lead = (isset($payload['is_corporate_lead'])) ? $payload['is_corporate_lead'] : null;
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -179,6 +117,23 @@ class ParcelController extends ControllerBase {
         $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
         if ($check){
+            if ($is_corporate_lead == 1){
+                EmailMessage::send(
+                    EmailMessage::CORPORATE_LEAD,
+                    [
+                        'firstname' => (isset($sender['firstname'])) ? ucfirst(strtolower($sender['firstname'])) : '',
+                        'lastname' => (isset($sender['lastname'])) ? ucfirst(strtolower($sender['lastname'])) : '',
+                        'street1' => (isset($sender_address['street1'])) ? $sender_address['street1'] : '',
+                        'street2' => (isset($sender_address['street2'])) ? $sender_address['street2'] : '',
+                        'city' => (isset($sender_address['city'])) ? ucfirst(strtolower($sender_address['city'])) : '',
+                        'state' => (isset($sender_address['state'])) ? $sender_address['state'] : '',
+                        'country' => (isset($sender_address['country'])) ? $sender_address['country'] : '',
+                        'email' => (isset($sender['email'])) ? $sender['email'] : '',
+                        'phone' => (isset($sender['phone'])) ? $sender['phone'] : ''
+                    ],
+                    'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']'
+                );
+            }
             return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $parcel_obj->getWaybillNumber()]);
         }
         return $this->response->sendError();
