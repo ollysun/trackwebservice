@@ -158,4 +158,17 @@ class BranchMap extends \Phalcon\Mvc\Model
         );
     }
 
+    public function initData($child_id, $parent_id)
+    {
+        $this->setChildId($child_id);
+        $this->setParentId($parent_id);
+        $this->setStatus(Status::ACTIVE);
+    }
+
+    public static function getByChildId($child_id){
+        return BranchMap::findFirst([
+            'child_id = :child_id:',
+            'bind' => ['child_id' => $child_id]
+        ]);
+    }
 }

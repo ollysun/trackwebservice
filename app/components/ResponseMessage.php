@@ -20,4 +20,11 @@ class ResponseMessage
     const INVALID_PACKAGE_COUNT = 'Invalid package count provided';
     const INVALID_AMOUNT = 'Invalid amounts provided';
     const INVALID_PAYMENT_TYPE = 'Invalid payment type provided';
+    const INVALID_STATUS = 'Invalid status provided';
+    const NO_HUB_PROVIDED = 'No HUB provided';
+    const INVALID_HUB_PROVIDED = 'Invalid HUB provided';
+    const INVALID_EC_PROVIDED = 'Invalid EC provided';
+    const HUB_NOT_EXISTING = 'HUB not existing';
+    const EC_NOT_EXISTING = 'EC not existing';
+    const RELINK_NOT_POSSIBLE = 'EC not linked to HUB to be re-link';
 }

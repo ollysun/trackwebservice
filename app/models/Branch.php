@@ -1,8 +1,11 @@
 <?php
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Branch extends \Phalcon\Mvc\Model
 {
-
+    const HUB_CODE_PREFIX = 'hub';
+    const EC_CODE_PREFIX = 'ec';
+    const OTHERS_PREFIX = 'x';
     /**
      *
      * @var integer
@@ -17,9 +20,21 @@ class Branch extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var string
+     */
+    protected $code;
+
+    /**
+     *
      * @var integer
      */
     protected $branch_type;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $state_id;
 
     /**
      *
@@ -66,7 +81,20 @@ class Branch extends \Phalcon\Mvc\Model
      */
     public function setName($name)
     {
-        $this->name = $name;
+        $this->name = Text::removeExtraSpaces(strtolower($name));
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field code
+     *
+     * @param string $code
+     * @return $this
+     */
+    public function setCode($code)
+    {
+        $this->code = strtolower(trim($code));
 
         return $this;
     }
@@ -85,6 +113,19 @@ class Branch extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field state_id
+     *
+     * @param integer $state_id
+     * @return $this
+     */
+    public function setStateId($state_id)
+    {
+        $this->state_id = $state_id;
+
+        return $this;
+    }
+
+    /**
      * Method to set the value of field address
      *
      * @param string $address
@@ -92,7 +133,7 @@ class Branch extends \Phalcon\Mvc\Model
      */
     public function setAddress($address)
     {
-        $this->address = $address;
+        $this->address = Text::removeExtraSpaces($address);
 
         return $this;
     }
@@ -157,6 +198,16 @@ class Branch extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field code
+     *
+     * @return string
+     */
+    public function getCode()
+    {
+        return $this->code;
+    }
+
+    /**
      * Returns the value of field branch_type
      *
      * @return integer
@@ -164,6 +215,16 @@ class Branch extends \Phalcon\Mvc\Model
     public function getBranchType()
     {
         return $this->branch_type;
+    }
+
+    /**
+     * Returns the value of field state_id
+     *
+     * @return integer
+     */
+    public function getStateId()
+    {
+        return $this->state_id;
     }
 
     /**
@@ -243,8 +304,10 @@ class Branch extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id', 
             'name' => 'name', 
-            'branch_type' => 'branch_type', 
-            'address' => 'address', 
+            'code' => 'code',
+            'branch_type' => 'branch_type',
+            'state_id' => 'state_id',
+            'address' => 'address',
             'created_date' => 'created_date', 
             'modified_date' => 'modified_date', 
             'status' => 'status'
@@ -255,12 +318,86 @@ class Branch extends \Phalcon\Mvc\Model
         return array(
             'id' => $this->getId(),
             'name' => $this->getName(),
+            'code' => $this->getCode(),
             'branch_type' => $this->getBranchType(),
+            'state_id' => $this->getStateId(),
             'address' => $this->getAddress(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus()
         );
+    }
+
+    public function initData($name, $branch_type, $state_id, $address, $status){
+        $this->setName($name);
+        $this->setCode(uniqid());
+        $this->setBranchType($branch_type);
+        $this->setStateId($state_id);
+        $this->setAddress($address);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setCreatedDate($now);
+        $this->setModifiedDate($now);
+        $this->setStatus($status);
+    }
+
+    public function generateCode(){
+        $code = '';
+
+        switch($this->branch_type){
+            case BranchType::EC:
+                $code = self::EC_CODE_PREFIX;
+                break;
+            case BranchType::HUB:
+                $code = self::HUB_CODE_PREFIX;
+                break;
+            default:
+                $code = self::OTHERS_PREFIX;
+        }
+
+        $this->setCode($code . str_pad($this->getId(), 3, '0', STR_PAD_LEFT));
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    public function saveBranch($hub_id=null){
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $this->setTransaction($transaction);
+            if ($this->save()){
+                $this->generateCode();
+                if ($this->save()){
+                    $check = true;
+                    if ($hub_id != null and $this->getBranchType() == BranchType::EC){
+                        $branch_map = new BranchMap();
+                        $branch_map->setTransaction($transaction);
+                        $branch_map->initData($this->getId(), $hub_id);
+                        $check = ($branch_map->save());
+                    }
+
+                    if ($check){
+                        $transactionManager->commit();
+                        return true;
+                    }
+                }
+            }
+        }catch(Exception $e){
+
+        }
+        $transactionManager->rollback();
+        return false;
+    }
+
+    public function editDetails($name, $state_id, $address){
+        $this->setName($name);
+        $this->setStateId($state_id);
+        $this->setAddress($address);
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    public function changeStatus($status){
+        $this->setStatus($status);
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
     /**
@@ -289,5 +426,68 @@ class Branch extends \Phalcon\Mvc\Model
             'id = :id:',
             'bind' => ['id' => $branch_id]
         ));
+    }
+
+    public static function fetchAllEC($hub_id){
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('Branch.*')
+            ->from('Branch')
+            ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
+            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:');
+
+        $data = $builder->getQuery()->execute(['hub_id' => $hub_id, 'branch_type' => BranchType::EC, 'status' => Status::ACTIVE]);
+
+        $result = [];
+        foreach($data as $item){
+            $result[] = $item->getData();
+        }
+        return $result;
+    }
+
+    public static function fetchAllHub(){
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('Branch.*')
+            ->from('Branch')
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
+
+        $data = $builder->getQuery()->execute(['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE]);
+
+        $result = [];
+        foreach($data as $item){
+            $result[] = $item->getData();
+        }
+        return $result;
+    }
+
+    public static function fetchOne($filter_by){
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Branch');
+
+        $bind = array();
+        if (isset($filter_by['branch_id'])){
+            $builder->where('Branch.id = :branch_id:');
+            $bind['branch_id'] = $filter_by['branch_id'];
+        }else if (isset($filter_by['code'])){
+            $builder->where('Branch.code = :code:');
+            $bind['code'] = trim($filter_by['code']);
+        }
+
+        $builder->andWhere('Branch.status = :status:');
+        $bind['status'] = Status::ACTIVE;
+
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        $result = $data[0]->getData();
+        $parent = Branch::getParentById($data[0]->getId());
+        $result['parent'] = ($parent == null) ? null : $parent->getData();
+
+        return $result;
     }
 }
