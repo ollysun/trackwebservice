@@ -2,6 +2,7 @@
 
 
 class BankaccountController extends ControllerBase {
+
     public function addAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
