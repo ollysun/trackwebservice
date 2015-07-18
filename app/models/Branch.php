@@ -461,6 +461,29 @@ class Branch extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    public static function fetchAll($offset, $count, $filter_by){
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Branch')
+            ->limit($count, $offset)
+            ->orderBy('Branch.name');
+
+        $where = [];
+        $bind = [];
+
+        if (isset($filter_by['state_id'])){ $where[] = 'Branch.state_id = :state_id:'; $bind['state_id'] = $filter_by['state_id'];}
+        if (isset($filter_by['branch_type'])){ $where[] = 'Branch.branch_type = :branch_type:'; $bind['branch_type'] = $filter_by['branch_type'];}
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        $result = [];
+        foreach($data as $item){
+            $result[] = $item->getData();
+        }
+        return $result;
+    }
+
     public static function fetchOne($filter_by){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
