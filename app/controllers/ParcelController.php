@@ -156,6 +156,7 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $held_by_id = $this->request->getQuery('held_by_id');
         $to_branch_id = $this->request->getQuery('to_branch_id');
         $from_branch_id = $this->request->getQuery('from_branch_id');
         $parcel_type = $this->request->getQuery('parcel_type');
@@ -185,6 +186,7 @@ class ParcelController extends ControllerBase {
         $waybill_number = $this->request->getQuery('waybill_number');
 
         $filter_by = [];
+        if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
         if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
         if (!is_null($from_branch_id)){ $filter_by['from_branch_id'] = $from_branch_id; }
         if (!is_null($parcel_type)){ $filter_by['parcel_type'] = $parcel_type; }
@@ -254,7 +256,200 @@ class ParcelController extends ControllerBase {
         return $this->response->sendSuccess($count);
     }
 
-    public function moveAction(){
+    private function sanitizeWaybillNumbers($waybill_numbers){
+        $waybill_number_arr = explode(',', $waybill_numbers);
+
+        $clean_arr = [];
+        foreach ($waybill_number_arr as $number){
+            $clean_arr[trim(strtoupper($number))] = true;
+        }
+
+        return array_keys($clean_arr);
+    }
+
+    public function moveToForSweeperAction(){
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $to_branch_id = $this->request->getPost('to_branch_id');
+
+        if (in_array(null, [$waybill_numbers, $to_branch_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_FOR_SWEEPER){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_SWEEPER;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_ARRIVAL){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
+                continue;
+            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                continue;
+            }
+
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    public function moveToArrivalAction(){
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $held_by_id = $this->request->getPost('held_by_id');
+
+        if (in_array(null, [$waybill_numbers, $held_by_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_ARRIVAL){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_TRANSIT;
+                continue;
+            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                continue;
+            }
+
+            //checking if the parcel is held by the correct person
+            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+            if ($held_parcel_record == false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                continue;
+            }
+
+            $check = $parcel->checkIn($held_parcel_record);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    public function moveToInTransitAction(){
+        $this->auth->allowOnly([Role::SWEEPER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $to_branch_id = $this->request->getPost('to_branch_id');
+        $held_by_id = $this->auth->getClientId();
+
+        if (in_array(null, [$waybill_numbers, $to_branch_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_TRANSIT;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_FOR_SWEEPER){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_SWEEPING;
+                continue;
+            } else if ($parcel->getToBranchId() != $to_branch_id){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_HEADING_TO_DESTINATION;
+                continue;
+            } else if (!HeldParcel::clearedForMovement($parcel->getId())){
+                return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
+            }
+
+            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    public function moveToForDeliveryAction(){
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+
+        if (in_array(null, [$waybill_numbers])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_ARRIVAL){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
+                continue;
+            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+
+
+    public function moveToBeingDeliveredAction(){
+
+    }
+
+    public function moveToDeliveredAction(){
 
     }
 } 
