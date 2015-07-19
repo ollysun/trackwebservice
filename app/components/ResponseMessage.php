@@ -26,5 +26,20 @@ class ResponseMessage
     const INVALID_EC_PROVIDED = 'Invalid EC provided';
     const HUB_NOT_EXISTING = 'HUB not existing';
     const EC_NOT_EXISTING = 'EC not existing';
+    const PARCEL_NOT_EXISTING = 'Parcel not existing';
     const RELINK_NOT_POSSIBLE = 'EC not linked to HUB to be re-link';
+    const CANNOT_MOVE_PARCEL = 'Parcel could not be moved';
+    const PARCEL_NOT_FROM_ARRIVAL = 'Parcel not from arrivals';
+    const PARCEL_NOT_IN_TRANSIT = 'Parcel not in transit';
+    const PARCEL_NOT_IN_OFFICE = 'Parcel not in the office';
+    const PARCEL_WRONG_DESTINATION = 'Parcel in wrong destination';
+    const PARCEL_NOT_HEADING_TO_DESTINATION = 'Parcel not heading to destination';
+    const PARCEL_CANNOT_BE_CLEARED = 'Parcel cannot be cleared';
+    const PARCEL_HELD_BY_WRONG_OFFICIAL = 'Parcel held by wrong official';
+    const PARCEL_NOT_FOR_SWEEPING = 'Parcel not for sweeping';
+    const PARCEL_NOT_CLEARED_FOR_TRANSIT = 'Parcel not cleared for transit';
+    const PARCEL_ALREADY_FOR_SWEEPER = 'Parcel already moved for sweeping';
+    const PARCEL_ALREADY_IN_ARRIVAL = 'Parcel already in arrival';
+    const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
+    const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
 }

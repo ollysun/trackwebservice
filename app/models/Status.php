@@ -12,6 +12,9 @@ class Status extends \Phalcon\Mvc\Model
     const PARCEL_FOR_SWEEPER = 8;
     const PARCEL_ARRIVAL = 9;
     const PARCEL_FOR_DELIVERY = 10;
+    const PARCEL_UNCLEARED = 11;
+    const PARCEL_CLEARED = 12;
+    const PARCEL_BEING_DELIVERED = 13;
     /**
      *
      * @var integer
