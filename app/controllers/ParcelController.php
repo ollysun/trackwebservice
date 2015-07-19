@@ -156,6 +156,7 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $held_by_id = $this->request->getQuery('held_by_id');
         $to_branch_id = $this->request->getQuery('to_branch_id');
         $from_branch_id = $this->request->getQuery('from_branch_id');
         $parcel_type = $this->request->getQuery('parcel_type');
@@ -185,6 +186,7 @@ class ParcelController extends ControllerBase {
         $waybill_number = $this->request->getQuery('waybill_number');
 
         $filter_by = [];
+        if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
         if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
         if (!is_null($from_branch_id)){ $filter_by['from_branch_id'] = $from_branch_id; }
         if (!is_null($parcel_type)){ $filter_by['parcel_type'] = $parcel_type; }

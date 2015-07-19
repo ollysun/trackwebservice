@@ -888,6 +888,12 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = [];
 
         //filters
+        if (isset($filter_by['held_by_id'])){
+            $where[] = 'HeldParcel.held_by_id = :held_by_id: AND HeldParcel.status = :held_status:';
+            $bind['held_by_id'] = $filter_by['held_by_id'];
+            $bind['held_status'] = Status::PARCEL_UNCLEARED;
+        }
+
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
         if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
         if (isset($filter_by['parcel_type'])){ $where[] = 'Parcel.parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
@@ -934,6 +940,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
         if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
             $builder->orderBy('modified_date');
+        }
+
+        if (isset($filter_by['held_by_id'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
         }
 
         //model hydration
