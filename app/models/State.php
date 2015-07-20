@@ -128,4 +128,11 @@ class State extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'country_id' => $this->getCountryId(),
+            'name' => $this->getName()
+        );
+    }
 }

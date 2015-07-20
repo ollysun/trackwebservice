@@ -954,12 +954,33 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //model hydration
-        if (isset($fetch_with['with_to_branch'])){ $columns[] = 'ToBranch.*'; $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch'); }
-        if (isset($fetch_with['with_from_branch'])){ $columns[] = 'FromBranch.*'; $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch'); }
+        if (isset($fetch_with['with_to_branch'])){
+            $columns[] = 'ToBranch.*';
+            $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
+            $columns[] = 'ToBranchState.*';
+            $builder->innerJoin('ToBranchState', 'ToBranchState.id = ToBranch.state_id', 'ToBranchState');
+        }
+        if (isset($fetch_with['with_from_branch'])){
+            $columns[] = 'FromBranch.*';
+            $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch');
+            $columns[] = 'FromBranchState.*';
+            $builder->innerJoin('FromBranchState', 'FromBranchState.id = FromBranch.state_id', 'FromBranchState');
+        }
+        if (isset($fetch_with['with_sender_address'])){
+            $columns[] = 'SenderAddress.*';
+            $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $columns[] = 'SenderAddressState.*';
+            $builder->innerJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+        }
+        if (isset($fetch_with['with_receiver_address'])){
+            $columns[] = 'ReceiverAddress.*';
+            $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $columns[] = 'ReceiverAddressState.*';
+            $builder->innerJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+        }
+
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
-        if (isset($fetch_with['with_sender_address'])){ $columns[] = 'SenderAddress.*'; $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress'); }
-        if (isset($fetch_with['with_receiver_address'])){ $columns[] = 'ReceiverAddress.*'; $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress'); }
 
         $builder->where(join(' AND ', $where));
         $builder->columns($columns);
@@ -972,12 +993,24 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
-                if (isset($fetch_with['with_to_branch'])) $parcel['to_branch'] = $item->toBranch->getData();
-                if (isset($fetch_with['with_from_branch'])) $parcel['from_branch'] = $item->fromBranch->getData();
+                if (isset($fetch_with['with_to_branch'])) {
+                    $parcel['to_branch'] = $item->toBranch->getData();
+                    $parcel['to_branch']['state'] = $item->toBranchState->getData();
+                }
+                if (isset($fetch_with['with_from_branch'])) {
+                    $parcel['from_branch'] = $item->fromBranch->getData();
+                    $parcel['from_branch']['state'] = $item->fromBranchState->getData();
+                }
                 if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
-                if (isset($fetch_with['with_sender_address'])) $parcel['sender_address'] = $item->senderAddress->getData();
+                if (isset($fetch_with['with_sender_address'])) {
+                    $parcel['sender_address'] = $item->senderAddress->getData();
+                    $parcel['sender_address']['state'] = $item->senderAddressState->getData();
+                }
                 if (isset($fetch_with['with_receiver'])) $parcel['receiver'] =$item->receiver->getData();
-                if (isset($fetch_with['with_receiver_address'])) $parcel['receiver_address'] = $item->receiverAddress->getData();
+                if (isset($fetch_with['with_receiver_address'])) {
+                    $parcel['receiver_address'] = $item->receiverAddress->getData();
+                    $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
+                }
             }
             $result[] = $parcel;
         }
