@@ -4,6 +4,8 @@ class ParcelHistory extends \Phalcon\Mvc\Model
 {
     const MSG_FOR_SWEEPER = 'Parcel ready for sweeping';
     const MSG_FOR_DELIVERY = 'Parcel ready for delivery';
+    const MSG_FOR_ARRIVAL = 'Parcel is in arrival';
+    const MSG_IN_TRANSIT = 'Parcel is in transit';
     /**
      *
      * @var integer
