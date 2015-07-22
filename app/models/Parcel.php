@@ -1190,39 +1190,77 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status){
-        $this->setStatus($status);
-        $this->setModifiedDate(date('Y-m-d H:i:s'));
-
-        return $this->save();
-    }
-
-    public function changeDestination($status, $to_branch_id){
-        $this->setStatus($status);
-        $this->setFromBranchId($this->getToBranchId());
-        $this->setToBranchId($to_branch_id);
-        $this->setModifiedDate(date('Y-m-d H:i:s'));
-
-        return $this->save();
-    }
-
-    public function checkout($status, $held_by_id){
+    public function changeStatus($status, $admin_id, $history_desc){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
-//            var_dump($this->getStatus());
+            $this->setStatus($status);
+            $this->setModifiedDate(date('Y-m-d H:i:s'));
+
+            if ($this->save()){
+                $parcel_history = new ParcelHistory();
+                $parcel_history->setTransaction($transaction);
+                $parcel_history->initData($this->getId(), $this->getToBranchId(), $history_desc, $admin_id, $status);
+                if ($parcel_history->save()){
+                    $transactionManager->commit();
+                    return true;
+                }
+            }
+        }catch (Exception $e) {
+
+        }
+
+        $transactionManager->rollback();
+        return false;
+    }
+
+    public function changeDestination($status, $to_branch_id, $admin_id, $history_desc){
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $from_branch_id = $this->getFromBranchId();
+            $this->setStatus($status);
+            $this->setFromBranchId($this->getToBranchId());
+            $this->setToBranchId($to_branch_id);
+            $this->setModifiedDate(date('Y-m-d H:i:s'));
+
+            if ($this->save()){
+                $parcel_history = new ParcelHistory();
+                $parcel_history->setTransaction($transaction);
+                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $status);
+                if ($parcel_history->save()){
+                    $transactionManager->commit();
+                    return true;
+                }
+            }
+        }catch (Exception $e) {
+
+        }
+
+        $transactionManager->rollback();
+        return false;
+    }
+
+    public function checkout($status, $held_by_id, $admin_id, $history_desc){
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
             $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
-//            var_dump($this->getStatus());
+
             if ($this->save()){
-//                var_dump('in');
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
                 $held_parcel->initData($this->getId(), $held_by_id);
                 if($held_parcel->save()){
-                    $transactionManager->commit();
-                    return true;
+                    $parcel_history = new ParcelHistory();
+                    $parcel_history->setTransaction($transaction);
+                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status);
+                    if ($parcel_history->save()){
+                        $transactionManager->commit();
+                        return true;
+                    }
                 }
             }
         }catch (Exception $e) {
@@ -1236,9 +1274,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * @param HeldParcel $held_parcel_record
+     * @param int $admin_id
      * @return bool
      */
-    public function checkIn($held_parcel_record)
+    public function checkIn($held_parcel_record, $admin_id)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -1252,8 +1291,13 @@ class Parcel extends \Phalcon\Mvc\Model
                     $held_parcel_record->setTransaction($transaction);
                     $held_parcel_record->clear();
                     if ($held_parcel_record->save()) {
-                        $transactionManager->commit();
-                        return true;
+                        $parcel_history = new ParcelHistory();
+                        $parcel_history->setTransaction($transaction);
+                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, Status::PARCEL_ARRIVAL);
+                        if ($parcel_history->save()){
+                            $transactionManager->commit();
+                            return true;
+                        }
                     }
                 }
             }

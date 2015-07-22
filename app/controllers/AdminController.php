@@ -85,6 +85,47 @@ class AdminController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
+    public function getAllAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $role_id = $this->request->getQuery('role_id');
+        $branch_id = $this->request->getQuery('branch_id');
+        $status = $this->request->getQuery('status');
+        $staff_id = $this->request->getQuery('staff_id');
+        $email = $this->request->getQuery('email');
+
+        $filter_by = [];
+        if (!is_null($role_id)){ $filter_by['role_id'] = $role_id; }
+        if (!is_null($branch_id)){ $filter_by['branch_id'] = $branch_id; }
+        if (!is_null($status)){ $filter_by['status'] = $status; }
+        if (!is_null($staff_id)){ $filter_by['staff_id'] = $staff_id; }
+        if (!is_null($email)){ $filter_by['email'] = $email; }
+
+        return $this->response->sendSuccess(Admin::fetchAll($offset, $count, $filter_by));
+    }
+
+    public function getOneAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $staff_id = $this->request->getQuery('staff_id');
+        $email = $this->request->getQuery('email');
+        $id = $this->request->getQuery('id');
+
+        $filter_by = [];
+        if (!is_null($staff_id)){ $filter_by['staff_id'] = $staff_id; }
+        else if (!is_null($email)){ $filter_by['email'] = $email; }
+        else if (!is_null($id)){ $filter_by['id'] = $id; }
+
+        $admin_data = Admin::fetchOne($filter_by);
+        if ($admin_data != false){
+            return $this->response->sendSuccess($admin_data);
+        }
+        return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+    }
     public function changePasswordAction(){
 
     }
@@ -96,4 +137,6 @@ class AdminController extends ControllerBase {
     public function resetPasswordAction(){
 
     }
+
+
 } 

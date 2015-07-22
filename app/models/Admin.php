@@ -448,4 +448,84 @@ class Admin extends \Phalcon\Mvc\Model
             'bind' => array('email' => $email, 'staff_id' => $staff_id)
         ));
     }
+
+    public static function fetchAll($offset, $count, $filter_by=array()){
+        $obj = new Admin();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Admin.*', 'Role.*', 'Branch.*'])
+            ->from('Admin')
+            ->innerJoin('Role', 'Admin.role_id = Role.id')
+            ->innerJoin('Branch', 'Admin.branch_id = Branch.id')
+            ->limit($count, $offset);
+
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['role_id'])) {
+            $where[] = 'role_id = :role_id:';
+            $bind['role_id'] = $filter_by['role_id'];
+        }
+
+        if (isset($filter_by['branch_id'])) {
+            $where[] = 'branch_id = :branch_id:';
+            $bind['branch_id'] = $filter_by['branch_id'];
+        }
+
+        if (isset($filter_by['status'])) {
+            $where[] = 'status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        if (isset($filter_by['staff_id'])){
+            $where[] = 'staff_id LIKE :staff_id:';
+            $bind['staff_id'] = '%' . strtoupper(trim($filter_by['staff_id'])) . '%';
+        }
+
+        if (isset($filter_by['email'])){
+            $where[] = 'email LIKE :email:';
+            $bind['email'] = '%' . strtolower(trim($filter_by['email'])) . '%';
+        }
+
+        $builder->where(join(' AND ', $where));
+
+        $data = $builder->getQuery()->execute($bind);
+
+        $result = [];
+        foreach($data as $item){
+            $admin = $item->admin->getData();
+            $admin['branch'] = $item->branch->toArray();
+            $admin['role'] = $item->role->toArray();
+            $result[] = $admin;
+        }
+
+        return $result;
+    }
+
+    public static function fetchOne($filter_by){
+        $obj = new Admin();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Admin.*', 'Role.*', 'Branch.*'])
+            ->from('Admin')
+            ->innerJoin('Role', 'Admin.role_id = Role.id')
+            ->innerJoin('Branch', 'Admin.branch_id = Branch.id');
+
+        if (isset($filter_by['staff_id'])){
+            $builder->where('Admin.staff_id = :staff_id:', ['staff_id' => strtoupper(trim($filter_by['staff_id']))]);
+        } else if (isset($filter_by['email'])){
+            $builder->where('Admin.email = :email:', ['email' => strtolower(trim($filter_by['email']))]);
+        } else if (isset($filter_by['id'])){
+            $builder->where('Admin.id = :id:', ['id' => $filter_by['id']]);
+        }
+
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0){
+            return false;
+        }
+        $admin = $data[0]->admin->getData();
+        $admin['branch'] = $data[0]->branch->toArray();
+        $admin['role'] = $data[0]->role->toArray();
+
+        return $admin;
+    }
 }

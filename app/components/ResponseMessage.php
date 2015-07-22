@@ -42,4 +42,5 @@ class ResponseMessage
     const PARCEL_ALREADY_IN_ARRIVAL = 'Parcel already in arrival';
     const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
+    const RECORD_DOES_NOT_EXIST = 'Record does not exist';
 }

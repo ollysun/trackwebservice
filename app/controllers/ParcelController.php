@@ -301,7 +301,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getClientId(), ParcelHistory::MSG_FOR_SWEEPER);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -350,7 +350,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->checkIn($held_parcel_record);
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId());
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
@@ -394,7 +394,7 @@ class ParcelController extends ControllerBase {
                 return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
             }
 
-            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id);
+            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $this->auth->getClientId(), ParcelHistory::MSG_IN_TRANSIT);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -435,7 +435,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $this->auth->getClientId(), ParcelHistory::MSG_FOR_DELIVERY);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
