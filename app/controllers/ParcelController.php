@@ -233,6 +233,8 @@ class ParcelController extends ControllerBase {
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
 
+        $with_total_count = $this->request->getQuery('with_total_count');
+
         $filter_by = $this->getFilterParams();
 
         $fetch_with = [];
@@ -243,7 +245,19 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
 
-        return $this->response->sendSuccess(Parcel::fetchAll($offset, $count, $filter_by, $fetch_with));
+        $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with);
+        $result = [];
+        if ($with_total_count != null){
+            $count = Parcel::parcelCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'parcels' => $parcels
+            ];
+        }else{
+            $result = $parcels;
+        }
+
+        return $this->response->sendSuccess($result);
     }
 
     public function countAction(){
