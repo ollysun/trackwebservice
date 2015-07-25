@@ -232,6 +232,7 @@ class ParcelController extends ControllerBase {
         $with_sender_address = $this->request->getQuery('with_sender_address');
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
+        $with_holder = $this->request->getQuery('with_holder');
 
         $with_total_count = $this->request->getQuery('with_total_count');
 
@@ -244,6 +245,7 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_receiver)){ $fetch_with['with_receiver'] = true; }
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
+        if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with);
         $result = [];
