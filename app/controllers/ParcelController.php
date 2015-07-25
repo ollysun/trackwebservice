@@ -232,6 +232,7 @@ class ParcelController extends ControllerBase {
         $with_sender_address = $this->request->getQuery('with_sender_address');
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
+        $with_holder = $this->request->getQuery('with_holder');
 
         $with_total_count = $this->request->getQuery('with_total_count');
 
@@ -244,6 +245,7 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_receiver)){ $fetch_with['with_receiver'] = true; }
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
+        if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with);
         $result = [];
@@ -375,13 +377,14 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = $this->auth->getClientId();
+        $held_by_id = ($this->auth->getUserType() == Role::SWEEPER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $admin_id = ($this->auth->getUserType() == Role::ADMIN) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
-        if (in_array(null, [$waybill_numbers, $to_branch_id])){
+        if (in_array(null, [$waybill_numbers, $to_branch_id, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -408,7 +411,7 @@ class ParcelController extends ControllerBase {
                 return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
             }
 
-            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $this->auth->getClientId(), ParcelHistory::MSG_IN_TRANSIT);
+            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $admin_id, ParcelHistory::MSG_IN_TRANSIT);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;

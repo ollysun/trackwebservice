@@ -978,6 +978,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'ReceiverAddressState.*';
             $builder->innerJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
         }
+        if (isset($fetch_with['with_holder'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
+            $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+            $columns[] = 'Admin.*';
+        }
 
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
@@ -993,6 +998,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
+                if (isset($fetch_with['with_holder'])){
+                    $parcel['holder'] = $item->admin->getData();
+                }
                 if (isset($fetch_with['with_to_branch'])) {
                     $parcel['to_branch'] = $item->toBranch->getData();
                     $parcel['to_branch']['state'] = $item->toBranchState->getData();
