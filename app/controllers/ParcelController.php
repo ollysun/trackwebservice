@@ -377,7 +377,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER, Role::ADMIN]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
