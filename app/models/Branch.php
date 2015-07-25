@@ -488,7 +488,7 @@ class Branch extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $branch = $item->branch->getData();
-            $parent = Branch::getParentById($data[0]->branch->getId());
+            $parent = Branch::getParentById($item->branch->getId());
             if ($fetch_with['with_parent']){
                 $branch['parent'] = ($parent == null) ? null : $parent->getData();
             }
