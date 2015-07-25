@@ -143,11 +143,16 @@ class BranchController extends ControllerBase {
         $state_id = $this->request->getQuery('state_id');
         $branch_type = $this->request->getQuery('branch_type');
 
+        $with_parent  = $this->request->getQuery('with_parent');
+
         $filter_by = [];
         if (!is_null($state_id)){ $filter_by['state_id'] = $state_id; }
         if (!is_null($branch_type)){ $filter_by['branch_type'] = $branch_type; }
 
-        return $this->response->sendSuccess(Branch::fetchAll($offset, $count, $filter_by));
+        $fetch_with = [];
+        if (!is_null($with_parent)){ $fetch_with['with_parent'] = true; }
+
+        return $this->response->sendSuccess(Branch::fetchAll($offset, $count, $filter_by, $fetch_with));
     }
 
     public function relinkAction(){
