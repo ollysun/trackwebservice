@@ -382,7 +382,7 @@ class ParcelController extends ControllerBase {
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
         $held_by_id = ($this->auth->getUserType() == Role::SWEEPER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
-        $admin_id = ($this->auth->getUserType() == Role::ADMIN) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+        $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
