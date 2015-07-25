@@ -467,7 +467,7 @@ class Branch extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function fetchAll($offset, $count, $filter_by){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['Branch.*', 'State.*'])
@@ -488,6 +488,10 @@ class Branch extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $branch = $item->branch->getData();
+            $parent = Branch::getParentById($data[0]->branch->getId());
+            if ($fetch_with['with_parent']){
+                $branch['parent'] = ($parent == null) ? null : $parent->getData();
+            }
             $branch['state'] = $item->state->getData();
             $result[] = $branch;
         }
