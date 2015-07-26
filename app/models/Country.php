@@ -98,4 +98,11 @@ class Country extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'name' => $this->getName()
+        );
+    }
+
 }

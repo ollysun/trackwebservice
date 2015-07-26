@@ -17,6 +17,12 @@ class State extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var integer
+     */
+    protected $region_id;
+
+    /**
+     *
      * @var string
      */
     protected $name;
@@ -43,6 +49,19 @@ class State extends \Phalcon\Mvc\Model
     public function setCountryId($country_id)
     {
         $this->country_id = $country_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field region_id
+     *
+     * @param integer $region_id
+     * @return $this
+     */
+    public function setRegionId($region_id)
+    {
+        $this->region_id = $region_id;
 
         return $this;
     }
@@ -81,6 +100,16 @@ class State extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field region_id
+     *
+     * @return integer
+     */
+    public function getRegionId()
+    {
+        return $this->region_id;
+    }
+
+    /**
      * Returns the value of field name
      *
      * @return string
@@ -98,6 +127,7 @@ class State extends \Phalcon\Mvc\Model
         $this->belongsTo('active_fg', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('created_by', 'User', 'id', array('alias' => 'User'));
         $this->belongsTo('country_id', 'Country', 'id', array('alias' => 'Country'));
+        $this->belongsTo('region_id', 'Region', 'id', array('alias' => 'Region'));
     }
 
     /**
@@ -123,7 +153,8 @@ class State extends \Phalcon\Mvc\Model
     {
         return array(
             'id' => 'id', 
-            'country_id' => 'country_id', 
+            'country_id' => 'country_id',
+            'region_id' => 'region_id',
             'name' => 'name'
         );
     }
@@ -132,7 +163,43 @@ class State extends \Phalcon\Mvc\Model
         return array(
             'id' => $this->getId(),
             'country_id' => $this->getCountryId(),
+            'region_id' => $this->getRegionId(),
             'name' => $this->getName()
         );
+    }
+
+    public function changeLocation($region_id, $country_id){
+        $this->setRegionId($region_id);
+        $this->setCountryId($country_id);
+    }
+
+    public static function fetchAll($filter_by){
+        $obj = new State();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('State')
+            ->orderBy('name');
+
+        $where = [];
+        $bind = [];
+        if (isset($filter_by['country_id'])){
+            $where[] = 'State.country_id = :country_id:';
+            $bind['country_id'] = $filter_by['country_id'];
+        }else if (isset($filter_by['region_id'])){
+            $where[] = 'State.region_id = :region_id:';
+            $bind['region_id'] = $filter_by['region_id'];
+        }
+
+        $builder->where(join(' AND ', $where));
+
+        $data = $builder->getQuery()->execute($bind);
+
+        return $data->toArray();
+    }
+
+    public static function fetchOne($state_id){
+        return State::findFirst([
+            'id = :id:',
+            'bind' => ['id' => $state_id]
+        ]);
     }
 }
