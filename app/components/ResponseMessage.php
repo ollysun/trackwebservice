@@ -43,4 +43,10 @@ class ResponseMessage
     const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
     const RECORD_DOES_NOT_EXIST = 'Record does not exist';
+    const REGION_DOES_NOT_EXIST = 'Region does not exist';
+    const CITY_DOES_NOT_EXIST = 'City does not exist';
+    const STATE_DOES_NOT_EXIST = 'State does not exist';
+    const REGION_EXISTS = 'Region already exists';
+    const CITY_EXISTS = 'City already exists';
+    const INVALID_ACTIVE_FG = 'Invalid active flag provided';
 }
