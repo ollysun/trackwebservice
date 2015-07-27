@@ -235,8 +235,11 @@ class ParcelController extends ControllerBase {
         $with_holder = $this->request->getQuery('with_holder');
 
         $with_total_count = $this->request->getQuery('with_total_count');
+        $send_all = $this->request->getQuery('send_all');
 
         $filter_by = $this->getFilterParams();
+
+        if (!is_null($send_all)){ $filter_by['send_all'] = true; }
 
         $fetch_with = [];
         if (!is_null($with_to_branch)){ $fetch_with['with_to_branch'] = true; }
