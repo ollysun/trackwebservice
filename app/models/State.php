@@ -173,13 +173,14 @@ class State extends \Phalcon\Mvc\Model
         $this->setCountryId($country_id);
     }
 
-    public static function fetchAll($filter_by){
+    public static function fetchAll($filter_by, $fetch_with){
         $obj = new State();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('State')
-            ->orderBy('name');
+            ->orderBy('State.name');
 
         $where = [];
+        $columns = ['State.*'];
         $bind = [];
         if (isset($filter_by['country_id'])){
             $where[] = 'State.country_id = :country_id:';
@@ -189,11 +190,30 @@ class State extends \Phalcon\Mvc\Model
             $bind['region_id'] = $filter_by['region_id'];
         }
 
+        if (isset($fetch_with['with_region'])){
+            $columns[] = 'Region.*';
+            $builder->innerJoin('Region', 'Region.id = State.region_id');
+        }
+
+        $builder->columns($columns);
         $builder->where(join(' AND ', $where));
 
         $data = $builder->getQuery()->execute($bind);
 
-        return $data->toArray();
+        $result = [];
+        foreach ($data as $item){
+            $state = [];
+            if (!isset($item->state)){
+                $state = $item->getData();
+            }else{
+                $state = $item->state->getData();
+                if (isset($fetch_with['with_region'])){
+                    $state['region'] = $item->region->getData();
+                }
+            }
+            $result[] = $state;
+        }
+        return $result;
     }
 
     public static function fetchOne($state_id){
