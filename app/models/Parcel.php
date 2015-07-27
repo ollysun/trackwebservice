@@ -932,8 +932,11 @@ class Parcel extends \Phalcon\Mvc\Model
     public static function fetchAll($offset, $count, $filter_by, $fetch_with){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Parcel')
-            ->limit($count, $offset);
+            ->from('Parcel');
+
+        if (!isset($filter_by['send_all'])){
+            $builder->limit($count, $offset);
+        }
 
         $columns = ['Parcel.*'];
 
