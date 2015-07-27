@@ -14,12 +14,16 @@ class RefController extends ControllerBase {
     public function statesAction(){
         $country_id = $this->request->getQuery('country_id');//optional
         $region_id = $this->request->getQuery('region_id');//optional
+        $with_region = $this->request->getQuery('with_region');
 
         $filter_by = [];
         if (!is_null($country_id)) {$filter_by['country_id'] = $country_id;}
         if (!is_null($region_id)) {$filter_by['region_id'] = $region_id;}
 
-        $data = State::fetchAll($filter_by);
+        $fetch_with = [];
+        if (!is_null($with_region)) {$fetch_with['with_region'] = true;}
+
+        $data = State::fetchAll($filter_by, $fetch_with);
         return $this->response->sendSuccess($data);
     }
 
