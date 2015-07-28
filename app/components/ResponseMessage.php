@@ -49,4 +49,8 @@ class ResponseMessage
     const REGION_EXISTS = 'Region already exists';
     const CITY_EXISTS = 'City already exists';
     const INVALID_ACTIVE_FG = 'Invalid active flag provided';
+
+    const ZONE_NAME_EXISTS = 'A zone with this name already exists';
+    const ZONE_CODE_EXISTS = 'A zone with this code already exists';
+    const ZONE_DOES_NOT_EXIST = 'Zone does not exists';
 }
