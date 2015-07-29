@@ -387,7 +387,7 @@ class Admin extends \Phalcon\Mvc\Model
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
-        $this->setStatus(Status::INACTIVE); //in order to force the user to change his password
+        $this->setStatus(Status::ACTIVE); // change back to INACTIVE - in order to force the user to change his password
     }
 
     public function changePassword($password){
