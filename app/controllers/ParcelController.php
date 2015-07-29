@@ -221,7 +221,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -266,7 +266,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 
         $filter_by = $this->getFilterParams();
 
