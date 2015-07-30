@@ -947,8 +947,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
         if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
             $builder->orderBy('modified_date');
-        } else {
-            $builder->orderBy('id');
         }
 
         if (isset($filter_by['held_by_id'])){
