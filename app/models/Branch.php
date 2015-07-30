@@ -435,7 +435,8 @@ class Branch extends \Phalcon\Mvc\Model
             ->from('Branch')
             ->innerJoin('State', 'Branch.state_id = State.id')
             ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
-            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:');
+            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:')
+            ->orderBy('Branch.name');
 
         $data = $builder->getQuery()->execute(['hub_id' => $hub_id, 'branch_type' => BranchType::EC, 'status' => Status::ACTIVE]);
 
@@ -454,7 +455,8 @@ class Branch extends \Phalcon\Mvc\Model
             ->columns(['Branch.*', 'State.*'])
             ->from('Branch')
             ->innerJoin('State', 'Branch.state_id = State.id')
-            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:')
+            ->orderBy('Branch.name');
 
         $data = $builder->getQuery()->execute(['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE]);
 
