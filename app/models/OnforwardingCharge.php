@@ -72,7 +72,7 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
      */
     public function setName($name)
     {
-        $this->name = $name;
+        $this->name = Text::removeExtraSpaces(strtolower($name));
 
         return $this;
     }
@@ -85,7 +85,7 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
      */
     public function setDescription($description)
     {
-        $this->description = $description;
+        $this->description = Text::removeExtraSpaces($description);
 
         return $this;
     }
@@ -98,7 +98,7 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
      */
     public function setCode($code)
     {
-        $this->code = $code;
+        $this->code = Text::removeExtraSpaces(strtoupper($code));
 
         return $this;
     }
@@ -276,4 +276,104 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'description' => $this->getDescription(),
+            'code' => $this->getCode(),
+            'amount' => $this->getAmount(),
+            'created_date' => $this->getCreatedDate(),
+            'modified_date' => $this->getModifiedDate(),
+            'status' => $this->getStatus()
+        );
+    }
+
+    public function initData($name, $code, $description, $amount){
+        $this->setName($name);
+        $this->setDescription($description);
+        $this->setCode($code);
+        $this->setAmount($amount);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setCreatedDate($now);
+        $this->setModifiedDate($now);
+        $this->setStatus(Status::ACTIVE);
+    }
+
+    public function edit($name, $code, $description, $amount){
+        $this->setName($name);
+        $this->setDescription($description);
+        $this->setCode($code);
+        $this->setAmount($amount);
+
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    public function changeStatus($status){
+        $this->setStatus($status);
+
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    public function hasSameName($name){
+        $name = Text::removeExtraSpaces(strtolower($name));
+        return $this->getName() == $name;
+    }
+
+    public function hasSameCode($code){
+        $code = Text::removeExtraSpaces(strtoupper($code));
+        return $this->getCode() == $code;
+    }
+
+    public static function fetchById($id){
+        return OnforwardingCharge::findFirst([
+            'id = :id:',
+            'bind' => ['id' => $id]
+        ]);
+    }
+
+    public static function fetchByDetails($name, $code, $id = null){
+        $name = Text::removeExtraSpaces(strtolower($name));
+        $code = Text::removeExtraSpaces(strtoupper($code));
+
+        $bind = ['name' => $name, 'code' => $code];
+        $id_condition = ($id == null) ? '' : ' AND id != :id:';
+        if ($id != null){
+            $bind['id'] = $id;
+        }
+
+        return OnforwardingCharge::findFirst([
+            '(name = :name: OR code = :code:)' . $id_condition,
+            'bind' => $bind
+        ]);
+    }
+
+    public static function fetchByCode($code){
+        $code = Text::removeExtraSpaces(strtoupper($code));
+
+        return OnforwardingCharge::findFirst([
+            'code = :code:',
+            'bind' => ['code' => $code]
+        ]);
+    }
+
+    public static function fetchAll($offset, $count, $filter_by){
+        $obj = new OnforwardingCharge();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('OnforwardingCharge')
+            ->limit($count, $offset);
+
+        $where = [];
+        $bind = [];
+
+        if (isset($filter_by['status'])){
+            $where[] = 'OnforwardingCharge.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+        return $data->toArray();
+    }
 }

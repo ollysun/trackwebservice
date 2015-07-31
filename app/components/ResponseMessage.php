@@ -18,7 +18,7 @@ class ResponseMessage
     const SWEEPER_ONLY_TO_HUB = 'A sweeper can only attached to a hub';
     const BRANCH_NOT_EXISTING = 'Branch does not exist';
     const INVALID_PACKAGE_COUNT = 'Invalid package count provided';
-    const INVALID_AMOUNT = 'Invalid amounts provided';
+    const INVALID_AMOUNT = 'Invalid amount(s) provided';
     const INVALID_PAYMENT_TYPE = 'Invalid payment type provided';
     const INVALID_STATUS = 'Invalid status provided';
     const NO_HUB_PROVIDED = 'No HUB provided';
@@ -53,6 +53,10 @@ class ResponseMessage
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
     const ZONE_DOES_NOT_EXIST = 'Zone does not exists';
+
+    const ONFORWARDING_CHARGE_NAME_EXISTS = 'An onforwarding charge with this name already exists';
+    const ONFORWARDING_CHARGE_CODE_EXISTS = 'An onforwarding charge with this code already exists';
+    const ONFORWARDING_CHARGE_DOES_NOT_EXIST = 'Onforwarding charge does not exists';
 
     const NEGATIVE_WEIGHT = 'Negative weights not allowed';
     const INVALID_WEIGHT = 'Invalid weight(s) provided';

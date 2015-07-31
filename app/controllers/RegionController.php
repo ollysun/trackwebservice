@@ -110,14 +110,17 @@ class RegionController extends ControllerBase {
 
         $state_id = $this->request->getPost('state_id');
         $name = $this->request->getPost('name');
+        $branch_id = $this->request->getPost('branch_id');
+        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
+        $transit_time = $this->request->getPost('transit_time');
 
-        if (in_array(null, [$state_id, $name])){
+        if (in_array(null, [$state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         if (!City::isExisting($state_id, $name)){
             $city = new City();
-            $city->initData($state_id, $name);
+            $city->initData($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time);
             if ($city->save()){
                 return $this->response->sendSuccess(['id' => $city->getId()]);
             }
@@ -156,8 +159,11 @@ class RegionController extends ControllerBase {
         $city_id = $this->request->getPost('city_id');
         $state_id = $this->request->getPost('state_id');
         $name = $this->request->getPost('name');
+        $branch_id = $this->request->getPost('branch_id');
+        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
+        $transit_time = $this->request->getPost('transit_time');
 
-        if (in_array(null, [$state_id, $name])){
+        if (in_array(null, [$state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -167,7 +173,7 @@ class RegionController extends ControllerBase {
 
         $city = City::fetchActive($city_id);
         if ($city != false){
-            $city->edit($state_id, $name);
+            $city->edit($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time);
             if ($city->save()){
                 return $this->response->sendSuccess();
             }
@@ -184,6 +190,8 @@ class RegionController extends ControllerBase {
         $with_state  = $this->request->getQuery('with_state');
         $with_country  = $this->request->getQuery('with_country');
         $with_region  = $this->request->getQuery('with_region');
+        $with_branch  = $this->request->getQuery('with_branch');
+        $with_charge  = $this->request->getQuery('with_charge');
 
         if (in_array(null, [$city_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -193,6 +201,8 @@ class RegionController extends ControllerBase {
         if (!is_null($with_state)){ $fetch_with['with_state'] = true; }
         if (!is_null($with_country)){ $fetch_with['with_country'] = true; }
         if (!is_null($with_region)){ $fetch_with['with_region'] = true; }
+        if (!is_null($with_branch)){ $fetch_with['with_branch'] = true; }
+        if (!is_null($with_charge)){ $fetch_with['with_charge'] = true; }
 
         $city = City::fetchOne($city_id, $fetch_with);
         if ($city != false){
@@ -210,20 +220,30 @@ class RegionController extends ControllerBase {
         $state_id = $this->request->getQuery('state_id');
         $country_id = $this->request->getQuery('country_id');
         $status = $this->request->getQuery('status');
+        $branch_id = $this->request->getQuery('branch_id');
+        $onforwarding_charge_id = $this->request->getQuery('onforwarding_charge_id');
+        $transit_time = $this->request->getQuery('transit_time');
 
         $with_state  = $this->request->getQuery('with_state');
         $with_country  = $this->request->getQuery('with_country');
         $with_region  = $this->request->getQuery('with_region');
+        $with_branch  = $this->request->getQuery('with_branch');
+        $with_charge  = $this->request->getQuery('with_charge');
 
         $filter_by = [];
         if (!is_null($state_id)){ $filter_by['state_id'] = $state_id; }
         if (!is_null($country_id)){ $filter_by['country_id'] = $country_id; }
         if (!is_null($status)){ $filter_by['status'] = $status; }
+        if (!is_null($branch_id)){ $filter_by['branch_id'] = $branch_id; }
+        if (!is_null($onforwarding_charge_id)){ $filter_by['onforwarding_charge_id'] = $onforwarding_charge_id; }
+        if (!is_null($transit_time)){ $filter_by['transit_time'] = $transit_time; }
 
         $fetch_with = [];
         if (!is_null($with_state)){ $fetch_with['with_state'] = true; }
         if (!is_null($with_country)){ $fetch_with['with_country'] = true; }
         if (!is_null($with_region)){ $fetch_with['with_region'] = true; }
+        if (!is_null($with_branch)){ $fetch_with['with_branch'] = true; }
+        if (!is_null($with_charge)){ $fetch_with['with_charge'] = true; }
 
         return $this->response->sendSuccess(City::fetchAll($offset, $count, $filter_by, $fetch_with));
     }
