@@ -53,4 +53,10 @@ class ResponseMessage
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
     const ZONE_DOES_NOT_EXIST = 'Zone does not exists';
+
+    const NEGATIVE_WEIGHT = 'Negative weights not allowed';
+    const INVALID_WEIGHT = 'Invalid weight(s) provided';
+    const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
+    const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
+    const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
 }
