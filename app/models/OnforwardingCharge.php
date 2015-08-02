@@ -35,6 +35,12 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var double
+     */
+    protected $percentage;
+
+    /**
+     *
      * @var string
      */
     protected $created_date;
@@ -74,6 +80,11 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     {
         $this->name = Text::removeExtraSpaces(strtolower($name));
 
+        return $this;
+    }
+
+    public function setPercentage($percentage){
+        $this->percentage = $percentage;
         return $this;
     }
 
@@ -205,6 +216,10 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         return $this->amount;
     }
 
+    public function getPercentage(){
+        return $this->percentage;
+    }
+
     /**
      * Returns the value of field created_date
      *
@@ -269,8 +284,9 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
             'name' => 'name', 
             'description' => 'description', 
             'code' => 'code', 
-            'amount' => 'amount', 
-            'created_date' => 'created_date', 
+            'amount' => 'amount',
+            'percentage' => 'percentage',
+            'created_date' => 'created_date',
             'modified_date' => 'modified_date', 
             'status' => 'status'
         );
@@ -283,17 +299,19 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
             'description' => $this->getDescription(),
             'code' => $this->getCode(),
             'amount' => $this->getAmount(),
+            'percentage' => $this->getPercentage(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus()
         );
     }
 
-    public function initData($name, $code, $description, $amount){
+    public function initData($name, $code, $description, $amount, $percentage){
         $this->setName($name);
         $this->setDescription($description);
         $this->setCode($code);
         $this->setAmount($amount);
+        $this->setPercentage($percentage);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -301,11 +319,12 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         $this->setStatus(Status::ACTIVE);
     }
 
-    public function edit($name, $code, $description, $amount){
+    public function edit($name, $code, $description, $amount, $percentage){
         $this->setName($name);
         $this->setDescription($description);
         $this->setCode($code);
         $this->setAmount($amount);
+        $this->setPercentage($percentage);
 
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
