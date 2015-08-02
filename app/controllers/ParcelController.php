@@ -185,6 +185,7 @@ class ParcelController extends ControllerBase {
         $start_modified_date = $this->request->getQuery('start_modified_date');
         $end_modified_date = $this->request->getQuery('end_modified_date');
         $waybill_number = $this->request->getQuery('waybill_number');
+        $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
         if (!is_null($held_by_staff_id)){ $filter_by['held_by_staff_id'] = $held_by_staff_id; }
@@ -216,6 +217,7 @@ class ParcelController extends ControllerBase {
         if (!is_null($start_modified_date)){ $filter_by['start_modified_date'] = $start_modified_date; }
         if (!is_null($end_modified_date)){ $filter_by['end_modified_date'] = $end_modified_date; }
         if (!is_null($waybill_number)){ $filter_by['waybill_number'] = $waybill_number; }
+        if (!is_null($waybill_number_arr)){ $filter_by['waybill_number_arr'] = $waybill_number_arr; }
 
         return $filter_by;
     }
@@ -464,8 +466,6 @@ class ParcelController extends ControllerBase {
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
-
-
 
     public function moveToBeingDeliveredAction(){
 

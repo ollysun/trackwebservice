@@ -994,6 +994,13 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
 
         $builder->where(join(' AND ', $where));
+
+        if (isset($filter_by['waybill_number_arr'])){
+            $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
+
+            $builder->inWhere('Parcel.waybill_number', $waybill_number_arr);
+        }
+
         $builder->columns($columns);
         $data = $builder->getQuery()->execute($bind);
 
