@@ -70,4 +70,6 @@ class ResponseMessage
     const INVALID_VALUES = 'Invalid values provided';
 
     const INTERNAL_ERROR = 'An internal error has occurred';
+
+    const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
 }
