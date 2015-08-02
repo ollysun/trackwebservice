@@ -338,4 +338,92 @@ class WeightBilling extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'zone_id' => $this->getZoneId(),
+            'weight_range_id' => $this->getWeightRangeId(),
+            'base_cost' => $this->getBaseCost(),
+            'base_percentage' => $this->getBasePercentage(),
+            'increment_cost' => $this->getIncrementCost(),
+            'increment_percentage' => $this->getIncrementPercentage(),
+            'created_date' => $this->getCreatedDate(),
+            'modified_date' => $this->getModifiedDate(),
+            'status' => $this->getStatus()
+        );
+    }
+
+    public function initData($zone_id, $weight_range_id, $base_cost, $base_percentage, $increment_cost, $increment_percentage){
+        $this->setZoneId($zone_id);
+        $this->setWeightRangeId($weight_range_id);
+        $this->setBaseCost($base_cost);
+        $this->setBasePercentage($base_percentage);
+        $this->setIncrementCost($increment_cost);
+        $this->setIncrementPercentage($increment_percentage);
+        $this->setStatus(Status::ACTIVE);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setCreatedDate($now);
+        $this->setModifiedDate($now);
+    }
+
+    public function editBilling($base_cost, $base_percentage, $increment_cost, $increment_percentage){
+        $this->setBaseCost($base_cost);
+        $this->setBasePercentage($base_percentage);
+        $this->setIncrementCost($increment_cost);
+        $this->setIncrementPercentage($increment_percentage);
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    public static function fetchById($weight_billing_id){
+        return WeightBilling::findFirst([
+            'id = :id:',
+            'bind' => ['id' => $weight_billing_id]
+        ]);
+    }
+
+    public static function fetchByDetails($zone_id, $weight_range_id){
+        return WeightBilling::findFirst([
+            'zone_id = :zone_id: AND weight_range_id = :weight_range_id:',
+            'bind' => ['zone_id' => $zone_id, 'weight_range_id' => $weight_range_id]
+        ]);
+    }
+
+    public static function fetchAll($offset, $count, $filter_by){
+        $obj = new WeightBilling();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['WeightBilling.*', 'Zone.*', 'WeightRange.*'])
+            ->from('WeightBilling')
+            ->innerJoin('Zone', 'Zone.id = WeightBilling.zone_id')
+            ->innerJoin('WeightRange', 'WeightRange.id = WeightBilling.weight_range_id')
+            ->orderBy('WeightBilling.id');
+
+        $where = ['Zone.status = :status: AND WeightRange.status = :status:'];
+        $bind = ['status' => Status::ACTIVE];
+
+        if (!isset($filter_by['send_all'])){
+            $builder->limit($count, $offset);
+        }
+        if (isset($filter_by['zone_id'])){
+            $where[] = 'WeightBilling.zone_id = :zone_id:';
+            $bind['zone_id'] = $filter_by['zone_id'];
+        }
+        if (isset($filter_by['weight_range_id'])){
+            $where[] = 'WeightBilling.weight_range_id = :weight_range_id:';
+            $bind['weight_range_id'] = $filter_by['weight_range_id'];
+        }
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        $result = [];
+        foreach ($data as $item){
+            $billing = $item->weightBilling->getData();
+            $billing['zone'] = $item->zone->getData();
+            $billing['weight_range'] = $item->weightRange->getData();
+
+            $result[] = $billing;
+        }
+        return $result;
+    }
 }
