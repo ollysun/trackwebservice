@@ -63,4 +63,13 @@ class ResponseMessage
     const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
     const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
     const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
+
+    const BILLING_EXISTS = 'Weight range billing for zone already exists';
+    const BILLING_NOT_EXISTS = 'Weight range billing for zone does not exists';
+
+    const INVALID_VALUES = 'Invalid values provided';
+
+    const INTERNAL_ERROR = 'An internal error has occurred';
+
+    const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
 }

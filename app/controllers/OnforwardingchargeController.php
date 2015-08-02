@@ -9,8 +9,9 @@ class OnforwardingchargeController extends ControllerBase {
         $code = $this->request->getPost('code');
         $description = $this->request->getPost('description', null, ' ');
         $amount = $this->request->getPost('amount');
+        $percentage = $this->request->getPost('percentage');
 
-        if (in_array(null, [$name, $code, $amount])){
+        if (in_array(null, [$name, $code, $amount, $percentage])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -30,7 +31,7 @@ class OnforwardingchargeController extends ControllerBase {
         }
 
         $charge = new OnforwardingCharge();
-        $charge->initData($name, $code, $description, $amount);
+        $charge->initData($name, $code, $description, $amount, $percentage);
         if ($charge->save()){
             return $this->response->sendSuccess(['id' => $charge->getId()]);
         }
@@ -45,6 +46,7 @@ class OnforwardingchargeController extends ControllerBase {
         $code = $this->request->getPost('code');
         $description = $this->request->getPost('description', null, ' ');
         $amount = $this->request->getPost('amount');
+        $percentage = $this->request->getPost('percentage');
 
         if (in_array(null, [$charge_id, $name, $code])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -67,7 +69,7 @@ class OnforwardingchargeController extends ControllerBase {
 
         $charge = OnforwardingCharge::fetchById($charge_id);
         if ($charge != false){
-            $charge->edit($name, $code, $description, $amount);
+            $charge->edit($name, $code, $description, $amount, $percentage);
             if ($charge->save()){
                 return $this->response->sendSuccess();
             }
