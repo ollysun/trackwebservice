@@ -827,7 +827,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
-        $this->setModifiedDate($now);
+        $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
     }
 
