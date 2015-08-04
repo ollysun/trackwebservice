@@ -287,6 +287,7 @@ class ZoneMatrix extends \Phalcon\Mvc\Model
         $result = [];
         foreach ($data as $item){
             $matrix_item  = $item->zoneMatrix->getData();
+            $matrix_item['zone'] = $item->zone->getData();
             $matrix_item['to_branch'] = $item->toBranch->getData();
             $matrix_item['to_branch']['state'] = $item->toBranchState->getData();
             $matrix_item['from_branch'] = $item->fromBranch->getData();
