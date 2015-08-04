@@ -827,7 +827,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
-        $this->setModifiedDate($now);
+        $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
     }
 
@@ -898,6 +898,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
+        if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
         if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
         if (isset($filter_by['parcel_type'])){ $where[] = 'Parcel.parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
@@ -929,7 +930,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return ['where' => $where, 'bind' => $bind];
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause=null){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel');
@@ -945,10 +946,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
+        if ($order_by_clause != null){
+            $builder->orderBy($order_by_clause);
+        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
             $builder->orderBy('Parcel.modified_date');
         } else {
-//            var_dump('hi');exit();
             $builder->orderBy('Parcel.id');
         }
 
