@@ -25,7 +25,7 @@ class UserController extends ControllerBase {
                     DEFAULT_OFFSET,
                     DEFAULT_COUNT,
                     array('user_id' => $user->getId()),
-                    array(),
+                    array('with_sender'=>true, 'with_receiver'=>true),
                     (!is_null($order_parcel_by_modified)) ? 'Parcel.modified_date DESC' : 'Parcel.created_date DESC'
                 );
             }
