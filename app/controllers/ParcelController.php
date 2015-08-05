@@ -241,6 +241,8 @@ class ParcelController extends ControllerBase {
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
 
+        $order_by = $this->request->getQuery('order_by'); //'Parcel.created_date DESC'
+
         $filter_by = $this->getFilterParams();
 
         if (!is_null($send_all)){ $filter_by['send_all'] = true; }
@@ -254,7 +256,7 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
         if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
 
-        $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with);
+        $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
         if ($with_total_count != null){
             $count = Parcel::parcelCount($filter_by);

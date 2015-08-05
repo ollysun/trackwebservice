@@ -426,4 +426,68 @@ class WeightBilling extends \Phalcon\Mvc\Model
         }
         return $result;
     }
+
+    /**
+     * @param $from_branch_id
+     * @param $to_branch_id
+     * @param $weight
+     * @return array|bool
+     */
+    public static function fetchForCalc($from_branch_id, $to_branch_id, $weight){
+        $obj = new WeightBilling();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['WeightBilling.*', 'WeightRange.*'])
+            ->from('WeightBilling')
+            ->innerJoin('Zone', 'Zone.id = WeightBilling.zone_id')
+            ->innerJoin('WeightRange', 'WeightRange.id = WeightBilling.weight_range_id')
+            ->innerJoin('ZoneMatrix', 'ZoneMatrix.zone_id = Zone.id');
+
+        $builder->where(
+            '
+            ((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
+            OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))
+            AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight > :weight:)
+            ',
+            ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight]
+        );
+
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0){
+            return false;
+        }
+
+        $info['weight_billing'] = $data[0]->weightBilling;
+        $info['weight_range'] = $data[0]->weightRange;
+
+        return $info;
+    }
+
+    public static function calcBilling($from_branch_id, $to_branch_id, $weight){
+        /**
+         * @var WeightBilling $weight_billing
+         * @var WeightRange $weight_range
+         */
+
+        $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight);
+        if ($billing_info == false){
+            return false;
+        }
+
+        $weight_billing = $billing_info['weight_billing'];
+        $weight_range = $billing_info['weight_range'];
+
+        $base_billing = round(($weight_billing->getBaseCost() * $weight_billing->getBasePercentage()) + $weight_billing->getBaseCost());
+
+        $increment = ($weight - $weight_range->getMinWeight());
+        $increment_steps = ($increment / $weight_range->getIncrementWeight());
+
+        if ($increment_steps > intval($increment_steps)){
+            $increment_steps = intval($increment_steps) + 1;
+        }
+
+        $incr_billing = round(($increment_steps - 1) * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+
+        return $base_billing + $incr_billing;
+    }
 }

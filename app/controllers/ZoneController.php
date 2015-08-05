@@ -283,4 +283,26 @@ class ZoneController extends ControllerBase {
 
         return $this->response->sendSuccess(ZoneMatrix::fetchAll($filter_by));
     }
+
+    public function calcBillingAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $from_branch_id = $this->request->getPost('from_branch_id');
+        $to_branch_id = $this->request->getPost('to_branch_id');
+        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
+        $weight = $this->request->getPost('weight');
+
+        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight);
+        if ($calc_weight_billing == false){
+            return $this->response->sendError();
+        }
+
+        $onforwarding_charge = OnforwardingCharge::fetchById($onforwarding_charge_id);
+        if ($onforwarding_charge == false){
+            return $this->response->sendError();
+        }
+
+        $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
+        return $this->response->sendSuccess($final_billing);
+    }
 } 
