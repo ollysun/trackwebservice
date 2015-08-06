@@ -137,6 +137,12 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @var string
      */
+    protected $pos_trans_id;
+
+    /**
+     *
+     * @var string
+     */
     protected $waybill_number;
 
     /**
@@ -425,6 +431,18 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field pos_trans_id
+     *
+     * @param string $pos_trans_id
+     * @return $this
+     */
+    public function setPosTransId($pos_trans_id){
+        $this->pos_trans_id = $pos_trans_id;
+
+        return $this;
+    }
+
+    /**
      * Method to set the value of field waybill_number
      *
      * @param string $waybill_number
@@ -674,6 +692,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field pos_trans_id
+     *
+     * @return string
+     */
+    public function getPosTransId(){
+        return $this->pos_trans_id;
+    }
+
+    /**
      * Returns the value of field waybill_number
      *
      * @return string
@@ -764,7 +791,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'shipping_type' => 'shipping_type', 
             'cash_amount' => 'cash_amount', 
             'pos_amount' => 'pos_amount', 
-            'waybill_number' => 'waybill_number', 
+            'pos_trans_id' => 'pos_trans_id',
+            'waybill_number' => 'waybill_number',
             'created_date' => 'created_date', 
             'modified_date' => 'modified_date'
         );
@@ -793,6 +821,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'shipping_type' => $this->getShippingType(),
             'cash_amount' => $this->getCashAmount(),
             'pos_amount' => $this->getPosAmount(),
+            'pos_trans_id' => $this->getPosTransId(),
             'waybill_number' => $this->getWaybillNumber(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate()
@@ -802,7 +831,7 @@ class Parcel extends \Phalcon\Mvc\Model
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount
+        $pos_amount, $pos_trans_id
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -820,6 +849,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setShippingType($shipping_type);
         $this->setCashAmount($cash_amount);
         $this->setPosAmount($pos_amount);
+        $this->setPosTransId($pos_trans_id);
         $this->setWaybillNumber(uniqid());
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
@@ -1121,7 +1151,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $sender_addr_obj->setTransaction($transaction);
                 $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
-                    intval($sender_address['country_id']), $sender_address['city'], $is_existing, $is_sender_existing);
+                    intval($sender_address['country_id']), $sender_address['city_id'], $is_existing, $is_sender_existing);
 
                 $check = $sender_addr_obj->save();
             }
@@ -1144,7 +1174,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $receiver_addr_obj->setTransaction($transaction);
                 $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
-                    $receiver_address['country_id'], $receiver_address['city'], $is_existing, $is_receiver_existing);
+                    $receiver_address['country_id'], $receiver_address['city_id'], $is_existing, $is_receiver_existing);
                 $check = $receiver_addr_obj->save();
             }
 
@@ -1181,7 +1211,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount']
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id']
                     );
                 $check = $this->save();
             }

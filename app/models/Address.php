@@ -56,7 +56,7 @@ class Address extends \Phalcon\Mvc\Model
      *
      * @var string
      */
-    protected $city;
+    protected $city_id;
 
     /**
      *
@@ -186,9 +186,9 @@ class Address extends \Phalcon\Mvc\Model
      * @param string $city
      * @return $this
      */
-    public function setCity($city)
+    public function setCityId($city)
     {
-        $this->city = trim($city);
+        $this->city_id = trim($city);
 
         return $this;
     }
@@ -317,9 +317,9 @@ class Address extends \Phalcon\Mvc\Model
      *
      * @return string
      */
-    public function getCity()
+    public function getCityId()
     {
-        return $this->city;
+        return $this->city_id;
     }
 
     /**
@@ -393,7 +393,7 @@ class Address extends \Phalcon\Mvc\Model
             'created_date' => 'created_date', 
             'modified_date' => 'modified_date', 
             'state_id' => 'state_id', 
-            'city' => 'city', 
+            'city_id' => 'city_id',
             'country_id' => 'country_id',
             'is_default' => 'is_default',
             'status' => 'status'
@@ -410,21 +410,21 @@ class Address extends \Phalcon\Mvc\Model
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'state_id' => $this->getStateId(),
-            'city' => $this->getCity(),
+            'city_id' => $this->getCityId(),
             'country_id' => $this->getCountryId(),
             'is_default' => $this->getIsDefault(),
             'status' => $this->getStatus()
         );
     }
 
-    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city, $is_existing=false, $is_user_existing=true){
+    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city_id, $is_existing=false, $is_user_existing=true){
         $this->setOwnerId($owner_id);
         $this->setOwnerType($owner_type);
         $this->setStreetAddress1($street_address1);
         $this->setStreetAddress2($street_address2);
         $this->setStateId($state_id);
         $this->setCountryId($country_id);
-        $this->setCity($city);
+        $this->setCityId($city_id);
         $is_default = ($is_user_existing) ? 0 : 1;
         $this->setIsDefault($is_default);
 
@@ -436,12 +436,12 @@ class Address extends \Phalcon\Mvc\Model
         $this->setModifiedDate($now);
     }
 
-    public function edit($street_address1, $street_address2, $state_id, $country_id, $city){
+    public function edit($street_address1, $street_address2, $state_id, $country_id, $city_id){
         $this->setStreetAddress1($street_address1);
         $this->setStreetAddress2($street_address2);
         $this->setStateId($state_id);
         $this->setCountryId($country_id);
-        $this->setCity($city);
+        $this->setCityId($city_id);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
