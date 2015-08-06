@@ -103,6 +103,15 @@ $di->set('auth', function(){
 $di->set('dispatcher', function() {
     $events_manager = new EventsManager();
 
+//    $events_manager->attach('dispatch:beforeException', function($event, $dispatcher){
+//        /**
+//         * @var MvcDispatcher $dispatcher
+//         */
+//        $di = FactoryDefault::getDefault();
+//        echo $di['response']->sendError(ResponseMessage::INTERNAL_ERROR)->getContent();
+//        exit();
+//    });
+
     $events_manager->attach("dispatch:beforeExecuteRoute", function($event, $dispatcher){
 //        /**
 //         * @var MvcDispatcher $dispatcher
@@ -130,7 +139,7 @@ $di->set('dispatcher', function() {
                 echo $di['response']->sendLoginRequired()->getContent();
                 exit();
             } else {
-                echo $di['response']->sendError();
+                echo $di['response']->sendError()->getContent();
                 exit();
             }
         }
