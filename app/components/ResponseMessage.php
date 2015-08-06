@@ -18,7 +18,7 @@ class ResponseMessage
     const SWEEPER_ONLY_TO_HUB = 'A sweeper can only attached to a hub';
     const BRANCH_NOT_EXISTING = 'Branch does not exist';
     const INVALID_PACKAGE_COUNT = 'Invalid package count provided';
-    const INVALID_AMOUNT = 'Invalid amounts provided';
+    const INVALID_AMOUNT = 'Invalid amount(s) provided';
     const INVALID_PAYMENT_TYPE = 'Invalid payment type provided';
     const INVALID_STATUS = 'Invalid status provided';
     const NO_HUB_PROVIDED = 'No HUB provided';
@@ -42,4 +42,34 @@ class ResponseMessage
     const PARCEL_ALREADY_IN_ARRIVAL = 'Parcel already in arrival';
     const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
+    const RECORD_DOES_NOT_EXIST = 'Record does not exist';
+    const REGION_DOES_NOT_EXIST = 'Region does not exist';
+    const CITY_DOES_NOT_EXIST = 'City does not exist';
+    const STATE_DOES_NOT_EXIST = 'State does not exist';
+    const REGION_EXISTS = 'Region already exists';
+    const CITY_EXISTS = 'City already exists';
+    const INVALID_ACTIVE_FG = 'Invalid active flag provided';
+
+    const ZONE_NAME_EXISTS = 'A zone with this name already exists';
+    const ZONE_CODE_EXISTS = 'A zone with this code already exists';
+    const ZONE_DOES_NOT_EXIST = 'Zone does not exists';
+
+    const ONFORWARDING_CHARGE_NAME_EXISTS = 'An onforwarding charge with this name already exists';
+    const ONFORWARDING_CHARGE_CODE_EXISTS = 'An onforwarding charge with this code already exists';
+    const ONFORWARDING_CHARGE_DOES_NOT_EXIST = 'Onforwarding charge does not exists';
+
+    const NEGATIVE_WEIGHT = 'Negative weights not allowed';
+    const INVALID_WEIGHT = 'Invalid weight(s) provided';
+    const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
+    const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
+    const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
+
+    const BILLING_EXISTS = 'Weight range billing for zone already exists';
+    const BILLING_NOT_EXISTS = 'Weight range billing for zone does not exists';
+
+    const INVALID_VALUES = 'Invalid values provided';
+
+    const INTERNAL_ERROR = 'An internal error has occurred';
+
+    const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
 }

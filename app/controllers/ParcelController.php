@@ -156,6 +156,7 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $user_id = $this->request->getQuery('user_id'); //either sender_id or receiver_id
         $held_by_staff_id = $this->request->getQuery('held_by_staff_id');
         $held_by_id = $this->request->getQuery('held_by_id');
         $to_branch_id = $this->request->getQuery('to_branch_id');
@@ -185,8 +186,10 @@ class ParcelController extends ControllerBase {
         $start_modified_date = $this->request->getQuery('start_modified_date');
         $end_modified_date = $this->request->getQuery('end_modified_date');
         $waybill_number = $this->request->getQuery('waybill_number');
+        $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($user_id)){ $filter_by['user_id'] = $user_id; }
         if (!is_null($held_by_staff_id)){ $filter_by['held_by_staff_id'] = $held_by_staff_id; }
         if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
         if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
@@ -216,12 +219,13 @@ class ParcelController extends ControllerBase {
         if (!is_null($start_modified_date)){ $filter_by['start_modified_date'] = $start_modified_date; }
         if (!is_null($end_modified_date)){ $filter_by['end_modified_date'] = $end_modified_date; }
         if (!is_null($waybill_number)){ $filter_by['waybill_number'] = $waybill_number; }
+        if (!is_null($waybill_number_arr)){ $filter_by['waybill_number_arr'] = $waybill_number_arr; }
 
         return $filter_by;
     }
 
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -232,8 +236,16 @@ class ParcelController extends ControllerBase {
         $with_sender_address = $this->request->getQuery('with_sender_address');
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
+        $with_holder = $this->request->getQuery('with_holder');
+
+        $with_total_count = $this->request->getQuery('with_total_count');
+        $send_all = $this->request->getQuery('send_all');
+
+        $order_by = $this->request->getQuery('order_by'); //'Parcel.created_date DESC'
 
         $filter_by = $this->getFilterParams();
+
+        if (!is_null($send_all)){ $filter_by['send_all'] = true; }
 
         $fetch_with = [];
         if (!is_null($with_to_branch)){ $fetch_with['with_to_branch'] = true; }
@@ -242,12 +254,25 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_receiver)){ $fetch_with['with_receiver'] = true; }
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
+        if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
 
-        return $this->response->sendSuccess(Parcel::fetchAll($offset, $count, $filter_by, $fetch_with));
+        $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
+        $result = [];
+        if ($with_total_count != null){
+            $count = Parcel::parcelCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'parcels' => $parcels
+            ];
+        }else{
+            $result = $parcels;
+        }
+
+        return $this->response->sendSuccess($result);
     }
 
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 
         $filter_by = $this->getFilterParams();
 
@@ -301,7 +326,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getClientId(), ParcelHistory::MSG_FOR_SWEEPER);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -350,7 +375,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->checkIn($held_parcel_record);
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId());
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
@@ -361,13 +386,14 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = $this->auth->getClientId();
+        $held_by_id = ($this->auth->getUserType() == Role::SWEEPER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
-        if (in_array(null, [$waybill_numbers, $to_branch_id])){
+        if (in_array(null, [$waybill_numbers, $to_branch_id, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -394,7 +420,7 @@ class ParcelController extends ControllerBase {
                 return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
             }
 
-            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id);
+            $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $admin_id, ParcelHistory::MSG_IN_TRANSIT);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -435,7 +461,7 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $this->auth->getClientId(), ParcelHistory::MSG_FOR_DELIVERY);
             if (!$check){
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -444,8 +470,6 @@ class ParcelController extends ControllerBase {
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
-
-
 
     public function moveToBeingDeliveredAction(){
 

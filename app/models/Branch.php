@@ -431,16 +431,20 @@ class Branch extends \Phalcon\Mvc\Model
     public static function fetchAllEC($hub_id){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns('Branch.*')
+            ->columns(['Branch.*', 'State.*'])
             ->from('Branch')
+            ->innerJoin('State', 'Branch.state_id = State.id')
             ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
-            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:');
+            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:')
+            ->orderBy('Branch.name');
 
         $data = $builder->getQuery()->execute(['hub_id' => $hub_id, 'branch_type' => BranchType::EC, 'status' => Status::ACTIVE]);
 
         $result = [];
         foreach($data as $item){
-            $result[] = $item->getData();
+            $branch = $item->branch->getData();
+            $branch['state'] = $item->state->getData();
+            $result[] = $branch;
         }
         return $result;
     }
@@ -448,23 +452,29 @@ class Branch extends \Phalcon\Mvc\Model
     public static function fetchAllHub(){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns('Branch.*')
+            ->columns(['Branch.*', 'State.*'])
             ->from('Branch')
-            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
+            ->innerJoin('State', 'Branch.state_id = State.id')
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:')
+            ->orderBy('Branch.name');
 
         $data = $builder->getQuery()->execute(['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE]);
 
         $result = [];
         foreach($data as $item){
-            $result[] = $item->getData();
+            $branch = $item->branch->getData();
+            $branch['state'] = $item->state->getData();
+            $result[] = $branch;
         }
         return $result;
     }
 
-    public static function fetchAll($offset, $count, $filter_by){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Branch.*', 'State.*'])
             ->from('Branch')
+            ->innerJoin('State', 'Branch.state_id = State.id')
             ->limit($count, $offset)
             ->orderBy('Branch.name');
 
@@ -479,7 +489,13 @@ class Branch extends \Phalcon\Mvc\Model
 
         $result = [];
         foreach($data as $item){
-            $result[] = $item->getData();
+            $branch = $item->branch->getData();
+            $parent = Branch::getParentById($item->branch->getId());
+            if ($fetch_with['with_parent']){
+                $branch['parent'] = ($parent == null) ? null : $parent->getData();
+            }
+            $branch['state'] = $item->state->getData();
+            $result[] = $branch;
         }
         return $result;
     }
@@ -487,7 +503,9 @@ class Branch extends \Phalcon\Mvc\Model
     public static function fetchOne($filter_by){
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Branch');
+            ->columns(['Branch.*', 'State.*'])
+            ->from('Branch')
+            ->innerJoin('State', 'Branch.state_id = State.id');
 
         $bind = array();
         if (isset($filter_by['branch_id'])){
@@ -507,9 +525,10 @@ class Branch extends \Phalcon\Mvc\Model
             return null;
         }
 
-        $result = $data[0]->getData();
-        $parent = Branch::getParentById($data[0]->getId());
+        $result = $data[0]->branch->getData();
+        $parent = Branch::getParentById($data[0]->branch->getId());
         $result['parent'] = ($parent == null) ? null : $parent->getData();
+        $result['state'] = $data[0]->state->getData();
 
         return $result;
     }

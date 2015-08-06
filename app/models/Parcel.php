@@ -827,7 +827,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
-        $this->setModifiedDate($now);
+        $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
     }
 
@@ -898,6 +898,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
+        if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
         if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
         if (isset($filter_by['parcel_type'])){ $where[] = 'Parcel.parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
@@ -929,11 +930,14 @@ class Parcel extends \Phalcon\Mvc\Model
         return ['where' => $where, 'bind' => $bind];
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause=null){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Parcel')
-            ->limit($count, $offset);
+            ->from('Parcel');
+
+        if (!isset($filter_by['send_all'])){
+            $builder->limit($count, $offset);
+        }
 
         $columns = ['Parcel.*'];
 
@@ -942,8 +946,12 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
-            $builder->orderBy('modified_date');
+        if ($order_by_clause != null){
+            $builder->orderBy($order_by_clause);
+        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
+            $builder->orderBy('Parcel.modified_date');
+        } else {
+            $builder->orderBy('Parcel.id');
         }
 
         if (isset($filter_by['held_by_id'])){
@@ -954,14 +962,47 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //model hydration
-        if (isset($fetch_with['with_to_branch'])){ $columns[] = 'ToBranch.*'; $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch'); }
-        if (isset($fetch_with['with_from_branch'])){ $columns[] = 'FromBranch.*'; $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch'); }
+        if (isset($fetch_with['with_to_branch'])){
+            $columns[] = 'ToBranch.*';
+            $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
+            $columns[] = 'ToBranchState.*';
+            $builder->innerJoin('ToBranchState', 'ToBranchState.id = ToBranch.state_id', 'ToBranchState');
+        }
+        if (isset($fetch_with['with_from_branch'])){
+            $columns[] = 'FromBranch.*';
+            $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch');
+            $columns[] = 'FromBranchState.*';
+            $builder->innerJoin('FromBranchState', 'FromBranchState.id = FromBranch.state_id', 'FromBranchState');
+        }
+        if (isset($fetch_with['with_sender_address'])){
+            $columns[] = 'SenderAddress.*';
+            $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $columns[] = 'SenderAddressState.*';
+            $builder->innerJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+        }
+        if (isset($fetch_with['with_receiver_address'])){
+            $columns[] = 'ReceiverAddress.*';
+            $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $columns[] = 'ReceiverAddressState.*';
+            $builder->innerJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+        }
+        if (isset($fetch_with['with_holder'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
+            $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+            $columns[] = 'Admin.*';
+        }
+
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
-        if (isset($fetch_with['with_sender_address'])){ $columns[] = 'SenderAddress.*'; $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress'); }
-        if (isset($fetch_with['with_receiver_address'])){ $columns[] = 'ReceiverAddress.*'; $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress'); }
 
         $builder->where(join(' AND ', $where));
+
+        if (isset($filter_by['waybill_number_arr'])){
+            $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
+
+            $builder->inWhere('Parcel.waybill_number', $waybill_number_arr);
+        }
+
         $builder->columns($columns);
         $data = $builder->getQuery()->execute($bind);
 
@@ -972,12 +1013,27 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
-                if (isset($fetch_with['with_to_branch'])) $parcel['to_branch'] = $item->toBranch->getData();
-                if (isset($fetch_with['with_from_branch'])) $parcel['from_branch'] = $item->fromBranch->getData();
+                if (isset($fetch_with['with_holder'])){
+                    $parcel['holder'] = $item->admin->getData();
+                }
+                if (isset($fetch_with['with_to_branch'])) {
+                    $parcel['to_branch'] = $item->toBranch->getData();
+                    $parcel['to_branch']['state'] = $item->toBranchState->getData();
+                }
+                if (isset($fetch_with['with_from_branch'])) {
+                    $parcel['from_branch'] = $item->fromBranch->getData();
+                    $parcel['from_branch']['state'] = $item->fromBranchState->getData();
+                }
                 if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
-                if (isset($fetch_with['with_sender_address'])) $parcel['sender_address'] = $item->senderAddress->getData();
+                if (isset($fetch_with['with_sender_address'])) {
+                    $parcel['sender_address'] = $item->senderAddress->getData();
+                    $parcel['sender_address']['state'] = $item->senderAddressState->getData();
+                }
                 if (isset($fetch_with['with_receiver'])) $parcel['receiver'] =$item->receiver->getData();
-                if (isset($fetch_with['with_receiver_address'])) $parcel['receiver_address'] = $item->receiverAddress->getData();
+                if (isset($fetch_with['with_receiver_address'])) {
+                    $parcel['receiver_address'] = $item->receiverAddress->getData();
+                    $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
+                }
             }
             $result[] = $parcel;
         }
@@ -1157,39 +1213,77 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status){
-        $this->setStatus($status);
-        $this->setModifiedDate(date('Y-m-d H:i:s'));
-
-        return $this->save();
-    }
-
-    public function changeDestination($status, $to_branch_id){
-        $this->setStatus($status);
-        $this->setFromBranchId($this->getToBranchId());
-        $this->setToBranchId($to_branch_id);
-        $this->setModifiedDate(date('Y-m-d H:i:s'));
-
-        return $this->save();
-    }
-
-    public function checkout($status, $held_by_id){
+    public function changeStatus($status, $admin_id, $history_desc){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
-//            var_dump($this->getStatus());
+            $this->setStatus($status);
+            $this->setModifiedDate(date('Y-m-d H:i:s'));
+
+            if ($this->save()){
+                $parcel_history = new ParcelHistory();
+                $parcel_history->setTransaction($transaction);
+                $parcel_history->initData($this->getId(), $this->getToBranchId(), $history_desc, $admin_id, $status);
+                if ($parcel_history->save()){
+                    $transactionManager->commit();
+                    return true;
+                }
+            }
+        }catch (Exception $e) {
+
+        }
+
+        $transactionManager->rollback();
+        return false;
+    }
+
+    public function changeDestination($status, $to_branch_id, $admin_id, $history_desc){
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $from_branch_id = $this->getFromBranchId();
+            $this->setStatus($status);
+            $this->setFromBranchId($this->getToBranchId());
+            $this->setToBranchId($to_branch_id);
+            $this->setModifiedDate(date('Y-m-d H:i:s'));
+
+            if ($this->save()){
+                $parcel_history = new ParcelHistory();
+                $parcel_history->setTransaction($transaction);
+                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $status);
+                if ($parcel_history->save()){
+                    $transactionManager->commit();
+                    return true;
+                }
+            }
+        }catch (Exception $e) {
+
+        }
+
+        $transactionManager->rollback();
+        return false;
+    }
+
+    public function checkout($status, $held_by_id, $admin_id, $history_desc){
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
             $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
-//            var_dump($this->getStatus());
+
             if ($this->save()){
-//                var_dump('in');
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
                 $held_parcel->initData($this->getId(), $held_by_id);
                 if($held_parcel->save()){
-                    $transactionManager->commit();
-                    return true;
+                    $parcel_history = new ParcelHistory();
+                    $parcel_history->setTransaction($transaction);
+                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status);
+                    if ($parcel_history->save()){
+                        $transactionManager->commit();
+                        return true;
+                    }
                 }
             }
         }catch (Exception $e) {
@@ -1203,9 +1297,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * @param HeldParcel $held_parcel_record
+     * @param int $admin_id
      * @return bool
      */
-    public function checkIn($held_parcel_record)
+    public function checkIn($held_parcel_record, $admin_id)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -1219,8 +1314,13 @@ class Parcel extends \Phalcon\Mvc\Model
                     $held_parcel_record->setTransaction($transaction);
                     $held_parcel_record->clear();
                     if ($held_parcel_record->save()) {
-                        $transactionManager->commit();
-                        return true;
+                        $parcel_history = new ParcelHistory();
+                        $parcel_history->setTransaction($transaction);
+                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, Status::PARCEL_ARRIVAL);
+                        if ($parcel_history->save()){
+                            $transactionManager->commit();
+                            return true;
+                        }
                     }
                 }
             }

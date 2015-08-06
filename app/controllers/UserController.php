@@ -6,6 +6,8 @@ class UserController extends ControllerBase {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
         $phone = $this->request->getQuery('phone');
+        $fetch_parcel = $this->request->getQuery('fetch_parcel');
+        $order_parcel_by_modified = $this->request->getQuery('order_parcel_by_modified'); //works with fetch_parcel
 
         if (is_null($phone)){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -17,6 +19,16 @@ class UserController extends ControllerBase {
 
             $result = $user->getData();
             $result['address'] = ($address == false) ? null : $address->getData();
+
+            if (!is_null($fetch_parcel)){
+                $result['parcel'] = Parcel::fetchAll(
+                    DEFAULT_OFFSET,
+                    DEFAULT_COUNT,
+                    array('user_id' => $user->getId()),
+                    array('with_sender'=>true, 'with_receiver'=>true),
+                    (!is_null($order_parcel_by_modified)) ? 'Parcel.modified_date DESC' : 'Parcel.created_date DESC'
+                );
+            }
             return $this->response->sendSuccess($result);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
