@@ -5,8 +5,8 @@ class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
-        $payload = $this->request->getJsonRawBody(true);
-        /*
+//        $payload = $this->request->getJsonRawBody(true);
+
         $payload = '{
     "sender": {
         "firstname": "Rotimo",
@@ -50,12 +50,13 @@ class ParcelController extends ControllerBase {
         "other_info": "This is the other information needed",
         "cash_amount": null,
         "pos_amount": null,
-        "pos_trans_id": null
+        "pos_trans_id": null,
+        "package_value": 200.00
     },
     "is_corporate_lead": 0,
     "to_hub": 1
 }';
-        */
+        $payload = json_decode($payload, true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -158,6 +159,9 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $entity_type = $this->request->getQuery('entity_type');
+        $is_visible = $this->request->getQuery('is_visible');
+        $created_by = $this->request->getQuery('created_by');
         $user_id = $this->request->getQuery('user_id'); //either sender_id or receiver_id
         $held_by_staff_id = $this->request->getQuery('held_by_staff_id');
         $held_by_id = $this->request->getQuery('held_by_id');
@@ -191,6 +195,9 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
+        if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }
+        if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
         if (!is_null($user_id)){ $filter_by['user_id'] = $user_id; }
         if (!is_null($held_by_staff_id)){ $filter_by['held_by_staff_id'] = $held_by_staff_id; }
         if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
