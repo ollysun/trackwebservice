@@ -7,11 +7,30 @@ class Parcel extends \Phalcon\Mvc\Model
     const TYPE_RETURN = 2;
     const TYPE_EXPRESS = 3;
 
+    const ENTITY_TYPE_NORMAL = 1;
+    const ENTITY_TYPE_BAG = 2;
+    const ENTITY_TYPE_SPLIT = 3;
+
     /**
      *
      * @var integer
      */
     protected $id;
+
+    /**
+     * @var int
+     */
+    protected $entity_type;
+
+    /**
+     * @var int
+     */
+    protected $is_visible;
+
+    /**
+     * @var int
+     */
+    protected $created_by;
 
     /**
      *
@@ -166,6 +185,45 @@ class Parcel extends \Phalcon\Mvc\Model
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field entity_type
+     *
+     * @param integer $entity_type
+     * @return $this
+     */
+    public function setEntityType($entity_type)
+    {
+        $this->entity_type = $entity_type;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field is_visible
+     *
+     * @param integer $is_visible
+     * @return $this
+     */
+    public function setIsVisible($is_visible)
+    {
+        $this->is_visible = $is_visible;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field created_by
+     *
+     * @param integer $created_by
+     * @return $this
+     */
+    public function setCreatedBy($created_by)
+    {
+        $this->created_by = $created_by;
 
         return $this;
     }
@@ -492,6 +550,36 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field entity_type
+     *
+     * @return integer
+     */
+    public function getEntityType()
+    {
+        return $this->entity_type;
+    }
+
+    /**
+     * Returns the value of field is_visible
+     *
+     * @return integer
+     */
+    public function getIsVisible()
+    {
+        return $this->is_visible;
+    }
+
+    /**
+     * Returns the value of field created_by
+     *
+     * @return integer
+     */
+    public function getCreatedBy()
+    {
+        return $this->created_by;
+    }
+
+    /**
      * Returns the value of field parcel_type
      *
      * @return integer
@@ -770,7 +858,10 @@ class Parcel extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
+            'entity_type' => 'entity_type',
+            'created_by' => 'created_by',
+            'is_visible' => 'is_visible',
             'parcel_type' => 'parcel_type', 
             'sender_id' => 'sender_id', 
             'sender_address_id' => 'sender_address_id', 
@@ -801,6 +892,9 @@ class Parcel extends \Phalcon\Mvc\Model
     public function getData(){
         return array(
             'id' => $this->getId(),
+            'entity_type' => $this->getEntityType(),
+            'created_by' => $this->getCreatedBy(),
+            'is_visible' => $this->getIsVisible(),
             'parcel_type' => $this->getParcelType(),
             'sender_id' => $this->getSenderId(),
             'sender_address_id' => $this->getSenderAddressId(),
@@ -831,7 +925,7 @@ class Parcel extends \Phalcon\Mvc\Model
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -854,6 +948,41 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
         $this->setNoOfPackage($no_of_package);
+        $this->setCreatedBy($created_by);
+        $this->setEntityType($entity_type);
+        $this->setIsVisible($is_visible);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setCreatedDate($now);
+        $this->setModifiedDate($this->getCreatedDate());
+        $this->setStatus($status);
+    }
+
+    public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible){
+        $this->setParcelType(null);
+        $this->setSenderId(null);
+        $this->setSenderAddressId(null);
+        $this->setReceiverId(null);
+        $this->setReceiverAddressId(null);
+        $this->setFromBranchId($from_branch_id);
+        $this->setToBranchId($to_branch_id);
+        $this->setWeight(null);
+        $this->setAmountDue(null);
+        $this->setCashOnDelivery(null);
+        $this->setCashOnDeliveryAmount(null);
+        $this->setDeliveryType(null);
+        $this->setPaymentType(null);
+        $this->setShippingType(null);
+        $this->setCashAmount(null);
+        $this->setPosAmount(null);
+        $this->setPosTransId(null);
+        $this->setWaybillNumber($waybill_number);
+        $this->setOtherInfo("N/A");
+        $this->setPackageValue(null);
+        $this->setNoOfPackage(null);
+        $this->setCreatedBy($created_by);
+        $this->setEntityType($entity_type);
+        $this->setIsVisible($is_visible);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -887,7 +1016,7 @@ class Parcel extends \Phalcon\Mvc\Model
             . str_pad($this->getId(), 8, '0', STR_PAD_LEFT);
 
         $this->setWaybillNumber($waybill_number);
-        $this->setModifiedDate('Y-m-d H:i:s');
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
     public static function fetchOne($id){
@@ -928,6 +1057,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
+        if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
+        if (isset($filter_by['is_visible'])){ $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = $filter_by['is_visible'];}
+        if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
         if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
         if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
@@ -975,6 +1107,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if (!isset($filter_by['is_visible'])){
+            $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = 1;
+        }
 
         if ($order_by_clause != null){
             $builder->orderBy($order_by_clause);
@@ -1211,12 +1347,25 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id']
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id
                     );
                 $check = $this->save();
             }
 
-            //saving the parcel
+            //setting waybill number
+            if ($check){
+                $this->generateWaybillNumber($from_branch_id);
+                $check = $this->save();
+            }
+            $waybill_number = $this->getWaybillNumber();
+
+            //creating sub-parcel if the number of packages is more than 1
+            if ($check and $this->getNoOfPackage() > 1){
+                $waybill_number = $this->createSub($transaction);
+                $check = $waybill_number != false;
+            }
+
+            //saving the parcel history
             if ($check){
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
@@ -1225,15 +1374,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $parcel_history->save();
             }
 
-            //setting waybill number
-            if ($check){
-                $this->generateWaybillNumber($from_branch_id);
-                $check = $this->save();
-            }
-
             if ($check){
                 $transactionManager->commit();
-                return true;
+                return $waybill_number;
             }
         } catch (Exception $e) {
 
@@ -1321,7 +1464,6 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         $transactionManager->rollback();
-//        exit();
         return false;
     }
 
@@ -1367,5 +1509,44 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number = :waybill_number:',
             'bind' => ['waybill_number' => trim(strtoupper($waybill_number))]
         ]);
+    }
+
+    public function createSub(&$transaction){
+        $check = true;
+        $waybill_number_arr = [];
+
+        for ($i = 1; $i <= $this->getNoOfPackage(); ++$i) {
+            $waybill_number = $this->getWaybillNumber() . '-' . $i . '-' . $this->getNoOfPackage();
+            $sub_parcel = new Parcel();
+            $sub_parcel->setTransaction($transaction);
+            $sub_parcel->initDataWithBasicInfo(
+                $this->getFromBranchId(),
+                $this->getToBranchId(),
+                $this->getCreatedBy(),
+                $this->getStatus(),
+                $waybill_number,
+                Parcel::ENTITY_TYPE_SPLIT,
+                0
+            );
+            if (!$sub_parcel->save()) {
+                $check = false;
+                break;
+            }
+            $linked_parcel = new LinkedParcel();
+            $linked_parcel->setTransaction($transaction);
+            $linked_parcel->initData($this->getId(), $sub_parcel->getId());
+            if (!$linked_parcel->save()) {
+                $check = false;
+                break;
+            }
+
+            $waybill_number_arr[] = $waybill_number;
+        }
+
+        if ($check){
+            return $waybill_number_arr;
+        }
+
+        return false;
     }
 }

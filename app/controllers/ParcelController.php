@@ -6,8 +6,8 @@ class ParcelController extends ControllerBase {
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-        /*
-        $payload = '{
+
+       /* $payload = '{
     "sender": {
         "firstname": "Rotimo",
         "lastname": "Akintewe",
@@ -38,7 +38,7 @@ class ParcelController extends ControllerBase {
     },
     "parcel": {
         "parcel_type": "1",
-        "no_of_package": "23",
+        "no_of_package": "3",
         "weight": "176",
         "parcel_value": "23000",
         "amount_due": "23000",
@@ -50,12 +50,13 @@ class ParcelController extends ControllerBase {
         "other_info": "This is the other information needed",
         "cash_amount": null,
         "pos_amount": null,
-        "pos_trans_id": null
+        "pos_trans_id": null,
+        "package_value": 200.00
     },
     "is_corporate_lead": 0,
     "to_hub": 1
 }';
-        */
+        $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -116,9 +117,9 @@ class ParcelController extends ControllerBase {
 
 
         $parcel_obj = new Parcel();
-        $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+        $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
-        if ($check){
+        if ($waybill_numbers){
             if ($is_corporate_lead == 1){
                 EmailMessage::send(
                     EmailMessage::CORPORATE_LEAD,
@@ -136,7 +137,7 @@ class ParcelController extends ControllerBase {
                     'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']'
                 );
             }
-            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $parcel_obj->getWaybillNumber()]);
+            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
         }
         return $this->response->sendError();
     }
@@ -158,6 +159,9 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $entity_type = $this->request->getQuery('entity_type');
+        $is_visible = $this->request->getQuery('is_visible');
+        $created_by = $this->request->getQuery('created_by');
         $user_id = $this->request->getQuery('user_id'); //either sender_id or receiver_id
         $held_by_staff_id = $this->request->getQuery('held_by_staff_id');
         $held_by_id = $this->request->getQuery('held_by_id');
@@ -191,6 +195,9 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
+        if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }
+        if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
         if (!is_null($user_id)){ $filter_by['user_id'] = $user_id; }
         if (!is_null($held_by_staff_id)){ $filter_by['held_by_staff_id'] = $held_by_staff_id; }
         if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
