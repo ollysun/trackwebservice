@@ -5,9 +5,9 @@ class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
-        $payload = $this->request->getJsonRawBody(true);
+//        $payload = $this->request->getJsonRawBody(true);
 
-       /* $payload = '{
+        $payload = '{
     "sender": {
         "firstname": "Rotimo",
         "lastname": "Akintewe",
@@ -56,7 +56,7 @@ class ParcelController extends ControllerBase {
     "is_corporate_lead": 0,
     "to_hub": 1
 }';
-        $payload = json_decode($payload, true);*/
+        $payload = json_decode($payload, true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -159,6 +159,7 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $parent_id = $this->request->getQuery('parent_id');
         $entity_type = $this->request->getQuery('entity_type');
         $is_visible = $this->request->getQuery('is_visible');
         $created_by = $this->request->getQuery('created_by');
@@ -195,6 +196,7 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($parent_id)){ $filter_by['parent_id'] = $parent_id; }
         if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
         if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }
         if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
