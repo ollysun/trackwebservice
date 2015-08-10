@@ -5,8 +5,8 @@ class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
-//        $payload = $this->request->getJsonRawBody(true);
-
+        $payload = $this->request->getJsonRawBody(true);
+/*
         $payload = '{
     "sender": {
         "firstname": "Rotimo",
@@ -24,7 +24,7 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "3 Cuttacosh Road, Abule Egba.",
         "street2": "",
-        "city_id": "1",
+        "city_id": "5",
         "state_id": "1",
         "country_id": "1"
     },
@@ -32,7 +32,7 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "9, Ojo Street, Akoka",
         "street2": "",
-        "city_id": "1",
+        "city_id": "5",
         "state_id": "1",
         "country_id": "1"
     },
@@ -56,7 +56,7 @@ class ParcelController extends ControllerBase {
     "is_corporate_lead": 0,
     "to_hub": 1
 }';
-        $payload = json_decode($payload, true);
+        $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
