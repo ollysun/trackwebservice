@@ -925,7 +925,7 @@ class Parcel extends \Phalcon\Mvc\Model
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $entity_type = 1, $is_visible = 1
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -948,6 +948,38 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
         $this->setNoOfPackage($no_of_package);
+        $this->setCreatedBy($created_by);
+        $this->setEntityType($entity_type);
+        $this->setIsVisible($is_visible);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setCreatedDate($now);
+        $this->setModifiedDate($this->getCreatedDate());
+        $this->setStatus($status);
+    }
+
+    public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible){
+        $this->setParcelType(null);
+        $this->setSenderId(null);
+        $this->setSenderAddressId(null);
+        $this->setReceiverId(null);
+        $this->setReceiverAddressId(null);
+        $this->setFromBranchId($from_branch_id);
+        $this->setToBranchId($to_branch_id);
+        $this->setWeight(null);
+        $this->setAmountDue(null);
+        $this->setCashOnDelivery(null);
+        $this->setCashOnDeliveryAmount(null);
+        $this->setDeliveryType(null);
+        $this->setPaymentType(null);
+        $this->setShippingType(null);
+        $this->setCashAmount(null);
+        $this->setPosAmount(null);
+        $this->setPosTransId(null);
+        $this->setWaybillNumber($waybill_number);
+        $this->setOtherInfo("N/A");
+        $this->setPackageValue(null);
+        $this->setNoOfPackage(null);
         $this->setCreatedBy($created_by);
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
@@ -984,7 +1016,7 @@ class Parcel extends \Phalcon\Mvc\Model
             . str_pad($this->getId(), 8, '0', STR_PAD_LEFT);
 
         $this->setWaybillNumber($waybill_number);
-        $this->setModifiedDate('Y-m-d H:i:s');
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
     public static function fetchOne($id){
@@ -1320,7 +1352,20 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $this->save();
             }
 
-            //saving the parcel
+            //setting waybill number
+            if ($check){
+                $this->generateWaybillNumber($from_branch_id);
+                $check = $this->save();
+            }
+            $waybill_number = $this->getWaybillNumber();
+
+            //creating sub-parcel if the number of packages is more than 1
+            if ($check and $this->getNoOfPackage() > 1){
+                $waybill_number = $this->createSub($transaction);
+                $check = $waybill_number != false;
+            }
+
+            //saving the parcel history
             if ($check){
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
@@ -1329,15 +1374,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $parcel_history->save();
             }
 
-            //setting waybill number
-            if ($check){
-                $this->generateWaybillNumber($from_branch_id);
-                $check = $this->save();
-            }
-
             if ($check){
                 $transactionManager->commit();
-                return true;
+                return $waybill_number;
             }
         } catch (Exception $e) {
 
@@ -1425,7 +1464,6 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         $transactionManager->rollback();
-//        exit();
         return false;
     }
 
@@ -1471,5 +1509,44 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number = :waybill_number:',
             'bind' => ['waybill_number' => trim(strtoupper($waybill_number))]
         ]);
+    }
+
+    public function createSub(&$transaction){
+        $check = true;
+        $waybill_number_arr = [];
+
+        for ($i = 1; $i <= $this->getNoOfPackage(); ++$i) {
+            $waybill_number = $this->getWaybillNumber() . '-' . $i . '-' . $this->getNoOfPackage();
+            $sub_parcel = new Parcel();
+            $sub_parcel->setTransaction($transaction);
+            $sub_parcel->initDataWithBasicInfo(
+                $this->getFromBranchId(),
+                $this->getToBranchId(),
+                $this->getCreatedBy(),
+                $this->getStatus(),
+                $waybill_number,
+                Parcel::ENTITY_TYPE_SPLIT,
+                0
+            );
+            if (!$sub_parcel->save()) {
+                $check = false;
+                break;
+            }
+            $linked_parcel = new LinkedParcel();
+            $linked_parcel->setTransaction($transaction);
+            $linked_parcel->initData($this->getId(), $sub_parcel->getId());
+            if (!$linked_parcel->save()) {
+                $check = false;
+                break;
+            }
+
+            $waybill_number_arr[] = $waybill_number;
+        }
+
+        if ($check){
+            return $waybill_number_arr;
+        }
+
+        return false;
     }
 }

@@ -5,9 +5,9 @@ class ParcelController extends ControllerBase {
     public function addAction(){
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
-//        $payload = $this->request->getJsonRawBody(true);
+        $payload = $this->request->getJsonRawBody(true);
 
-        $payload = '{
+       /* $payload = '{
     "sender": {
         "firstname": "Rotimo",
         "lastname": "Akintewe",
@@ -38,7 +38,7 @@ class ParcelController extends ControllerBase {
     },
     "parcel": {
         "parcel_type": "1",
-        "no_of_package": "23",
+        "no_of_package": "3",
         "weight": "176",
         "parcel_value": "23000",
         "amount_due": "23000",
@@ -56,7 +56,7 @@ class ParcelController extends ControllerBase {
     "is_corporate_lead": 0,
     "to_hub": 1
 }';
-        $payload = json_decode($payload, true);
+        $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -117,9 +117,9 @@ class ParcelController extends ControllerBase {
 
 
         $parcel_obj = new Parcel();
-        $check = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+        $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
-        if ($check){
+        if ($waybill_numbers){
             if ($is_corporate_lead == 1){
                 EmailMessage::send(
                     EmailMessage::CORPORATE_LEAD,
@@ -137,7 +137,7 @@ class ParcelController extends ControllerBase {
                     'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']'
                 );
             }
-            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $parcel_obj->getWaybillNumber()]);
+            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
         }
         return $this->response->sendError();
     }
