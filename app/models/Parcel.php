@@ -13,7 +13,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
     const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
-    const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, status = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+    const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
 
     /**
      *
@@ -1642,7 +1642,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     }
                 }
 
-                return ['bag_number' => $bag->getWaybillNumber(), 'bad_parcels' => $waybill_number_arr];
+                return ['bag_number' => $bag->getWaybillNumber(), 'bad_parcels' => $bad_parcels];
             }
         }
         return false;
@@ -1663,16 +1663,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $check = $connection->execute($sql, ['parent_id' => $bag->getId(), 'modified_date' => date('Y-m-d H:i:s')]);
         if ($check) {
-            $sql = Parcel::SQL_DELETE_LINKAGE;
-
-            $check = $connection->execute($sql, ['parent_id' => $bag->getId()]);
-
-            if ($check) {
-                $bag->setIsVisible(0);
-                $bag->setModifiedDate(date('Y-m-d H:i:s'));
-                if ($bag->save()) {
-                    return true;
-                }
+            $bag->setIsVisible(0);
+            $bag->setModifiedDate(date('Y-m-d H:i:s'));
+            if ($bag->save()) {
+                return true;
             }
         }
         return false;
@@ -1683,8 +1677,7 @@ class Parcel extends \Phalcon\Mvc\Model
             return false;
         }
 
-        $manager = new self();
-        $connection = $manager->getWriteConnection();
+        $connection = $this->getWriteConnection();
         $sql = Parcel::SQL_UPDATE_SUBS;
 
         return $connection->execute($sql, [

@@ -366,7 +366,7 @@ class ParcelController extends ControllerBase {
         return $this->response->sendError();
     }
 
-    public function unbagAction(){
+    public function openBagAction(){
         $this->auth->allowOnly([Role::OFFICER]);
 
         $bag_waybill_number = $this->request->getPost('waybill_number');
