@@ -138,5 +138,23 @@ class AdminController extends ControllerBase {
 
     }
 
+    public function validateAction(){
+        $temp = $this->request->getQuery('identifier');
+        $identifier = !empty($temp) ? $temp : $this->auth->getEmail(); //email or staff id
+        $password = $this->request->getQuery('password');
 
-} 
+        if (in_array(null, array($identifier, $password))){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = Admin::fetchLoginData($identifier);
+        if ($admin != false){
+            if ($this->security->checkHash($password, $admin['password'])){
+                unset($admin['password']);
+               return $this->response->sendSuccess($admin);
+           }
+        }
+        return $this->response->sendError(ResponseMessage::INVALID_CRED);
+    }
+
+}
