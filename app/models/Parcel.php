@@ -1358,13 +1358,14 @@ class Parcel extends \Phalcon\Mvc\Model
             //finally saving the parcel
 
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
+            $is_visible = ($this->getNoOfPackage() > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible
                     );
                 $check = $this->save();
             }
@@ -1569,7 +1570,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getStatus(),
                 $waybill_number,
                 Parcel::ENTITY_TYPE_SPLIT,
-                0
+                1
             );
             if (!$sub_parcel->save()) {
                 $check = false;
