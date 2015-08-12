@@ -24,7 +24,7 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "3 Cuttacosh Road, Abule Egba.",
         "street2": "",
-        "city_id": "5",
+        "city_id": "4",
         "state_id": "1",
         "country_id": "1"
     },
@@ -32,13 +32,13 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "9, Ojo Street, Akoka",
         "street2": "",
-        "city_id": "5",
+        "city_id": "4",
         "state_id": "1",
         "country_id": "1"
     },
     "parcel": {
         "parcel_type": "1",
-        "no_of_package": "3",
+        "no_of_package": "1",
         "weight": "176",
         "parcel_value": "23000",
         "amount_due": "23000",
