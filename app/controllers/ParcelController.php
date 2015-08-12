@@ -345,6 +345,43 @@ class ParcelController extends ControllerBase {
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 
+    public function bagAction(){
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $to_branch_id = $this->request->getPost('to_branch_id');
+        $status = $this->request->getPost('status');
+
+        if (in_array(null, [$waybill_numbers, $to_branch_id, $status])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr) ;
+        if ($bag_info != false){
+            return $this->response->sendSuccess($bag_info);
+        }
+        return $this->response->sendError();
+    }
+
+    public function openBagAction(){
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $bag_waybill_number = $this->request->getPost('waybill_number');
+
+        if (in_array(null, [$bag_waybill_number])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $check = Parcel::unbagParcels($bag_waybill_number);
+        if ($check){
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError();
+    }
+
     public function moveToArrivalAction(){
         $this->auth->allowOnly([Role::OFFICER]);
 
