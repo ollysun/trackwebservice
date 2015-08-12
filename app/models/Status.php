@@ -118,7 +118,7 @@ class Status extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'name' => 'name'
         );
     }
