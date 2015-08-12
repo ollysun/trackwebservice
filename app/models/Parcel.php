@@ -1415,7 +1415,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1449,7 +1449,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1480,7 +1480,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1522,7 +1522,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1687,8 +1687,8 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     public function alterSubs(){
-        if (!in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
-            return false;
+        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG){
+            return true;
         }
 
         $connection = $this->getWriteConnection();
