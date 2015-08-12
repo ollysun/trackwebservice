@@ -866,29 +866,29 @@ class Parcel extends \Phalcon\Mvc\Model
             'entity_type' => 'entity_type',
             'created_by' => 'created_by',
             'is_visible' => 'is_visible',
-            'parcel_type' => 'parcel_type', 
-            'sender_id' => 'sender_id', 
-            'sender_address_id' => 'sender_address_id', 
-            'receiver_id' => 'receiver_id', 
+            'parcel_type' => 'parcel_type',
+            'sender_id' => 'sender_id',
+            'sender_address_id' => 'sender_address_id',
+            'receiver_id' => 'receiver_id',
             'receiver_address_id' => 'receiver_address_id',
             'from_branch_id' => 'from_branch_id',
             'to_branch_id' => 'to_branch_id',
-            'status' => 'status', 
-            'weight' => 'weight', 
-            'amount_due' => 'amount_due', 
-            'cash_on_delivery' => 'cash_on_delivery', 
+            'status' => 'status',
+            'weight' => 'weight',
+            'amount_due' => 'amount_due',
+            'cash_on_delivery' => 'cash_on_delivery',
             'cash_on_delivery_amount' => 'cash_on_delivery_amount',
             'delivery_type' => 'delivery_type',
             'package_value' => 'package_value',
             'no_of_package' => 'no_of_package',
             'other_info' => 'other_info',
             'payment_type' => 'payment_type',
-            'shipping_type' => 'shipping_type', 
-            'cash_amount' => 'cash_amount', 
-            'pos_amount' => 'pos_amount', 
+            'shipping_type' => 'shipping_type',
+            'cash_amount' => 'cash_amount',
+            'pos_amount' => 'pos_amount',
             'pos_trans_id' => 'pos_trans_id',
             'waybill_number' => 'waybill_number',
-            'created_date' => 'created_date', 
+            'created_date' => 'created_date',
             'modified_date' => 'modified_date'
         );
     }
@@ -1061,6 +1061,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
+        if (!isset($filter_by['is_visible'])){$where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = 1;}
+        if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
         if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
         if (isset($filter_by['is_visible'])){ $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = $filter_by['is_visible'];}
         if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
@@ -1112,16 +1114,16 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (!isset($filter_by['is_visible'])){
-            $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = 1;
-        }
-
         if ($order_by_clause != null){
             $builder->orderBy($order_by_clause);
         } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
             $builder->orderBy('Parcel.modified_date');
         } else {
             $builder->orderBy('Parcel.id');
+        }
+
+        if (isset($filter_by['parent_id'])){
+            $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
         if (isset($filter_by['held_by_id'])){
@@ -1220,6 +1222,17 @@ class Parcel extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if (isset($filter_by['parent_id'])){
+            $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
+        }
+
+        if (isset($filter_by['held_by_id'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+        }else if (isset($filter_by['held_by_staff_id'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+            $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
