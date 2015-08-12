@@ -11,6 +11,10 @@ class Parcel extends \Phalcon\Mvc\Model
     const ENTITY_TYPE_BAG = 2;
     const ENTITY_TYPE_SPLIT = 3;
 
+    const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+    const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
+    const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+
     /**
      *
      * @var integer
@@ -862,29 +866,29 @@ class Parcel extends \Phalcon\Mvc\Model
             'entity_type' => 'entity_type',
             'created_by' => 'created_by',
             'is_visible' => 'is_visible',
-            'parcel_type' => 'parcel_type', 
-            'sender_id' => 'sender_id', 
-            'sender_address_id' => 'sender_address_id', 
-            'receiver_id' => 'receiver_id', 
+            'parcel_type' => 'parcel_type',
+            'sender_id' => 'sender_id',
+            'sender_address_id' => 'sender_address_id',
+            'receiver_id' => 'receiver_id',
             'receiver_address_id' => 'receiver_address_id',
             'from_branch_id' => 'from_branch_id',
             'to_branch_id' => 'to_branch_id',
-            'status' => 'status', 
-            'weight' => 'weight', 
-            'amount_due' => 'amount_due', 
-            'cash_on_delivery' => 'cash_on_delivery', 
+            'status' => 'status',
+            'weight' => 'weight',
+            'amount_due' => 'amount_due',
+            'cash_on_delivery' => 'cash_on_delivery',
             'cash_on_delivery_amount' => 'cash_on_delivery_amount',
             'delivery_type' => 'delivery_type',
             'package_value' => 'package_value',
             'no_of_package' => 'no_of_package',
             'other_info' => 'other_info',
             'payment_type' => 'payment_type',
-            'shipping_type' => 'shipping_type', 
-            'cash_amount' => 'cash_amount', 
-            'pos_amount' => 'pos_amount', 
+            'shipping_type' => 'shipping_type',
+            'cash_amount' => 'cash_amount',
+            'pos_amount' => 'pos_amount',
             'pos_trans_id' => 'pos_trans_id',
             'waybill_number' => 'waybill_number',
-            'created_date' => 'created_date', 
+            'created_date' => 'created_date',
             'modified_date' => 'modified_date'
         );
     }
@@ -1009,7 +1013,7 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     public function generateWaybillNumber($initial_branch_id){
-        $parcel_type_label = $this->getParcelTypeLabel();
+        $parcel_type_label = ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) ? 'B' : $this->getParcelTypeLabel();
         $waybill_number = $this->getDeliveryType()
             . $parcel_type_label
             . str_pad($initial_branch_id, 3, '0', STR_PAD_LEFT)
@@ -1403,10 +1407,17 @@ class Parcel extends \Phalcon\Mvc\Model
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
+            $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()){
+                $check = $this->alterSubs();
+
+                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                    $transactionManager->rollback();
+                    return false;
+                }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $parcel_history->initData($this->getId(), $this->getToBranchId(), $history_desc, $admin_id, $status);
@@ -1427,6 +1438,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
+            $this->setTransaction($transaction);
             $from_branch_id = $this->getFromBranchId();
             $this->setStatus($status);
             $this->setFromBranchId($this->getToBranchId());
@@ -1434,6 +1446,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()){
+                $check = $this->alterSubs();
+
+                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                    $transactionManager->rollback();
+                    return false;
+                }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $status);
@@ -1459,6 +1477,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()){
+                $check = $this->alterSubs();
+
+                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                    $transactionManager->rollback();
+                    return false;
+                }
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
                 $held_parcel->initData($this->getId(), $held_by_id);
@@ -1495,6 +1519,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()) {
+                $check = $this->alterSubs();
+
+                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                    $transactionManager->rollback();
+                    return false;
+                }
                 if ($held_parcel_record != false) {
                     $held_parcel_record->setTransaction($transaction);
                     $held_parcel_record->clear();
@@ -1563,11 +1593,112 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function bagParcels(){
+    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr){
+        $bag = new Parcel();
+        $bag->initDataWithBasicInfo(
+            $from_branch_id,
+            $to_branch_id,
+            $created_by,
+            $status,
+            uniqid(),
+            Parcel::ENTITY_TYPE_BAG,
+            1
+        );
+        $bad_parcels = [];
+        if ($bag->save()) {
+            $bag->generateWaybillNumber($from_branch_id);
+            if ($bag->save()){
+                $obj = new Parcel();
+                $builder = $obj->getModelsManager()->createBuilder()
+                    ->from('Parcel')
+                    ->inWhere('waybill_number', $waybill_number_arr);
 
+                $data = $builder->getQuery()->execute();
+
+                /**
+                 * @var Parcel $item
+                 */
+                foreach ($data as $item){
+                    if ($item->getEntityType() != Parcel::ENTITY_TYPE_NORMAL or $item->getIsVisible() == 0){
+                        $bad_parcels[$item->getWaybillNumber()] = 'Parcel is not an ordinary parcel';
+                        continue;
+                    }
+
+                    if ($item->getToBranchId() != $to_branch_id){
+                        $bad_parcels[$item->getWaybillNumber()] = 'Parcel not heading to bag\'s destination';
+                        continue;
+                    }
+
+                    $transactionManager = new TransactionManager();
+                    $transaction = $transactionManager->get();
+                    try{
+                        $item->setTransaction($transaction);
+                        $item->setIsVisible(0);
+                        $item->setFromBranchId($from_branch_id);
+                        $item->setToBranchId($to_branch_id);
+                        $item->setStatus($status);
+                        $item->setModifiedDate(date('Y-m-d H:i:s'));
+                        if (!$item->save()){
+                            $bad_parcels[$item->getWaybillNumber()] = 'An error occurred';
+                            continue;
+                        }
+                        $linked_parcel = new LinkedParcel();
+                        $linked_parcel->setTransaction($transaction);
+                        $linked_parcel->initData($bag->getId(), $item->getId());
+                        if (!$linked_parcel->save()) {
+                            $bad_parcels[$item->getWaybillNumber()] = 'An error occurred';
+                            continue;
+                        }
+                        $transactionManager->commit();
+                    }catch (Exception $e){
+                        $transactionManager->rollback();
+                    }
+                }
+
+                return ['bag_number' => $bag->getWaybillNumber(), 'bad_parcels' => $bad_parcels];
+            }
+        }
+        return false;
     }
 
-    public static function unbagParcels(){
+    public static function unbagParcels($bag_waybill_number){
+        $bag = Parcel::findFirst([
+            'waybill_number = :waybill_number: AND entity_type = :entity_type:',
+            'bind' => ['waybill_number' => $bag_waybill_number, 'entity_type' => Parcel::ENTITY_TYPE_BAG]
+        ]);
 
+        if ($bag == false){
+            return false;
+        }
+        $manager = new self();
+        $connection = $manager->getWriteConnection();
+        $sql = Parcel::SQL_MAKE_SUB_VISIBLE;
+
+        $check = $connection->execute($sql, ['parent_id' => $bag->getId(), 'modified_date' => date('Y-m-d H:i:s')]);
+        if ($check) {
+            $bag->setIsVisible(0);
+            $bag->setModifiedDate(date('Y-m-d H:i:s'));
+            if ($bag->save()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function alterSubs(){
+        if (!in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+            return false;
+        }
+
+        $connection = $this->getWriteConnection();
+        $sql = Parcel::SQL_UPDATE_SUBS;
+
+        return $connection->execute($sql, [
+            'parent_id' => $this->getId(),
+            'from_branch_id' => $this->getFromBranchId(),
+            'to_branch_id' => $this->getToBranchId(),
+            'status' => $this->getStatus(),
+            'modified_date' => date('Y-m-d H:i:s'),
+        ]);
     }
 }
