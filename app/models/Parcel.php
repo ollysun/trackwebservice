@@ -1061,10 +1061,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
-        if (!isset($filter_by['is_visible'])){$where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = 1;}
+        $where[] = 'Parcel.is_visible = :is_visible:';
+        $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
+
         if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
         if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
-        if (isset($filter_by['is_visible'])){ $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = $filter_by['is_visible'];}
         if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
         if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
@@ -1358,7 +1359,7 @@ class Parcel extends \Phalcon\Mvc\Model
             //finally saving the parcel
 
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
-            $is_visible = ($this->getNoOfPackage() > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+            $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
