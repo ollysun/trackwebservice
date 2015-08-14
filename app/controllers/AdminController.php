@@ -71,10 +71,11 @@ class AdminController extends ControllerBase {
                 }
 
                 unset($admin['password']);
+                $role_id = ($admin['status'] == Status::ACTIVE) ? $admin['role_id'] : Role::INACTIVE_USER;
 
                 $this->auth->saveTokenData($admin['id'],[
                     Auth::L_EMAIL => $admin['email'],
-                    Auth::L_USER_TYPE => $admin['role_id'],
+                    Auth::L_USER_TYPE => $role_id,
                     Auth::L_TOKEN => $token,
                     Auth::L_DATA => $admin
                 ]);
@@ -126,8 +127,29 @@ class AdminController extends ControllerBase {
         }
         return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
     }
-    public function changePasswordAction(){
 
+    public function changePasswordAction(){
+        $password = $this->request->getPost('password');
+
+        if ($password == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        if (strlen($password) < MIN_PASSWORD_LENGTH) {
+            return $this->response->sendError(ResponseMessage::PASSWORD_TOO_SMALL);
+        }
+
+        $admin = Admin::findFirst(array(
+            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
+            'bind' => array('id' => $this->auth->getClientId())
+        ));
+        if ($admin != false) {
+            $admin->changePassword($password);
+            if ($admin->save()) {
+                return $this->response->sendSuccess('');
+            }
+        }
+        return $this->response->sendError();
     }
 
     public function changeStatusAction(){

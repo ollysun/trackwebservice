@@ -8,6 +8,7 @@
  */
 class ResponseMessage
 {
+    const PASSWORD_TOO_SMALL = 'Password is lesser than 6 characters';
     const ERROR_REQUIRED_FIELDS = 'Required field(s) not sent';
     const INVALID_EMAIL = 'Invalid email provided';
     const EXISTING_EMAIL = 'Email provided already exists';

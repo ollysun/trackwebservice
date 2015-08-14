@@ -6,6 +6,7 @@ class Role extends \Phalcon\Mvc\Model
     const OFFICER = 2;
     const SWEEPER = 3;
     const DISPATCHER = 4;
+    const INACTIVE_USER = -1;
     /**
      *
      * @var integer
