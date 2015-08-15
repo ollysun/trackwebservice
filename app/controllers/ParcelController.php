@@ -361,6 +361,10 @@ class ParcelController extends ControllerBase {
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        if (count($waybill_number_arr) == 0){
+            return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_BAG);
+        }
+
         $auth_data = $this->auth->getData();
 
         $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr) ;

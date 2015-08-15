@@ -76,4 +76,9 @@ class ResponseMessage
     const INTERNAL_ERROR = 'An internal error has occurred';
 
     const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
+
+    const NO_PARCEL_TO_BAG = 'No parcel to bag';
+    const PARCEL_NOT_BE_BAGGED = 'Parcel cannot be bagged';
+    const PARCEL_ALREADY_BAGGED = 'Parcel is already bagged';
+    const PARCEL_NOT_GOING_TO_BAG_LOC = 'Parcel not heading to bag\'s destination';
 }
