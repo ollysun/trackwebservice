@@ -8,6 +8,7 @@
  */
 class ResponseMessage
 {
+    const PASSWORD_TOO_SMALL = 'Password is lesser than 6 characters';
     const ERROR_REQUIRED_FIELDS = 'Required field(s) not sent';
     const INVALID_EMAIL = 'Invalid email provided';
     const EXISTING_EMAIL = 'Email provided already exists';
@@ -49,6 +50,9 @@ class ResponseMessage
     const REGION_EXISTS = 'Region already exists';
     const CITY_EXISTS = 'City already exists';
     const INVALID_ACTIVE_FG = 'Invalid active flag provided';
+    const PARCEL_ALREADY_FOR_BEING_DELIVERED = 'Parcel already being delivered';
+    const PARCEL_ALREADY_DELIVERED = 'Parcel already delivered';
+    const PARCEL_NOT_FOR_DELIVERY = 'Parcel not for delivery';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';

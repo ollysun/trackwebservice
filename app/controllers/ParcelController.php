@@ -6,8 +6,8 @@ class ParcelController extends ControllerBase {
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-
-       /* $payload = '{
+/*
+        $payload = '{
     "sender": {
         "firstname": "Rotimo",
         "lastname": "Akintewe",
@@ -24,7 +24,7 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "3 Cuttacosh Road, Abule Egba.",
         "street2": "",
-        "city_id": "1",
+        "city_id": "4",
         "state_id": "1",
         "country_id": "1"
     },
@@ -32,13 +32,13 @@ class ParcelController extends ControllerBase {
         "id": null,
         "street1": "9, Ojo Street, Akoka",
         "street2": "",
-        "city_id": "1",
+        "city_id": "4",
         "state_id": "1",
         "country_id": "1"
     },
     "parcel": {
         "parcel_type": "1",
-        "no_of_package": "3",
+        "no_of_package": "1",
         "weight": "176",
         "parcel_value": "23000",
         "amount_due": "23000",
@@ -159,6 +159,8 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $show_parents = $this->request->getQuery('show_parents');
+        $parent_id = $this->request->getQuery('parent_id');
         $entity_type = $this->request->getQuery('entity_type');
         $is_visible = $this->request->getQuery('is_visible');
         $created_by = $this->request->getQuery('created_by');
@@ -195,6 +197,8 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($show_parents)){ $filter_by['show_parents'] = $show_parents; }
+        if (!is_null($parent_id)){ $filter_by['parent_id'] = $parent_id; }
         if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
         if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }
         if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
@@ -518,10 +522,82 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToBeingDeliveredAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
 
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $held_by_id = ($this->auth->getUserType() == Role::DISPATCHER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+
+        if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_BEING_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_BEING_DELIVERED;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_FOR_DELIVERY){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                continue;
+            }
+
+            $check = $parcel->checkout(Status::PARCEL_BEING_DELIVERED, $held_by_id, $admin_id, ParcelHistory::MSG_BEING_DELIVERED);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 
     public function moveToDeliveredAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
 
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $admin_id = $this->auth->getClientId();
+
+        if (in_array(null, [$waybill_numbers, $admin_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
-} 
+}

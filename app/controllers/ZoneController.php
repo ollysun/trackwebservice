@@ -218,6 +218,21 @@ class ZoneController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::BILLING_NOT_EXISTS);
     }
 
+    public function fetchBillingByIdAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $weight_billing_id = $this->request->getQuery('weight_billing_id');
+
+        if (in_array(null, [$weight_billing_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $billing = WeightBilling::fetchOne($weight_billing_id);
+        if ($billing != false){
+            return $this->response->sendSuccess($billing);
+        }
+        return $this->response->sendError(ResponseMessage::BILLING_NOT_EXISTS);
+    }
+
     public function fetchBillingAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 

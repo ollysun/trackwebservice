@@ -9,7 +9,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
     const ENTITY_TYPE_NORMAL = 1;
     const ENTITY_TYPE_BAG = 2;
-    const ENTITY_TYPE_SPLIT = 3;
+    const ENTITY_TYPE_SUB = 3;
+    const ENTITY_TYPE_PARENT = 4;
 
     const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
@@ -866,29 +867,29 @@ class Parcel extends \Phalcon\Mvc\Model
             'entity_type' => 'entity_type',
             'created_by' => 'created_by',
             'is_visible' => 'is_visible',
-            'parcel_type' => 'parcel_type', 
-            'sender_id' => 'sender_id', 
-            'sender_address_id' => 'sender_address_id', 
-            'receiver_id' => 'receiver_id', 
+            'parcel_type' => 'parcel_type',
+            'sender_id' => 'sender_id',
+            'sender_address_id' => 'sender_address_id',
+            'receiver_id' => 'receiver_id',
             'receiver_address_id' => 'receiver_address_id',
             'from_branch_id' => 'from_branch_id',
             'to_branch_id' => 'to_branch_id',
-            'status' => 'status', 
-            'weight' => 'weight', 
-            'amount_due' => 'amount_due', 
-            'cash_on_delivery' => 'cash_on_delivery', 
+            'status' => 'status',
+            'weight' => 'weight',
+            'amount_due' => 'amount_due',
+            'cash_on_delivery' => 'cash_on_delivery',
             'cash_on_delivery_amount' => 'cash_on_delivery_amount',
             'delivery_type' => 'delivery_type',
             'package_value' => 'package_value',
             'no_of_package' => 'no_of_package',
             'other_info' => 'other_info',
             'payment_type' => 'payment_type',
-            'shipping_type' => 'shipping_type', 
-            'cash_amount' => 'cash_amount', 
-            'pos_amount' => 'pos_amount', 
+            'shipping_type' => 'shipping_type',
+            'cash_amount' => 'cash_amount',
+            'pos_amount' => 'pos_amount',
             'pos_trans_id' => 'pos_trans_id',
             'waybill_number' => 'waybill_number',
-            'created_date' => 'created_date', 
+            'created_date' => 'created_date',
             'modified_date' => 'modified_date'
         );
     }
@@ -1061,8 +1062,16 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
+        $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
+
+        $initial_cond = 'Parcel.is_visible = :is_visible:';
+        if (isset($filter_by['show_parents'])){
+            $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != '. self::ENTITY_TYPE_SUB;
+        }
+        $where[] = $initial_cond;
+
+        if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
         if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
-        if (isset($filter_by['is_visible'])){ $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = $filter_by['is_visible'];}
         if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
         if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
         if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
@@ -1112,16 +1121,16 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (!isset($filter_by['is_visible'])){
-            $where[] = 'Parcel.is_visible = :is_visible:'; $bind['is_visible'] = 1;
-        }
-
         if ($order_by_clause != null){
             $builder->orderBy($order_by_clause);
         } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
             $builder->orderBy('Parcel.modified_date');
         } else {
             $builder->orderBy('Parcel.id');
+        }
+
+        if (isset($filter_by['parent_id'])){
+            $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
         if (isset($filter_by['held_by_id'])){
@@ -1146,15 +1155,15 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         if (isset($fetch_with['with_sender_address'])){
             $columns[] = 'SenderAddress.*';
-            $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
             $columns[] = 'SenderAddressState.*';
-            $builder->innerJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+            $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
         }
         if (isset($fetch_with['with_receiver_address'])){
             $columns[] = 'ReceiverAddress.*';
-            $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
             $columns[] = 'ReceiverAddressState.*';
-            $builder->innerJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+            $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
         }
         if (isset($fetch_with['with_holder'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
@@ -1162,8 +1171,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Admin.*';
         }
 
-        if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
-        if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
+        if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
+        if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
 
         $builder->where(join(' AND ', $where));
 
@@ -1220,6 +1229,17 @@ class Parcel extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if (isset($filter_by['parent_id'])){
+            $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
+        }
+
+        if (isset($filter_by['held_by_id'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+        }else if (isset($filter_by['held_by_staff_id'])){
+            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+            $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
@@ -1345,13 +1365,15 @@ class Parcel extends \Phalcon\Mvc\Model
             //finally saving the parcel
 
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
+            $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+            $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type
                     );
                 $check = $this->save();
             }
@@ -1401,7 +1423,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1435,7 +1457,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1466,7 +1488,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()){
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1508,7 +1530,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check and !in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
+                if (!$check){
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1555,8 +1577,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getCreatedBy(),
                 $this->getStatus(),
                 $waybill_number,
-                Parcel::ENTITY_TYPE_SPLIT,
-                0
+                Parcel::ENTITY_TYPE_SUB,
+                1
             );
             if (!$sub_parcel->save()) {
                 $check = false;
@@ -1692,8 +1714,8 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     public function alterSubs(){
-        if (!in_array($this->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_SPLIT])){
-            return false;
+        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG){
+            return true;
         }
 
         $connection = $this->getWriteConnection();

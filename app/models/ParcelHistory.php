@@ -6,6 +6,8 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     const MSG_FOR_DELIVERY = 'Parcel ready for delivery';
     const MSG_FOR_ARRIVAL = 'Parcel is in arrival';
     const MSG_IN_TRANSIT = 'Parcel is in transit';
+    const MSG_BEING_DELIVERED = 'Parcel ready for delivery';
+    const MSG_DELIVERED = 'Parcel delivered';
     /**
      *
      * @var integer
@@ -242,12 +244,12 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'parcel_id' => 'parcel_id', 
+            'id' => 'id',
+            'parcel_id' => 'parcel_id',
             'branch_id' => 'branch_id',
             'admin_id' => 'admin_id',
-            'status' => 'status', 
-            'created_date' => 'created_date', 
+            'status' => 'status',
+            'created_date' => 'created_date',
             'description' => 'description'
         );
     }

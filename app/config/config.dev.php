@@ -7,6 +7,10 @@ return new \Phalcon\Config(array(
         'username' => 'root',
         'password' => '',
         'dbname' => 'tnt',
+//        'host' => '52.26.122.248',
+//        'username' => 'explode',
+//        'password' => '$$12TY*34YSD$',
+//        'dbname' => 'tnt',
         'charset'     => 'utf8',
     ),
     'application' => array(

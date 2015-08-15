@@ -389,6 +389,27 @@ class WeightBilling extends \Phalcon\Mvc\Model
         ]);
     }
 
+    public static function fetchOne($id){
+        $obj = new WeightBilling();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['WeightBilling.*', 'Zone.*', 'WeightRange.*'])
+            ->from('WeightBilling')
+            ->innerJoin('Zone', 'Zone.id = WeightBilling.zone_id')
+            ->innerJoin('WeightRange', 'WeightRange.id = WeightBilling.weight_range_id')
+            ->orderBy('WeightBilling.id')
+            ->where('Zone.status = :status: AND WeightRange.status = :status: AND WeightBilling.id = :id:', ['status' => Status::ACTIVE, 'id' => $id]);
+
+        $data = $builder->getQuery()->execute();
+        if (count($data) == 0){
+            return false;
+        }
+
+        $billing = $data[0]->weightBilling->getData();
+        $billing['zone'] =  $data[0]->zone->getData();
+        $billing['weight_range'] =  $data[0]->weightRange->getData();
+        return $billing;
+    }
+
     public static function fetchAll($offset, $count, $filter_by){
         $obj = new WeightBilling();
         $builder = $obj->getModelsManager()->createBuilder()
