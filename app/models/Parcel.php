@@ -995,28 +995,28 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setStatus($status);
     }
 
-    private function getParcelTypeLabel(){
-        $parcel_type_label = "X";
-        switch ($this->getParcelType()){
-            case self::TYPE_NORMAL:
-                $parcel_type_label = "N";
+    private function getEntityTypeLabel(){
+        $entity_type_label = "X";
+        switch ($this->getEntityType()){
+            case self::ENTITY_TYPE_BAG:
+                $entity_type_label = "B";
                 break;
-            case self::TYPE_EXPRESS:
-                $parcel_type_label = "E";
+            case self::ENTITY_TYPE_PARENT:
+                $entity_type_label = "S";
                 break;
-            case self::TYPE_RETURN:
-                $parcel_type_label = "R";
+            case self::ENTITY_TYPE_NORMAL:
+                $entity_type_label = "N";
                 break;
             default:
                 break;
         }
-        return $parcel_type_label;
+        return $entity_type_label;
     }
 
     public function generateWaybillNumber($initial_branch_id){
-        $parcel_type_label = ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) ? 'B' : $this->getParcelTypeLabel();
+        $entity_type_label = $this->getEntityTypeLabel();
         $waybill_number = $this->getDeliveryType()
-            . $parcel_type_label
+            . $entity_type_label
             . str_pad($initial_branch_id, 3, '0', STR_PAD_LEFT)
             . str_pad($this->getId(), 8, '0', STR_PAD_LEFT);
 
