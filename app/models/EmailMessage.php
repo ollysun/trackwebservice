@@ -5,6 +5,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
     const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
 
     const CORPORATE_LEAD = 1;
+    const USER_ACCOUNT_CREATION = 2;
     /**
      *
      * @var integer
@@ -201,11 +202,11 @@ class EmailMessage extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'to_email' => 'to_email', 
-            'subject' => 'subject', 
-            'message' => 'message', 
-            'created_date' => 'created_date', 
+            'id' => 'id',
+            'to_email' => 'to_email',
+            'subject' => 'subject',
+            'message' => 'message',
+            'created_date' => 'created_date',
             'status' => 'status'
         );
     }
@@ -217,15 +218,16 @@ class EmailMessage extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function send($id, $msg_params, $from_name, $from_email=self::DEFAULT_FROM_EMAIL){
+    public static function send($id, $msg_params, $from_name, $from_email=self::DEFAULT_FROM_EMAIL, $to_email=null){
         try {
             $email_msg = self::fetchActive($id);
             if ($email_msg == false) {
                 return false;
             }
+            $receiver_email = is_null($to_email) ? $email_msg->getToEmail(): $to_email;
 
             return Emailer::send(
-                $email_msg->getToEmail(),
+                $receiver_email,
                 $email_msg->getSubject(),
                 $email_msg->getMessage(),
                 $from_email,
