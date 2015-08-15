@@ -8,6 +8,7 @@
  */
 class ResponseMessage
 {
+    const PASSWORD_TOO_SMALL = 'Password is lesser than 6 characters';
     const ERROR_REQUIRED_FIELDS = 'Required field(s) not sent';
     const INVALID_EMAIL = 'Invalid email provided';
     const EXISTING_EMAIL = 'Email provided already exists';
@@ -75,4 +76,9 @@ class ResponseMessage
     const INTERNAL_ERROR = 'An internal error has occurred';
 
     const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
+
+    const NO_PARCEL_TO_BAG = 'No parcel to bag';
+    const PARCEL_NOT_BE_BAGGED = 'Parcel cannot be bagged';
+    const PARCEL_ALREADY_BAGGED = 'Parcel is already bagged';
+    const PARCEL_NOT_GOING_TO_BAG_LOC = 'Parcel not heading to bag\'s destination';
 }
