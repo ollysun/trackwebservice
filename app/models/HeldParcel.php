@@ -235,11 +235,11 @@ class HeldParcel extends \Phalcon\Mvc\Model
 
     public static function clearedForMovement($parcel_id){
         $check = HeldParcel::findFirst([
-            'parcel_id = :parcel_id: AND status != :status:',
+            'parcel_id = :parcel_id: AND status = :status:',
             'bind' => ['parcel_id' => $parcel_id, 'status' => Status::PARCEL_UNCLEARED]
         ]);
 
-        return $check === false;
+        return $check == false;
     }
 
     public static function fetchUncleared($parcel_id, $held_by_id){
