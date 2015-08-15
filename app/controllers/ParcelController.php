@@ -159,6 +159,7 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
+        $show_parents = $this->request->getQuery('show_parents');
         $parent_id = $this->request->getQuery('parent_id');
         $entity_type = $this->request->getQuery('entity_type');
         $is_visible = $this->request->getQuery('is_visible');
@@ -196,6 +197,7 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
+        if (!is_null($show_parents)){ $filter_by['show_parents'] = $show_parents; }
         if (!is_null($parent_id)){ $filter_by['parent_id'] = $parent_id; }
         if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
         if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }

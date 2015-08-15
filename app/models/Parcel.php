@@ -9,7 +9,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
     const ENTITY_TYPE_NORMAL = 1;
     const ENTITY_TYPE_BAG = 2;
-    const ENTITY_TYPE_SPLIT = 3;
+    const ENTITY_TYPE_SUB = 3;
+    const ENTITY_TYPE_PARENT = 4;
 
     const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
@@ -1061,8 +1062,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
         }
 
-        $where[] = 'Parcel.is_visible = :is_visible:';
         $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
+
+        $initial_cond = 'Parcel.is_visible = :is_visible:';
+        if (isset($filter_by['show_parents'])){
+            $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != '. self::ENTITY_TYPE_SUB;
+        }
+        $where[] = $initial_cond;
 
         if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
         if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
@@ -1149,15 +1155,15 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         if (isset($fetch_with['with_sender_address'])){
             $columns[] = 'SenderAddress.*';
-            $builder->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
             $columns[] = 'SenderAddressState.*';
-            $builder->innerJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+            $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
         }
         if (isset($fetch_with['with_receiver_address'])){
             $columns[] = 'ReceiverAddress.*';
-            $builder->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
             $columns[] = 'ReceiverAddressState.*';
-            $builder->innerJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+            $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
         }
         if (isset($fetch_with['with_holder'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
@@ -1165,8 +1171,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Admin.*';
         }
 
-        if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
-        if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
+        if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
+        if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
 
         $builder->where(join(' AND ', $where));
 
@@ -1360,13 +1366,14 @@ class Parcel extends \Phalcon\Mvc\Model
 
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+            $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
             if ($check){
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type
                     );
                 $check = $this->save();
             }
@@ -1570,7 +1577,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getCreatedBy(),
                 $this->getStatus(),
                 $waybill_number,
-                Parcel::ENTITY_TYPE_SPLIT,
+                Parcel::ENTITY_TYPE_SUB,
                 1
             );
             if (!$sub_parcel->save()) {
