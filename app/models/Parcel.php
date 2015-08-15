@@ -1589,7 +1589,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $status,
             uniqid(),
             Parcel::ENTITY_TYPE_BAG,
-            1
+            0
         );
         $bad_parcels = [];
         if ($bag->save()) {
@@ -1606,13 +1606,18 @@ class Parcel extends \Phalcon\Mvc\Model
                  * @var Parcel $item
                  */
                 foreach ($data as $item){
-                    if ($item->getEntityType() != Parcel::ENTITY_TYPE_NORMAL or $item->getIsVisible() == 0){
-                        $bad_parcels[$item->getWaybillNumber()] = 'Parcel is not an ordinary parcel';
+                    if ($item->getEntityType() != Parcel::ENTITY_TYPE_NORMAL){
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_BE_BAGGED;
+                        continue;
+                    }
+
+                    if ($item->getIsVisible() == 0){
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_ALREADY_BAGGED;
                         continue;
                     }
 
                     if ($item->getToBranchId() != $to_branch_id){
-                        $bad_parcels[$item->getWaybillNumber()] = 'Parcel not heading to bag\'s destination';
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_GOING_TO_BAG_LOC;
                         continue;
                     }
 
@@ -1626,14 +1631,14 @@ class Parcel extends \Phalcon\Mvc\Model
                         $item->setStatus($status);
                         $item->setModifiedDate(date('Y-m-d H:i:s'));
                         if (!$item->save()){
-                            $bad_parcels[$item->getWaybillNumber()] = 'An error occurred';
+                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
                             continue;
                         }
                         $linked_parcel = new LinkedParcel();
                         $linked_parcel->setTransaction($transaction);
                         $linked_parcel->initData($bag->getId(), $item->getId());
                         if (!$linked_parcel->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = 'An error occurred';
+                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
                             continue;
                         }
                         $transactionManager->commit();
@@ -1642,7 +1647,21 @@ class Parcel extends \Phalcon\Mvc\Model
                     }
                 }
 
-                return ['bag_number' => $bag->getWaybillNumber(), 'bad_parcels' => $bad_parcels];
+                $response['bag_number'] = null;
+                $no_of_parcels_in_bag = count($waybill_number_arr) - count($bad_parcels);
+                if ($no_of_parcels_in_bag > 0) {
+                    $bag->setIsVisible(1);
+                    $bag->setNoOfPackage($no_of_parcels_in_bag);
+
+                    if ($bag->save()) {
+                        $response['bag_number'] = $bag->getWaybillNumber();
+                    }
+                }else{
+                    $bag->delete();
+                }
+
+                $response['bad_parcels'] = $bad_parcels;
+                return $response;
             }
         }
         return false;
