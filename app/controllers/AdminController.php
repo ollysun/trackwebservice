@@ -47,6 +47,16 @@ class AdminController extends ControllerBase {
         $admin = new Admin();
         $admin->initData($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone);
         if ($admin->save()){
+            EmailMessage::send(
+                EmailMessage::USER_ACCOUNT_CREATION,
+                [
+                    'name' => $fullname,
+                    'email' => $email,
+                    'password' => $password,
+                    'link' => 'staging-courierplusng.cottacush.com/site/changePassword?ican='.md5($admin->getId()).'&salt='.$admin->getId(),
+                ],
+                'Courier Plus', $email
+            );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
         }
         return $this->response->sendError();
@@ -153,7 +163,23 @@ class AdminController extends ControllerBase {
     }
 
     public function changeStatusAction(){
+        $status = $this->request->getPost('status');
 
+        if ($status == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = Admin::findFirst(array(
+            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
+            'bind' => array('id' => $this->auth->getClientId())
+        ));
+        if ($admin != false) {
+            $admin->changeStatus($status);
+            if ($admin->save()) {
+                return $this->response->sendSuccess('');
+            }
+        }
+        return $this->response->sendError();
     }
 
     public function resetPasswordAction(){
