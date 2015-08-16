@@ -930,7 +930,7 @@ class Parcel extends \Phalcon\Mvc\Model
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -949,7 +949,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCashAmount($cash_amount);
         $this->setPosAmount($pos_amount);
         $this->setPosTransId($pos_trans_id);
-        $this->setWaybillNumber(uniqid());
+        $this->setWaybillNumber(($waybill_number == null) ? uniqid() : $waybill_number);
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
         $this->setNoOfPackage($no_of_package);
@@ -1024,15 +1024,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public static function fetchOne($id){
+    public static function fetchOne($id, $in_recursion=false){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*'])
             ->from('Parcel')
-            ->innerJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
-            ->innerJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
-            ->innerJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
-            ->innerJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
+            ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
+            ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
+            ->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
+            ->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
             ->where('Parcel.id = :id:');
 
         $data = $builder->getQuery()->execute(['id' => $id]);
@@ -1043,6 +1043,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $result['sender_address'] = $data[0]->senderAddress->getData();
         $result['receiver'] = $data[0]->receiver->getData();
         $result['receiver_address'] = $data[0]->receiverAddress->getData();
+
+        if (!$in_recursion) {
+            $linkage = LinkedParcel::getByChildId($id);
+            if ($linkage != false) {
+                $result['parent'] = Parcel::fetchOne($linkage->getParentId(), true);
+            } else {
+                $result['parent'] = null;
+            }
+        }
 
         return $result;
     }
@@ -1577,14 +1586,32 @@ class Parcel extends \Phalcon\Mvc\Model
             $waybill_number = $this->getWaybillNumber() . '-' . $i . '-' . $this->getNoOfPackage();
             $sub_parcel = new Parcel();
             $sub_parcel->setTransaction($transaction);
-            $sub_parcel->initDataWithBasicInfo(
+            $sub_parcel->initData(
+                $this->getParcelType(),
+                $this->getSenderId(),
+                $this->getSenderAddressId(),
+                $this->getReceiverId(),
+                $this->getReceiverAddressId(),
+                null,
+                null,
+                $this->getCashOnDelivery(),
+                null,
+                $this->getDeliveryType(),
+                $this->getPaymentType(),
+                $this->getShippingType(),
                 $this->getFromBranchId(),
                 $this->getToBranchId(),
-                $this->getCreatedBy(),
                 $this->getStatus(),
-                $waybill_number,
+                null,
+                null,
+                "N/A",
+                null,
+                null,
+                null,
+                $this->getCreatedBy(),
+                1,
                 Parcel::ENTITY_TYPE_SUB,
-                1
+                $waybill_number
             );
             if (!$sub_parcel->save()) {
                 $check = false;

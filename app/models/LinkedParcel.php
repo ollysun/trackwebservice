@@ -172,4 +172,28 @@ class LinkedParcel extends \Phalcon\Mvc\Model
         $this->setChildId($child_id);
         $this->setStatus(Status::ACTIVE);
     }
+
+    public static function getParent($child_id){
+        $obj = new LinkedParcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('Parcel.*')
+            ->from('LinkedParcel')
+            ->innerJoin('Parcel', 'Parcel.id = LinkedParcel.parent_id')
+            ->where('LinkedParcel.child_id = :child_id:', ['child_id' => $child_id]);
+
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0){
+            return false;
+        }
+
+        return $data[0];
+    }
+
+    public static function getByChildId($child_id){
+        return LinkedParcel::findFirst([
+            'child_id = :child_id:',
+            'bind' => ['child_id' => $child_id]
+        ]);
+    }
 }
