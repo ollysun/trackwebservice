@@ -81,4 +81,6 @@ class ResponseMessage
     const PARCEL_NOT_BE_BAGGED = 'Parcel cannot be bagged';
     const PARCEL_ALREADY_BAGGED = 'Parcel is already bagged';
     const PARCEL_NOT_GOING_TO_BAG_LOC = 'Parcel not heading to bag\'s destination';
+
+    const CAN_ONLY_DELIVER_FROM_EC = 'Must be login to an EC to set parcels for delivery';
 }
