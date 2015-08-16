@@ -121,21 +121,25 @@ class ParcelController extends ControllerBase {
             $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
         if ($waybill_numbers){
             if ($is_corporate_lead == 1){
-                EmailMessage::send(
-                    EmailMessage::CORPORATE_LEAD,
-                    [
-                        'firstname' => (isset($sender['firstname'])) ? ucfirst(strtolower($sender['firstname'])) : '',
-                        'lastname' => (isset($sender['lastname'])) ? ucfirst(strtolower($sender['lastname'])) : '',
-                        'street1' => (isset($sender_address['street1'])) ? $sender_address['street1'] : '',
-                        'street2' => (isset($sender_address['street2'])) ? $sender_address['street2'] : '',
-                        'city' => (isset($sender_address['city'])) ? ucfirst(strtolower($sender_address['city'])) : '',
-                        'state' => (isset($sender_address['state'])) ? $sender_address['state'] : '',
-                        'country' => (isset($sender_address['country'])) ? $sender_address['country'] : '',
-                        'email' => (isset($sender['email'])) ? $sender['email'] : '',
-                        'phone' => (isset($sender['phone'])) ? $sender['phone'] : ''
-                    ],
-                    'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']'
-                );
+                $city = City::fetchOne($sender_address['city_id'], ['with_state'=>1, 'with_country'=>1]);
+                if ($city != false) {
+                    EmailMessage::send(
+                        EmailMessage::CORPORATE_LEAD,
+                        [
+                            'firstname' => (isset($sender['firstname'])) ? ucfirst(strtolower($sender['firstname'])) : '',
+                            'lastname' => (isset($sender['lastname'])) ? ucfirst(strtolower($sender['lastname'])) : '',
+                            'street1' => (isset($sender_address['street1'])) ? $sender_address['street1'] : '',
+                            'street2' => (isset($sender_address['street2'])) ? $sender_address['street2'] : '',
+                            'city' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['name'])) : '',
+                            'state' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['state']['name'])) : '',
+                            'country' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['country']['name'])) : '',
+                            'email' => (isset($sender['email'])) ? $sender['email'] : '',
+                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : ''
+                        ],
+                        'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']',
+                        ''
+                    );
+                }
             }
             return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
         }
