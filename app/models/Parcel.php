@@ -1158,12 +1158,16 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
             $columns[] = 'SenderAddressState.*';
             $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+            $columns[] = 'SenderAddressCity.*';
+            $builder->leftJoin('SenderAddressCity', 'SenderAddressCity.id = SenderAddress.city_id', 'SenderAddressCity');
         }
         if (isset($fetch_with['with_receiver_address'])){
             $columns[] = 'ReceiverAddress.*';
             $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
             $columns[] = 'ReceiverAddressState.*';
             $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+            $columns[] = 'ReceiverAddressCity.*';
+            $builder->leftJoin('ReceiverAddressCity', 'ReceiverAddressCity.id = ReceiverAddress.city_id', 'ReceiverAddressCity');
         }
         if (isset($fetch_with['with_holder'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
@@ -1207,11 +1211,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_sender_address'])) {
                     $parcel['sender_address'] = $item->senderAddress->getData();
                     $parcel['sender_address']['state'] = $item->senderAddressState->getData();
+                    $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
                 }
                 if (isset($fetch_with['with_receiver'])) $parcel['receiver'] =$item->receiver->getData();
                 if (isset($fetch_with['with_receiver_address'])) {
                     $parcel['receiver_address'] = $item->receiverAddress->getData();
                     $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
+                    $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
                 }
             }
             $result[] = $parcel;
