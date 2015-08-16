@@ -488,13 +488,18 @@ class ParcelController extends ControllerBase {
         $this->auth->allowOnly([Role::OFFICER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $held_by_id = $this->request->getPost('held_by_id');
 
-        if (in_array(null, [$waybill_numbers])){
+        if (in_array(null, [$waybill_numbers, $held_by_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
+
+        if ($auth_data['branch']['branch_type'] != BranchType::EC){
+            return $this->response->sendError(ResponseMessage::CAN_ONLY_DELIVER_FROM_EC);
+        }
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number){
@@ -507,17 +512,24 @@ class ParcelController extends ControllerBase {
             if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
-            } else if ($parcel->getStatus() != Status::PARCEL_ARRIVAL){
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
+            } else if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_TRANSIT;
                 continue;
             } else if ($parcel->getToBranchId() != $auth_data['branch']['id']){
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $this->auth->getClientId(), ParcelHistory::MSG_FOR_DELIVERY);
+            //checking if the parcel is held by the correct person
+            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+            if ($held_parcel_record == false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                continue;
+            }
+
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId(), Status::PARCEL_FOR_DELIVERY);
             if (!$check){
-                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
             }
         }

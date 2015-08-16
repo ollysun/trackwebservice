@@ -1531,15 +1531,16 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * @param HeldParcel $held_parcel_record
      * @param int $admin_id
+     * @param int $status
      * @return bool
      */
-    public function checkIn($held_parcel_record, $admin_id)
+    public function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
             $this->setTransaction($transaction);
-            $this->setStatus(Status::PARCEL_ARRIVAL);
+            $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()) {
@@ -1555,7 +1556,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($held_parcel_record->save()) {
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
-                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, Status::PARCEL_ARRIVAL);
+                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status);
                         if ($parcel_history->save()){
                             $transactionManager->commit();
                             return true;
