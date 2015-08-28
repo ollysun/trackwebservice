@@ -134,7 +134,8 @@ class ParcelController extends ControllerBase {
                             'state' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['state']['name'])) : '',
                             'country' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['country']['name'])) : '',
                             'email' => (isset($sender['email'])) ? $sender['email'] : '',
-                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : ''
+                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : '',
+                            'year' => date('Y')
                         ],
                         'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']',
                         ''
