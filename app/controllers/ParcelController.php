@@ -455,6 +455,17 @@ class ParcelController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        $other_id = ($this->auth->getUserType() == Role::SWEEPER) ? $admin_id : $held_by_id;
+        $other_role_id = ($this->auth->getUserType() == Role::SWEEPER) ? Role::OFFICER : Role::SWEEPER;
+        $other = Admin::getById($other_id, $other_role_id);
+        if ($other == false){
+            if ($this->auth->getUserType() == Role::SWEEPER) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER);
+            }
+        }
+
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
 
         $bad_parcel = [];
@@ -465,8 +476,14 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
+            $auth_data = $this->auth->getData();
+            $user_branch_id = $auth_data['branch_id']; // logged on user's branch
+
             if ($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_TRANSIT;
+                continue;
+            } else if (($parcel->getFromBranchId() != $other->getBranchId() and $this->auth->getUserType() == Role::SWEEPER) or ($parcel->getFromBranchId() != $user_branch_id and $this->auth->getUserType() == Role::OFFICER)){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                 continue;
             } else if ($parcel->getStatus() != Status::PARCEL_FOR_SWEEPER){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_SWEEPING;
@@ -475,7 +492,8 @@ class ParcelController extends ControllerBase {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_HEADING_TO_DESTINATION;
                 continue;
             } else if (!HeldParcel::clearedForMovement($parcel->getId())){
-                return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT;
+                continue;
             }
 
             $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $admin_id, ParcelHistory::MSG_IN_TRANSIT);
