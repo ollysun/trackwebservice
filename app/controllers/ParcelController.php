@@ -65,6 +65,7 @@ class ParcelController extends ControllerBase {
         $parcel = (isset($payload['parcel'])) ? $payload['parcel'] : null;
         $to_hub = (isset($payload['to_hub'])) ? $payload['to_hub'] : null;
         $is_corporate_lead = (isset($payload['is_corporate_lead'])) ? $payload['is_corporate_lead'] : null;
+        $to_branch_id = (isset($payload['to_branch_id'])) ? $payload['to_branch_id'] : null;
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -72,20 +73,26 @@ class ParcelController extends ControllerBase {
 
         $auth_data = $this->auth->getData();
 
-        //Ensuring the officer is an EC officer
-        if ($auth_data['branch']['branch_type'] != BranchType::EC){
+        //Ensuring the officer is an EC or HUB officer
+        if (!in_array($auth_data['branch']['branch_type'], [BranchType::EC, BranchType::HUB])){
             return $this->response->sendAccessDenied();
         }
 
         //determining destination branch
-        $to_branch_id = $auth_data['branch']['id'];
-        if ($to_hub > 0){
-            $to_branch = Branch::getParentById($auth_data['branch']['id']);
-            if ($to_branch == null){
-                return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
-            }
 
-            $to_branch_id = $to_branch->getId();
+        if ($to_hub > 0){
+            if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                $to_branch = Branch::getParentById($auth_data['branch']['id']);
+                if ($to_branch == null) {
+                    return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+                }
+
+                $to_branch_id = $to_branch->getId();
+            } else if ($to_branch_id == null){
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS . ': Destination branch');
+            }
+        }else{
+            $to_branch_id = $auth_data['branch']['id'];
         }
 
         //parcel no_of_package validation
