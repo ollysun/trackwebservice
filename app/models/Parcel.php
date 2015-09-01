@@ -182,6 +182,12 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $modified_date;
 
     /**
+     *
+     * @var integer
+     */
+    protected $bank_account_id;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
