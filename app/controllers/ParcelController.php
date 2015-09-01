@@ -445,25 +445,31 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER, Role::DISPATCHER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = ($this->auth->getUserType() == Role::SWEEPER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
         $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $other_id = ($this->auth->getUserType() == Role::SWEEPER) ? $admin_id : $held_by_id;
-        $other_role_id = ($this->auth->getUserType() == Role::SWEEPER) ? Role::OFFICER : Role::SWEEPER;
-        $other = Admin::getById($other_id, $other_role_id);
-        if ($other == false){
-            if ($this->auth->getUserType() == Role::SWEEPER) {
+        //checking if the other user is valid
+        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
+        $other = Admin::getById($other_id);
+        if ($other != false){
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && $other->getRoleId() != Role::OFFICER) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
-            } else {
-                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER);
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && $this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+        }else{
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if ($this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
         }
 
@@ -561,14 +567,31 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToBeingDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = ($this->auth->getUserType() == Role::DISPATCHER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
         $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
         if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        //checking if the other user is valid
+        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
+        $other = Admin::getById($other_id);
+        if ($other != false){
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && $other->getRoleId() != Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && $this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+        }else{
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if ($this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
@@ -603,7 +626,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getClientId();
