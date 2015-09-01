@@ -37,9 +37,9 @@ class AdminController extends ControllerBase {
 
         $admin = Admin::fetchByIdentifier($email, $staff_id);
         if ($admin != false){
-            if ($admin->getEmail() == $email){
+            if ($admin['auth']['email'] == $email){
                 return $this->response->sendError(ResponseMessage::EXISTING_EMAIL);
-            }else if ($admin->getStaffId() == $staff_id){
+            }else if ($admin['detail']['staff_id'] == $staff_id){
                 return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
             }
         }
@@ -61,40 +61,6 @@ class AdminController extends ControllerBase {
             return $this->response->sendSuccess(['id' => $admin->getId()]);
         }
         return $this->response->sendError();
-    }
-
-    public function loginAction(){
-        $identifier = $this->request->getPost('identifier'); //email or staff id
-        $password = $this->request->getPost('password');
-
-        if (in_array(null, array($identifier, $password))){
-            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
-        }
-
-        $admin = Admin::fetchLoginData($identifier);
-        if ($admin != false){
-            if ($this->security->checkHash($password, $admin['password'])){
-                if ($this->auth->clientTokenExists($admin['id'])) {
-                    $this->auth->loadTokenData($admin['id']);
-                    $token = $this->auth->getToken();
-                } else {
-                    $token = $this->auth->generateToken();
-                }
-
-                unset($admin['password']);
-                $role_id = ($admin['status'] == Status::ACTIVE) ? $admin['role_id'] : Role::INACTIVE_USER;
-
-                $this->auth->saveTokenData($admin['id'],[
-                    Auth::L_EMAIL => $admin['email'],
-                    Auth::L_USER_TYPE => $role_id,
-                    Auth::L_TOKEN => $token,
-                    Auth::L_DATA => $admin
-                ]);
-
-                return $this->response->sendSuccess($admin);
-            }
-        }
-        return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
     public function getAllAction(){
@@ -139,38 +105,17 @@ class AdminController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
     }
 
-    public function changePasswordAction(){
-        $password = $this->request->getPost('password');
-
-        if ($password == null) {
-            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
-        }
-
-        if (strlen($password) < MIN_PASSWORD_LENGTH) {
-            return $this->response->sendError(ResponseMessage::PASSWORD_TOO_SMALL);
-        }
-
-        $admin = Admin::findFirst(array(
-            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
-            'bind' => array('id' => $this->auth->getClientId())
-        ));
-        if ($admin != false) {
-            $admin->changePassword($password);
-            if ($admin->save()) {
-                return $this->response->sendSuccess('');
-            }
-        }
-        return $this->response->sendError();
-    }
-
     public function changeStatusAction(){
+        //todo: I am here
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
         $status = $this->request->getPost('status');
 
         if ($status == null) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $admin = Admin::findFirst(array(
+        $admin = UserAuth::findFirst(array(
             "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
             'bind' => array('id' => $this->auth->getClientId())
         ));
@@ -181,29 +126,6 @@ class AdminController extends ControllerBase {
             }
         }
         return $this->response->sendError();
-    }
-
-    public function resetPasswordAction(){
-
-    }
-
-    public function validateAction(){
-        $temp = $this->request->getQuery('identifier');
-        $identifier = !empty($temp) ? $temp : $this->auth->getEmail(); //email or staff id
-        $password = $this->request->getQuery('password');
-
-        if (in_array(null, array($identifier, $password))){
-            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
-        }
-
-        $admin = Admin::fetchLoginData($identifier);
-        if ($admin != false){
-            if ($this->security->checkHash($password, $admin['password'])){
-                unset($admin['password']);
-               return $this->response->sendSuccess($admin);
-           }
-        }
-        return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
 }
