@@ -5,7 +5,7 @@ class Emailer {
     const HTML_HEADERS = "
 MIME-Version: 1.0\r\n
 From: {{from_name}} <{{from_email}}>\r\n
-To: <{{to_email}}>\r\n
+To: <{{to_email}}> \r\n
 Subject: {{subject}} \r\n
 Content-type: text/html; charset=iso-8859-1\r\n
     ";
@@ -18,7 +18,7 @@ Content-type: text/html; charset=iso-8859-1\r\n
         $headers = str_replace('{{subject}}', $subject, $headers);
 
         $message = self::getActualMessage($message, $msg_params);
-        return @mail($email, $subject, $message, $headers);
+        return @mail($email, $subject, $message, $headers, '-f'.$from_email);
     }
 
     private static function getActualMessage($message, $params){
@@ -27,4 +27,4 @@ Content-type: text/html; charset=iso-8859-1\r\n
         }
         return $message;
     }
-} 
+}
