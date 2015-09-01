@@ -545,6 +545,19 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field bank_account_id
+     *
+     * @param string $bank_account_id
+     * @return $this
+     */
+    public function setBankAccountId($bank_account_id)
+    {
+        $this->bank_account_id = $bank_account_id;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -824,6 +837,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field bank_account_id
+     *
+     * @return string
+     */
+    public function getBankAccountId(){
+        return $this->bank_account_id;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -839,6 +861,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('delivery_type', 'Delivery_type', 'id', array('alias' => 'Delivery_type'));
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
+        $this->belongsTo('bank_account_id', 'Bank_Account', 'id', array('alias' => 'Bank_Account'));
     }
 
     /**
@@ -890,7 +913,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'pos_trans_id' => 'pos_trans_id',
             'waybill_number' => 'waybill_number',
             'created_date' => 'created_date',
-            'modified_date' => 'modified_date'
+            'modified_date' => 'modified_date',
+            'bank_account_id' => 'bank_account_id'
         );
     }
 
@@ -923,14 +947,15 @@ class Parcel extends \Phalcon\Mvc\Model
             'pos_trans_id' => $this->getPosTransId(),
             'waybill_number' => $this->getWaybillNumber(),
             'created_date' => $this->getCreatedDate(),
-            'modified_date' => $this->getModifiedDate()
+            'modified_date' => $this->getModifiedDate(),
+            'bank_account_id' => $this->getBankAccountId()
         );
     }
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -956,6 +981,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedBy($created_by);
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
+        $this->setBankAccountId($bank_account_id);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -988,6 +1014,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedBy($created_by);
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
+        $this->setBankAccountId(null);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -1183,6 +1210,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
             $columns[] = 'Admin.*';
         }
+        if (isset($fetch_with['with_bank_account'])){
+            $columns[] = 'BankAccount.*';
+            $builder->leftJoin('BankAccount', 'BankAccount.id = Parcel.bank_account_id');
+            $columns[] = 'Bank.*';
+            $builder->leftJoin('Bank', 'Bank.id = BankAccount.bank_id');
+        }
 
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
         if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
@@ -1227,6 +1260,10 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel['receiver_address'] = $item->receiverAddress->getData();
                     $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
                     $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
+                }
+                if (isset($fetch_with['with_bank_account'])) {
+                    $parcel['bank_account'] = $item->bankAccount->getData();
+                    $parcel['bank_account']['bank'] = $item->bank->getData();
                 }
             }
             $result[] = $parcel;
@@ -1354,9 +1391,9 @@ class Parcel extends \Phalcon\Mvc\Model
             }
 
             //saving a bank account if any was provided
+            $bank_account_obj = new BankAccount();
+            $is_existing = false;
             if ($bank_account != null) {
-                $bank_account_obj = new BankAccount();
-                $is_existing = false;
                 if ($check) {
                     if ($bank_account['id'] != null) {
                         $bank_account_obj = BankAccount::fetchById($bank_account['id']);
@@ -1378,7 +1415,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
             //finally saving the parcel
-
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
@@ -1388,7 +1424,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId()
                     );
                 $check = $this->save();
             }

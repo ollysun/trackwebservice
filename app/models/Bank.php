@@ -91,8 +91,15 @@ class Bank extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'name' => 'name'
+        );
+    }
+
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'name' => $this->getName()
         );
     }
 
