@@ -528,4 +528,18 @@ class Admin extends \Phalcon\Mvc\Model
 
         return $admin;
     }
+
+    public static function getById($id, $role_id=null){
+        $condition = 'id = :id: AND status = :status:';
+        $bind = array('id' => $id, 'status' => Status::ACTIVE);
+
+        if ($role_id != null){
+            $condition .= ' AND role_id=:role_id:';
+            $bind['role_id'] = $role_id;
+        }
+        return Admin::findFirst(array(
+            $condition,
+            'bind' => $bind
+        ));
+    }
 }

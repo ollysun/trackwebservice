@@ -53,6 +53,9 @@ class ResponseMessage
     const PARCEL_ALREADY_FOR_BEING_DELIVERED = 'Parcel already being delivered';
     const PARCEL_ALREADY_DELIVERED = 'Parcel already delivered';
     const PARCEL_NOT_FOR_DELIVERY = 'Parcel not for delivery';
+    const INVALID_SWEEPER_OR_DISPATCHER = 'Invalid sweeper or dispatcher provided';
+    const INVALID_OFFICER = 'Invalid officer provided';
+    const PARCEL_NOT_IN_OFFICER_BRANCH = 'Parcel not in officer\'s branch';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';

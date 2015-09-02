@@ -12,7 +12,7 @@ class AdminController extends ControllerBase {
         $email = $this->request->getPost('email');
         $fullname = $this->request->getPost('fullname');
         $phone = $this->request->getPost('phone');
-        $password = '123456'; //auto-generated
+        $password = $this->auth->generateToken(6);
 
         if (in_array(null, array($email, $role_id, $staff_id, $fullname, $password))){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -56,7 +56,9 @@ class AdminController extends ControllerBase {
                     'link' => 'staging-courierplusng.cottacush.com/site/changePassword?ican='.md5($admin->getId()).'&salt='.$admin->getId(),
                     'year'=> date('Y')
                 ],
-                'Courier Plus', EmailMessage::DEFAULT_FROM_EMAIL, $email
+                'Courier Plus',
+                EmailMessage::DEFAULT_FROM_EMAIL,
+                $email
             );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
         }

@@ -65,6 +65,7 @@ class ParcelController extends ControllerBase {
         $parcel = (isset($payload['parcel'])) ? $payload['parcel'] : null;
         $to_hub = (isset($payload['to_hub'])) ? $payload['to_hub'] : null;
         $is_corporate_lead = (isset($payload['is_corporate_lead'])) ? $payload['is_corporate_lead'] : null;
+        $to_branch_id = (isset($payload['to_branch_id'])) ? $payload['to_branch_id'] : null;
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -72,20 +73,26 @@ class ParcelController extends ControllerBase {
 
         $auth_data = $this->auth->getData();
 
-        //Ensuring the officer is an EC officer
-        if ($auth_data['branch']['branch_type'] != BranchType::EC){
+        //Ensuring the officer is an EC or HUB officer
+        if (!in_array($auth_data['branch']['branch_type'], [BranchType::EC, BranchType::HUB])){
             return $this->response->sendAccessDenied();
         }
 
         //determining destination branch
-        $to_branch_id = $auth_data['branch']['id'];
-        if ($to_hub > 0){
-            $to_branch = Branch::getParentById($auth_data['branch']['id']);
-            if ($to_branch == null){
-                return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
-            }
 
-            $to_branch_id = $to_branch->getId();
+        if ($to_hub > 0){
+            if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                $to_branch = Branch::getParentById($auth_data['branch']['id']);
+                if ($to_branch == null) {
+                    return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+                }
+
+                $to_branch_id = $to_branch->getId();
+            } else if ($to_branch_id == null){
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS . ': Destination branch');
+            }
+        }else{
+            $to_branch_id = $auth_data['branch']['id'];
         }
 
         //parcel no_of_package validation
@@ -134,7 +141,8 @@ class ParcelController extends ControllerBase {
                             'state' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['state']['name'])) : '',
                             'country' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['country']['name'])) : '',
                             'email' => (isset($sender['email'])) ? $sender['email'] : '',
-                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : ''
+                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : '',
+                            'year' => date('Y')
                         ],
                         'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']',
                         ''
@@ -254,6 +262,7 @@ class ParcelController extends ControllerBase {
         $with_receiver = $this->request->getQuery('with_receiver');
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
         $with_holder = $this->request->getQuery('with_holder');
+        $with_bank_account = $this->request->getQuery('with_bank_account');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -272,6 +281,7 @@ class ParcelController extends ControllerBase {
         if (!is_null($with_sender_address)){ $fetch_with['with_sender_address'] = true; }
         if (!is_null($with_receiver_address)){ $fetch_with['with_receiver_address'] = true; }
         if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
+        if (!is_null($with_bank_account)){ $fetch_with['with_bank_account'] = true; }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
@@ -444,15 +454,32 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER, Role::DISPATCHER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = ($this->auth->getUserType() == Role::SWEEPER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
         $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        //checking if the other user is valid
+        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
+        $other = Admin::getById($other_id);
+        if ($other != false){
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && $other->getRoleId() != Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && $this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+        }else{
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if ($this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
@@ -465,8 +492,14 @@ class ParcelController extends ControllerBase {
                 continue;
             }
 
+            $auth_data = $this->auth->getData();
+            $user_branch_id = $auth_data['branch_id']; // logged on user's branch
+
             if ($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_TRANSIT;
+                continue;
+            } else if (($parcel->getFromBranchId() != $other->getBranchId() and $this->auth->getUserType() == Role::SWEEPER) or ($parcel->getFromBranchId() != $user_branch_id and $this->auth->getUserType() == Role::OFFICER)){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                 continue;
             } else if ($parcel->getStatus() != Status::PARCEL_FOR_SWEEPER){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_SWEEPING;
@@ -475,7 +508,8 @@ class ParcelController extends ControllerBase {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_HEADING_TO_DESTINATION;
                 continue;
             } else if (!HeldParcel::clearedForMovement($parcel->getId())){
-                return $this->response->sendError(ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT);
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT;
+                continue;
             }
 
             $check = $parcel->checkout(Status::PARCEL_IN_TRANSIT, $held_by_id, $admin_id, ParcelHistory::MSG_IN_TRANSIT);
@@ -542,14 +576,31 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToBeingDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = ($this->auth->getUserType() == Role::DISPATCHER) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
         $admin_id = ($this->auth->getUserType() == Role::OFFICER) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
 
         if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        //checking if the other user is valid
+        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
+        $other = Admin::getById($other_id);
+        if ($other != false){
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && $other->getRoleId() != Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && $this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+        }else{
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            } else if ($this->auth->getUserType() == Role::OFFICER) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
@@ -584,7 +635,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getClientId();
