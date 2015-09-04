@@ -188,6 +188,12 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $bank_account_id;
 
     /**
+     *
+     * @var integer
+     */
+    protected $is_payment_deferred;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -553,12 +559,25 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * Method to set the value of field bank_account_id
      *
-     * @param string $bank_account_id
+     * @param int $bank_account_id
      * @return $this
      */
     public function setBankAccountId($bank_account_id)
     {
         $this->bank_account_id = $bank_account_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field is_payment_deferred
+     *
+     * @param int $is_payment_deferred
+     * @return $this
+     */
+    public function setIsPaymentDeferred($is_payment_deferred)
+    {
+        $this->is_payment_deferred = $is_payment_deferred;
 
         return $this;
     }
@@ -845,10 +864,21 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * Returns the value of field bank_account_id
      *
-     * @return string
+     * @return int
      */
-    public function getBankAccountId(){
+    public function getBankAccountId()
+    {
         return $this->bank_account_id;
+    }
+
+    /**
+     * Returns the value of field is_payment_deferred
+     *
+     * @return int
+     */
+    public function getIsPaymentDeferred()
+    {
+        return $this->is_payment_deferred;
     }
 
     /**
@@ -920,7 +950,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number' => 'waybill_number',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'bank_account_id' => 'bank_account_id'
+            'bank_account_id' => 'bank_account_id',
+            'is_payment_deferred' => 'is_payment_deferred'
         );
     }
 
@@ -954,14 +985,15 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number' => $this->getWaybillNumber(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
-            'bank_account_id' => $this->getBankAccountId()
+            'bank_account_id' => $this->getBankAccountId(),
+            'is_payment_deferred' => $this->getIsPaymentDeferred()
         );
     }
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_payment_deferred = 0
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -988,6 +1020,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
         $this->setBankAccountId($bank_account_id);
+        $this->setIsPaymentDeferred($is_payment_deferred);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -1021,6 +1054,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
         $this->setBankAccountId(null);
+        $this->setIsPaymentDeferred(0);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -1112,6 +1146,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         $where[] = $initial_cond;
 
+        if (isset($filter_by['is_payment_deferred'])){ $where[] = 'Parcel.is_payment_deferred = :is_payment_deferred:'; $bind['is_payment_deferred'] = $filter_by['is_payment_deferred'];}
         if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
         if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
         if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
@@ -1430,7 +1465,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId()
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
+                    $parcel_data['is_payment_deferred']
                     );
                 $check = $this->save();
             }
