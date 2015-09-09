@@ -5,6 +5,7 @@ class PaymentType extends \Phalcon\Mvc\Model
     const CASH = 1;
     const POS = 2;
     const CASH_AND_POS = 3;
+    const DEFERRED = 4;
     /**
      *
      * @var integer

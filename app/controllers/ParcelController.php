@@ -54,8 +54,7 @@ class ParcelController extends ControllerBase {
         "package_value": 200.00
     },
     "is_corporate_lead": 0,
-    "to_hub": 1,
-    "is_payment_deferred": 0
+    "to_hub": 1
 }';
         $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
@@ -172,7 +171,6 @@ class ParcelController extends ControllerBase {
     }
 
     private function getFilterParams(){
-        $is_payment_deferred = $this->request->getQuery('is_payment_deferred');
         $show_parents = $this->request->getQuery('show_parents');
         $parent_id = $this->request->getQuery('parent_id');
         $entity_type = $this->request->getQuery('entity_type');
@@ -211,7 +209,6 @@ class ParcelController extends ControllerBase {
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
-        if (!is_null($is_payment_deferred)){ $filter_by['is_payment_deferred'] = $is_payment_deferred; }
         if (!is_null($show_parents)){ $filter_by['show_parents'] = $show_parents; }
         if (!is_null($parent_id)){ $filter_by['parent_id'] = $parent_id; }
         if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
