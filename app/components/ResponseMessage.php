@@ -74,6 +74,9 @@ class ResponseMessage
     const BILLING_EXISTS = 'Weight range billing for zone already exists';
     const BILLING_NOT_EXISTS = 'Weight range billing for zone does not exists';
 
+    const PARCEL_ON_TELLER_ALREADY = 'Parcel is already on a teller';
+    const TELLER_ALREADY_USED = 'Teller has been uploaded already';
+
     const INVALID_VALUES = 'Invalid values provided';
 
     const INTERNAL_ERROR = 'An internal error has occurred';
