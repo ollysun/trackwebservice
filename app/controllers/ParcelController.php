@@ -104,6 +104,7 @@ class ParcelController extends ControllerBase {
         //parcel cash_amount and pos_amount sanitation
         switch($parcel['payment_type']){
             case PaymentType::CASH:
+            case PaymentType::DEFERRED:
                 $parcel['cash_amount'] = $parcel['amount_due'];
                 $parcel['pos_amount'] = 0.0;
                 break;
