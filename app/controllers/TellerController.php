@@ -31,7 +31,7 @@ class TellerController extends ControllerBase {
         $bad_parcels = array();
         $good_parcels = array();
 
-        //checkin gthe waybill_numbers
+        //checking the waybill_numbers
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
@@ -42,11 +42,12 @@ class TellerController extends ControllerBase {
             }
         }
         if(!empty($bad_parcels)){
-            return $this->response->sendError(['bad_parcels'=>$bad_parcels]);
+            return $this->response->sendError($waybill_number_arr);
         }
 
-        $teller = Teller::getTeller($bank_id, $teller_id);
+        $teller = Teller::getTeller($bank_id, $teller_no);
         if($teller === false) {
+            $teller = new Teller();
             $teller_id = $teller->saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $good_parcels, $paid_by, $created_by, $branch_id);
             if ($teller_id){
                 return $this->response->sendSuccess(['id' => $teller->getId()]);
@@ -55,7 +56,7 @@ class TellerController extends ControllerBase {
         else{
             return $this->response->sendError(ResponseMessage::TELLER_ALREADY_USED);
         }
-        return $this->response->sendError();
+        return $this->response->sendError($teller);
     }
 
     public function getOneAction(){

@@ -610,7 +610,7 @@ class Teller extends \Phalcon\Mvc\Model
         }
 
         $transactionManager->rollback();
-        return false;
+        return $parcel_id_arr;
     }
 
     public function getData(){
@@ -628,7 +628,7 @@ class Teller extends \Phalcon\Mvc\Model
 
     public static function getTeller($bank_id, $teller_no){
         return Teller::findFirst([
-            'bank_id = :bank_id: OR teller_no = :teller_no: ',
+            'bank_id = :bank_id: AND teller_no = :teller_no:',
             'bind' => array('bank_id' => $bank_id, 'teller_no' => $teller_no)
         ]);
     }

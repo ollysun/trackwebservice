@@ -188,4 +188,5 @@ class TellerParcel extends \Phalcon\Mvc\Model
             'bind' => ['parcel_id' => trim($parcel_id)]
         ]);
     }
+
 }
