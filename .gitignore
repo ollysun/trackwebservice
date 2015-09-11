@@ -2,5 +2,5 @@
 ### Phalcon template
 /app/cache/*
 !/app/cache/empty
-
+.idea
 

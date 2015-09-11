@@ -16,6 +16,11 @@ try {
     include __DIR__ . "/../app/config/global.php";
 
     /**
+     * import composer autoloader
+     */
+    include __DIR__ . "/../vendor/autoload.php";
+
+    /**
      * Read the configuration
      */
     if (getenv(TNT_DB_HOST) == false){
@@ -23,7 +28,6 @@ try {
     } else{
         $config = include __DIR__ . "/../app/config/config.php";
     }
-
 
     /**
      * Read auto-loader
@@ -43,5 +47,6 @@ try {
     echo $application->handle()->getContent();
 
 } catch (\Exception $e) {
+    var_dump($e);
     echo $e->getMessage();
 }

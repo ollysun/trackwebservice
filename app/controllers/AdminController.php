@@ -53,7 +53,7 @@ class AdminController extends ControllerBase {
                     'name' => $fullname,
                     'email' => $email,
                     'password' => $password,
-                    'link' => 'staging-courierplusng.cottacush.com/site/changePassword?ican='.md5($admin->getId()).'&salt='.$admin->getId(),
+                    'link' => $this->config->fe_base_url.'/site/changePassword?ican='.md5($admin->getId()).'&salt='.$admin->getId(),
                     'year'=> date('Y')
                 ],
                 'Courier Plus',

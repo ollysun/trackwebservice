@@ -20,5 +20,20 @@ return new \Phalcon\Config(array(
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
-    )
+    ),
+
+    'params' => array(
+
+        //TODO change to production config
+        'mailer' => array(
+            'mandrill_username' => 'yemi@cottacush.com',
+            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
+            'default_from' => ['sys@traceandtrack.com' => 'Cube'],
+            'smtp_host' => 'smtp.mandrillapp.com',
+            'smtp_port' => 587
+        ),
+    ),
+
+
+    'fe_base_url' => 'http://staging-courierplusng.cottacush'
 ));

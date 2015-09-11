@@ -1,5 +1,7 @@
 <?php
 
+use PhalconUtils\Mailer\MailerHandler;
+
 class EmailMessage extends \Phalcon\Mvc\Model
 {
     const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
@@ -211,32 +213,38 @@ class EmailMessage extends \Phalcon\Mvc\Model
         );
     }
 
-    public static function fetchActive($id){
+    public static function fetchActive($id)
+    {
         return EmailMessage::findFirst([
             'id = :id: AND status = :status:',
             'bind' => ['id' => $id, 'status' => Status::ACTIVE]
         ]);
     }
 
-    public static function send($id, $msg_params, $from_name, $from_email=self::DEFAULT_FROM_EMAIL, $to_email=null){
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $id
+     * @param $msg_params
+     * @param $from_name
+     * @param string $from_email
+     * @param null $to_email
+     * @return bool
+     */
+    public static function send($id, $msg_params, $from_name, $from_email = self::DEFAULT_FROM_EMAIL, $to_email = null)
+    {
         try {
             $email_msg = self::fetchActive($id);
             if ($email_msg == false) {
                 return false;
             }
-            $receiver_email = is_null($to_email) ? $email_msg->getToEmail(): $to_email;
+            $receiver_email = is_null($to_email) ? $email_msg->getToEmail() : $to_email;
 
-            return Emailer::send(
-                $receiver_email,
-                $email_msg->getSubject(),
-                $email_msg->getMessage(),
-                $from_email,
-                $from_name,
-                $msg_params
-            );
+            /** @var MailerHandler $mailer */
+            $mailer = \Phalcon\Di::getDefault()->getMailer();
+            return $mailer->send($email_msg->getMessage(), $email_msg->getMessage(), $email_msg->getSubject(), [$receiver_email => ''], [$from_email => $from_name], [], [], $msg_params);
         } catch (Exception $e) {
+            return false;
         }
-        return false;
     }
 
 
