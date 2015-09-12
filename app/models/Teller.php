@@ -542,6 +542,14 @@ class Teller extends \Phalcon\Mvc\Model
         return ['where' => $where, 'bind' => $bind];
     }
 
+
+    /**
+     * Returns the number of teller based on condition
+     *
+     * @param array
+     * @return int
+     * @author  Olawale Lawal
+     */
     public static function tellerCount($filter_by){
         $obj = new Teller();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -563,6 +571,22 @@ class Teller extends \Phalcon\Mvc\Model
         return intval($data[0]->teller_count);
     }
 
+    /**
+     * Initializes the details of the teller
+     *
+     * @param bank_id
+     * @param account_name
+     * @param account_no
+     * @param teller_no
+     * @param amount_paid
+     * @param paid_by
+     * @param created_by
+     * @param branch_id
+     * @param status
+     *
+     * @author  Olawale Lawal
+     */
+
     public function initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, $status){
 
         $this->setBankId($bank_id);
@@ -580,7 +604,23 @@ class Teller extends \Phalcon\Mvc\Model
         $this->setStatus($status);
     }
 
-    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $parcel_id_arr, $paid_by, $created_by, $branch_id) {
+    /**
+     * Saves the details of the teller
+     *
+     * @param bank_id
+     * @param account_name
+     * @param account_no
+     * @param teller_no
+     * @param amount_paid
+     * @param parcel_id_array
+     * @param paid_by
+     * @param created_by
+     * @param branch_id
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
+    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $parcel_id_array, $paid_by, $created_by, $branch_id) {
 
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -593,7 +633,7 @@ class Teller extends \Phalcon\Mvc\Model
 
             //saving the parcels with the teller id
             if ($check) {
-                foreach ($parcel_id_arr as $parcel_id){
+                foreach ($parcel_id_array as $parcel_id){
                     $teller_parcel = new TellerParcel();
                     $teller_parcel->setTransaction($transaction);
                     $teller_parcel->initData($this->getId(), $parcel_id);
@@ -610,7 +650,7 @@ class Teller extends \Phalcon\Mvc\Model
         }
 
         $transactionManager->rollback();
-        return $parcel_id_arr;
+        return $parcel_id_array;
     }
 
     /**
