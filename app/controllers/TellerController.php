@@ -2,6 +2,14 @@
 
 
 class TellerController extends ControllerBase {
+
+
+    /**
+     * Creates a teller using the specified details.
+     * It returns the id of the created teller, if successful or the error, if not.
+     *
+     * @return int
+     */
     public function addAction(){
         $bank_id = $this->request->getPost('bank_id');
         $account_name = $this->request->getPost('account_name');
@@ -14,10 +22,10 @@ class TellerController extends ControllerBase {
         $auth_data = $this->auth->getData();
         $branch_id = $auth_data['branch']['id'];
         $created_by = $this->auth->getClientId();
-        $paid_by = empty($paid_by) ? $created_by : $paid_by;
+        $paid_by = isset($paid_by) ? $paid_by: $created_by;
 
 
-        if (in_array(null, array($bank_id, $account_no, $teller_no, $amount_paid, $waybill_numbers))){
+        if (!isset($bank_id, $account_no, $teller_no, $amount_paid, $waybill_numbers))){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -31,7 +39,7 @@ class TellerController extends ControllerBase {
         $bad_parcels = array();
         $good_parcels = array();
 
-        //checking the waybill_numbers
+        //checking the waybill_numbers for validity
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
@@ -41,10 +49,11 @@ class TellerController extends ControllerBase {
                 $good_parcels[] = $parcel->getId();
             }
         }
-        if(!empty($bad_parcels)){
-            return $this->response->sendError($waybill_number_arr);
+        if(isset($bad_parcels)){
+            return $this->response->sendError($bad_parcels);
         }
 
+        //check for the pre-exsitence of the teller no breofre the creatio nof the teller
         $teller = Teller::getTeller($bank_id, $teller_no);
         if($teller === false) {
             $teller = new Teller();
@@ -59,6 +68,13 @@ class TellerController extends ControllerBase {
         return $this->response->sendError($teller);
     }
 
+    /**
+     * Returns the details of a teller.
+     *
+     * @param id
+     * @author  Olawale Lawal
+     * @return int
+     */
     public function getOneAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
@@ -70,11 +86,17 @@ class TellerController extends ControllerBase {
 
         $teller = Teller::fetchOne($id);
         if ($teller != false){
-            return $this->response->sendSuccess($teller->get);
+            return $this->response->sendSuccess($teller->getData());
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
+    /**
+     * Arranges the filter for use
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
     private function getFilterParams(){
         $bank_id = $this->request->getQuery('bank_id');
         $teller_number = $this->request->getQuery('teller_number');
@@ -108,6 +130,13 @@ class TellerController extends ControllerBase {
         return $filter_by;
     }
 
+
+    /**
+     * Returns the details of teller meeting a set of filter criteria.
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
     public function getAllAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 
@@ -148,6 +177,12 @@ class TellerController extends ControllerBase {
         return $this->response->sendSuccess($result);
     }
 
+    /**
+     * Returns the number of tellers that meet a set of criteria.
+     *
+     * @author  Olawale Lawal
+     * @return int
+     */
     public function countAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
 

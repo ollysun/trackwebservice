@@ -613,6 +613,12 @@ class Teller extends \Phalcon\Mvc\Model
         return $parcel_id_arr;
     }
 
+    /**
+     * Returns the details of the teller
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
     public function getData(){
         return array(
             'id' => $this->getId(),
@@ -626,6 +632,14 @@ class Teller extends \Phalcon\Mvc\Model
         );
     }
 
+    /**
+     * Searches for a teller
+     *
+     * @param bank_id
+     * @param teller_no
+     * @author  Olawale Lawal
+     * @return Teller
+     */
     public static function getTeller($bank_id, $teller_no){
         return Teller::findFirst([
             'bank_id = :bank_id: AND teller_no = :teller_no:',
