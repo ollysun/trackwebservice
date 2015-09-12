@@ -6,6 +6,7 @@ class Role extends \Phalcon\Mvc\Model
     const OFFICER = 2;
     const SWEEPER = 3;
     const DISPATCHER = 4;
+    const GROUNDSMAN = 5;
     const INACTIVE_USER = -1;
     /**
      *
@@ -95,7 +96,7 @@ class Role extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'name' => 'name'
         );
     }

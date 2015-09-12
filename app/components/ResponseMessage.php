@@ -43,6 +43,8 @@ class ResponseMessage
     const PARCEL_ALREADY_IN_ARRIVAL = 'Parcel already in arrival';
     const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
+    const PARCEL_ALREADY_CANCELLED = 'Parcel already cancelled';
+    const PARCEL_CANNOT_BE_CANCELLED = 'Parcel cannot be cancelled';
     const RECORD_DOES_NOT_EXIST = 'Record does not exist';
     const REGION_DOES_NOT_EXIST = 'Region does not exist';
     const CITY_DOES_NOT_EXIST = 'City does not exist';
