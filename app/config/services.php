@@ -7,10 +7,9 @@ use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 use Phalcon\Session\Adapter\Files as SessionAdapter;
-use Phalcon\Cache\Backend\File as BackFile;
-use Phalcon\Cache\Frontend\Data as FrontData;
 use Phalcon\Mvc\Dispatcher as MvcDispatcher;
 use Phalcon\Events\Manager as EventsManager;
+use PhalconUtils\Mailer\MailerHandler;
 
 /**
  * The FactoryDefault Dependency Injector automatically register the right services providing a full stack framework
@@ -76,7 +75,7 @@ $di->set('session', function () {
 /**
  * Adding custom Response class [PackedResponse]
  */
-$di->set('response', function() {
+$di->set('response', function () {
     $response = new PackedResponse();
     return $response;
 });
@@ -84,7 +83,7 @@ $di->set('response', function() {
 /**
  * Added cache functionality for data
  */
-$di->set('cache', function () use ($config){
+$di->set('cache', function () use ($config) {
     #todo: use memcached after
     return \phpFastCache();
 }, true);
@@ -92,50 +91,56 @@ $di->set('cache', function () use ($config){
 /**
  * Added Auth functionality as a service
  */
-$di->set('auth', function(){
+$di->set('auth', function () {
     $auth = new Auth();
     return $auth;
 }, true);
 
 /**
+ *Register Mailer Service
+ */
+$di->set('mailer', function () use ($config) {
+    return new MailerHandler(
+        $config->params->mailer->mandrill_username,
+        $config->params->mailer->mandrill_password,
+        $config->params->mailer->smtp_host,
+        $config->params->mailer->smtp_port,
+        $config->params->mailer->default_from);
+});
+
+
+/**
  * Added Dispatcher service with events handled
  */
-$di->set('dispatcher', function() {
+$di->set('dispatcher', function () {
+
     $events_manager = new EventsManager();
+    $events_manager->attach('dispatch:beforeException', function ($event, $dispatcher) {
+        $di = FactoryDefault::getDefault();
+        echo $di['response']->sendError(ResponseMessage::INTERNAL_ERROR)->getContent();
+        exit();
+    });
 
-//    $events_manager->attach('dispatch:beforeException', function($event, $dispatcher){
-//        /**
-//         * @var MvcDispatcher $dispatcher
-//         */
-//        $di = FactoryDefault::getDefault();
-//        echo $di['response']->sendError(ResponseMessage::INTERNAL_ERROR)->getContent();
-//        exit();
-//    });
-
-    $events_manager->attach("dispatch:beforeExecuteRoute", function($event, $dispatcher){
-//        /**
-//         * @var MvcDispatcher $dispatcher
-//         */
+    $events_manager->attach("dispatch:beforeExecuteRoute", function ($event, $dispatcher) {
         $di = FactoryDefault::getDefault();
         $auth = $di['auth'];
         if (!$auth->skipAuth(array(
             array('controller' => 'ref'),
             array('controller' => 'admin', 'action' => 'login'),
             array('controller' => 'user', 'action' => 'login')
-        )))
-        {
+        ))
+        ) {
             $i = $di['request']->getHeader('i');
             $a = $di['request']->getHeader('a');
 
             $auth->loadTokenData($i);
 
             $token_check = $auth->checkToken($a);
-            if ($token_check == Auth::STATUS_OK){
-//                $auth->resetToken();
-            } else if ($token_check == Auth::STATUS_ACCESS_DENIED){
+            if ($token_check == Auth::STATUS_OK) {
+            } else if ($token_check == Auth::STATUS_ACCESS_DENIED) {
                 echo $di['response']->sendAccessDenied()->getContent();
                 exit();
-            } else if ($token_check == Auth::STATUS_LOGIN_REQUIRED){
+            } else if ($token_check == Auth::STATUS_LOGIN_REQUIRED) {
                 echo $di['response']->sendLoginRequired()->getContent();
                 exit();
             } else {

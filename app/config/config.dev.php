@@ -24,5 +24,17 @@ return new \Phalcon\Config(array(
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
-    )
+    ),
+
+    'params' => array(
+        'mailer' => array(
+            'mandrill_username' => 'yemi@cottacush.com',
+            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
+            'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
+            'smtp_host' => 'smtp.mandrillapp.com',
+            'smtp_port' => 587
+        ),
+    ),
+
+    'fe_base_url' => 'http://local.courierplus.tnt.com'
 ));
