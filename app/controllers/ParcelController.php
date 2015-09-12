@@ -703,7 +703,7 @@ class ParcelController extends ControllerBase {
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED){
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
-            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, ServiceConstant::PARCEL_FOR_DELIVERY]){
+            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, ServiceConstant::PARCEL_FOR_DELIVERY])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
