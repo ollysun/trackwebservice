@@ -302,14 +302,14 @@ class Branch extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'name' => 'name', 
+            'id' => 'id',
+            'name' => 'name',
             'code' => 'code',
             'branch_type' => 'branch_type',
             'state_id' => 'state_id',
             'address' => 'address',
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
             'status' => 'status'
         );
     }
@@ -491,7 +491,7 @@ class Branch extends \Phalcon\Mvc\Model
         foreach($data as $item){
             $branch = $item->branch->getData();
             $parent = Branch::getParentById($item->branch->getId());
-            if ($fetch_with['with_parent']){
+            if(isset($fetch_with['with_parent'])) {
                 $branch['parent'] = ($parent == null) ? null : $parent->getData();
             }
             $branch['state'] = $item->state->getData();
