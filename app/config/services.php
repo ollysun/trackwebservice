@@ -109,13 +109,17 @@ $di->set('mailer', function () use ($config) {
 });
 
 
-
 /**
  * Added Dispatcher service with events handled
  */
 $di->set('dispatcher', function () {
-    $events_manager = new EventsManager();
 
+    $events_manager = new EventsManager();
+    $events_manager->attach('dispatch:beforeException', function ($event, $dispatcher) {
+        $di = FactoryDefault::getDefault();
+        echo $di['response']->sendError(ResponseMessage::INTERNAL_ERROR)->getContent();
+        exit();
+    });
 
     $events_manager->attach("dispatch:beforeExecuteRoute", function ($event, $dispatcher) {
         $di = FactoryDefault::getDefault();
