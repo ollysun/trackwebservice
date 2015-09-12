@@ -690,7 +690,6 @@ class ParcelController extends ControllerBase {
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
-        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number){
@@ -715,6 +714,49 @@ class ParcelController extends ControllerBase {
             }
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
 
+    /**
+     * Marks a shipment for GROUNDSMAN
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
+    public function assignToGroundsmanAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $admin_id = $this->auth->getClientId();
+
+        if (!isset($waybill_numbers, $admin_id)){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() != Status::PARCEL_ARRIVAL){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
+                continue;
+            } else if ($parcel->getToBranchId() != $auth_data['branch_id']) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 }
