@@ -156,7 +156,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $id = $this->request->getQuery('id');
 
@@ -251,7 +251,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -300,7 +300,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $filter_by = $this->getFilterParams();
 
@@ -323,7 +323,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToForSweeperAction(){
-        $this->auth->allowOnly([Role::OFFICER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
@@ -406,7 +406,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToArrivalAction(){
-        $this->auth->allowOnly([Role::OFFICER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $held_by_id = $this->request->getPost('held_by_id');
@@ -455,7 +455,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToInTransitAction(){
-        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::SWEEPER, Role::OFFICER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
@@ -524,7 +524,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToForDeliveryAction(){
-        $this->auth->allowOnly([Role::OFFICER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $held_by_id = $this->request->getPost('held_by_id');
@@ -577,7 +577,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToBeingDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
@@ -636,7 +636,7 @@ class ParcelController extends ControllerBase {
     }
 
     public function moveToDeliveredAction(){
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getClientId();
@@ -671,5 +671,50 @@ class ParcelController extends ControllerBase {
             }
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /**
+     * Marks a shipment as CANCELLED
+     *
+     * @author  Olawale Lawal
+     * @return array
+     */
+    public function cancelAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $admin_id = $this->auth->getClientId();
+
+        if (!isset($waybill_numbers, $admin_id)){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number){
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getStatus() == Status::PARCEL_CANCELLED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
+                continue;
+            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, ServiceConstant::PARCEL_FOR_DELIVERY]){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED);
+            if (!$check){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+
     }
 }
