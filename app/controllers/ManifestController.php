@@ -2,6 +2,12 @@
 
 
 class ManifestController extends ControllerBase {
+    /**
+     * This action is used to acknowledge the receipt of the manifest at the destination and can set the status of the
+     * manifest to resolved (if all is well) or has_issue(if there is an issue maybe the parcels are not completely
+     * cleared).
+     * @return $this
+     */
     public function receiveAction(){
         $this->auth->allowOnly([Role::OFFICER]);
 
@@ -32,27 +38,28 @@ class ManifestController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
+    /**
+     * Fetches the details of a manifest. More info can be hydrated using certain params starting with 'with'.
+     * @return $this
+     */
     public function getOneAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
+        $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
+
+        foreach ($fetch_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
+
         $manifest_id = $this->request->getQuery('manifest_id');
-
-        $with_from_branch = $this->request->getQuery('with_from_branch');
-        $with_to_branch = $this->request->getQuery('with_to_branch');
-        $with_sender_admin = $this->request->getQuery('with_sender_admin');
-        $with_receiver_admin = $this->request->getQuery('with_receiver_admin');
-        $with_holder = $this->request->getQuery('with_holder');
-
         if (is_null($manifest_id)){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $fetch_with = [];
-        if (!is_null($with_from_branch)){ $fetch_with['with_from_branch'] = true; }
-        if (!is_null($with_to_branch)){ $fetch_with['with_to_branch'] = true; }
-        if (!is_null($with_sender_admin)){ $fetch_with['with_sender_admin'] = true; }
-        if (!is_null($with_receiver_admin)){ $fetch_with['with_receiver_admin'] = true; }
-        if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
 
         $manifest = Manifest::fetchOne($manifest_id, $fetch_with);
         if ($manifest != false){
@@ -61,41 +68,37 @@ class ManifestController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
+    /**
+     * This fetches a paginated list of manifest using filter params. More info can be hydrated using certain params starting with 'with'.
+     * @return $this
+     */
     public function getAllAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
-        $type_id = $this->request->getQuery('type_id');
-        $from_branch_id = $this->request->getQuery('from_branch_id');
-        $to_branch_id = $this->request->getQuery('to_branch_id');
-        $sender_admin_id = $this->request->getQuery('sender_admin_id');
-        $receiver_admin_id = $this->request->getQuery('receiver_admin_id');
-        $held_by_id = $this->request->getQuery('held_by_id');
-        $status = $this->request->getQuery('status');
+        $filter_params = [
+            'type_id', 'from_branch_id', 'to_branch_id', 'sender_admin_id', 'receiver_admin_id', 'held_by_id', 'status'
+        ];
 
-        $with_from_branch = $this->request->getQuery('with_from_branch');
-        $with_to_branch = $this->request->getQuery('with_to_branch');
-        $with_sender_admin = $this->request->getQuery('with_sender_admin');
-        $with_receiver_admin = $this->request->getQuery('with_receiver_admin');
-        $with_holder = $this->request->getQuery('with_holder');
+        $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
 
         $filter_by = [];
-        if (!is_null($type_id)){ $filter_by['type_id'] = $type_id; }
-        if (!is_null($from_branch_id)){ $filter_by['from_branch_id'] = $from_branch_id; }
-        if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
-        if (!is_null($sender_admin_id)){ $filter_by['sender_admin_id'] = $sender_admin_id; }
-        if (!is_null($receiver_admin_id)){ $filter_by['receiver_admin_id'] = $receiver_admin_id; }
-        if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
-        if (!is_null($status)){ $filter_by['status'] = $status; }
+        foreach ($filter_params as $param){
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
 
         $fetch_with = [];
-        if (!is_null($with_from_branch)){ $fetch_with['with_from_branch'] = true; }
-        if (!is_null($with_to_branch)){ $fetch_with['with_to_branch'] = true; }
-        if (!is_null($with_sender_admin)){ $fetch_with['with_sender_admin'] = true; }
-        if (!is_null($with_receiver_admin)){ $fetch_with['with_receiver_admin'] = true; }
-        if (!is_null($with_holder)){ $fetch_with['with_holder'] = true; }
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
 
         return $this->response->sendSuccess(Manifest::fetchAll($offset, $count, $filter_by, $fetch_with));
     }
