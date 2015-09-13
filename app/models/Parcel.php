@@ -1534,7 +1534,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function checkout($status, $held_by_id, $admin_id, $history_desc){
+    public function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1551,7 +1551,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
-                $held_parcel->initData($this->getId(), $held_by_id);
+                $held_parcel->initData($this->getId(), $held_by_id, $manifest_id);
                 if($held_parcel->save()){
                     $parcel_history = new ParcelHistory();
                     $parcel_history->setTransaction($transaction);
@@ -1619,6 +1619,26 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number = :waybill_number:',
             'bind' => ['waybill_number' => trim(strtoupper($waybill_number))]
         ]);
+    }
+
+    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc=false){
+        $obj = new Parcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Parcel')
+            ->inWhere('waybill_number', $waybill_number_arr);
+        $data = $builder->getQuery()->execute();
+
+        if ($make_assoc){
+            $assoc_data = [];
+            /**
+             * @var Parcel $parcel
+             */
+            foreach($data as $parcel){
+                $assoc_data[$parcel->getWaybillNumber()] = $parcel;
+            }
+            return $assoc_data;
+        }
+        return $data;
     }
 
     public function createSub(&$transaction){
@@ -1716,6 +1736,11 @@ class Parcel extends \Phalcon\Mvc\Model
 
                     if ($item->getToBranchId() != $to_branch_id){
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_GOING_TO_BAG_LOC;
+                        continue;
+                    }
+
+                    if ($item->getFromBranchId() != $from_branch_id){
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 
