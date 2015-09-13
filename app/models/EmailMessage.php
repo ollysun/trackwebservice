@@ -5,9 +5,9 @@ use PhalconUtils\Mailer\MailerHandler;
 class EmailMessage extends \Phalcon\Mvc\Model
 {
     const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
+    const CORPORATE_LEAD = 'marketing_opportunity';
+    const USER_ACCOUNT_CREATION = 'staff_account_creation';
 
-    const CORPORATE_LEAD = 1;
-    const USER_ACCOUNT_CREATION = 2;
     /**
      *
      * @var integer
@@ -43,6 +43,12 @@ class EmailMessage extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $status;
+
+    /**
+     *
+     * @var string
+     */
+    protected $email_message_code;
 
     /**
      * Method to set the value of field id
@@ -123,6 +129,19 @@ class EmailMessage extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Set Email Message code
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $email_message_code
+     * @return $this
+     */
+    public function setEmailMessageCode($email_message_code)
+    {
+
+        $this->email_message_code = $email_message_code;
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -183,6 +202,16 @@ class EmailMessage extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Get email message code
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return string
+     */
+    public function getEmailMessageCode()
+    {
+        return $this->email_message_code;
+    }
+
+    /**
      * @return EmailMessage[]
      */
     public static function find($parameters = array())
@@ -223,17 +252,20 @@ class EmailMessage extends \Phalcon\Mvc\Model
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $id
+     * @param $email_message_code
      * @param $msg_params
      * @param $from_name
      * @param string $from_email
      * @param null $to_email
      * @return bool
      */
-    public static function send($id, $msg_params, $from_name, $from_email = self::DEFAULT_FROM_EMAIL, $to_email = null)
+    public static function send($email_message_code, $msg_params, $from_name, $from_email = self::DEFAULT_FROM_EMAIL, $to_email = null)
     {
         try {
-            $email_msg = self::fetchActive($id);
+            $email_msg = self::findFirst([
+                'email_message_code = :email_message_code: AND status = :status:',
+                'bind' => ['email_message_code' => $email_message_code, 'status' => Status::ACTIVE]
+            ]);
             if ($email_msg == false) {
                 return false;
             }
