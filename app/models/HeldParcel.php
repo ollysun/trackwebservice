@@ -13,6 +13,12 @@ class HeldParcel extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
+    protected $manifest_id;
+
+    /**
+     *
+     * @var integer
+     */
     protected $parcel_id;
 
     /**
@@ -48,6 +54,19 @@ class HeldParcel extends \Phalcon\Mvc\Model
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field manifest_id
+     *
+     * @param integer $manifest_id
+     * @return $this
+     */
+    public function setManifestId($manifest_id)
+    {
+        $this->manifest_id = $manifest_id;
 
         return $this;
     }
@@ -128,6 +147,16 @@ class HeldParcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field manifest_id
+     *
+     * @return integer
+     */
+    public function getManifestId()
+    {
+        return $this->manifest_id;
+    }
+
+    /**
      * Returns the value of field parcel_id
      *
      * @return integer
@@ -182,6 +211,7 @@ class HeldParcel extends \Phalcon\Mvc\Model
      */
     public function initialize()
     {
+        $this->belongsTo('manifest_id', 'Manifest', 'id', array('alias' => 'Manifest'));
         $this->belongsTo('parcel_id', 'Parcel', 'id', array('alias' => 'Parcel'));
         $this->belongsTo('held_by_id', 'Admin', 'id', array('alias' => 'Admin'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
@@ -209,7 +239,8 @@ class HeldParcel extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
+            'manifest_id' => 'manifest_id',
             'parcel_id' => 'parcel_id', 
             'held_by_id' => 'held_by_id', 
             'created_date' => 'created_date', 
@@ -218,7 +249,20 @@ class HeldParcel extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($parcel_id, $held_by_id){
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'manifest_id' => $this->getManifestId(),
+            'parcel_id' => $this->getParcelId(),
+            'held_by_id' => $this->getHeldById(),
+            'created_date' => $this->getCreatedDate(),
+            'modified_date' => $this->getModifiedDate(),
+            'status' => $this->getStatus()
+        );
+    }
+
+    public function initData($parcel_id, $held_by_id, $manifest_id){
+        $this->setManifestId($manifest_id);
         $this->setParcelId($parcel_id);
         $this->setHeldById($held_by_id);
 
