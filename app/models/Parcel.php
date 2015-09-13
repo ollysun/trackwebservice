@@ -1102,6 +1102,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Admin.staff_id = :held_by_staff_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_staff_id'] = $filter_by['held_by_staff_id'];
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
+        }else if (isset($filter_by['manifest_id'])){
+            $where[] = 'HeldParcel.manifest_id = :manifest_id:';
+            $bind['manifest_id'] = $filter_by['manifest_id'];
         }
 
         $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
@@ -1175,7 +1178,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
         }else if (isset($filter_by['held_by_staff_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
@@ -1292,7 +1295,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
         }else if (isset($filter_by['held_by_staff_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
