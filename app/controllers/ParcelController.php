@@ -177,7 +177,8 @@ class ParcelController extends ControllerBase
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
-    private function getFilterParams(){
+    private function getFilterParams()
+    {
         $manifest_id = $this->request->getQuery('manifest_id');
         $show_parents = $this->request->getQuery('show_parents');
         $parent_id = $this->request->getQuery('parent_id');
@@ -217,43 +218,117 @@ class ParcelController extends ControllerBase
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
 
         $filter_by = [];
-        if (!is_null($manifest_id)){ $filter_by['manifest_id'] = $manifest_id; }
-        if (!is_null($show_parents)){ $filter_by['show_parents'] = $show_parents; }
-        if (!is_null($parent_id)){ $filter_by['parent_id'] = $parent_id; }
-        if (!is_null($entity_type)){ $filter_by['entity_type'] = $entity_type; }
-        if (!is_null($is_visible)){ $filter_by['is_visible'] = $is_visible; }
-        if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
-        if (!is_null($user_id)){ $filter_by['user_id'] = $user_id; }
-        if (!is_null($held_by_staff_id)){ $filter_by['held_by_staff_id'] = $held_by_staff_id; }
-        if (!is_null($held_by_id)){ $filter_by['held_by_id'] = $held_by_id; }
-        if (!is_null($to_branch_id)){ $filter_by['to_branch_id'] = $to_branch_id; }
-        if (!is_null($from_branch_id)){ $filter_by['from_branch_id'] = $from_branch_id; }
-        if (!is_null($parcel_type)){ $filter_by['parcel_type'] = $parcel_type; }
-        if (!is_null($sender_id)){ $filter_by['sender_id'] = $sender_id; }
-        if (!is_null($sender_address_id)){ $filter_by['sender_address_id'] = $sender_address_id; }
-        if (!is_null($receiver_id)){ $filter_by['receiver_id'] = $receiver_id; }
-        if (!is_null($receiver_address_id)){ $filter_by['receiver_address_id'] = $receiver_address_id; }
-        if (!is_null($status)){ $filter_by['status'] = $status; }
-        if (!is_null($min_weight)){ $filter_by['min_weight'] = $min_weight; }
-        if (!is_null($max_weight)){ $filter_by['max_weight'] = $max_weight; }
-        if (!is_null($min_amount_due)){ $filter_by['min_amount_due'] = $min_amount_due; }
-        if (!is_null($max_amount_due)){ $filter_by['max_amount_due'] = $max_amount_due; }
-        if (!is_null($cash_on_delivery)){ $filter_by['cash_on_delivery'] = $cash_on_delivery; }
-        if (!is_null($min_delivery_amount)){ $filter_by['min_delivery_amount'] = $min_delivery_amount; }
-        if (!is_null($max_delivery_amount)){ $filter_by['max_delivery_amount'] = $max_delivery_amount; }
-        if (!is_null($delivery_type)){ $filter_by['delivery_type'] = $delivery_type; }
-        if (!is_null($payment_type)){ $filter_by['payment_type'] = $payment_type; }
-        if (!is_null($shipping_type)){ $filter_by['shipping_type'] = $shipping_type; }
-        if (!is_null($min_cash_amount)){ $filter_by['min_cash_amount'] = $min_cash_amount; }
-        if (!is_null($max_cash_amount)){ $filter_by['max_cash_amount'] = $max_cash_amount; }
-        if (!is_null($min_pos_amount)){ $filter_by['min_pos_amount'] = $min_pos_amount; }
-        if (!is_null($max_pos_amount)){ $filter_by['max_pos_amount'] = $max_pos_amount; }
-        if (!is_null($start_created_date)){ $filter_by['start_created_date'] = $start_created_date; }
-        if (!is_null($end_created_date)){ $filter_by['end_created_date'] = $end_created_date; }
-        if (!is_null($start_modified_date)){ $filter_by['start_modified_date'] = $start_modified_date; }
-        if (!is_null($end_modified_date)){ $filter_by['end_modified_date'] = $end_modified_date; }
-        if (!is_null($waybill_number)){ $filter_by['waybill_number'] = $waybill_number; }
-        if (!is_null($waybill_number_arr)){ $filter_by['waybill_number_arr'] = $waybill_number_arr; }
+        if (!is_null($manifest_id)) {
+            $filter_by['manifest_id'] = $manifest_id;
+        }
+        if (!is_null($show_parents)) {
+            $filter_by['show_parents'] = $show_parents;
+        }
+        if (!is_null($parent_id)) {
+            $filter_by['parent_id'] = $parent_id;
+        }
+        if (!is_null($entity_type)) {
+            $filter_by['entity_type'] = $entity_type;
+        }
+        if (!is_null($is_visible)) {
+            $filter_by['is_visible'] = $is_visible;
+        }
+        if (!is_null($created_by)) {
+            $filter_by['created_by'] = $created_by;
+        }
+        if (!is_null($user_id)) {
+            $filter_by['user_id'] = $user_id;
+        }
+        if (!is_null($held_by_staff_id)) {
+            $filter_by['held_by_staff_id'] = $held_by_staff_id;
+        }
+        if (!is_null($held_by_id)) {
+            $filter_by['held_by_id'] = $held_by_id;
+        }
+        if (!is_null($to_branch_id)) {
+            $filter_by['to_branch_id'] = $to_branch_id;
+        }
+        if (!is_null($from_branch_id)) {
+            $filter_by['from_branch_id'] = $from_branch_id;
+        }
+        if (!is_null($parcel_type)) {
+            $filter_by['parcel_type'] = $parcel_type;
+        }
+        if (!is_null($sender_id)) {
+            $filter_by['sender_id'] = $sender_id;
+        }
+        if (!is_null($sender_address_id)) {
+            $filter_by['sender_address_id'] = $sender_address_id;
+        }
+        if (!is_null($receiver_id)) {
+            $filter_by['receiver_id'] = $receiver_id;
+        }
+        if (!is_null($receiver_address_id)) {
+            $filter_by['receiver_address_id'] = $receiver_address_id;
+        }
+        if (!is_null($status)) {
+            $filter_by['status'] = $status;
+        }
+        if (!is_null($min_weight)) {
+            $filter_by['min_weight'] = $min_weight;
+        }
+        if (!is_null($max_weight)) {
+            $filter_by['max_weight'] = $max_weight;
+        }
+        if (!is_null($min_amount_due)) {
+            $filter_by['min_amount_due'] = $min_amount_due;
+        }
+        if (!is_null($max_amount_due)) {
+            $filter_by['max_amount_due'] = $max_amount_due;
+        }
+        if (!is_null($cash_on_delivery)) {
+            $filter_by['cash_on_delivery'] = $cash_on_delivery;
+        }
+        if (!is_null($min_delivery_amount)) {
+            $filter_by['min_delivery_amount'] = $min_delivery_amount;
+        }
+        if (!is_null($max_delivery_amount)) {
+            $filter_by['max_delivery_amount'] = $max_delivery_amount;
+        }
+        if (!is_null($delivery_type)) {
+            $filter_by['delivery_type'] = $delivery_type;
+        }
+        if (!is_null($payment_type)) {
+            $filter_by['payment_type'] = $payment_type;
+        }
+        if (!is_null($shipping_type)) {
+            $filter_by['shipping_type'] = $shipping_type;
+        }
+        if (!is_null($min_cash_amount)) {
+            $filter_by['min_cash_amount'] = $min_cash_amount;
+        }
+        if (!is_null($max_cash_amount)) {
+            $filter_by['max_cash_amount'] = $max_cash_amount;
+        }
+        if (!is_null($min_pos_amount)) {
+            $filter_by['min_pos_amount'] = $min_pos_amount;
+        }
+        if (!is_null($max_pos_amount)) {
+            $filter_by['max_pos_amount'] = $max_pos_amount;
+        }
+        if (!is_null($start_created_date)) {
+            $filter_by['start_created_date'] = $start_created_date;
+        }
+        if (!is_null($end_created_date)) {
+            $filter_by['end_created_date'] = $end_created_date;
+        }
+        if (!is_null($start_modified_date)) {
+            $filter_by['start_modified_date'] = $start_modified_date;
+        }
+        if (!is_null($end_modified_date)) {
+            $filter_by['end_modified_date'] = $end_modified_date;
+        }
+        if (!is_null($waybill_number)) {
+            $filter_by['waybill_number'] = $waybill_number;
+        }
+        if (!is_null($waybill_number_arr)) {
+            $filter_by['waybill_number_arr'] = $waybill_number_arr;
+        }
 
         return $filter_by;
     }
@@ -572,30 +647,26 @@ class ParcelController extends ControllerBase
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
         //send out notification for parcels in transit that are not bad
-        foreach ($parcel_arr as $waybill_number => $parcel) {
-            if (!in_array($waybill_number, $bad_parcels)) {
-                $admin = Admin::findFirst($admin_id);
+        $admin = Admin::findFirst($admin_id);
 
-                /** @var  $originBranch  Branch */
-                $originBranch = Branch::findFirst($from_branch_id);
-                /** @var  $destinationBranch Branch */
-                $destinationBranch = Branch::findFirst($to_branch_id);
-
-                if ($admin) {
-                    EmailMessage::send(
-                        EmailMessage::PARCEL_IN_TRANSIT,
-                        [
-                            'fullname' => $admin->getFullname(),
-                            'manifest_label' => $manifest->getLabel(),
-                            'origin' => $originBranch->getName(),
-                            'destination' => $destinationBranch->getName()
-                        ],
-                        'Courier Plus',
-                        $admin->getEmail()
-                    );
-                }
-            }
+        if ($admin) {
+            /** @var  $originBranch  Branch */
+            $originBranch = Branch::findFirst($from_branch_id);
+            /** @var  $destinationBranch Branch */
+            $destinationBranch = Branch::findFirst($to_branch_id);
+            EmailMessage::send(
+                EmailMessage::PARCEL_IN_TRANSIT,
+                [
+                    'fullname' => ucwords($admin->getFullname()),
+                    'manifest_label' => $manifest->getLabel(),
+                    'origin' => $originBranch->getName(),
+                    'destination' => $destinationBranch->getName()
+                ],
+                'Courier Plus',
+                $admin->getEmail()
+            );
         }
+
 
         $check['bad_parcels'] = $bad_parcels;
         $check['manifest_id'] = $manifest->getId();
@@ -732,30 +803,25 @@ class ParcelController extends ControllerBase
         $manifest = $check['manifest'];
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
-        //send out notification for parcels in transit that are not bad
-        foreach ($parcel_arr as $waybill_number => $parcel) {
-            if (!in_array($waybill_number, $bad_parcels)) {
-                $admin = Admin::findFirst($admin_id);
+        $admin = Admin::findFirst($admin_id);
 
-                /** @var  $originBranch  Branch */
-                $originBranch = Branch::findFirst($user_branch_id);
-                /** @var  $destinationBranch Branch */
-                $destinationBranch = Branch::findFirst($user_branch_id);
 
-                if ($admin) {
-                    EmailMessage::send(
-                        EmailMessage::PARCEL_IN_TRANSIT,
-                        [
-                            'fullname' => $admin->getFullname(),
-                            'manifest_label' => $manifest->getLabel(),
-                            'origin' => $originBranch->getName(),
-                            'destination' => $destinationBranch->getName()
-                        ],
-                        'Courier Plus',
-                        $admin->getEmail()
-                    );
-                }
-            }
+        if ($admin) {
+            /** @var  $originBranch  Branch */
+            $originBranch = Branch::findFirst($user_branch_id);
+            /** @var  $destinationBranch Branch */
+            $destinationBranch = Branch::findFirst($user_branch_id);
+            EmailMessage::send(
+                EmailMessage::PARCEL_IN_TRANSIT,
+                [
+                    'fullname' => ucwords($admin->getFullname()),
+                    'manifest_label' => $manifest->getLabel(),
+                    'origin' => $originBranch->getName(),
+                    'destination' => $destinationBranch->getName()
+                ],
+                'Courier Plus',
+                $admin->getEmail()
+            );
         }
 
         $check['bad_parcels'] = $bad_parcels;
@@ -769,7 +835,8 @@ class ParcelController extends ControllerBase
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
-    public function moveToDeliveredAction()
+    public
+    function moveToDeliveredAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
@@ -808,23 +875,23 @@ class ParcelController extends ControllerBase
             //get recipients
             $recipients = [];
             if ($admin) {
-                $recipients[] = [$admin->getEmail() => $admin->getFullname()];
+                $recipients[$admin->getEmail()] = $admin->getFullname();
             }
             $sender = User::findFirst($parcel->getSenderId());
             if ($sender) {
-                $recipients[] = [$sender->getEmail() => $sender->getFirstname()];
+                $recipients[$sender->getEmail()] = $sender->getFirstname();
             }
 
             $receiver = User::findFirst($parcel->getReceiverId());
             if ($receiver) {
-                $recipients[] = [$receiver->getEmail() => $receiver->getFirstname()];
+                $recipients[$receiver->getEmail()] = $receiver->getFirstname();
             }
 
             foreach ($recipients as $email => $name) {
                 EmailMessage::send(
                     EmailMessage::PARCEL_DELIVERED,
                     [
-                        'firstname' => $name,
+                        'firstname' => ucwords($name),
                         'waybill_number' => $waybill_number,
                     ],
                     'Courier Plus',
@@ -844,7 +911,8 @@ class ParcelController extends ControllerBase
      * @author  Olawale Lawal
      * @return array
      */
-    public function cancelAction()
+    public
+    function cancelAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
@@ -888,7 +956,8 @@ class ParcelController extends ControllerBase
      * @author  Olawale Lawal
      * @return array
      */
-    public function assignToGroundsmanAction()
+    public
+    function assignToGroundsmanAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 

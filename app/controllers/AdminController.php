@@ -122,7 +122,7 @@ class AdminController extends ControllerBase {
     }
 
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $staff_id = $this->request->getQuery('staff_id');
         $email = $this->request->getQuery('email');
