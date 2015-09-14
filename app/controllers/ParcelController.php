@@ -587,14 +587,21 @@ class ParcelController extends ControllerBase
         $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
         $other = Admin::getById($other_id);
         if ($other != false) {
-            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
+
+            //check if officer is valid
+            if (!in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
-            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
+
+                //check if sweeper or dispatcher is valid
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
         } else {
+            //if currently logged in user is a dispatcher or sweeper the officer is invalid
             if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+
+                //if currently logged in user is an officer or groundsman the sweeper or dispatcher is invalid
             } else if (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
@@ -750,14 +757,21 @@ class ParcelController extends ControllerBase
         $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
         $other = Admin::getById($other_id);
         if ($other != false) {
-            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
+
+            //check if officer is valid
+            if (!in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
-            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
+
+                //check if sweeper or dispatcher is valid
+            } else if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
         } else {
+            //if currently logged in user is a dispatcher or sweeper the officer is invalid
             if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+
+                //if currently logged in user is an officer or groundsman the sweeper or dispatcher is invalid
             } else if (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
