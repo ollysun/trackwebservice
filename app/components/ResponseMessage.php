@@ -88,4 +88,7 @@ class ResponseMessage
     const PARCEL_NOT_GOING_TO_BAG_LOC = 'Parcel not heading to bag\'s destination';
 
     const CAN_ONLY_DELIVER_FROM_EC = 'Must be login to an EC to set parcels for delivery';
+
+    const MANIFEST_NOT_RECEIVABLE = 'Manifest cannot be receive at your branch';
+    const MANIFEST_PARCEL_DIRECTION_MISMATCH = 'Parcel\'s origin and destination is not the same as manifest';
 }
