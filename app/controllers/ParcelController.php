@@ -583,20 +583,20 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        //checking if the other user is valid
-        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
-        $other = Admin::getById($other_id);
-        if ($other != false) {
+        $heldBy = Admin::getById($held_by_id);
+        $admin = Admin::getById($admin_id);
 
+        if ($heldBy & $admin) {
             //check if officer is valid
-            if (!in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
+            if (!in_array($admin->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
             }
 
             //check if sweeper or dispatcher is valid
-            if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
+            if (!in_array($heldBy->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
+
         } else {
             //if currently logged in user is a dispatcher or sweeper the officer is invalid
             if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
@@ -615,7 +615,7 @@ class ParcelController extends ControllerBase
         $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
         $bad_parcel = [];
 
-        $from_branch_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $user_branch_id : $other->getBranchId();
+        $from_branch_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $user_branch_id : (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin->getBranchId() : $heldBy->getBranchId();
 
         /**
          * @var Parcel $parcel
@@ -754,18 +754,17 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        //checking if the other user is valid
-        $other_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $admin_id : $held_by_id;
-        $other = Admin::getById($other_id);
-        if ($other != false) {
+        $heldBy = Admin::getById($held_by_id);
+        $admin = Admin::getById($admin_id);
 
+        if ($heldBy & $admin) {
             //check if officer is valid
-            if (!in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
+            if (!in_array($admin->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
             }
 
             //check if sweeper or dispatcher is valid
-            if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
+            if (!in_array($heldBy->getRoleId(), [Role::SWEEPER, Role::DISPATCHER])) {
                 return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
             }
 
