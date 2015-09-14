@@ -35,5 +35,5 @@ return new \Phalcon\Config(array(
     ),
 
 
-    'fe_base_url' => 'http://staging-courierplusng.cottacush'
+    'fe_base_url' => 'http://staging-courierplusng.cottacush.com'
 ));
