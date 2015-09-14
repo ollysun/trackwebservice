@@ -7,6 +7,8 @@ class EmailMessage extends \Phalcon\Mvc\Model
     const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
     const CORPORATE_LEAD = 'marketing_opportunity';
     const USER_ACCOUNT_CREATION = 'staff_account_creation';
+    const PARCEL_IN_TRANSIT = 'parcel_in_transit';
+    const PARCEL_DELIVERED = 'parcel_delivered';
 
     /**
      *
@@ -238,7 +240,8 @@ class EmailMessage extends \Phalcon\Mvc\Model
             'subject' => 'subject',
             'message' => 'message',
             'created_date' => 'created_date',
-            'status' => 'status'
+            'status' => 'status',
+            'email_message_code' => 'email_message_code'
         );
     }
 
@@ -259,7 +262,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
      * @param null $to_email
      * @return bool
      */
-    public static function send($email_message_code, $msg_params, $from_name, $from_email = self::DEFAULT_FROM_EMAIL, $to_email = null)
+    public static function send($email_message_code, $msg_params, $from_name, $to_email = null, $from_email = self::DEFAULT_FROM_EMAIL)
     {
         try {
             $email_msg = self::findFirst([

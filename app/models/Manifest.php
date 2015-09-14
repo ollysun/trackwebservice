@@ -547,7 +547,7 @@ class Manifest extends \Phalcon\Mvc\Model
                 $manifest->setMetrics($total_weight, $no_of_parcels);
                 $manifest->save();
             }
-            return ['manifest_id' => $manifest->getId(), 'bad_parcels' => $bad_parcel];
+            return ['manifest' => $manifest, 'bad_parcels' => $bad_parcel];
         }
 
         return false;

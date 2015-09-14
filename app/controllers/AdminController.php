@@ -57,7 +57,6 @@ class AdminController extends ControllerBase {
                     'year'=> date('Y')
                 ],
                 'Courier Plus',
-                EmailMessage::DEFAULT_FROM_EMAIL,
                 $email
             );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
