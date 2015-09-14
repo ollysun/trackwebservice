@@ -8,6 +8,9 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     const MSG_IN_TRANSIT = 'Parcel is in transit';
     const MSG_BEING_DELIVERED = 'Parcel ready for delivery';
     const MSG_DELIVERED = 'Parcel delivered';
+    const MSG_CANCELLED = 'Parcel cancelled';
+    const MSG_ASSIGNED_TO_GROUNDSMAN = 'Parcel assigned to the groundsman';
+
     /**
      *
      * @var integer

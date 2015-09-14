@@ -1102,6 +1102,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Admin.staff_id = :held_by_staff_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_staff_id'] = $filter_by['held_by_staff_id'];
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
+        }else if (isset($filter_by['manifest_id'])){
+            $where[] = 'HeldParcel.manifest_id = :manifest_id:';
+            $bind['manifest_id'] = $filter_by['manifest_id'];
         }
 
         $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
@@ -1175,7 +1178,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
         }else if (isset($filter_by['held_by_staff_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
@@ -1292,7 +1295,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
         }else if (isset($filter_by['held_by_staff_id'])){
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
@@ -1534,7 +1537,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function checkout($status, $held_by_id, $admin_id, $history_desc){
+    public function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1551,7 +1554,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
-                $held_parcel->initData($this->getId(), $held_by_id);
+                $held_parcel->initData($this->getId(), $held_by_id, $manifest_id);
                 if($held_parcel->save()){
                     $parcel_history = new ParcelHistory();
                     $parcel_history->setTransaction($transaction);
@@ -1619,6 +1622,26 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number = :waybill_number:',
             'bind' => ['waybill_number' => trim(strtoupper($waybill_number))]
         ]);
+    }
+
+    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc=false){
+        $obj = new Parcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Parcel')
+            ->inWhere('waybill_number', $waybill_number_arr);
+        $data = $builder->getQuery()->execute();
+
+        if ($make_assoc){
+            $assoc_data = [];
+            /**
+             * @var Parcel $parcel
+             */
+            foreach($data as $parcel){
+                $assoc_data[$parcel->getWaybillNumber()] = $parcel;
+            }
+            return $assoc_data;
+        }
+        return $data;
     }
 
     public function createSub(&$transaction){
@@ -1716,6 +1739,11 @@ class Parcel extends \Phalcon\Mvc\Model
 
                     if ($item->getToBranchId() != $to_branch_id){
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_GOING_TO_BAG_LOC;
+                        continue;
+                    }
+
+                    if ($item->getFromBranchId() != $from_branch_id){
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 

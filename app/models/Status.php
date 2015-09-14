@@ -15,10 +15,15 @@ class Status extends \Phalcon\Mvc\Model
     const PARCEL_UNCLEARED = 11;
     const PARCEL_CLEARED = 12;
     const PARCEL_BEING_DELIVERED = 13;
-
     const TELLER_AWAITING_APPROVAL = 14;
     const TELLER_APPROVED = 15;
     const TELLER_DECLINED = 16;
+    const PARCEL_FOR_GROUNDSMAN = 17;
+    const MANIFEST_PENDING = 18;
+    const MANIFEST_IN_TRANSIT = 19;
+    const MANIFEST_RESOLVED = 20;
+    const MANIFEST_CANCELLED = 21;
+    const MANIFEST_HAS_ISSUE = 22;
 
     /**
      *
