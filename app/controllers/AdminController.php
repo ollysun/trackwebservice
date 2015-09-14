@@ -57,7 +57,6 @@ class AdminController extends ControllerBase {
                     'year'=> date('Y')
                 ],
                 'Courier Plus',
-                EmailMessage::DEFAULT_FROM_EMAIL,
                 $email
             );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
@@ -123,7 +122,7 @@ class AdminController extends ControllerBase {
     }
 
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $staff_id = $this->request->getQuery('staff_id');
         $email = $this->request->getQuery('email');
