@@ -25,7 +25,7 @@ class TellerController extends ControllerBase {
         $paid_by = isset($paid_by) ? $paid_by: $created_by;
 
 
-        if (!isset($bank_id, $account_no, $teller_no, $amount_paid, $waybill_numbers))){
+        if (!isset($bank_id, $account_no, $teller_no, $amount_paid, $waybill_numbers)){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
