@@ -623,6 +623,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -657,7 +658,7 @@ class ParcelController extends ControllerBase
         //send out notification for parcels in transit that are not bad
         $admin = Admin::findFirst($admin_id);
 
-        if ($admin) {
+        if ($admin && isset($check['manifest'])) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($from_branch_id);
             /** @var  $destinationBranch Branch */
@@ -675,9 +676,9 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        $check['manifest'] = (isset($check['manifest'])) ? $check['manifest']->getData() : $check['manifest'];
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
+        $check['manifest_id'] = (isset($check['manifest'])) ? $check['manifest']->getId() : null;
         return $this->response->sendSuccess($check);
     }
 
@@ -792,6 +793,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -822,7 +824,7 @@ class ParcelController extends ControllerBase
         $admin = Admin::findFirst($admin_id);
 
 
-        if ($admin) {
+        if ($admin && isset($check['manifest'])) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($user_branch_id);
             /** @var  $destinationBranch Branch */
@@ -840,9 +842,9 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        $check['manifest'] = (isset($check['manifest'])) ? $check['manifest']->getData() : $check['manifest'];
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
+        $check['manifest_id'] = (isset($check['manifest'])) ? $check['manifest']->getId() : null;
         return $this->response->sendSuccess($check);
     }
 
