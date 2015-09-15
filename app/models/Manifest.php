@@ -496,7 +496,7 @@ class Manifest extends \Phalcon\Mvc\Model
 
     public static function createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $sender_admin_id, $held_by_id, $type_id){
         if (empty($parcel_arr)){
-            return ['manifest_id' => null, 'bad_parcels' => []];
+            return ['manifest' => null, 'bad_parcels' => []];
         }
 
         $bad_parcel = [];
