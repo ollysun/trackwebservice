@@ -51,9 +51,6 @@ foreach ($argv as $k => $arg) {
     }
 }
 
-$arguments['task'] = 'branch_upload';
-$arguments['action'] = 'main';
-$arguments['params'][] = 'hub';
 
 // Load the configuration file (if any)
 if (is_readable(APPLICATION_PATH . '/config/config.php')) {
