@@ -382,7 +382,7 @@ class Branch extends \Phalcon\Mvc\Model
                 }
             }
         }catch(Exception $e){
-
+            $this->_errorMessages[] = $e->getMessage();
         }
         $transactionManager->rollback();
         return false;
