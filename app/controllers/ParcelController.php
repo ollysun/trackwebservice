@@ -623,6 +623,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -651,13 +652,13 @@ class ParcelController extends ControllerBase
         }
 
         /** @var Manifest $manifest */
-        $manifest = $check['manifest'];
+        $manifest = isset($check['manifest']) ? $check['manifest'] : null;
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
         //send out notification for parcels in transit that are not bad
         $admin = Admin::findFirst($admin_id);
 
-        if ($admin) {
+        if ($admin && !is_null($manifest)) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($from_branch_id);
             /** @var  $destinationBranch Branch */
@@ -675,9 +676,13 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        //set response data
+        $check['manifest_id'] = null;
+        if (!is_null($manifest)) {
+            $check['manifest'] = $manifest->getData();
+            $check['manifest_id'] = $manifest->getId();
+        }
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
         return $this->response->sendSuccess($check);
     }
 
@@ -792,6 +797,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -816,13 +822,14 @@ class ParcelController extends ControllerBase
         }
 
         /** @var Manifest $manifest */
-        $manifest = $check['manifest'];
+        $manifest = isset($check['manifest']) ? $check['manifest'] : null;
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
         $admin = Admin::findFirst($admin_id);
 
 
-        if ($admin) {
+        //send notification if manifest was created
+        if ($admin && !is_null($manifest)) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($user_branch_id);
             /** @var  $destinationBranch Branch */
@@ -840,9 +847,13 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        //set response data
+        $check['manifest_id'] = null;
+        if (!is_null($manifest)) {
+            $check['manifest'] = $manifest->getData();
+            $check['manifest_id'] = $manifest->getId();
+        }
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
         return $this->response->sendSuccess($check);
     }
 
