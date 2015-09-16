@@ -684,6 +684,11 @@ class Manifest extends \Phalcon\Mvc\Model
             $bind['status'] = $filter_by['status'];
         }
 
+        if (isset($filter_by['id'])) {
+            $where[] = 'Manifest.id LIKE :id:';
+            $bind['id'] = '%' . $filter_by['id'] . '%';
+        }
+
         if (isset($filter_by['start_created_date'])) {
             $where[] = 'Manifest.created_date >= :start_created_date:';
             $bind['start_created_date'] = $filter_by['start_created_date'];
