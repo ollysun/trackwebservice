@@ -79,7 +79,8 @@ class ManifestController extends ControllerBase {
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = [
-            'type_id', 'from_branch_id', 'to_branch_id', 'sender_admin_id', 'receiver_admin_id', 'held_by_id', 'status'
+            'type_id', 'from_branch_id', 'to_branch_id', 'sender_admin_id', 'receiver_admin_id', 'held_by_id', 'status',
+            'start_created_date', 'end_created_date'
         ];
 
         $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
