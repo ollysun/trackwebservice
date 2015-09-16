@@ -558,6 +558,13 @@ class Manifest extends \Phalcon\Mvc\Model
         return false;
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $manifest_id
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchOne($manifest_id, $fetch_with)
     {
         $obj = new Manifest();
@@ -618,6 +625,10 @@ class Manifest extends \Phalcon\Mvc\Model
             }
             if (isset($fetch_with['with_holder'])) {
                 $manifest['holder'] = $data[0]->holder->getData();
+            }
+            if (isset($fetch_with['with_parcels'])) {
+                $parcels = HeldParcel::fetchManifestParcels($manifest['id']);
+                $manifest['parcels'] = $parcels;
             }
         }
 

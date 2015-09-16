@@ -45,7 +45,7 @@ class ManifestController extends ControllerBase {
     public function getOneAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
-        $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
+        $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder', 'with_parcels'];
 
         foreach ($fetch_params as $param){
             $$param = $this->request->getQuery($param);
