@@ -1,6 +1,6 @@
 <?php use Phalcon\Cli\Task;
 
-;
+
 
 /**
  * Class BranchUploadTask
