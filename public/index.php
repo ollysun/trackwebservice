@@ -23,10 +23,10 @@ try {
     /**
      * Read the configuration
      */
-    if (getenv(TNT_DB_HOST) == false){
+    if (($env = getenv('APPLICATION_ENV')) == false){
         $config = include __DIR__ . "/../app/config/config.dev.php";
     } else{
-        $config = include __DIR__ . "/../app/config/config.php";
+        $config = include __DIR__ . "/../app/config/config_$env.php";
     }
 
     /**

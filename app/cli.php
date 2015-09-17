@@ -53,8 +53,8 @@ foreach ($argv as $k => $arg) {
 
 
 // Load the configuration file (if any)
-if (is_readable(APPLICATION_PATH . '/config/config.php')) {
-    $config = include APPLICATION_PATH . '/config/config.php';
+if (is_readable(APPLICATION_PATH . '/config/config_cli.php')) {
+    $config = include APPLICATION_PATH . '/config/config_cli.php';
     $di->set('config', $config);
 }
 
