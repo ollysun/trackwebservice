@@ -148,6 +148,14 @@ $di->set('dispatcher', function () {
                 exit();
             }
         }
+
+        /**
+         * Set Current Transaction in New Relic
+         * @author Adegoke Obasa <goke@cottacush.com>
+         */
+        if (extension_loaded ('newrelic')) {
+            newrelic_name_transaction ($dispatcher->getControllerName() . '/' . $dispatcher->getActionName());
+        }
     });
 
     $dispatcher = new MvcDispatcher();
