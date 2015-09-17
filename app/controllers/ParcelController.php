@@ -8,13 +8,19 @@
  */
 class ParcelController extends ControllerBase
 {
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return $this
+     */
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-        /*
-                $payload = '{
+
+              /*  $payload = '{
             "sender": {
                 "firstname": "Rotimo",
                 "lastname": "Akintewe",
@@ -31,7 +37,7 @@ class ParcelController extends ControllerBase
                 "id": null,
                 "street1": "3 Cuttacosh Road, Abule Egba.",
                 "street2": "",
-                "city_id": "4",
+                "city_id": "23",
                 "state_id": "1",
                 "country_id": "1"
             },
@@ -39,7 +45,7 @@ class ParcelController extends ControllerBase
                 "id": null,
                 "street1": "9, Ojo Street, Akoka",
                 "street2": "",
-                "city_id": "4",
+                "city_id": "23",
                 "state_id": "1",
                 "country_id": "1"
             },
@@ -58,7 +64,9 @@ class ParcelController extends ControllerBase
                 "cash_amount": null,
                 "pos_amount": null,
                 "pos_trans_id": null,
-                "package_value": 200.00
+                "package_value": 200.00,
+                "is_billing_overridden": 1,
+                "reference_number": "R34324232"
             },
             "is_corporate_lead": 0,
             "to_hub": 1
