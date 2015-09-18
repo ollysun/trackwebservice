@@ -1005,7 +1005,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'bank_account_id' => $this->getBankAccountId(),
-            'is_billing_overridden' => $this->getIsBillingOverriden(),
+            'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number'=> $this->getReferenceNumber()
         );
     }
@@ -1300,7 +1300,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $parcel = [];
-            if ($item->parcel == null){
+            if (!property_exists($item, 'parcel')){
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
