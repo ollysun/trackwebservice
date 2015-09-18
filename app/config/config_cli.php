@@ -2,11 +2,11 @@
 
 return new \Phalcon\Config(array(
     'database' => array(
-        'adapter' => 'Mysql',
-        'host' => '127.0.0.1',
-        'username' => 'root',
-        'password' => '',
-        'dbname' => 'tnt',
+        'adapter'     => 'Mysql',
+        'host'        => getenv(TNT_DB_HOST),
+        'username'    => getenv(TNT_DB_USERNAME),
+        'password'    => getenv(TNT_DB_PASSWORD),
+        'dbname'      => getenv(TNT_DBNAME),
         'charset'     => 'utf8',
     ),
     'application' => array(
@@ -23,6 +23,8 @@ return new \Phalcon\Config(array(
     ),
 
     'params' => array(
+
+        //TODO change to production config
         'mailer' => array(
             'mandrill_username' => 'yemi@cottacush.com',
             'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
@@ -32,5 +34,6 @@ return new \Phalcon\Config(array(
         ),
     ),
 
-    'fe_base_url' => 'http://local.courierplus.tnt.com'
+
+    'fe_base_url' => 'http://prod-tnt.cottacush.com'
 ));

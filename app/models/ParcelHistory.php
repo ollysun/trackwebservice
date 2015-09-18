@@ -27,7 +27,13 @@ class ParcelHistory extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
-    protected $branch_id;
+    protected $from_branch_id;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $to_branch_id;
 
     /**
      *
@@ -82,12 +88,25 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     /**
      * Method to set the value of field branch_id
      *
-     * @param integer $branch_id
+     * @param integer $from_branch_id
      * @return $this
      */
-    public function setBranchId($branch_id)
+    public function setFromBranchId($from_branch_id)
     {
-        $this->branch_id = $branch_id;
+        $this->from_branch_id = $from_branch_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field branch_id
+     *
+     * @param integer $to_branch_id
+     * @return $this
+     */
+    public function setToBranchId($to_branch_id)
+    {
+        $this->to_branch_id = $to_branch_id;
 
         return $this;
     }
@@ -169,9 +188,19 @@ class ParcelHistory extends \Phalcon\Mvc\Model
      *
      * @return integer
      */
-    public function getBranchId()
+    public function getFromBranchId()
     {
-        return $this->branch_id;
+        return $this->from_branch_id;
+    }
+
+    /**
+     * Returns the value of field branch_id
+     *
+     * @return integer
+     */
+    public function getToBranchId()
+    {
+        return $this->to_branch_id;
     }
 
     /**
@@ -249,7 +278,8 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'parcel_id' => 'parcel_id',
-            'branch_id' => 'branch_id',
+            'from_branch_id' => 'from_branch_id',
+            'to_branch_id' => 'to_branch_id',
             'admin_id' => 'admin_id',
             'status' => 'status',
             'created_date' => 'created_date',
@@ -257,9 +287,24 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($parcel_id, $branch_id, $description, $admin_id, $status){
+    public function getData()
+    {
+        return array(
+            'id' => $this->getId(),
+            'parcel_id' => $this->getParcelId(),
+            'from_branch_id' => $this->getFromBranchId(),
+            'to_branch_id' => $this->getToBranchId(),
+            'admin_id' => $this->getAdminId(),
+            'status' => $this->getStatus(),
+            'created_date' => $this->getCreatedDate(),
+            'description' => $this->getDescription()
+        );
+    }
+
+    public function initData($parcel_id, $from_branch_id, $description, $admin_id, $status, $to_branch_id){
         $this->setParcelId($parcel_id);
-        $this->setBranchId($branch_id);
+        $this->setFromBranchId($from_branch_id);
+        $this->setToBranchId($to_branch_id);
         $this->setDescription($description);
         $this->setAdminId($admin_id);
 
@@ -267,4 +312,56 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $this->setCreatedDate(date('Y-m-d H:i:s'));
     }
 
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with)
+    {
+        $obj = new ParcelHistory();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('ParcelHistory');
+
+        if (isset($filter_by['paginate'])){
+            $builder->limit($count, $offset);
+        }
+
+        $where = [];
+        $bind = [];
+        $columns = ['ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
+
+        if (isset($filter_by['waybill_number'])){
+            $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
+            $where[] = 'Parcel.waybill_number = :waybill_number:';
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        } else if (isset($filter_by['parcel_id'])){
+            $where[] = 'ParcelHistory.parcel_id = :parcel_id:';
+            $bind['parcel_id'] = $filter_by['parcel_id'];
+        }
+        if (isset($filter_by['status'])) {
+            $where[] = 'ParcelHistory.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        if (isset($fetch_with['with_admin'])) {
+            $columns[] = 'Admin.*';
+            $builder->innerJoin('Admin', 'Admin.id = ParcelHistory.admin_id');
+        }
+
+        //doing the left join after any possible inner join
+        $builder->leftJoin('FromBranch', 'FromBranch.id = ParcelHistory.from_branch_id', 'FromBranch');
+        $builder->leftJoin('ToBranch', 'ToBranch.id = ParcelHistory.to_branch_id', 'ToBranch');
+
+        $builder->columns($columns);
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        $result = [];
+        foreach ($data as $item) {
+            $history = $item->parcelHistory->getData();
+            $history['from_branch'] = (is_null($item->fromBranch->id)) ? null : $item->fromBranch->getData();
+            $history['to_branch'] = (is_null($item->toBranch->id)) ? null : $item->toBranch->getData();
+            if (isset($fetch_with['with_admin'])) {
+                $history['sender_admin'] = $item->admin->getData();
+            }
+            $result[] = $history;
+        }
+        return $result;
+    }
 }

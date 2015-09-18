@@ -63,7 +63,7 @@ class CityUploadTask extends BaseTask
         }
 
 
-        if(strlen($hub_name) == 0){
+        if (strlen($hub_name) == 0) {
             $this->printToConsole("No hub mapped to city $name. Skipping...");
             return false;
         }
@@ -75,8 +75,10 @@ class CityUploadTask extends BaseTask
             return false;
         }
 
-        if(City::findFirstByName($name)){
-            $this->printToConsole("$name already uploaded");
+        /** @var  City $exisitingCity */
+        $existingCity = City::findFirstByName($name);
+        if ($existingCity && $existingCity->getStateId() == $state->getId()) {
+            $this->printToConsole("$name in " . $state->getName() . " already uploaded");
             return false;
         }
 
