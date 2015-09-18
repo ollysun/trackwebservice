@@ -1411,6 +1411,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $receiver_obj->save();
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save sender's info");
+                Util::slackDebug("Parcel not created", $sender_obj->getMessages());
+                return false;
             }
 
             //saving the sender's address
@@ -1436,6 +1438,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $sender_addr_obj->save();
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save receiver's info");
+                Util::slackDebug("Parcel not created", $receiver_obj->getMessages());
+                return false;
             }
 
             //saving the receiver's address
@@ -1460,6 +1464,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $receiver_addr_obj->save();
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save sender's address");
+                Util::slackDebug("Parcel not created", $sender_addr_obj->getMessages());
+                return false;
             }
 
             //saving a bank account if any was provided
@@ -1484,6 +1490,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $check = $bank_account_obj->save();
                 } else {
                     Util::slackDebug("Parcel not created", "Unable to save receiver's address");
+                    Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
+                    return false;
                 }
             }
 
@@ -1504,8 +1512,12 @@ class Parcel extends \Phalcon\Mvc\Model
             } else {
                 if ($bank_account != null) {
                     Util::slackDebug("Parcel not created", "Unable to save bank account");
+                    Util::slackDebug("Parcel not created", $bank_account_obj->getMessages());
+                    return false;
                 } else {
                     Util::slackDebug("Parcel not created", "Unable to save receiver's address");
+                    Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
+                    return false;
                 }
             }
 
@@ -1515,6 +1527,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $this->save();
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
+                Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
             }
             $waybill_number = $this->getWaybillNumber();
 
@@ -1545,6 +1558,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 return $waybill_number;
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel history");
+                Util::slackDebug("Parcel not created", $parcel_history->getMessages());
+                return false;
             }
         } catch (Exception $e) {
             Util::slackDebug("EXCEPTION LOG", $e->getMessage());
