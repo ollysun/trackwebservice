@@ -127,7 +127,8 @@ $di->set('dispatcher', function () {
         if (!$auth->skipAuth(array(
             array('controller' => 'ref'),
             array('controller' => 'admin', 'action' => 'login'),
-            array('controller' => 'user', 'action' => 'login')
+            array('controller' => 'user', 'action' => 'login'),
+            array('controller' => 'parcel', 'action' => 'history'),
         ))
         ) {
             $i = $di['request']->getHeader('i');
@@ -147,6 +148,14 @@ $di->set('dispatcher', function () {
                 echo $di['response']->sendError()->getContent();
                 exit();
             }
+        }
+
+        /**
+         * Set Current Transaction in New Relic
+         * @author Adegoke Obasa <goke@cottacush.com>
+         */
+        if (extension_loaded ('newrelic')) {
+            newrelic_name_transaction ($dispatcher->getControllerName() . '/' . $dispatcher->getActionName());
         }
     });
 

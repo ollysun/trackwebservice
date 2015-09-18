@@ -8,13 +8,19 @@
  */
 class ParcelController extends ControllerBase
 {
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return $this
+     */
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-        /*
-                $payload = '{
+
+              /*  $payload = '{
             "sender": {
                 "firstname": "Rotimo",
                 "lastname": "Akintewe",
@@ -31,7 +37,7 @@ class ParcelController extends ControllerBase
                 "id": null,
                 "street1": "3 Cuttacosh Road, Abule Egba.",
                 "street2": "",
-                "city_id": "4",
+                "city_id": "23",
                 "state_id": "1",
                 "country_id": "1"
             },
@@ -39,7 +45,7 @@ class ParcelController extends ControllerBase
                 "id": null,
                 "street1": "9, Ojo Street, Akoka",
                 "street2": "",
-                "city_id": "4",
+                "city_id": "23",
                 "state_id": "1",
                 "country_id": "1"
             },
@@ -58,7 +64,9 @@ class ParcelController extends ControllerBase
                 "cash_amount": null,
                 "pos_amount": null,
                 "pos_trans_id": null,
-                "package_value": 200.00
+                "package_value": 200.00,
+                "is_billing_overridden": 1,
+                "reference_number": "R34324232"
             },
             "is_corporate_lead": 0,
             "to_hub": 1
@@ -623,6 +631,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -651,13 +660,13 @@ class ParcelController extends ControllerBase
         }
 
         /** @var Manifest $manifest */
-        $manifest = $check['manifest'];
+        $manifest = isset($check['manifest']) ? $check['manifest'] : null;
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
         //send out notification for parcels in transit that are not bad
         $admin = Admin::findFirst($admin_id);
 
-        if ($admin) {
+        if ($admin && !is_null($manifest)) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($from_branch_id);
             /** @var  $destinationBranch Branch */
@@ -675,9 +684,13 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        //set response data
+        $check['manifest_id'] = null;
+        if (!is_null($manifest)) {
+            $check['manifest'] = $manifest->getData();
+            $check['manifest_id'] = $manifest->getId();
+        }
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
         return $this->response->sendSuccess($check);
     }
 
@@ -792,6 +805,7 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -816,13 +830,14 @@ class ParcelController extends ControllerBase
         }
 
         /** @var Manifest $manifest */
-        $manifest = $check['manifest'];
+        $manifest = isset($check['manifest']) ? $check['manifest'] : null;
         $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
 
         $admin = Admin::findFirst($admin_id);
 
 
-        if ($admin) {
+        //send notification if manifest was created
+        if ($admin && !is_null($manifest)) {
             /** @var  $originBranch  Branch */
             $originBranch = Branch::findFirst($user_branch_id);
             /** @var  $destinationBranch Branch */
@@ -840,9 +855,13 @@ class ParcelController extends ControllerBase
             );
         }
 
-        $check['manifest'] = $check['manifest']->getData();
+        //set response data
+        $check['manifest_id'] = null;
+        if (!is_null($manifest)) {
+            $check['manifest'] = $manifest->getData();
+            $check['manifest_id'] = $manifest->getId();
+        }
         $check['bad_parcels'] = $bad_parcels;
-        $check['manifest_id'] = $manifest->getId();
         return $this->response->sendSuccess($check);
     }
 
@@ -865,6 +884,7 @@ class ParcelController extends ControllerBase
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         $admin = Admin::findFirst($admin_id);
@@ -883,7 +903,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED);
+            $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -941,6 +961,7 @@ class ParcelController extends ControllerBase
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -958,7 +979,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED);
+            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
@@ -1004,12 +1025,45 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    public function historyAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = [
+            'waybill_number', 'parcel_id', 'paginate', 'status'
+        ];
+
+        $fetch_params = ['with_admin'];
+
+        //todo: make this block a function
+        //------------------------------------------
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
+        //------------------------------------------
+
+        return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
     }
 }

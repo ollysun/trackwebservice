@@ -419,18 +419,18 @@ class Manifest extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'type_id' => 'type_id',
             'label' => 'label',
-            'from_branch_id' => 'from_branch_id', 
-            'to_branch_id' => 'to_branch_id', 
-            'sender_admin_id' => 'sender_admin_id', 
-            'receiver_admin_id' => 'receiver_admin_id', 
-            'held_by_id' => 'held_by_id', 
-            'weight' => 'weight', 
-            'no_of_parcels' => 'no_of_parcels', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
+            'from_branch_id' => 'from_branch_id',
+            'to_branch_id' => 'to_branch_id',
+            'sender_admin_id' => 'sender_admin_id',
+            'receiver_admin_id' => 'receiver_admin_id',
+            'held_by_id' => 'held_by_id',
+            'weight' => 'weight',
+            'no_of_parcels' => 'no_of_parcels',
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
             'status' => 'status'
         );
     }
@@ -472,31 +472,36 @@ class Manifest extends \Phalcon\Mvc\Model
         $this->setStatus(Status::MANIFEST_IN_TRANSIT);
     }
 
-    protected function setMetrics($weight, $no_of_parcels){
+    protected function setMetrics($weight, $no_of_parcels)
+    {
         $this->setWeight($weight);
         $this->setNoOfParcels($no_of_parcels);
     }
 
-    public function changeStatus($status){
+    public function changeStatus($status)
+    {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function recieve($receiver_admin_id, $status){
+    public function recieve($receiver_admin_id, $status)
+    {
         $this->changeStatus($status);
         $this->setReceiverAdminId($receiver_admin_id);
     }
 
-    public static function getById($id){
+    public static function getById($id)
+    {
         return Manifest::findFirst([
             'id = :id:',
             'bind' => ['id' => $id]
         ]);
     }
 
-    public static function createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $sender_admin_id, $held_by_id, $type_id){
-        if (empty($parcel_arr)){
-            return ['manifest_id' => null, 'bad_parcels' => []];
+    public static function createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $sender_admin_id, $held_by_id, $type_id)
+    {
+        if (empty($parcel_arr)) {
+            return ['manifest' => null, 'bad_parcels' => []];
         }
 
         $bad_parcel = [];
@@ -511,7 +516,7 @@ class Manifest extends \Phalcon\Mvc\Model
              */
             $status = null;
             $history_comment = '';
-            switch($type_id){
+            switch ($type_id) {
                 case Manifest::TYPE_SWEEP:
                     $status = Status::PARCEL_IN_TRANSIT;
                     $history_comment = ParcelHistory::MSG_IN_TRANSIT;
@@ -524,7 +529,7 @@ class Manifest extends \Phalcon\Mvc\Model
                     break;
             }
 
-            if ($status == null){
+            if ($status == null) {
                 return false;
             }
 
@@ -553,6 +558,13 @@ class Manifest extends \Phalcon\Mvc\Model
         return false;
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $manifest_id
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchOne($manifest_id, $fetch_with)
     {
         $obj = new Manifest();
@@ -562,27 +574,27 @@ class Manifest extends \Phalcon\Mvc\Model
 
         $columns = ['Manifest.*'];
 
-        if (isset($fetch_with['with_from_branch'])){
+        if (isset($fetch_with['with_from_branch'])) {
             $columns[] = 'FromBranch.*';
             $builder->innerJoin('FromBranch', 'FromBranch.id = Manifest.from_branch_id', 'FromBranch');
         }
 
-        if (isset($fetch_with['with_to_branch'])){
+        if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
             $builder->innerJoin('ToBranch', 'ToBranch.id = Manifest.to_branch_id', 'ToBranch');
         }
 
-        if (isset($fetch_with['with_sender_admin'])){
+        if (isset($fetch_with['with_sender_admin'])) {
             $columns[] = 'SenderAdmin.*';
             $builder->innerJoin('SenderAdmin', 'SenderAdmin.id = Manifest.sender_admin_id', 'SenderAdmin');
         }
 
-        if (isset($fetch_with['with_receiver_admin'])){
+        if (isset($fetch_with['with_receiver_admin'])) {
             $columns[] = 'ReceiverAdmin.*';
             $builder->leftJoin('ReceiverAdmin', 'ReceiverAdmin.id = Manifest.receiver_admin_id', 'ReceiverAdmin');
         }
 
-        if (isset($fetch_with['with_holder'])){
+        if (isset($fetch_with['with_holder'])) {
             $columns[] = 'Holder.*';
             $builder->innerJoin('Holder', 'Holder.id = Manifest.held_by_id', 'Holder');
         }
@@ -590,35 +602,48 @@ class Manifest extends \Phalcon\Mvc\Model
         $builder->columns($columns);
         $data = $builder->getQuery()->execute();
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
 
         $manifest = [];
-        if (!isset($data[0]->manifest)){
+        if (!isset($data[0]->manifest)) {
             $manifest = $data[0]->getData();
-        }else{
+        } else {
             $manifest = $data[0]->manifest->getData();
-            if (isset($fetch_with['with_from_branch'])){
+            if (isset($fetch_with['with_from_branch'])) {
                 $manifest['from_branch'] = $data[0]->fromBranch->getData();
             }
-            if (isset($fetch_with['with_to_branch'])){
+            if (isset($fetch_with['with_to_branch'])) {
                 $manifest['to_branch'] = $data[0]->toBranch->getData();
             }
-            if (isset($fetch_with['with_sender_admin'])){
+            if (isset($fetch_with['with_sender_admin'])) {
                 $manifest['sender_admin'] = $data[0]->senderAdmin->getData();
             }
-            if (isset($fetch_with['with_receiver_admin'])){
+            if (isset($fetch_with['with_receiver_admin'])) {
                 $manifest['receiver_admin'] = $data[0]->receiverAdmin->getData();
             }
-            if (isset($fetch_with['with_holder'])){
+            if (isset($fetch_with['with_holder'])) {
                 $manifest['holder'] = $data[0]->holder->getData();
+            }
+            if (isset($fetch_with['with_parcels'])) {
+                $parcels = HeldParcel::fetchManifestParcels($manifest['id']);
+                $manifest['parcels'] = $parcels;
             }
         }
 
         return $manifest;
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Manifest();
@@ -630,56 +655,70 @@ class Manifest extends \Phalcon\Mvc\Model
         $bind = [];
         $columns = ['Manifest.*'];
 
-        if (isset($filter_by['type_id'])){
+        if (isset($filter_by['type_id'])) {
             $where[] = 'Manifest.type_id = :type_id:';
             $bind['type_id'] = $filter_by['type_id'];
         }
-        if (isset($filter_by['from_branch_id'])){
+        if (isset($filter_by['from_branch_id'])) {
             $where[] = 'Manifest.from_branch_id = :from_branch_id:';
             $bind['from_branch_id'] = $filter_by['from_branch_id'];
         }
-        if (isset($filter_by['to_branch_id'])){
+        if (isset($filter_by['to_branch_id'])) {
             $where[] = 'Manifest.to_branch_id = :to_branch_id:';
             $bind['to_branch_id'] = $filter_by['to_branch_id'];
         }
-        if (isset($filter_by['sender_admin_id'])){
+        if (isset($filter_by['sender_admin_id'])) {
             $where[] = 'Manifest.sender_admin_id = :sender_admin_id:';
             $bind['sender_admin_id'] = $filter_by['sender_admin_id'];
         }
-        if (isset($filter_by['receiver_admin_id'])){
+        if (isset($filter_by['receiver_admin_id'])) {
             $where[] = 'Manifest.receiver_admin_id = :receiver_admin_id:';
             $bind['receiver_admin_id'] = $filter_by['receiver_admin_id'];
         }
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id'])) {
             $where[] = 'Manifest.held_by_id = :held_by_id:';
             $bind['held_by_id'] = $filter_by['held_by_id'];
         }
-        if (isset($filter_by['status'])){
+        if (isset($filter_by['status'])) {
             $where[] = 'Manifest.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
-        if (isset($fetch_with['with_from_branch'])){
+        if (isset($filter_by['id'])) {
+            $where[] = 'Manifest.id LIKE :id:';
+            $bind['id'] = '%' . $filter_by['id'] . '%';
+        }
+
+        if (isset($filter_by['start_created_date'])) {
+            $where[] = 'Manifest.created_date >= :start_created_date:';
+            $bind['start_created_date'] = $filter_by['start_created_date'];
+        }
+        if (isset($filter_by['end_created_date'])) {
+            $where[] = 'Manifest.created_date <= :end_created_date:';
+            $bind['end_created_date'] = $filter_by['end_created_date'];
+        }
+
+        if (isset($fetch_with['with_from_branch'])) {
             $columns[] = 'FromBranch.*';
             $builder->innerJoin('FromBranch', 'FromBranch.id = Manifest.from_branch_id', 'FromBranch');
         }
 
-        if (isset($fetch_with['with_to_branch'])){
+        if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
             $builder->innerJoin('ToBranch', 'ToBranch.id = Manifest.to_branch_id', 'ToBranch');
         }
 
-        if (isset($fetch_with['with_sender_admin'])){
+        if (isset($fetch_with['with_sender_admin'])) {
             $columns[] = 'SenderAdmin.*';
             $builder->innerJoin('SenderAdmin', 'SenderAdmin.id = Manifest.sender_admin_id', 'SenderAdmin');
         }
 
-        if (isset($fetch_with['with_receiver_admin'])){
+        if (isset($fetch_with['with_receiver_admin'])) {
             $columns[] = 'ReceiverAdmin.*';
             $builder->leftJoin('ReceiverAdmin', 'ReceiverAdmin.id = Manifest.receiver_admin_id', 'ReceiverAdmin');
         }
 
-        if (isset($fetch_with['with_holder'])){
+        if (isset($fetch_with['with_holder'])) {
             $columns[] = 'Holder.*';
             $builder->innerJoin('Holder', 'Holder.id = Manifest.held_by_id', 'Holder');
         }
@@ -689,25 +728,25 @@ class Manifest extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach ($data as $item){
+        foreach ($data as $item) {
             $manifest = [];
-            if (!isset($item->manifest)){
+            if (!isset($item->manifest)) {
                 $manifest = $item->getData();
-            }else{
+            } else {
                 $manifest = $item->manifest->getData();
-                if (isset($fetch_with['with_from_branch'])){
+                if (isset($fetch_with['with_from_branch'])) {
                     $manifest['from_branch'] = $item->fromBranch->getData();
                 }
-                if (isset($fetch_with['with_to_branch'])){
+                if (isset($fetch_with['with_to_branch'])) {
                     $manifest['to_branch'] = $item->toBranch->getData();
                 }
-                if (isset($fetch_with['with_sender_admin'])){
+                if (isset($fetch_with['with_sender_admin'])) {
                     $manifest['sender_admin'] = $item->senderAdmin->getData();
                 }
-                if (isset($fetch_with['with_receiver_admin'])){
+                if (isset($fetch_with['with_receiver_admin'])) {
                     $manifest['receiver_admin'] = $item->receiverAdmin->getData();
                 }
-                if (isset($fetch_with['with_holder'])){
+                if (isset($fetch_with['with_holder'])) {
                     $manifest['holder'] = $item->holder->getData();
                 }
             }

@@ -292,4 +292,39 @@ class HeldParcel extends \Phalcon\Mvc\Model
             'bind' => ['parcel_id' => $parcel_id, 'held_by_id' => $held_by_id, 'status' => Status::PARCEL_UNCLEARED]
         ]);
     }
+
+    /**
+     * Gets parcels associated with a manifest
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $manifestId
+     * @return array
+     */
+    public static function fetchManifestParcels($manifestId)
+    {
+        // Get Columns for parcels table
+        $parcelColumns = (new Parcel())->columnMap();
+        $columns = [];
+
+        foreach($parcelColumns as $column) {
+            $columns[] = 'Parcel.' . $column;
+        }
+
+        // Destination
+        $columns[] = 'ToBranch.name AS destination_name';
+        $columns[] = 'ToBranch.code AS destination_code';
+
+        // Shipper
+        $columns[] = 'User.firstname AS shipper_firstname';
+        $columns[] = 'User.lastname AS shipper_lastname';
+
+        return HeldParcel::query()
+            ->columns($columns)
+            ->where('manifest_id = :manifest_id:')
+            ->bind(['manifest_id' => $manifestId])
+            ->innerJoin('Parcel')
+            ->innerJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
+            ->innerJoin('User', 'Parcel.sender_id = User.id')
+            ->execute()
+            ->toArray();
+    }
 }

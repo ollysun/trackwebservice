@@ -188,6 +188,17 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $bank_account_id;
 
     /**
+     * @var integer
+     */
+    protected $is_billing_overridden;
+
+    /**
+     * @var string
+     */
+    protected $reference_number;
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -564,6 +575,25 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $is_billing_overridden
+     */
+    public function setIsBillingOverridden($is_billing_overridden)
+    {
+        $this->is_billing_overridden = $is_billing_overridden;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param string $reference_number
+     */
+    public function setReferenceNumber($reference_number)
+    {
+        $this->reference_number = $reference_number;
+    }
+
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -852,6 +882,24 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field is_billing_overridden
+     *
+     * @return integer
+     */
+    public function getIsBillingOverridden(){
+        return $this->is_billing_overridden;
+    }
+
+    /**
+     * Returns the value of field reference_number
+     *
+     * @return integer
+     */
+    public function getReferenceNumber(){
+        return $this->reference_number;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -920,7 +968,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number' => 'waybill_number',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'bank_account_id' => 'bank_account_id'
+            'bank_account_id' => 'bank_account_id',
+            'is_billing_overridden' => 'is_billing_overridden',
+            'reference_number' => 'reference_number',
         );
     }
 
@@ -954,14 +1004,17 @@ class Parcel extends \Phalcon\Mvc\Model
             'waybill_number' => $this->getWaybillNumber(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
-            'bank_account_id' => $this->getBankAccountId()
+            'bank_account_id' => $this->getBankAccountId(),
+            'is_billing_overridden' => $this->getIsBillingOverridden(),
+            'reference_number'=> $this->getReferenceNumber()
         );
     }
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
         $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
         $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null
+        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null,$is_billing_overridden = 0,
+        $reference_number = null
     ){
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -993,6 +1046,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedDate($now);
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
+        $this->setIsBillingOverridden($is_billing_overridden);
+        $this->setReferenceNumber($reference_number);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible){
@@ -1026,6 +1081,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedDate($now);
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
+        $this->setIsBillingOverridden(0);
+        $this->setReferenceNumber(null);
     }
 
     private function getEntityTypeLabel(){
@@ -1243,7 +1300,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $parcel = [];
-            if ($item->parcel == null){
+            if (!property_exists($item, 'parcel')){
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
@@ -1433,8 +1490,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId()
-                    );
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number']);
                 $check = $this->save();
             }
 
@@ -1456,11 +1513,18 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
-                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status);
+                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status, $to_branch_id);
                 $check = $parcel_history->save();
             }
 
             if ($check){
+                if(is_null($this->getReferenceNumber())){
+                    $this->setReferenceNumber($this->getWaybillNumber());
+                    if(!$this->save()){
+                        $transactionManager->rollback();
+                        return false;
+                    }
+                }
                 $transactionManager->commit();
                 return $waybill_number;
             }
@@ -1472,7 +1536,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc){
+    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1489,7 +1553,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
-                $parcel_history->initData($this->getId(), $this->getToBranchId(), $history_desc, $admin_id, $status);
+                $parcel_history->initData($this->getId(), $admin_branch_id, $history_desc, $admin_id, $status, null);
                 if ($parcel_history->save()){
                     $transactionManager->commit();
                     return true;
@@ -1508,7 +1572,6 @@ class Parcel extends \Phalcon\Mvc\Model
         $transaction = $transactionManager->get();
         try {
             $this->setTransaction($transaction);
-            $from_branch_id = $this->getFromBranchId();
             $this->setStatus($status);
             $this->setFromBranchId($this->getToBranchId());
             $this->setToBranchId($to_branch_id);
@@ -1523,7 +1586,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
-                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $status);
+                $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
                 if ($parcel_history->save()){
                     $transactionManager->commit();
                     return true;
@@ -1558,7 +1621,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 if($held_parcel->save()){
                     $parcel_history = new ParcelHistory();
                     $parcel_history->setTransaction($transaction);
-                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status);
+                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
                     if ($parcel_history->save()){
                         $transactionManager->commit();
                         return true;
@@ -1601,7 +1664,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($held_parcel_record->save()) {
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
-                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status);
+                        $parcel_history->initData($this->getId(), null, ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
                         if ($parcel_history->save()){
                             $transactionManager->commit();
                             return true;
