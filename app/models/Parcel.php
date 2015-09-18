@@ -1529,7 +1529,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 return $waybill_number;
             }
         } catch (Exception $e) {
-
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1560,7 +1560,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1593,7 +1593,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1629,7 +1629,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1673,7 +1673,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         } catch (Exception $e) {
-
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
