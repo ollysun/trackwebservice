@@ -1409,6 +1409,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $receiver_obj->setTransaction($transaction);
                 $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_receiver_existing);
                 $check = $receiver_obj->save();
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save sender's info");
             }
 
             //saving the sender's address
@@ -1432,6 +1434,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     intval($sender_address['country_id']), $sender_address['city_id'], $is_existing, $is_sender_existing);
 
                 $check = $sender_addr_obj->save();
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save receiver's info");
             }
 
             //saving the receiver's address
@@ -1454,6 +1458,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
                     $receiver_address['country_id'], $receiver_address['city_id'], $is_existing, $is_receiver_existing);
                 $check = $receiver_addr_obj->save();
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save sender's address");
             }
 
             //saving a bank account if any was provided
@@ -1476,6 +1482,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $bank_account_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER, $bank_account['bank_id'],
                         $bank_account['account_name'], $bank_account['account_no'], $bank_account['sort_code'], $is_existing);
                     $check = $bank_account_obj->save();
+                } else {
+                    Util::slackDebug("Parcel not created", "Unable to save receiver's address");
                 }
             }
 
@@ -1493,12 +1501,20 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number']);
                 $check = $this->save();
+            } else {
+                if ($bank_account != null) {
+                    Util::slackDebug("Parcel not created", "Unable to save bank account");
+                } else {
+                    Util::slackDebug("Parcel not created", "Unable to save receiver's address");
+                }
             }
 
             //setting waybill number
             if ($check){
                 $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save parcel");
             }
             $waybill_number = $this->getWaybillNumber();
 
@@ -1527,9 +1543,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $transactionManager->commit();
                 return $waybill_number;
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save parcel history");
             }
         } catch (Exception $e) {
-            error_log($e->getMessage());
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1560,7 +1578,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-            error_log($e->getMessage());
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1593,7 +1611,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-            error_log($e->getMessage());
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1629,7 +1647,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         }catch (Exception $e) {
-            error_log($e->getMessage());
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
@@ -1673,7 +1691,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         } catch (Exception $e) {
-            error_log($e->getMessage());
+            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
         $transactionManager->rollback();
