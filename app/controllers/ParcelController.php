@@ -19,6 +19,7 @@ class ParcelController extends ControllerBase
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
+        Util::slackDebug("Parcel Payload >>", json_encode($payload));
 
               /*  $payload = '{
             "sender": {
