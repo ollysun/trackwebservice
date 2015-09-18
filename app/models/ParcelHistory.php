@@ -27,7 +27,13 @@ class ParcelHistory extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
-    protected $branch_id;
+    protected $from_branch_id;
+
+    /**
+     *
+     * @var integer
+     */
+    protected $to_branch_id;
 
     /**
      *
@@ -82,12 +88,25 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     /**
      * Method to set the value of field branch_id
      *
-     * @param integer $branch_id
+     * @param integer $from_branch_id
      * @return $this
      */
-    public function setBranchId($branch_id)
+    public function setFromBranchId($from_branch_id)
     {
-        $this->branch_id = $branch_id;
+        $this->from_branch_id = $from_branch_id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field branch_id
+     *
+     * @param integer $to_branch_id
+     * @return $this
+     */
+    public function setToBranchId($to_branch_id)
+    {
+        $this->to_branch_id = $to_branch_id;
 
         return $this;
     }
@@ -169,9 +188,19 @@ class ParcelHistory extends \Phalcon\Mvc\Model
      *
      * @return integer
      */
-    public function getBranchId()
+    public function getFromBranchId()
     {
-        return $this->branch_id;
+        return $this->from_branch_id;
+    }
+
+    /**
+     * Returns the value of field branch_id
+     *
+     * @return integer
+     */
+    public function getToBranchId()
+    {
+        return $this->to_branch_id;
     }
 
     /**
@@ -249,7 +278,8 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'parcel_id' => 'parcel_id',
-            'branch_id' => 'branch_id',
+            'from_branch_id' => 'from_branch_id',
+            'to_branch_id' => 'to_branch_id',
             'admin_id' => 'admin_id',
             'status' => 'status',
             'created_date' => 'created_date',
@@ -257,9 +287,10 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($parcel_id, $branch_id, $description, $admin_id, $status){
+    public function initData($parcel_id, $from_branch_id, $description, $admin_id, $status, $to_branch_id){
         $this->setParcelId($parcel_id);
-        $this->setBranchId($branch_id);
+        $this->setFromBranchId($from_branch_id);
+        $this->setToBranchId($to_branch_id);
         $this->setDescription($description);
         $this->setAdminId($admin_id);
 

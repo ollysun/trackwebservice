@@ -884,6 +884,7 @@ class ParcelController extends ControllerBase
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         $admin = Admin::findFirst($admin_id);
@@ -902,7 +903,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED);
+            $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -960,6 +961,7 @@ class ParcelController extends ControllerBase
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -977,7 +979,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED);
+            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
@@ -1023,7 +1025,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
