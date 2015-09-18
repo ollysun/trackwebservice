@@ -1033,4 +1033,37 @@ class ParcelController extends ControllerBase
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
+
+    public function historyAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = [
+            'waybill_number', 'parcel_id', 'paginate', 'status'
+        ];
+
+        $fetch_params = ['with_admin'];
+
+        //todo: make this block a function
+        //------------------------------------------
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
+        //------------------------------------------
+
+        return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
+    }
 }
