@@ -17,13 +17,15 @@ class Util
      */
     public static function slackDebug($tag, $text)
     {
+        /** @var \Phalcon\Http\Request $request */
+        $request = \Phalcon\Di::getDefault()->getRequest();
         $httpClient = new HttpClient();
         $data = ['username' => 'TNT Debug Bot', 'icon_emoji' => ':rat:',
             'attachments' => [
                 [
                     'fallback' => "$tag",
                     'color' => '#205081',
-                    'author_name' => 'TNT SERVICE',
+                    'author_name' => 'TNT SERVICE - '. $request->getServer('SERVER_NAME'),
                     'title' => "$tag",
                     'text' => $text
                 ]
