@@ -1005,7 +1005,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'bank_account_id' => $this->getBankAccountId(),
-            'is_billing_overridden' => $this->getIsBillingOverriden(),
+            'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number'=> $this->getReferenceNumber()
         );
     }
@@ -1300,7 +1300,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $parcel = [];
-            if ($item->parcel == null){
+            if (!property_exists($item, 'parcel')){
                 $parcel = $item->getData();
             }else{
                 $parcel = $item->parcel->getData();
@@ -1513,7 +1513,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
-                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status);
+                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status, $to_branch_id);
                 $check = $parcel_history->save();
             }
 
@@ -1536,7 +1536,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc){
+    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id){
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1553,7 +1553,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
-                $parcel_history->initData($this->getId(), $this->getToBranchId(), $history_desc, $admin_id, $status);
+                $parcel_history->initData($this->getId(), $admin_branch_id, $history_desc, $admin_id, $status, null);
                 if ($parcel_history->save()){
                     $transactionManager->commit();
                     return true;
@@ -1572,7 +1572,6 @@ class Parcel extends \Phalcon\Mvc\Model
         $transaction = $transactionManager->get();
         try {
             $this->setTransaction($transaction);
-            $from_branch_id = $this->getFromBranchId();
             $this->setStatus($status);
             $this->setFromBranchId($this->getToBranchId());
             $this->setToBranchId($to_branch_id);
@@ -1587,7 +1586,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
-                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $status);
+                $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
                 if ($parcel_history->save()){
                     $transactionManager->commit();
                     return true;
@@ -1622,7 +1621,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 if($held_parcel->save()){
                     $parcel_history = new ParcelHistory();
                     $parcel_history->setTransaction($transaction);
-                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status);
+                    $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
                     if ($parcel_history->save()){
                         $transactionManager->commit();
                         return true;
@@ -1665,7 +1664,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($held_parcel_record->save()) {
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
-                        $parcel_history->initData($this->getId(), $this->getToBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status);
+                        $parcel_history->initData($this->getId(), null, ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
                         if ($parcel_history->save()){
                             $transactionManager->commit();
                             return true;
