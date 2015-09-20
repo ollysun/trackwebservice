@@ -83,7 +83,7 @@ class ManifestController extends ControllerBase {
             'start_created_date', 'end_created_date', 'id'
         ];
 
-        $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
+        $fetch_params = ['with_total_count', 'with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder'];
 
         $possible_params = array_merge($filter_params, $fetch_params);
 
@@ -101,6 +101,45 @@ class ManifestController extends ControllerBase {
             if (!is_null($$param)){ $fetch_with[$param] = true; }
         }
 
-        return $this->response->sendSuccess(Manifest::fetchAll($offset, $count, $filter_by, $fetch_with));
+        $manifests = Manifest::fetchAll($offset, $count, $filter_by, $fetch_with);
+        $result = [];
+        if (!empty($with_total_count)) {
+            $count = Manifest::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'manifests' => $manifests
+            ];
+        } else {
+            $result = $manifests;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Gets the total manifest count based on possible filters.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function countAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $filter_params = [
+            'type_id', 'from_branch_id', 'to_branch_id', 'sender_admin_id', 'receiver_admin_id', 'held_by_id', 'status',
+            'start_created_date', 'end_created_date', 'id'
+        ];
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            $$param = $this->request->getQuery($param);
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $count = Manifest::getTotalCount($filter_by);
+        if ($count === null) {
+            return $this->response->sendError();
+        }
+        return $this->response->sendSuccess($count);
     }
 } 
