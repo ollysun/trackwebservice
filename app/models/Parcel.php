@@ -1697,7 +1697,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($held_parcel_record->save()) {
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
-                        $parcel_history->initData($this->getId(), null, ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
+                        $parcel_history->initData($this->getId(), $this->getFromBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
                         if ($parcel_history->save()){
                             $transactionManager->commit();
                             return true;

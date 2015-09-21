@@ -651,52 +651,11 @@ class Manifest extends \Phalcon\Mvc\Model
             ->from('Manifest')
             ->limit($count, $offset);
 
-        $where = [];
-        $bind = [];
         $columns = ['Manifest.*'];
-
-        if (isset($filter_by['type_id'])) {
-            $where[] = 'Manifest.type_id = :type_id:';
-            $bind['type_id'] = $filter_by['type_id'];
-        }
-        if (isset($filter_by['from_branch_id'])) {
-            $where[] = 'Manifest.from_branch_id = :from_branch_id:';
-            $bind['from_branch_id'] = $filter_by['from_branch_id'];
-        }
-        if (isset($filter_by['to_branch_id'])) {
-            $where[] = 'Manifest.to_branch_id = :to_branch_id:';
-            $bind['to_branch_id'] = $filter_by['to_branch_id'];
-        }
-        if (isset($filter_by['sender_admin_id'])) {
-            $where[] = 'Manifest.sender_admin_id = :sender_admin_id:';
-            $bind['sender_admin_id'] = $filter_by['sender_admin_id'];
-        }
-        if (isset($filter_by['receiver_admin_id'])) {
-            $where[] = 'Manifest.receiver_admin_id = :receiver_admin_id:';
-            $bind['receiver_admin_id'] = $filter_by['receiver_admin_id'];
-        }
-        if (isset($filter_by['held_by_id'])) {
-            $where[] = 'Manifest.held_by_id = :held_by_id:';
-            $bind['held_by_id'] = $filter_by['held_by_id'];
-        }
-        if (isset($filter_by['status'])) {
-            $where[] = 'Manifest.status = :status:';
-            $bind['status'] = $filter_by['status'];
-        }
-
-        if (isset($filter_by['id'])) {
-            $where[] = 'Manifest.id LIKE :id:';
-            $bind['id'] = '%' . $filter_by['id'] . '%';
-        }
-
-        if (isset($filter_by['start_created_date'])) {
-            $where[] = 'Manifest.created_date >= :start_created_date:';
-            $bind['start_created_date'] = $filter_by['start_created_date'];
-        }
-        if (isset($filter_by['end_created_date'])) {
-            $where[] = 'Manifest.created_date <= :end_created_date:';
-            $bind['end_created_date'] = $filter_by['end_created_date'];
-        }
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         if (isset($fetch_with['with_from_branch'])) {
             $columns[] = 'FromBranch.*';
@@ -754,5 +713,90 @@ class Manifest extends \Phalcon\Mvc\Model
         }
 
         return $result;
+    }
+
+    /**
+     * This gets the total count of manifest based on possible filters
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @return int|null
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new Manifest();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS manifest_count')
+            ->from('Manifest');
+
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        return intval($data[0]->manifest_count);
+    }
+
+    /**
+     * Used to set up the where clause with its bind parameters
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
+    private static function filterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['type_id'])) {
+            $where[] = 'Manifest.type_id = :type_id:';
+            $bind['type_id'] = $filter_by['type_id'];
+        }
+        if (isset($filter_by['from_branch_id'])) {
+            $where[] = 'Manifest.from_branch_id = :from_branch_id:';
+            $bind['from_branch_id'] = $filter_by['from_branch_id'];
+        }
+        if (isset($filter_by['to_branch_id'])) {
+            $where[] = 'Manifest.to_branch_id = :to_branch_id:';
+            $bind['to_branch_id'] = $filter_by['to_branch_id'];
+        }
+        if (isset($filter_by['sender_admin_id'])) {
+            $where[] = 'Manifest.sender_admin_id = :sender_admin_id:';
+            $bind['sender_admin_id'] = $filter_by['sender_admin_id'];
+        }
+        if (isset($filter_by['receiver_admin_id'])) {
+            $where[] = 'Manifest.receiver_admin_id = :receiver_admin_id:';
+            $bind['receiver_admin_id'] = $filter_by['receiver_admin_id'];
+        }
+        if (isset($filter_by['held_by_id'])) {
+            $where[] = 'Manifest.held_by_id = :held_by_id:';
+            $bind['held_by_id'] = $filter_by['held_by_id'];
+        }
+        if (isset($filter_by['status'])) {
+            $where[] = 'Manifest.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        if (isset($filter_by['id'])) {
+            $where[] = 'Manifest.id LIKE :id:';
+            $bind['id'] = '%' . $filter_by['id'] . '%';
+        }
+
+        if (isset($filter_by['start_created_date'])) {
+            $where[] = 'Manifest.created_date >= :start_created_date:';
+            $bind['start_created_date'] = $filter_by['start_created_date'];
+        }
+        if (isset($filter_by['end_created_date'])) {
+            $where[] = 'Manifest.created_date <= :end_created_date:';
+            $bind['end_created_date'] = $filter_by['end_created_date'];
+        }
+
+        return ['where' => $where, 'bind' => $bind];
     }
 }
