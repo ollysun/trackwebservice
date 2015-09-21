@@ -64,6 +64,60 @@ class AdminController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    public function editAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        //todo: validate phone number
+
+        $admin_id = $this->request->getPost('admin_id');
+        $role_id = $this->request->getPost('role_id');
+        $branch_id = $this->request->getPost('branch_id');
+        $staff_id = $this->request->getPost('staff_id');
+        $email = $this->request->getPost('email');
+        $fullname = $this->request->getPost('fullname');
+        $phone = $this->request->getPost('phone');
+        $status = $this->request->getPost('status');
+
+        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id))){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $email = strtolower(trim($email));
+        $staff_id = strtoupper(trim($staff_id));
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false){
+            return $this->response->sendError(ResponseMessage::INVALID_EMAIL);
+        }
+
+        $branch = Branch::fetchById($branch_id);
+        if ($branch == false){
+            return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
+        }
+
+        if ($role_id == Role::SWEEPER){
+            if ($branch->getBranchType() != BranchType::HUB){
+                return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB);
+            }
+        }
+
+        $admin = Admin::fetchByIdentifier($email, $staff_id, $admin_id);
+        if ($admin != false){
+            if ($admin->getEmail() == $email){
+                return $this->response->sendError(ResponseMessage::EXISTING_EMAIL);
+            }else if ($admin->getStaffId() == $staff_id){
+                return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
+            }
+        }
+
+        $admin = Admin::findFirst(['id = :id:', 'bind' => ['id' => $admin_id]]);
+        if ($admin != false) {
+            $admin->changeDetails($branch_id, $role_id, $staff_id, $email, $fullname, $phone, $status);
+            if ($admin->save()) {
+                return $this->response->sendSuccess();
+            }
+            return $this->response->sendError();
+        }
+        return $this->response->sendError(ResponseMessage::STAFF_DOES_NOT_EXIST);
+    }
+
     public function loginAction(){
         $identifier = $this->request->getPost('identifier'); //email or staff id
         $password = $this->request->getPost('password');

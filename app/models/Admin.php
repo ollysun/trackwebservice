@@ -390,6 +390,19 @@ class Admin extends \Phalcon\Mvc\Model
         $this->setStatus(Status::INACTIVE);
     }
 
+    public function changeDetails($branch_id, $role_id, $staff_id, $email, $fullname, $phone, $status)
+    {
+        $this->setBranchId($branch_id);
+        $this->setRoleId($role_id);
+        $this->setStaffId($staff_id);
+        $this->setEmail($email);
+        $this->setFullname($fullname);
+        $this->setPhone($phone);
+
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+        $this->setStatus($status);
+    }
+
     public function changePassword($password){
         $this->setPassword($password);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
@@ -442,10 +455,22 @@ class Admin extends \Phalcon\Mvc\Model
         return $admin;
     }
 
-    public static function fetchByIdentifier($email, $staff_id){
+    /**
+     * Get the Admin model attributed to the idenfier (either email or staff id)
+     * @param $email - Email of the admin
+     * @param $staff_id - Staff id
+     * @param $not_id - Used to exclude an admin id on search, useful for change the email or staff id of an admin
+     * @return Admin
+     */
+    public static function fetchByIdentifier($email, $staff_id, $not_id = null){
+        $id_condition = (empty($not_id)) ? '' : ' AND id != :id:';
+        $bind = (empty($not_id)) ? [] : ['id' => $not_id];
+        $bind['email'] = $email;
+        $bind['staff_id'] = $staff_id;
+
         return Admin::findFirst(array(
-            'email = :email: OR staff_id = :staff_id: ',
-            'bind' => array('email' => $email, 'staff_id' => $staff_id)
+            '(email = :email: OR staff_id = :staff_id:) ' . $id_condition,
+            'bind' => $bind
         ));
     }
 
