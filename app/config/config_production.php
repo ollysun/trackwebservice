@@ -35,5 +35,14 @@ return new \Phalcon\Config(array(
     ),
 
 
-    'fe_base_url' => 'http://prod-tnt.cottacush.com'
+    'fe_base_url' => 'http://prod-tnt.cottacush.com',
+
+    'aws' => [
+        'aws_key' => getenv('AWS_KEY'),
+        'aws_secret' => getenv('AWS_SECRET'),
+        's3' => [
+            'bucket' => 'tnt_delivery_receipts',
+            'namespace' => 'production'
+        ]
+    ]
 ));

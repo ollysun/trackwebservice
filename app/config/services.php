@@ -10,6 +10,7 @@ use Phalcon\Session\Adapter\Files as SessionAdapter;
 use Phalcon\Mvc\Dispatcher as MvcDispatcher;
 use Phalcon\Events\Manager as EventsManager;
 use PhalconUtils\Mailer\MailerHandler;
+use PhalconUtils\S3\S3Client;
 
 /**
  * The FactoryDefault Dependency Injector automatically register the right services providing a full stack framework
@@ -108,6 +109,13 @@ $di->set('mailer', function () use ($config) {
         $config->params->mailer->default_from);
 });
 
+/**
+ * Register s3 client as a lazy loaded service
+ */
+$di->set('s3Client', function () use ($config) {
+    return new S3Client($config->aws->aws_key, $config->aws->aws_secret, $config->aws->s3->bucket, $config->aws->s3->namespace);
+});
+
 
 /**
  * Added Dispatcher service with events handled
@@ -115,11 +123,6 @@ $di->set('mailer', function () use ($config) {
 $di->set('dispatcher', function () {
 
     $events_manager = new EventsManager();
-    $events_manager->attach('dispatch:beforeException', function ($event, $dispatcher) {
-        $di = FactoryDefault::getDefault();
-        echo $di['response']->sendError(ResponseMessage::INTERNAL_ERROR)->getContent();
-        exit();
-    });
 
     $events_manager->attach("dispatch:beforeExecuteRoute", function ($event, $dispatcher) {
         $di = FactoryDefault::getDefault();
