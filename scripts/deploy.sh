@@ -50,7 +50,7 @@ function run() {
     read dev_branch
 
     envs=(staging production)
-    app_folder=tnt_service
+    app_folder=tnt-service
 
     if [ -n "$dev_branch" ] ; then
         for env in "${envs[@]}"
