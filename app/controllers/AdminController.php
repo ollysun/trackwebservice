@@ -14,7 +14,7 @@ class AdminController extends ControllerBase {
         $phone = $this->request->getPost('phone');
         $password = $this->auth->generateToken(6);
 
-        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $password))){
+        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $password, $branch_id))){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
