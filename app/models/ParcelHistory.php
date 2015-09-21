@@ -301,7 +301,8 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($parcel_id, $from_branch_id, $description, $admin_id, $status, $to_branch_id){
+    public function initData($parcel_id, $from_branch_id, $description, $admin_id, $status, $to_branch_id)
+    {
         $this->setParcelId($parcel_id);
         $this->setFromBranchId($from_branch_id);
         $this->setToBranchId($to_branch_id);
@@ -318,22 +319,23 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('ParcelHistory');
 
-        if (isset($filter_by['paginate'])){
+        if (isset($filter_by['paginate'])) {
             $builder->limit($count, $offset);
         }
 
         $where = [];
         $bind = [];
-        $columns = ['ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
+        $columns = ['Parcel.*', 'ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
 
-        if (isset($filter_by['waybill_number'])){
+        if (isset($filter_by['waybill_number'])) {
             $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
-            $where[] = 'Parcel.waybill_number = :waybill_number:';
+            $where[] = 'Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :waybill_number:';
             $bind['waybill_number'] = $filter_by['waybill_number'];
-        } else if (isset($filter_by['parcel_id'])){
+        } else if (isset($filter_by['parcel_id'])) {
             $where[] = 'ParcelHistory.parcel_id = :parcel_id:';
             $bind['parcel_id'] = $filter_by['parcel_id'];
         }
+
         if (isset($filter_by['status'])) {
             $where[] = 'ParcelHistory.status = :status:';
             $bind['status'] = $filter_by['status'];
@@ -354,13 +356,18 @@ class ParcelHistory extends \Phalcon\Mvc\Model
 
         $result = [];
         foreach ($data as $item) {
+            if (!isset($result[$item->parcel->waybill_number])) {
+                $result[$item->parcel->waybill_number]['parcel'] = $item->parcel->getData();
+                $result[$item->parcel->waybill_number]['sender'] = User::findFirst($item->parcel->sender_id)->toArray();
+                $result[$item->parcel->waybill_number]['receiver'] = User::findFirst($item->parcel->receiver_id)->toArray();
+            }
             $history = $item->parcelHistory->getData();
             $history['from_branch'] = (is_null($item->fromBranch->id)) ? null : $item->fromBranch->getData();
             $history['to_branch'] = (is_null($item->toBranch->id)) ? null : $item->toBranch->getData();
             if (isset($fetch_with['with_admin'])) {
                 $history['sender_admin'] = $item->admin->getData();
             }
-            $result[] = $history;
+            $result[$item->parcel->waybill_number]['history'][] = $history;
         }
         return $result;
     }
