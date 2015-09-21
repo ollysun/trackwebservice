@@ -329,12 +329,13 @@ class ParcelHistory extends \Phalcon\Mvc\Model
 
         if (isset($filter_by['waybill_number'])) {
             $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
-            $where[] = 'Parcel.waybill_number = :waybill_number:';
+            $where[] = 'Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :waybill_number:';
             $bind['waybill_number'] = $filter_by['waybill_number'];
         } else if (isset($filter_by['parcel_id'])) {
             $where[] = 'ParcelHistory.parcel_id = :parcel_id:';
             $bind['parcel_id'] = $filter_by['parcel_id'];
         }
+
         if (isset($filter_by['status'])) {
             $where[] = 'ParcelHistory.status = :status:';
             $bind['status'] = $filter_by['status'];
