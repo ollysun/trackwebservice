@@ -1109,20 +1109,22 @@ class ParcelController extends ControllerBase
             if (in_array($file->getKey(), ['signature', 'snapshot'])) {
                 if (in_array($file->getExtension(), $allowedExtensions)) {
                     if (DeliveryReceipt::doesReceiptExist($waybill_number, $file->getKey())) {
-                       return $this->response->sendError($file->getKey() . ' receipt for parcel already exists');
+                        return $this->response->sendError($file->getKey() . ' receipt for parcel already exists');
                     }
-                    $receiptPath = $this->s3Client->createObject($file->getTempName(), $waybill_number . "_" . $file->getKey() . "_receipt");
-                    if (!$receiptPath) {
+
+                    $receipt_file_name = $waybill_number . "_" . $file->getKey() . "_receipt." . $file->getExtension();
+                    $receipt_path = $this->s3Client->createObject($file->getTempName(), $receipt_file_name);
+                    if (!$receipt_path) {
                         return $this->response->sendError('Could not upload ' . $file->getKey() . ' receipt to S3');
                     }
 
-                    $deliveryReceipt = new DeliveryReceipt();
-                    $deliveryReceipt->delivered_by = $delivered_by;
-                    $deliveryReceipt->waybill_number = $waybill_number;
-                    $deliveryReceipt->receipt_path = $receiptPath;
-                    $deliveryReceipt->receipt_type = $file->getKey();
+                    $delivery_receipt = new DeliveryReceipt();
+                    $delivery_receipt->delivered_by = $delivered_by;
+                    $delivery_receipt->waybill_number = $waybill_number;
+                    $delivery_receipt->receipt_path = $receipt_path;
+                    $delivery_receipt->receipt_type = $file->getKey();
 
-                    if (!$deliveryReceipt->save()) {
+                    if (!$delivery_receipt->save()) {
                         return $this->response->sendError('Could not save ' . $file->getKey() . ' receipt');
                     }
 

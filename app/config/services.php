@@ -113,7 +113,12 @@ $di->set('mailer', function () use ($config) {
  * Register s3 client as a lazy loaded service
  */
 $di->set('s3Client', function () use ($config) {
-    return new S3Client($config->aws->aws_key, $config->aws->aws_secret, $config->aws->s3->bucket, $config->aws->s3->namespace);
+    return new S3Client(
+        $config->aws->aws_key,
+        $config->aws->aws_secret,
+        $config->aws->s3->region,
+        $config->aws->s3->bucket,
+        $config->aws->s3->namespace);
 });
 
 
