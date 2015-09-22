@@ -47,6 +47,7 @@ try {
     echo $application->handle()->getContent();
 
 } catch (\Exception $e) {
+    Util::slackDebug('EXCEPTION LOG', $e->getMessage() . " TRACE: " . $e->getTraceAsString());
     echo json_encode([
         'status' => PackedResponse::STATUS_ERROR,
         PackedResponse::P_MESSAGE => 'An internal error occurred',
