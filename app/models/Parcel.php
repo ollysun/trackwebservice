@@ -1823,7 +1823,7 @@ class Parcel extends \Phalcon\Mvc\Model
                  * @var Parcel $item
                  */
                 foreach ($data as $item){
-                    if ($item->getEntityType() != Parcel::ENTITY_TYPE_NORMAL){
+                    if (!in_array($item->getEntityType(), [Parcel::ENTITY_TYPE_NORMAL, Parcel::ENTITY_TYPE_SUB])){
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_BE_BAGGED;
                         continue;
                     }
