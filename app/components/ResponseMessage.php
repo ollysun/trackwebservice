@@ -94,4 +94,6 @@ class ResponseMessage
 
     const MANIFEST_NOT_RECEIVABLE = 'Manifest cannot be receive at your branch';
     const MANIFEST_PARCEL_DIRECTION_MISMATCH = 'Parcel\'s origin and destination is not the same as manifest';
+
+    const STAFF_DOES_NOT_EXIST = 'Staff does not exist';
 }
