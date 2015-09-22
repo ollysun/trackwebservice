@@ -1103,6 +1103,7 @@ class ParcelController extends ControllerBase
         }
 
         $allowedExtensions = ['png', 'jpg', 'jpeg'];
+        $receipt_paths = [];
 
         /** @var \Phalcon\Http\Request\File $file */
         foreach ($this->request->getUploadedFiles() as $file) {
@@ -1118,13 +1119,9 @@ class ParcelController extends ControllerBase
                         return $this->response->sendError('Could not upload ' . $file->getKey() . ' receipt to S3');
                     }
 
-                    $delivery_receipt = new DeliveryReceipt();
-                    $delivery_receipt->delivered_by = $delivered_by;
-                    $delivery_receipt->waybill_number = $waybill_number;
-                    $delivery_receipt->receipt_path = $receipt_path;
-                    $delivery_receipt->receipt_type = $file->getKey();
+                    $receipt_paths[] = $receipt_path;
 
-                    if (!$delivery_receipt->save()) {
+                    if (!DeliveryReceipt::add($waybill_number, $receipt_path, $delivered_by, $file->getKey())) {
                         return $this->response->sendError('Could not save ' . $file->getKey() . ' receipt');
                     }
 
@@ -1134,6 +1131,6 @@ class ParcelController extends ControllerBase
             }
         }
 
-        return $this->response->sendSuccess([]);
+        return $this->response->sendSuccess(['receipts' => $receipt_paths]);
     }
 }

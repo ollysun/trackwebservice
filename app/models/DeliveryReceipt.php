@@ -34,4 +34,23 @@ class DeliveryReceipt extends Model
     {
         $this->created_at = Util::getCurrentDateTime();
     }
+
+    /**
+     * Create a delivery receipt
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @param $receipt_path
+     * @param $delivered_by
+     * @param $receipt_type
+     * @return bool
+     */
+    public static function add($waybill_number, $receipt_path, $delivered_by, $receipt_type)
+    {
+        $delivery_receipt = new DeliveryReceipt();
+        $delivery_receipt->delivered_by = $delivered_by;
+        $delivery_receipt->waybill_number = $waybill_number;
+        $delivery_receipt->receipt_path = $receipt_path;
+        $delivery_receipt->receipt_type = $receipt_type;
+        return $delivery_receipt->save();
+    }
 }
