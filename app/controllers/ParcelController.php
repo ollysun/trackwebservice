@@ -21,58 +21,58 @@ class ParcelController extends ControllerBase
         $payload = $this->request->getJsonRawBody(true);
         Util::slackDebug("Parcel Payload >>", json_encode($payload));
 
-              /*  $payload = '{
-            "sender": {
-                "firstname": "Rotimo",
-                "lastname": "Akintewe",
-                "phone": "+2348033438870",
-                "email": "akintewe.rotimi@gmail.com"
-            },
-            "receiver": {
-                "firstname": "Dapo",
-                "lastname": "Olotu",
-                "phone": "09023454321",
-                "email": "dapo.olotu@gmail.com"
-            },
-            "sender_address": {
-                "id": null,
-                "street1": "3 Cuttacosh Road, Abule Egba.",
-                "street2": "",
-                "city_id": "23",
-                "state_id": "1",
-                "country_id": "1"
-            },
-            "receiver_address": {
-                "id": null,
-                "street1": "9, Ojo Street, Akoka",
-                "street2": "",
-                "city_id": "23",
-                "state_id": "1",
-                "country_id": "1"
-            },
-            "parcel": {
-                "parcel_type": "1",
-                "no_of_package": "1",
-                "weight": "176",
-                "parcel_value": "23000",
-                "amount_due": "23000",
-                "cash_on_delivery": 1,
-                "cash_on_delivery_amount": "120000",
-                "delivery_type": "2",
-                "payment_type": "2",
-                "shipping_type": "1",
-                "other_info": "This is the other information needed",
-                "cash_amount": null,
-                "pos_amount": null,
-                "pos_trans_id": null,
-                "package_value": 200.00,
-                "is_billing_overridden": 1,
-                "reference_number": "R34324232"
-            },
-            "is_corporate_lead": 0,
-            "to_hub": 1
-        }';
-                $payload = json_decode($payload, true);*/
+        /*  $payload = '{
+      "sender": {
+          "firstname": "Rotimo",
+          "lastname": "Akintewe",
+          "phone": "+2348033438870",
+          "email": "akintewe.rotimi@gmail.com"
+      },
+      "receiver": {
+          "firstname": "Dapo",
+          "lastname": "Olotu",
+          "phone": "09023454321",
+          "email": "dapo.olotu@gmail.com"
+      },
+      "sender_address": {
+          "id": null,
+          "street1": "3 Cuttacosh Road, Abule Egba.",
+          "street2": "",
+          "city_id": "23",
+          "state_id": "1",
+          "country_id": "1"
+      },
+      "receiver_address": {
+          "id": null,
+          "street1": "9, Ojo Street, Akoka",
+          "street2": "",
+          "city_id": "23",
+          "state_id": "1",
+          "country_id": "1"
+      },
+      "parcel": {
+          "parcel_type": "1",
+          "no_of_package": "1",
+          "weight": "176",
+          "parcel_value": "23000",
+          "amount_due": "23000",
+          "cash_on_delivery": 1,
+          "cash_on_delivery_amount": "120000",
+          "delivery_type": "2",
+          "payment_type": "2",
+          "shipping_type": "1",
+          "other_info": "This is the other information needed",
+          "cash_amount": null,
+          "pos_amount": null,
+          "pos_trans_id": null,
+          "package_value": 200.00,
+          "is_billing_overridden": 1,
+          "reference_number": "R34324232"
+      },
+      "is_corporate_lead": 0,
+      "to_hub": 1
+  }';
+          $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -1050,21 +1050,87 @@ class ParcelController extends ControllerBase
         //------------------------------------------
         $possible_params = array_merge($filter_params, $fetch_params);
 
-        foreach ($possible_params as $param){
+        foreach ($possible_params as $param) {
             $$param = $this->request->getQuery($param);
         }
 
         $filter_by = [];
-        foreach ($filter_params as $param){
-            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
         }
 
         $fetch_with = [];
-        foreach ($fetch_params as $param){
-            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
         }
         //------------------------------------------
 
         return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
+    }
+
+
+    /**
+     * Add a parcel delivery receipt
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createParcelDeliveryReceiptAction()
+    {
+        $waybill_number = $this->request->getPost('waybill_number', null, null);
+        $delivered_by = $this->request->getPost('delivered_by', null, null);
+        if (!isset($waybill_number)) {
+            return $this->response->sendError('Waybill number required');
+        }
+
+        //check if parcel with waybill_number exists
+        $parcel = Parcel::findFirstByWaybillNumber($waybill_number);
+        if (!$parcel) {
+            return $this->response->sendError('Parcel with waybill number does not exist');
+        }
+
+        //check if delivering user exists
+        $user = Admin::findFirst($delivered_by);
+        if (!$user) {
+            return $this->response->sendError('Invalid delivery user');
+        }
+
+        //check if post has files
+        if (!$this->request->hasFiles()) {
+            return $this->response->sendError('signature or snapshot file required');
+        }
+
+        $allowedExtensions = ['png', 'jpg', 'jpeg'];
+        $receipt_paths = [];
+
+        /** @var \Phalcon\Http\Request\File $file */
+        foreach ($this->request->getUploadedFiles() as $file) {
+            if (in_array($file->getKey(), ['signature', 'snapshot'])) {
+                if (in_array($file->getExtension(), $allowedExtensions)) {
+                    if (DeliveryReceipt::doesReceiptExist($waybill_number, $file->getKey())) {
+                        return $this->response->sendError($file->getKey() . ' receipt for parcel already exists');
+                    }
+
+                    $receipt_file_name = $waybill_number . "_" . $file->getKey() . "_receipt." . $file->getExtension();
+                    $receipt_path = $this->s3Client->createObject($file->getTempName(), $receipt_file_name);
+                    if (!$receipt_path) {
+                        return $this->response->sendError('Could not upload ' . $file->getKey() . ' receipt to S3');
+                    }
+
+                    $receipt_paths[] = $receipt_path;
+
+                    if (!DeliveryReceipt::add($waybill_number, $receipt_path, $delivered_by, $file->getKey())) {
+                        return $this->response->sendError('Could not save ' . $file->getKey() . ' receipt');
+                    }
+
+                } else {
+                    return $this->response->sendError('Invalid extension for ' . $file->getKey() . '. Only ' . implode(', ', $allowedExtensions) . ' allowed');
+                }
+            }
+        }
+
+        return $this->response->sendSuccess(['receipts' => $receipt_paths]);
     }
 }
