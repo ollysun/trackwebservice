@@ -186,6 +186,11 @@ class ParcelController extends ControllerBase
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     */
     private function getFilterParams()
     {
         $manifest_id = $this->request->getQuery('manifest_id');
@@ -225,6 +230,7 @@ class ParcelController extends ControllerBase
         $end_modified_date = $this->request->getQuery('end_modified_date');
         $waybill_number = $this->request->getQuery('waybill_number');
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
+        $created_branch_id = $this->request->getQuery('created_branch_id');
 
         $filter_by = [];
         if (!is_null($manifest_id)) {
@@ -338,10 +344,18 @@ class ParcelController extends ControllerBase
         if (!is_null($waybill_number_arr)) {
             $filter_by['waybill_number_arr'] = $waybill_number_arr;
         }
+        if (!is_null($created_branch_id)) {
+            $filter_by['created_branch_id'] = $created_branch_id;
+        }
 
         return $filter_by;
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     */
     public function getAllAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
@@ -357,6 +371,7 @@ class ParcelController extends ControllerBase
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
         $with_holder = $this->request->getQuery('with_holder');
         $with_bank_account = $this->request->getQuery('with_bank_account');
+        $with_created_branch = $this->request->getQuery('with_created_branch');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -393,6 +408,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_bank_account)) {
             $fetch_with['with_bank_account'] = true;
+        }
+        if (!is_null($with_created_branch)) {
+            $fetch_with['with_created_branch'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);

@@ -197,6 +197,11 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $reference_number;
 
+    /**
+     * @var integer
+     */
+    protected $created_branch_id;
+
 
     /**
      * @var string
@@ -599,6 +604,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->reference_number = $reference_number;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param int $created_branch_id
+     */
+    public function setCreatedBranchId($created_branch_id)
+    {
+        $this->created_branch_id = $created_branch_id;
+    }
+
 
     /**
      * Returns the value of field id
@@ -911,6 +925,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field created_branch_id
+     *
+     * @return integer
+     */
+    public function getCreatedBranchId(){
+        return $this->created_branch_id;
+    }
+
+    /**
      * @return string
      */
     public function getSealId()
@@ -944,6 +967,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('delivery_type', 'Delivery_type', 'id', array('alias' => 'Delivery_type'));
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
         $this->belongsTo('bank_account_id', 'Bank_Account', 'id', array('alias' => 'Bank_Account'));
+        $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
     }
 
     /**
@@ -999,6 +1023,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'bank_account_id' => 'bank_account_id',
             'is_billing_overridden' => 'is_billing_overridden',
             'reference_number' => 'reference_number',
+            'created_branch_id' => 'created_branch_id',
             'seal_id' => 'seal_id'
         );
     }
@@ -1037,7 +1062,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'bank_account_id' => $this->getBankAccountId(),
             'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number' => $this->getReferenceNumber(),
-            'seal_id' => $this->getSealId()
+            'seal_id' => $this->getSealId(),
+            'created_branch_id'=> $this->getCreatedBranchId()
         );
     }
 
@@ -1080,6 +1106,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
         $this->setReferenceNumber($reference_number);
+        $this->setCreatedBranchId($from_branch_id);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1116,6 +1143,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setStatus($status);
         $this->setIsBillingOverridden(0);
         $this->setReferenceNumber(null);
+        $this->setCreatedBranchId($from_branch_id);
     }
 
     private function getEntityTypeLabel()
@@ -1413,6 +1441,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Bank.*';
             $builder->leftJoin('Bank', 'Bank.id = BankAccount.bank_id');
         }
+        if (isset($fetch_with['with_created_branch'])){
+            $columns[] = 'CreatedBranch.*';
+            $builder->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
+            $columns[] = 'CreatedBranchState.*';
+            $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
+        }
 
         if (isset($fetch_with['with_sender'])) {
             $columns[] = 'Sender.*';
@@ -1467,6 +1501,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_bank_account'])) {
                     $parcel['bank_account'] = $item->bankAccount->getData();
                     $parcel['bank_account']['bank'] = $item->bank->getData();
+                }
+                if (isset($fetch_with['with_created_branch'])) {
+                    $parcel['created_branch'] = $item->createdBranch->getData();
+                    $parcel['created_branch']['state'] = $item->createdBranchState->getData();
                 }
             }
             $result[] = $parcel;
