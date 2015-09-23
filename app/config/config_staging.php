@@ -41,9 +41,9 @@ return new \Phalcon\Config(array(
         'aws_key' => getenv('AWS_KEY'),
         'aws_secret' => getenv('AWS_SECRET'),
         's3' => [
-            'bucket' => 'tnt_delivery_receipts',
+            'bucket' => 'tnt-delivery-receipts',
             'namespace' => 'staging',
-            'region' => 'us-west'
+            'region' => 'us-west-2'
         ]
     ]
 ));
