@@ -119,7 +119,7 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @var double
      */
-    protected  $package_value;
+    protected $package_value;
 
     /**
      *
@@ -196,6 +196,12 @@ class Parcel extends \Phalcon\Mvc\Model
      * @var string
      */
     protected $reference_number;
+
+
+    /**
+     * @var string
+     */
+    protected $seal_id;
 
 
     /**
@@ -516,7 +522,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param string $pos_trans_id
      * @return $this
      */
-    public function setPosTransId($pos_trans_id){
+    public function setPosTransId($pos_trans_id)
+    {
         $this->pos_trans_id = $pos_trans_id;
 
         return $this;
@@ -838,7 +845,8 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return string
      */
-    public function getPosTransId(){
+    public function getPosTransId()
+    {
         return $this->pos_trans_id;
     }
 
@@ -877,7 +885,8 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return string
      */
-    public function getBankAccountId(){
+    public function getBankAccountId()
+    {
         return $this->bank_account_id;
     }
 
@@ -886,7 +895,8 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return integer
      */
-    public function getIsBillingOverridden(){
+    public function getIsBillingOverridden()
+    {
         return $this->is_billing_overridden;
     }
 
@@ -895,9 +905,27 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return integer
      */
-    public function getReferenceNumber(){
+    public function getReferenceNumber()
+    {
         return $this->reference_number;
     }
+
+    /**
+     * @return string
+     */
+    public function getSealId()
+    {
+        return $this->seal_id;
+    }
+
+    /**
+     * @param string $seal_id
+     */
+    public function setSealId($seal_id)
+    {
+        $this->seal_id = $seal_id;
+    }
+
 
     /**
      * Initialize method for model.
@@ -971,10 +999,12 @@ class Parcel extends \Phalcon\Mvc\Model
             'bank_account_id' => 'bank_account_id',
             'is_billing_overridden' => 'is_billing_overridden',
             'reference_number' => 'reference_number',
+            'seal_id' => 'seal_id'
         );
     }
 
-    public function getData(){
+    public function getData()
+    {
         return array(
             'id' => $this->getId(),
             'entity_type' => $this->getEntityType(),
@@ -1006,16 +1036,18 @@ class Parcel extends \Phalcon\Mvc\Model
             'modified_date' => $this->getModifiedDate(),
             'bank_account_id' => $this->getBankAccountId(),
             'is_billing_overridden' => $this->getIsBillingOverridden(),
-            'reference_number'=> $this->getReferenceNumber()
+            'reference_number' => $this->getReferenceNumber(),
+            'seal_id' => $this->getSealId()
         );
     }
 
     public function initData($parcel_type, $sender_id, $sender_address_id, $receiver_id, $receiver_address_id,
-        $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
-        $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
-        $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null,$is_billing_overridden = 0,
-        $reference_number = null
-    ){
+                             $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
+                             $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
+                             $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
+                             $reference_number = null
+    )
+    {
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
         $this->setSenderAddressId($sender_address_id);
@@ -1050,7 +1082,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber($reference_number);
     }
 
-    public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible){
+    public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
+    {
         $this->setParcelType(null);
         $this->setSenderId(null);
         $this->setSenderAddressId(null);
@@ -1085,9 +1118,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber(null);
     }
 
-    private function getEntityTypeLabel(){
+    private function getEntityTypeLabel()
+    {
         $entity_type_label = "X";
-        switch ($this->getEntityType()){
+        switch ($this->getEntityType()) {
             case self::ENTITY_TYPE_BAG:
                 $entity_type_label = "B";
                 break;
@@ -1103,7 +1137,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $entity_type_label;
     }
 
-    public function generateWaybillNumber($initial_branch_id){
+    public function generateWaybillNumber($initial_branch_id)
+    {
         $entity_type_label = $this->getEntityTypeLabel();
         $waybill_number = $this->getDeliveryType()
             . $entity_type_label
@@ -1114,7 +1149,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public static function fetchOne($id, $in_recursion=false){
+    public static function fetchOne($id, $in_recursion = false)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*'])
@@ -1146,20 +1182,21 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    private static function filterConditions($filter_by){
+    private static function filterConditions($filter_by)
+    {
         $bind = [];
         $where = [];
 
         //filters
-        if (isset($filter_by['held_by_id'])){
+        if (isset($filter_by['held_by_id'])) {
             $where[] = 'HeldParcel.held_by_id = :held_by_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_id'] = $filter_by['held_by_id'];
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
-        }else if (isset($filter_by['held_by_staff_id'])){
+        } else if (isset($filter_by['held_by_staff_id'])) {
             $where[] = 'Admin.staff_id = :held_by_staff_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_staff_id'] = $filter_by['held_by_staff_id'];
             $bind['held_status'] = Status::PARCEL_UNCLEARED;
-        }else if (isset($filter_by['manifest_id'])){
+        } else if (isset($filter_by['manifest_id'])) {
             $where[] = 'HeldParcel.manifest_id = :manifest_id:';
             $bind['manifest_id'] = $filter_by['manifest_id'];
         }
@@ -1167,52 +1204,146 @@ class Parcel extends \Phalcon\Mvc\Model
         $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
 
         $initial_cond = 'Parcel.is_visible = :is_visible:';
-        if (isset($filter_by['show_parents'])){
-            $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != '. self::ENTITY_TYPE_SUB;
+        if (isset($filter_by['show_parents'])) {
+            $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != ' . self::ENTITY_TYPE_SUB;
         }
         $where[] = $initial_cond;
 
-        if (isset($filter_by['parent_id'])){ $where[] = 'LinkedParcel.parent_id = :parent_id:'; $bind['parent_id'] = $filter_by['parent_id'];}
-        if (isset($filter_by['entity_type'])){ $where[] = 'Parcel.entity_type = :entity_type:'; $bind['entity_type'] = $filter_by['entity_type'];}
-        if (isset($filter_by['created_by'])){ $where[] = 'Parcel.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
-        if (isset($filter_by['user_id'])){ $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)'; $bind['user_id'] = $filter_by['user_id'];}
-        if (isset($filter_by['to_branch_id'])){ $where[] = 'Parcel.to_branch_id = :to_branch_id:'; $bind['to_branch_id'] = $filter_by['to_branch_id'];}
-        if (isset($filter_by['from_branch_id'])){ $where[] = 'Parcel.from_branch_id = :from_branch_id:'; $bind['from_branch_id'] = $filter_by['from_branch_id'];}
-        if (isset($filter_by['parcel_type'])){ $where[] = 'Parcel.parcel_type = :parcel_type:'; $bind['parcel_type'] = $filter_by['parcel_type'];}
-        if (isset($filter_by['sender_id'])){ $where[] = 'Parcel.sender_id = :sender_id:'; $bind['sender_id'] = $filter_by['sender_id'];}
-        if (isset($filter_by['sender_address_id'])){ $where[] = 'Parcel.sender_address_id = :sender_address_id:'; $bind['sender_address_id'] = $filter_by['sender_address_id'];}
-        if (isset($filter_by['receiver_id'])){ $where[] = 'Parcel.receiver_id = :receiver_id:'; $bind['receiver_id'] = $filter_by['receiver_id'];}
-        if (isset($filter_by['receiver_address_id'])){ $where[] = 'Parcel.receiver_address_id = :receiver_address_id:'; $bind['receiver_address_id'] = $filter_by['receiver_address_id'];}
-        if (isset($filter_by['status'])){ $where[] = 'Parcel.status = :status:'; $bind['status'] = $filter_by['status'];}
-        if (isset($filter_by['min_weight'])){ $where[] = 'Parcel.weight >= :min_weight:'; $bind['min_weight'] = $filter_by['min_weight'];}
-        if (isset($filter_by['max_weight'])){ $where[] = 'Parcel.weight <= :max_weight:'; $bind['max_weight'] = $filter_by['max_weight'];}
-        if (isset($filter_by['min_amount_due'])){ $where[] = 'Parcel.amount_due >= :min_weight:'; $bind['min_amount_due'] = $filter_by['min_amount_due'];}
-        if (isset($filter_by['max_amount_due'])){ $where[] = 'Parcel.amount_due <= :max_weight:'; $bind['max_amount_due'] = $filter_by['max_amount_due'];}
-        if (isset($filter_by['cash_on_delivery'])){ $where[] = 'Parcel.cash_on_delivery = :cash_on_delivery:'; $bind['cash_on_delivery'] = $filter_by['cash_on_delivery'];}
-        if (isset($filter_by['min_delivery_amount'])){ $where[] = 'Parcel.delivery_amount >= :min_delivery_amount:'; $bind['min_delivery_amount'] = $filter_by['min_delivery_amount'];}
-        if (isset($filter_by['max_delivery_amount'])){ $where[] = 'Parcel.delivery_amount <= :max_delivery_amount:'; $bind['max_delivery_amount'] = $filter_by['max_delivery_amount'];}
-        if (isset($filter_by['delivery_type'])){ $where[] = 'Parcel.delivery_type = :delivery_type:'; $bind['delivery_type'] = $filter_by['delivery_type'];}
-        if (isset($filter_by['payment_type'])){ $where[] = 'Parcel.payment_type = :payment_type:'; $bind['payment_type'] = $filter_by['payment_type'];}
-        if (isset($filter_by['shipping_type'])){ $where[] = 'Parcel.shipping_type = :shipping_type:'; $bind['shipping_type'] = $filter_by['shipping_type'];}
-        if (isset($filter_by['min_cash_amount'])){ $where[] = 'Parcel.cash_amount >= :min_cash_amount:'; $bind['min_cash_amount'] = $filter_by['min_cash_amount'];}
-        if (isset($filter_by['max_cash_amount'])){ $where[] = 'Parcel.cash_amount <= :max_cash_amount:'; $bind['max_cash_amount'] = $filter_by['max_cash_amount'];}
-        if (isset($filter_by['min_pos_amount'])){ $where[] = 'Parcel.pos_amount >= :min_pos_amount:'; $bind['min_pos_amount'] = $filter_by['min_pos_amount'];}
-        if (isset($filter_by['max_pos_amount'])){ $where[] = 'Parcel.pos_amount <= :max_pos_amount:'; $bind['max_pos_amount'] = $filter_by['max_pos_amount'];}
-        if (isset($filter_by['start_created_date'])){ $where[] = 'Parcel.created_date >= :start_created_date:'; $bind['start_created_date'] = $filter_by['start_created_date'];}
-        if (isset($filter_by['end_created_date'])){ $where[] = 'Parcel.created_date <= :end_created_date:'; $bind['end_created_date'] = $filter_by['end_created_date'];}
-        if (isset($filter_by['start_modified_date'])){ $where[] = 'Parcel.modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date'];}
-        if (isset($filter_by['end_modified_date'])){ $where[] = 'Parcel.modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date'];}
-        if (isset($filter_by['waybill_number'])){ $where[] = 'Parcel.waybill_number LIKE :waybill_number:'; $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';}
+        if (isset($filter_by['parent_id'])) {
+            $where[] = 'LinkedParcel.parent_id = :parent_id:';
+            $bind['parent_id'] = $filter_by['parent_id'];
+        }
+        if (isset($filter_by['entity_type'])) {
+            $where[] = 'Parcel.entity_type = :entity_type:';
+            $bind['entity_type'] = $filter_by['entity_type'];
+        }
+        if (isset($filter_by['created_by'])) {
+            $where[] = 'Parcel.created_by = :created_by:';
+            $bind['created_by'] = $filter_by['created_by'];
+        }
+        if (isset($filter_by['user_id'])) {
+            $where[] = '(Parcel.sender_id = :user_id: OR Parcel.receiver_id = :user_id:)';
+            $bind['user_id'] = $filter_by['user_id'];
+        }
+        if (isset($filter_by['to_branch_id'])) {
+            $where[] = 'Parcel.to_branch_id = :to_branch_id:';
+            $bind['to_branch_id'] = $filter_by['to_branch_id'];
+        }
+        if (isset($filter_by['from_branch_id'])) {
+            $where[] = 'Parcel.from_branch_id = :from_branch_id:';
+            $bind['from_branch_id'] = $filter_by['from_branch_id'];
+        }
+        if (isset($filter_by['parcel_type'])) {
+            $where[] = 'Parcel.parcel_type = :parcel_type:';
+            $bind['parcel_type'] = $filter_by['parcel_type'];
+        }
+        if (isset($filter_by['sender_id'])) {
+            $where[] = 'Parcel.sender_id = :sender_id:';
+            $bind['sender_id'] = $filter_by['sender_id'];
+        }
+        if (isset($filter_by['sender_address_id'])) {
+            $where[] = 'Parcel.sender_address_id = :sender_address_id:';
+            $bind['sender_address_id'] = $filter_by['sender_address_id'];
+        }
+        if (isset($filter_by['receiver_id'])) {
+            $where[] = 'Parcel.receiver_id = :receiver_id:';
+            $bind['receiver_id'] = $filter_by['receiver_id'];
+        }
+        if (isset($filter_by['receiver_address_id'])) {
+            $where[] = 'Parcel.receiver_address_id = :receiver_address_id:';
+            $bind['receiver_address_id'] = $filter_by['receiver_address_id'];
+        }
+        if (isset($filter_by['status'])) {
+            $where[] = 'Parcel.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+        if (isset($filter_by['min_weight'])) {
+            $where[] = 'Parcel.weight >= :min_weight:';
+            $bind['min_weight'] = $filter_by['min_weight'];
+        }
+        if (isset($filter_by['max_weight'])) {
+            $where[] = 'Parcel.weight <= :max_weight:';
+            $bind['max_weight'] = $filter_by['max_weight'];
+        }
+        if (isset($filter_by['min_amount_due'])) {
+            $where[] = 'Parcel.amount_due >= :min_weight:';
+            $bind['min_amount_due'] = $filter_by['min_amount_due'];
+        }
+        if (isset($filter_by['max_amount_due'])) {
+            $where[] = 'Parcel.amount_due <= :max_weight:';
+            $bind['max_amount_due'] = $filter_by['max_amount_due'];
+        }
+        if (isset($filter_by['cash_on_delivery'])) {
+            $where[] = 'Parcel.cash_on_delivery = :cash_on_delivery:';
+            $bind['cash_on_delivery'] = $filter_by['cash_on_delivery'];
+        }
+        if (isset($filter_by['min_delivery_amount'])) {
+            $where[] = 'Parcel.delivery_amount >= :min_delivery_amount:';
+            $bind['min_delivery_amount'] = $filter_by['min_delivery_amount'];
+        }
+        if (isset($filter_by['max_delivery_amount'])) {
+            $where[] = 'Parcel.delivery_amount <= :max_delivery_amount:';
+            $bind['max_delivery_amount'] = $filter_by['max_delivery_amount'];
+        }
+        if (isset($filter_by['delivery_type'])) {
+            $where[] = 'Parcel.delivery_type = :delivery_type:';
+            $bind['delivery_type'] = $filter_by['delivery_type'];
+        }
+        if (isset($filter_by['payment_type'])) {
+            $where[] = 'Parcel.payment_type = :payment_type:';
+            $bind['payment_type'] = $filter_by['payment_type'];
+        }
+        if (isset($filter_by['shipping_type'])) {
+            $where[] = 'Parcel.shipping_type = :shipping_type:';
+            $bind['shipping_type'] = $filter_by['shipping_type'];
+        }
+        if (isset($filter_by['min_cash_amount'])) {
+            $where[] = 'Parcel.cash_amount >= :min_cash_amount:';
+            $bind['min_cash_amount'] = $filter_by['min_cash_amount'];
+        }
+        if (isset($filter_by['max_cash_amount'])) {
+            $where[] = 'Parcel.cash_amount <= :max_cash_amount:';
+            $bind['max_cash_amount'] = $filter_by['max_cash_amount'];
+        }
+        if (isset($filter_by['min_pos_amount'])) {
+            $where[] = 'Parcel.pos_amount >= :min_pos_amount:';
+            $bind['min_pos_amount'] = $filter_by['min_pos_amount'];
+        }
+        if (isset($filter_by['max_pos_amount'])) {
+            $where[] = 'Parcel.pos_amount <= :max_pos_amount:';
+            $bind['max_pos_amount'] = $filter_by['max_pos_amount'];
+        }
+        if (isset($filter_by['start_created_date'])) {
+            $where[] = 'Parcel.created_date >= :start_created_date:';
+            $bind['start_created_date'] = $filter_by['start_created_date'];
+        }
+        if (isset($filter_by['end_created_date'])) {
+            $where[] = 'Parcel.created_date <= :end_created_date:';
+            $bind['end_created_date'] = $filter_by['end_created_date'];
+        }
+        if (isset($filter_by['start_modified_date'])) {
+            $where[] = 'Parcel.modified_date >= :start_modified_date:';
+            $bind['start_modified_date'] = $filter_by['start_modified_date'];
+        }
+        if (isset($filter_by['end_modified_date'])) {
+            $where[] = 'Parcel.modified_date <= :end_modified_date:';
+            $bind['end_modified_date'] = $filter_by['end_modified_date'];
+        }
+        if (isset($filter_by['waybill_number'])) {
+            $where[] = 'Parcel.waybill_number LIKE :waybill_number:';
+            $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause=null){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel');
 
-        if (!isset($filter_by['send_all'])){
+        if (!isset($filter_by['send_all'])) {
             $builder->limit($count, $offset);
         }
 
@@ -1223,39 +1354,39 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if ($order_by_clause != null){
+        if ($order_by_clause != null) {
             $builder->orderBy($order_by_clause);
-        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
+        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])) {
             $builder->orderBy('Parcel.modified_date');
         } else {
             $builder->orderBy('Parcel.id');
         }
 
-        if (isset($filter_by['parent_id'])){
+        if (isset($filter_by['parent_id'])) {
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
-        }else if (isset($filter_by['held_by_staff_id'])){
+        } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
         }
 
         //model hydration
-        if (isset($fetch_with['with_to_branch'])){
+        if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
             $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
             $columns[] = 'ToBranchState.*';
             $builder->innerJoin('ToBranchState', 'ToBranchState.id = ToBranch.state_id', 'ToBranchState');
         }
-        if (isset($fetch_with['with_from_branch'])){
+        if (isset($fetch_with['with_from_branch'])) {
             $columns[] = 'FromBranch.*';
             $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch');
             $columns[] = 'FromBranchState.*';
             $builder->innerJoin('FromBranchState', 'FromBranchState.id = FromBranch.state_id', 'FromBranchState');
         }
-        if (isset($fetch_with['with_sender_address'])){
+        if (isset($fetch_with['with_sender_address'])) {
             $columns[] = 'SenderAddress.*';
             $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
             $columns[] = 'SenderAddressState.*';
@@ -1263,7 +1394,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'SenderAddressCity.*';
             $builder->leftJoin('SenderAddressCity', 'SenderAddressCity.id = SenderAddress.city_id', 'SenderAddressCity');
         }
-        if (isset($fetch_with['with_receiver_address'])){
+        if (isset($fetch_with['with_receiver_address'])) {
             $columns[] = 'ReceiverAddress.*';
             $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
             $columns[] = 'ReceiverAddressState.*';
@@ -1271,24 +1402,30 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'ReceiverAddressCity.*';
             $builder->leftJoin('ReceiverAddressCity', 'ReceiverAddressCity.id = ReceiverAddress.city_id', 'ReceiverAddressCity');
         }
-        if (isset($fetch_with['with_holder'])){
+        if (isset($fetch_with['with_holder'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
             $columns[] = 'Admin.*';
         }
-        if (isset($fetch_with['with_bank_account'])){
+        if (isset($fetch_with['with_bank_account'])) {
             $columns[] = 'BankAccount.*';
             $builder->leftJoin('BankAccount', 'BankAccount.id = Parcel.bank_account_id');
             $columns[] = 'Bank.*';
             $builder->leftJoin('Bank', 'Bank.id = BankAccount.bank_id');
         }
 
-        if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
-        if (isset($fetch_with['with_receiver'])){ $columns[] = 'Receiver.*'; $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver'); }
+        if (isset($fetch_with['with_sender'])) {
+            $columns[] = 'Sender.*';
+            $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender');
+        }
+        if (isset($fetch_with['with_receiver'])) {
+            $columns[] = 'Receiver.*';
+            $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver');
+        }
 
         $builder->where(join(' AND ', $where));
 
-        if (isset($filter_by['waybill_number_arr'])){
+        if (isset($filter_by['waybill_number_arr'])) {
             $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
 
             $builder->inWhere('Parcel.waybill_number', $waybill_number_arr);
@@ -1298,13 +1435,13 @@ class Parcel extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach($data as $item){
+        foreach ($data as $item) {
             $parcel = [];
-            if (!property_exists($item, 'parcel')){
+            if (!property_exists($item, 'parcel')) {
                 $parcel = $item->getData();
-            }else{
+            } else {
                 $parcel = $item->parcel->getData();
-                if (isset($fetch_with['with_holder'])){
+                if (isset($fetch_with['with_holder'])) {
                     $parcel['holder'] = $item->admin->getData();
                 }
                 if (isset($fetch_with['with_to_branch'])) {
@@ -1321,7 +1458,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel['sender_address']['state'] = $item->senderAddressState->getData();
                     $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
                 }
-                if (isset($fetch_with['with_receiver'])) $parcel['receiver'] =$item->receiver->getData();
+                if (isset($fetch_with['with_receiver'])) $parcel['receiver'] = $item->receiver->getData();
                 if (isset($fetch_with['with_receiver_address'])) {
                     $parcel['receiver_address'] = $item->receiverAddress->getData();
                     $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
@@ -1337,7 +1474,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function parcelCount($filter_by){
+    public static function parcelCount($filter_by)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS parcel_count')
@@ -1348,13 +1486,13 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (isset($filter_by['parent_id'])){
+        if (isset($filter_by['parent_id'])) {
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])){
+        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
-        }else if (isset($filter_by['held_by_staff_id'])){
+        } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
         }
@@ -1362,7 +1500,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return null;
         }
 
@@ -1380,7 +1518,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param array $parcel_data
      * @return bool
      */
-    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id){
+    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id)
+    {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1390,7 +1529,7 @@ class Parcel extends \Phalcon\Mvc\Model
             //saving the sender's user info
             $sender_obj = User::fetchByPhone($sender['phone']);
             $is_sender_existing = $sender_obj != false;
-            if (!$is_sender_existing){
+            if (!$is_sender_existing) {
                 $sender_obj = new User();
             }
             $sender_obj->setTransaction($transaction);
@@ -1403,7 +1542,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($check) {
                 $receiver_obj = User::fetchByPhone($receiver['phone']);
                 $is_receiver_existing = $receiver_obj != false;
-                if (!$is_receiver_existing){
+                if (!$is_receiver_existing) {
                     $receiver_obj = new User();
                 }
                 $receiver_obj->setTransaction($transaction);
@@ -1422,11 +1561,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 if ($sender_address['id'] != null) {
                     $sender_addr_obj = Address::fetchById($sender_address['id']);
                     $is_existing = ($sender_addr_obj != false);
-                    if (!$is_existing){
+                    if (!$is_existing) {
                         $sender_addr_obj = new Address();
                     }
                 }
-                if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
+                if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1449,11 +1588,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 if ($receiver_address['id'] != null) {
                     $receiver_addr_obj = Address::fetchById($receiver_address['id']);
                     $is_existing = ($receiver_addr_obj != false);
-                    if (!$is_existing){
+                    if (!$is_existing) {
                         $receiver_addr_obj = new Address();
                     }
                 }
-                if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
+                if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1476,11 +1615,11 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($bank_account['id'] != null) {
                         $bank_account_obj = BankAccount::fetchById($bank_account['id']);
                         $is_existing = ($bank_account_obj != false);
-                        if ($is_existing){
+                        if ($is_existing) {
                             $bank_account_obj = new BankAccount();
                         }
                     }
-                    if ($is_existing and ($bank_account_obj->getOwnerId() != $sender_obj->getId() OR $bank_account_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)){
+                    if ($is_existing and ($bank_account_obj->getOwnerId() != $sender_obj->getId() OR $bank_account_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
                         $transactionManager->rollback();
                         return false;
                     }
@@ -1500,7 +1639,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
-            if ($check){
+            if ($check) {
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                     $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $parcel_data['amount_due'],
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
@@ -1522,7 +1661,7 @@ class Parcel extends \Phalcon\Mvc\Model
             }
 
             //setting waybill number
-            if ($check){
+            if ($check) {
                 $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
             } else {
@@ -1532,13 +1671,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $waybill_number = $this->getWaybillNumber();
 
             //creating sub-parcel if the number of packages is more than 1
-            if ($check and $this->getNoOfPackage() > 1){
+            if ($check and $this->getNoOfPackage() > 1) {
                 $waybill_number = $this->createSub($transaction);
                 $check = $waybill_number != false;
             }
 
             //saving the parcel history
-            if ($check){
+            if ($check) {
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
@@ -1546,10 +1685,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 $check = $parcel_history->save();
             }
 
-            if ($check){
-                if(is_null($this->getReferenceNumber())){
+            if ($check) {
+                if (is_null($this->getReferenceNumber())) {
                     $this->setReferenceNumber($this->getWaybillNumber());
-                    if(!$this->save()){
+                    if (!$this->save()) {
                         $transactionManager->rollback();
                         return false;
                     }
@@ -1569,7 +1708,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id){
+    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id)
+    {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1577,22 +1717,22 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
-            if ($this->save()){
+            if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check){
+                if (!$check) {
                     $transactionManager->rollback();
                     return false;
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $parcel_history->initData($this->getId(), $admin_branch_id, $history_desc, $admin_id, $status, null);
-                if ($parcel_history->save()){
+                if ($parcel_history->save()) {
                     $transactionManager->commit();
                     return true;
                 }
             }
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
@@ -1600,7 +1740,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeDestination($status, $to_branch_id, $admin_id, $history_desc){
+    public function changeDestination($status, $to_branch_id, $admin_id, $history_desc)
+    {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1610,22 +1751,22 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setToBranchId($to_branch_id);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
-            if ($this->save()){
+            if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check){
+                if (!$check) {
                     $transactionManager->rollback();
                     return false;
                 }
                 $parcel_history = new ParcelHistory();
                 $parcel_history->setTransaction($transaction);
                 $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
-                if ($parcel_history->save()){
+                if ($parcel_history->save()) {
                     $transactionManager->commit();
                     return true;
                 }
             }
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
@@ -1633,7 +1774,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id){
+    public function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id)
+    {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
@@ -1641,27 +1783,27 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
-            if ($this->save()){
+            if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check){
+                if (!$check) {
                     $transactionManager->rollback();
                     return false;
                 }
                 $held_parcel = new HeldParcel();
                 $held_parcel->setTransaction($transaction);
                 $held_parcel->initData($this->getId(), $held_by_id, $manifest_id);
-                if($held_parcel->save()){
+                if ($held_parcel->save()) {
                     $parcel_history = new ParcelHistory();
                     $parcel_history->setTransaction($transaction);
                     $parcel_history->initData($this->getId(), $this->getFromBranchId(), $history_desc, $admin_id, $status, $this->getToBranchId());
-                    if ($parcel_history->save()){
+                    if ($parcel_history->save()) {
                         $transactionManager->commit();
                         return true;
                     }
                 }
             }
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
 
@@ -1687,7 +1829,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->save()) {
                 $check = $this->alterSubs();
 
-                if (!$check){
+                if (!$check) {
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1698,7 +1840,7 @@ class Parcel extends \Phalcon\Mvc\Model
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
                         $parcel_history->initData($this->getId(), $this->getFromBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
-                        if ($parcel_history->save()){
+                        if ($parcel_history->save()) {
                             $transactionManager->commit();
                             return true;
                         }
@@ -1713,26 +1855,28 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function getByWaybillNumber($waybill_number){
+    public static function getByWaybillNumber($waybill_number)
+    {
         return Parcel::findFirst([
             'waybill_number = :waybill_number:',
             'bind' => ['waybill_number' => trim(strtoupper($waybill_number))]
         ]);
     }
 
-    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc=false){
+    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc = false)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel')
             ->inWhere('waybill_number', $waybill_number_arr);
         $data = $builder->getQuery()->execute();
 
-        if ($make_assoc){
+        if ($make_assoc) {
             $assoc_data = [];
             /**
              * @var Parcel $parcel
              */
-            foreach($data as $parcel){
+            foreach ($data as $parcel) {
                 $assoc_data[$parcel->getWaybillNumber()] = $parcel;
             }
             return $assoc_data;
@@ -1740,7 +1884,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $data;
     }
 
-    public function createSub(&$transaction){
+    public function createSub(&$transaction)
+    {
         $check = true;
         $waybill_number_arr = [];
 
@@ -1790,14 +1935,15 @@ class Parcel extends \Phalcon\Mvc\Model
             $waybill_number_arr[] = $waybill_number;
         }
 
-        if ($check){
+        if ($check) {
             return $waybill_number_arr;
         }
 
         return false;
     }
 
-    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr){
+    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id)
+    {
         $bag = new Parcel();
         $bag->initDataWithBasicInfo(
             $from_branch_id,
@@ -1808,10 +1954,11 @@ class Parcel extends \Phalcon\Mvc\Model
             Parcel::ENTITY_TYPE_BAG,
             0
         );
+        $bag->seal_id = $seal_id;
         $bad_parcels = [];
         if ($bag->save()) {
             $bag->generateWaybillNumber($from_branch_id);
-            if ($bag->save()){
+            if ($bag->save()) {
                 $obj = new Parcel();
                 $builder = $obj->getModelsManager()->createBuilder()
                     ->from('Parcel')
@@ -1822,37 +1969,32 @@ class Parcel extends \Phalcon\Mvc\Model
                 /**
                  * @var Parcel $item
                  */
-                foreach ($data as $item){
-                    if (!in_array($item->getEntityType(), [Parcel::ENTITY_TYPE_NORMAL, Parcel::ENTITY_TYPE_SUB])){
+                foreach ($data as $item) {
+                    if (!in_array($item->getEntityType(), [Parcel::ENTITY_TYPE_NORMAL, Parcel::ENTITY_TYPE_SUB])) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_BE_BAGGED;
                         continue;
                     }
 
-                    if ($item->getIsVisible() == 0){
+                    if ($item->getIsVisible() == 0) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_ALREADY_BAGGED;
                         continue;
                     }
 
-                    if ($item->getToBranchId() != $to_branch_id){
-                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_GOING_TO_BAG_LOC;
-                        continue;
-                    }
-
-                    if ($item->getFromBranchId() != $from_branch_id){
+                    if ($item->getFromBranchId() != $from_branch_id) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 
                     $transactionManager = new TransactionManager();
                     $transaction = $transactionManager->get();
-                    try{
+                    try {
                         $item->setTransaction($transaction);
                         $item->setIsVisible(0);
                         $item->setFromBranchId($from_branch_id);
                         $item->setToBranchId($to_branch_id);
                         $item->setStatus($status);
                         $item->setModifiedDate(date('Y-m-d H:i:s'));
-                        if (!$item->save()){
+                        if (!$item->save()) {
                             $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
                             continue;
                         }
@@ -1864,7 +2006,7 @@ class Parcel extends \Phalcon\Mvc\Model
                             continue;
                         }
                         $transactionManager->commit();
-                    }catch (Exception $e){
+                    } catch (Exception $e) {
                         $transactionManager->rollback();
                     }
                 }
@@ -1878,7 +2020,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($bag->save()) {
                         $response['bag_number'] = $bag->getWaybillNumber();
                     }
-                }else{
+                } else {
                     $bag->delete();
                 }
 
@@ -1889,13 +2031,14 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function unbagParcels($bag_waybill_number){
+    public static function unbagParcels($bag_waybill_number)
+    {
         $bag = Parcel::findFirst([
             'waybill_number = :waybill_number: AND entity_type = :entity_type:',
             'bind' => ['waybill_number' => $bag_waybill_number, 'entity_type' => Parcel::ENTITY_TYPE_BAG]
         ]);
 
-        if ($bag == false){
+        if ($bag == false) {
             return false;
         }
         $manager = new self();
@@ -1913,8 +2056,9 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function alterSubs(){
-        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG){
+    public function alterSubs()
+    {
+        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG) {
             return true;
         }
 

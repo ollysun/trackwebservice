@@ -485,6 +485,7 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
         $status = $this->request->getPost('status');
+        $seal_id = $this->request->getPost('seal_id', null, '');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id, $status])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -497,7 +498,7 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr);
+        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr, $seal_id);
         if ($bag_info != false) {
             return $this->response->sendSuccess($bag_info);
         }
@@ -1071,7 +1072,6 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
     }
-
 
     /**
      * Add a parcel delivery receipt
