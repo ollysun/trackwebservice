@@ -1313,9 +1313,9 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         if (isset($fetch_with['with_created_branch'])){
             $columns[] = 'CreatedBranch.*';
-            $builder->innerJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
+            $builder->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
             $columns[] = 'CreatedBranchState.*';
-            $builder->innerJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
+            $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
         }
 
         if (isset($fetch_with['with_sender'])){ $columns[] = 'Sender.*'; $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender'); }
@@ -1366,7 +1366,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel['bank_account'] = $item->bankAccount->getData();
                     $parcel['bank_account']['bank'] = $item->bank->getData();
                 }
-                if (isset($fetch_with['with_from_branch'])) {
+                if (isset($fetch_with['with_created_branch'])) {
                     $parcel['created_branch'] = $item->createdBranch->getData();
                     $parcel['created_branch']['state'] = $item->createdBranchState->getData();
                 }
