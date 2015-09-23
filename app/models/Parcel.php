@@ -1145,12 +1145,13 @@ class Parcel extends \Phalcon\Mvc\Model
     public static function fetchOne($id, $in_recursion=false){
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*'])
+            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*'])
             ->from('Parcel')
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
             ->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
             ->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
+            ->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch')
             ->where('Parcel.id = :id:');
 
         $data = $builder->getQuery()->execute(['id' => $id]);
@@ -1161,6 +1162,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $result['sender_address'] = $data[0]->senderAddress->getData();
         $result['receiver'] = $data[0]->receiver->getData();
         $result['receiver_address'] = $data[0]->receiverAddress->getData();
+        $result['created_branch'] = $data[0]->createdBranch->getData();
 
         if (!$in_recursion) {
             $linkage = LinkedParcel::getByChildId($id);
