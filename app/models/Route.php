@@ -35,6 +35,11 @@ class Route extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $branch_id;
+    /**
+     *
+     * @var integer
+     */
+    protected $status;
 
     /**
      * @author Adegoke Obasa <goke@cottacush.com>
@@ -57,13 +62,17 @@ class Route extends \Phalcon\Mvc\Model
         $route = new Route();
         $route->name = $routeName;
         $route->branch_id = $branchId;
+        $route->code = new Phalcon\Db\RawValue(null);
+        $route->status = Status::ACTIVE;
         $route->created_date = Util::getCurrentDateTime();
         $route->updated_date = Util::getCurrentDateTime();
 
         if (!$route->save()) {
             return false;
         }
-        return $route;
+
+        $route->refresh(); // Ensure DB version is loaded
+        return $route->toArray();
     }
 
     /**
