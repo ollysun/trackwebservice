@@ -41,7 +41,7 @@ class Route extends \Phalcon\Mvc\Model
     public function initialize()
     {
         $this->setSource('routes');
-        $this->hasOne('id', 'Branch', 'branch_id', array('alias' => 'Branch'));
+        $this->hasOne('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
     }
 
     /**
@@ -73,6 +73,7 @@ class Route extends \Phalcon\Mvc\Model
     public static function getAll()
     {
         return Route::query()
+            ->columns("Route.id, Route.name, Route.code, Route.created_date, Route.updated_date, Branch.name AS branch_name, Branch.code AS branch_code,  Route.branch_id")
             ->innerJoin('Branch')
             ->execute()
             ->toArray();
