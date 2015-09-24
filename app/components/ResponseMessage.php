@@ -58,6 +58,7 @@ class ResponseMessage
     const INVALID_SWEEPER_OR_DISPATCHER = 'Invalid sweeper or dispatcher provided';
     const INVALID_OFFICER = 'Invalid officer provided';
     const PARCEL_NOT_IN_OFFICER_BRANCH = 'Parcel not in officer\'s branch';
+    const INVALID_BRANCH = 'Invalid Branch Provided';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
@@ -96,4 +97,5 @@ class ResponseMessage
     const MANIFEST_PARCEL_DIRECTION_MISMATCH = 'Parcel\'s origin and destination is not the same as manifest';
 
     const STAFF_DOES_NOT_EXIST = 'Staff does not exist';
+    const UNABLE_TO_CREATE_ROUTE = 'Unable to create route';
 }
