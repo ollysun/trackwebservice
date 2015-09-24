@@ -35,6 +35,7 @@ class Route extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $branch_id;
+
     /**
      * @author Adegoke Obasa <goke@cottacush.com>
      */
@@ -59,7 +60,7 @@ class Route extends \Phalcon\Mvc\Model
         $route->created_date = Util::getCurrentDateTime();
         $route->updated_date = Util::getCurrentDateTime();
 
-        if(!$route->save()){
+        if (!$route->save()) {
             return false;
         }
         return $route;
@@ -70,12 +71,17 @@ class Route extends \Phalcon\Mvc\Model
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return array
      */
-    public static function getAll()
+    public static function getAll($branchId)
     {
-        return Route::query()
+        $query = Route::query()
             ->columns("Route.id, Route.name, Route.code, Route.created_date, Route.updated_date, Branch.name AS branch_name, Branch.code AS branch_code,  Route.branch_id")
-            ->innerJoin('Branch')
-            ->execute()
-            ->toArray();
+            ->innerJoin('Branch');
+
+        if (!is_null($branchId)) {
+            $query->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
+        }
+        $query = $query->execute();
+
+        return $query->toArray();
     }
 }

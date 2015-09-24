@@ -12,6 +12,8 @@ class RouteController extends ControllerBase
     public function getAllAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
-        return $this->response->sendSuccess(Route::getAll());
+
+        $branchId = $this->request->getQuery('branch_id');
+        return $this->response->sendSuccess(Route::getAll($branchId));
     }
 }
