@@ -100,18 +100,4 @@ class AuthController extends ControllerBase {
         }
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
-
-    public function transferAction(){
-        $admins = Admin::find();
-
-        foreach ($admins as $a){
-            $auth = new UserAuth();
-            $auth->setStatus(Status::ACTIVE);
-            $auth->initData($a->getEmail(), $a->getPassword(), 1);
-            if ($auth->save()){
-                $a->setAuthId($auth->getId());
-                $a->save();
-            }
-        }
-    }
 } 
