@@ -1,19 +1,15 @@
 <?php
 
-return new \Phalcon\Config(array(
-    'database' => array(
+return new \Phalcon\Config([
+    'database' => [
         'adapter' => 'Mysql',
-        'host' => 'localhost',
+        'host' => '127.0.0.1',
         'username' => 'root',
         'password' => '',
         'dbname' => 'tnt',
-//        'host' => '52.26.122.248',
-//        'username' => 'explode',
-//        'password' => '$$12TY*34YSD$',
-//        'dbname' => 'tnt',
-        'charset'     => 'utf8',
-    ),
-    'application' => array(
+        'charset' => 'utf8',
+    ],
+    'application' => [
         'componentsDir' => __DIR__ . '/../../app/components/',
         'controllersDir' => __DIR__ . '/../../app/controllers/',
         'modelsDir' => __DIR__ . '/../../app/models/',
@@ -21,8 +17,30 @@ return new \Phalcon\Config(array(
         'pluginsDir' => __DIR__ . '/../../app/plugins/',
         'libraryDir' => __DIR__ . '/../../app/library/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
-        'tasksDir'        => __DIR__ . '/../../app/tasks/',
+        'tasksDir' => __DIR__ . '/../../app/tasks/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
-    )
-));
+    ],
+
+    'params' => [
+        'mailer' => [
+            'mandrill_username' => 'yemi@cottacush.com',
+            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
+            'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
+            'smtp_host' => 'smtp.mandrillapp.com',
+            'smtp_port' => 587
+        ],
+    ],
+
+    'fe_base_url' => 'http://local.courierplus.tnt.com',
+
+    'aws' => [
+        'aws_key' => getenv('AWS_KEY'),
+        'aws_secret' => getenv('AWS_SECRET'),
+        's3' => [
+            'bucket' => 'tnt-delivery-receipts',
+            'namespace' => 'local',
+            'region' => 'us-west-2'
+        ]
+    ]
+]);

@@ -16,14 +16,18 @@ try {
     include __DIR__ . "/../app/config/global.php";
 
     /**
+     * import composer autoloader
+     */
+    include __DIR__ . "/../vendor/autoload.php";
+
+    /**
      * Read the configuration
      */
-    if (getenv(TNT_DB_HOST) == false){
+    if (($env = getenv('APPLICATION_ENV')) == false) {
         $config = include __DIR__ . "/../app/config/config.dev.php";
-    } else{
-        $config = include __DIR__ . "/../app/config/config.php";
+    } else {
+        $config = include __DIR__ . "/../app/config/config_$env.php";
     }
-
 
     /**
      * Read auto-loader
@@ -43,5 +47,10 @@ try {
     echo $application->handle()->getContent();
 
 } catch (\Exception $e) {
-    echo $e->getMessage();
+    Util::slackDebug('EXCEPTION LOG', $e->getMessage() . " TRACE: " . $e->getTraceAsString());
+    echo json_encode([
+        'status' => PackedResponse::STATUS_ERROR,
+        PackedResponse::P_MESSAGE => 'An internal error occurred',
+        'ex' => $e->getMessage()
+    ]);
 }

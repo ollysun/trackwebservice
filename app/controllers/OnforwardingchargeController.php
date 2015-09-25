@@ -16,7 +16,7 @@ class OnforwardingchargeController extends ControllerBase {
         }
 
         $amount = floatval($amount);
-        if ($amount <= 0.0){
+        if ($amount < 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
@@ -52,7 +52,7 @@ class OnforwardingchargeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
         $amount = floatval($amount);
-        if ($amount <= 0.0){
+        if ($amount < 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
@@ -142,4 +142,4 @@ class OnforwardingchargeController extends ControllerBase {
 
         return $this->response->sendSuccess(OnforwardingCharge::fetchAll($offset, $count, $filter_by));
     }
-} 
+}

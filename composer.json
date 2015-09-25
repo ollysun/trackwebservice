@@ -1,0 +1,12 @@
+{
+  "name": "CourierPlus TNT Service",
+  "require": {
+    "phalcon-utils": "1.2.0"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": " git@bitbucket.org:cottacush/phalcon-utils.git"
+    }
+  ]
+}

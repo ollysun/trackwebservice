@@ -43,6 +43,8 @@ class ResponseMessage
     const PARCEL_ALREADY_IN_ARRIVAL = 'Parcel already in arrival';
     const PARCEL_ALREADY_IN_TRANSIT = 'Parcel already in transit';
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
+    const PARCEL_ALREADY_CANCELLED = 'Parcel already cancelled';
+    const PARCEL_CANNOT_BE_CANCELLED = 'Parcel cannot be cancelled';
     const RECORD_DOES_NOT_EXIST = 'Record does not exist';
     const REGION_DOES_NOT_EXIST = 'Region does not exist';
     const CITY_DOES_NOT_EXIST = 'City does not exist';
@@ -53,6 +55,10 @@ class ResponseMessage
     const PARCEL_ALREADY_FOR_BEING_DELIVERED = 'Parcel already being delivered';
     const PARCEL_ALREADY_DELIVERED = 'Parcel already delivered';
     const PARCEL_NOT_FOR_DELIVERY = 'Parcel not for delivery';
+    const INVALID_SWEEPER_OR_DISPATCHER = 'Invalid sweeper or dispatcher provided';
+    const INVALID_OFFICER = 'Invalid officer provided';
+    const PARCEL_NOT_IN_OFFICER_BRANCH = 'Parcel not in officer\'s branch';
+    const INVALID_BRANCH = 'Invalid Branch Provided';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
@@ -71,6 +77,9 @@ class ResponseMessage
     const BILLING_EXISTS = 'Weight range billing for zone already exists';
     const BILLING_NOT_EXISTS = 'Weight range billing for zone does not exists';
 
+    const PARCEL_ON_TELLER_ALREADY = 'Parcel is already on a teller';
+    const TELLER_ALREADY_USED = 'Teller has been uploaded already';
+
     const INVALID_VALUES = 'Invalid values provided';
 
     const INTERNAL_ERROR = 'An internal error has occurred';
@@ -83,4 +92,10 @@ class ResponseMessage
     const PARCEL_NOT_GOING_TO_BAG_LOC = 'Parcel not heading to bag\'s destination';
 
     const CAN_ONLY_DELIVER_FROM_EC = 'Must be login to an EC to set parcels for delivery';
+
+    const MANIFEST_NOT_RECEIVABLE = 'Manifest cannot be receive at your branch';
+    const MANIFEST_PARCEL_DIRECTION_MISMATCH = 'Parcel\'s origin and destination is not the same as manifest';
+
+    const STAFF_DOES_NOT_EXIST = 'Staff does not exist';
+    const UNABLE_TO_CREATE_ROUTE = 'Unable to create route';
 }

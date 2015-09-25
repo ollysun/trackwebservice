@@ -13,6 +13,12 @@ class HeldParcel extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
+    protected $manifest_id;
+
+    /**
+     *
+     * @var integer
+     */
     protected $parcel_id;
 
     /**
@@ -48,6 +54,19 @@ class HeldParcel extends \Phalcon\Mvc\Model
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field manifest_id
+     *
+     * @param integer $manifest_id
+     * @return $this
+     */
+    public function setManifestId($manifest_id)
+    {
+        $this->manifest_id = $manifest_id;
 
         return $this;
     }
@@ -128,6 +147,16 @@ class HeldParcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field manifest_id
+     *
+     * @return integer
+     */
+    public function getManifestId()
+    {
+        return $this->manifest_id;
+    }
+
+    /**
      * Returns the value of field parcel_id
      *
      * @return integer
@@ -182,6 +211,7 @@ class HeldParcel extends \Phalcon\Mvc\Model
      */
     public function initialize()
     {
+        $this->belongsTo('manifest_id', 'Manifest', 'id', array('alias' => 'Manifest'));
         $this->belongsTo('parcel_id', 'Parcel', 'id', array('alias' => 'Parcel'));
         $this->belongsTo('held_by_id', 'Admin', 'id', array('alias' => 'Admin'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
@@ -209,7 +239,8 @@ class HeldParcel extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
+            'manifest_id' => 'manifest_id',
             'parcel_id' => 'parcel_id', 
             'held_by_id' => 'held_by_id', 
             'created_date' => 'created_date', 
@@ -218,7 +249,20 @@ class HeldParcel extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($parcel_id, $held_by_id){
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'manifest_id' => $this->getManifestId(),
+            'parcel_id' => $this->getParcelId(),
+            'held_by_id' => $this->getHeldById(),
+            'created_date' => $this->getCreatedDate(),
+            'modified_date' => $this->getModifiedDate(),
+            'status' => $this->getStatus()
+        );
+    }
+
+    public function initData($parcel_id, $held_by_id, $manifest_id){
+        $this->setManifestId($manifest_id);
         $this->setParcelId($parcel_id);
         $this->setHeldById($held_by_id);
 
@@ -247,5 +291,40 @@ class HeldParcel extends \Phalcon\Mvc\Model
             'parcel_id = :parcel_id: AND held_by_id = :held_by_id: AND status = :status:',
             'bind' => ['parcel_id' => $parcel_id, 'held_by_id' => $held_by_id, 'status' => Status::PARCEL_UNCLEARED]
         ]);
+    }
+
+    /**
+     * Gets parcels associated with a manifest
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $manifestId
+     * @return array
+     */
+    public static function fetchManifestParcels($manifestId)
+    {
+        // Get Columns for parcels table
+        $parcelColumns = (new Parcel())->columnMap();
+        $columns = [];
+
+        foreach($parcelColumns as $column) {
+            $columns[] = 'Parcel.' . $column;
+        }
+
+        // Destination
+        $columns[] = 'ToBranch.name AS destination_name';
+        $columns[] = 'ToBranch.code AS destination_code';
+
+        // Shipper
+        $columns[] = 'User.firstname AS shipper_firstname';
+        $columns[] = 'User.lastname AS shipper_lastname';
+
+        return HeldParcel::query()
+            ->columns($columns)
+            ->where('manifest_id = :manifest_id:')
+            ->bind(['manifest_id' => $manifestId])
+            ->innerJoin('Parcel')
+            ->innerJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
+            ->innerJoin('User', 'Parcel.sender_id = User.id')
+            ->execute()
+            ->toArray();
     }
 }

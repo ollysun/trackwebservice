@@ -28,6 +28,12 @@ class State extends \Phalcon\Mvc\Model
     protected $name;
 
     /**
+     *
+     * @var string
+     */
+    protected $code;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -80,6 +86,19 @@ class State extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field name
+     *
+     * @param string $code
+     * @return $this
+     */
+    public function setCode($code)
+    {
+        $this->name = $code;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -120,6 +139,16 @@ class State extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field code
+     *
+     * @return string
+     */
+    public function getCode()
+    {
+        return $this->code;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -152,14 +181,16 @@ class State extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'country_id' => 'country_id',
             'region_id' => 'region_id',
-            'name' => 'name'
+            'name' => 'name',
+            'code' => 'code'
         );
     }
 
-    public function getData(){
+    public function getData()
+    {
         return array(
             'id' => $this->getId(),
             'country_id' => $this->getCountryId(),
@@ -168,12 +199,14 @@ class State extends \Phalcon\Mvc\Model
         );
     }
 
-    public function changeLocation($region_id, $country_id){
+    public function changeLocation($region_id, $country_id)
+    {
         $this->setRegionId($region_id);
         $this->setCountryId($country_id);
     }
 
-    public static function fetchAll($filter_by, $fetch_with){
+    public static function fetchAll($filter_by, $fetch_with)
+    {
         $obj = new State();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('State')
@@ -182,15 +215,15 @@ class State extends \Phalcon\Mvc\Model
         $where = [];
         $columns = ['State.*'];
         $bind = [];
-        if (isset($filter_by['country_id'])){
+        if (isset($filter_by['country_id'])) {
             $where[] = 'State.country_id = :country_id:';
             $bind['country_id'] = $filter_by['country_id'];
-        }else if (isset($filter_by['region_id'])){
+        } else if (isset($filter_by['region_id'])) {
             $where[] = 'State.region_id = :region_id:';
             $bind['region_id'] = $filter_by['region_id'];
         }
 
-        if (isset($fetch_with['with_region'])){
+        if (isset($fetch_with['with_region'])) {
             $columns[] = 'Region.*';
             $builder->innerJoin('Region', 'Region.id = State.region_id');
         }
@@ -201,13 +234,13 @@ class State extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach ($data as $item){
+        foreach ($data as $item) {
             $state = [];
-            if (!isset($item->state)){
+            if (!isset($item->state)) {
                 $state = $item->getData();
-            }else{
+            } else {
                 $state = $item->state->getData();
-                if (isset($fetch_with['with_region'])){
+                if (isset($fetch_with['with_region'])) {
                     $state['region'] = $item->region->getData();
                 }
             }
@@ -216,7 +249,8 @@ class State extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function fetchOne($state_id){
+    public static function fetchOne($state_id)
+    {
         return State::findFirst([
             'id = :id:',
             'bind' => ['id' => $state_id]
