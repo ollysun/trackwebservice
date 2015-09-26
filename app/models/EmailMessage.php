@@ -9,6 +9,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
     const USER_ACCOUNT_CREATION = 'staff_account_creation';
     const PARCEL_IN_TRANSIT = 'parcel_in_transit';
     const PARCEL_DELIVERED = 'parcel_delivered';
+    const RESET_PASSWORD = 'reset_password';
 
     /**
      *

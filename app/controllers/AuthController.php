@@ -69,8 +69,38 @@ class AuthController extends ControllerBase {
         return $this->response->sendError();
     }
 
-    public function resetPasswordAction(){
+    /**
+     * Reset password actionW
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function forgotPasswordAction(){
+        $email = $this->request->getPost('identifier');
 
+        if ($email == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = UserAuth::findFirst([
+            'email = :email:',
+            'bind' => ['email' => $email]
+        ]);
+
+        if($admin) {
+            // Send password reset email
+            EmailMessage::send(
+                EmailMessage::RESET_PASSWORD,
+                [
+                    'name' => '',
+                    'email' => $email,
+                    'link' => $this->config->fe_base_url.'/site/forgotpassword?ican='.md5($admin->getId()),
+                    'year'=> date('Y')
+                ],
+                'Courier Plus',
+                $email
+            );
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
     }
 
     public function validateAction(){

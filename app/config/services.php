@@ -135,6 +135,8 @@ $di->set('dispatcher', function () {
         if (!$auth->skipAuth(array(
             array('controller' => 'ref'),
             array('controller' => 'admin', 'action' => 'login'),
+            array('controller' => 'auth', 'action' => 'resetPassword'),
+            array('controller' => 'auth', 'action' => 'forgotPassword'),
             array('controller' => 'user', 'action' => 'login'),
             array('controller' => 'parcel', 'action' => 'history'),
         ))
