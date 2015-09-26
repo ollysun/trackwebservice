@@ -98,4 +98,7 @@ class ResponseMessage
 
     const STAFF_DOES_NOT_EXIST = 'Staff does not exist';
     const UNABLE_TO_CREATE_ROUTE = 'Unable to create route';
+    const ACCOUNT_DOES_NOT_EXIST = 'Account does not exist';
+    const UNABLE_TO_RESET_PASSWORD = 'Unable to reset password';
+    const INVALID_TOKEN = 'Invalid password reset token';
 }
