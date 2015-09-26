@@ -70,7 +70,7 @@ class AuthController extends ControllerBase {
     }
 
     /**
-     * Reset password actionW
+     * Forgot password action
      * @author Adegoke Obasa <goke@cottacush.com>
      */
     public function forgotPasswordAction(){
@@ -99,6 +99,33 @@ class AuthController extends ControllerBase {
                 $email
             );
             return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
+    }
+
+    /**
+     * Reset password action
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function resetPasswordAction(){
+        $userAuthId = $this->request->getPost('user_auth_id');
+        $password = $this->request->getPost('password');
+
+        if (in_array(null, [$userAuthId, $password])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = UserAuth::findFirst($userAuthId);
+
+        if($admin) {
+            // TODO - Change password
+            $admin->changePassword($password);
+
+            if($admin->save()) {
+                return $this->response->sendSuccess();
+            } else {
+                return $this->response->sendError(ResponseMessage::UNABLE_TO_RESET_PASSWORD);
+            }
         }
         return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
     }
