@@ -30,13 +30,14 @@ class AuthController extends ControllerBase {
                 }
 
                 $officer_data['email'] = $officer->getEmail();
+                $officer_data['status'] = $officer->getStatus();
                 $role_id = ($officer->getStatus() == Status::ACTIVE) ? $officer_data['role_id'] : Role::INACTIVE_USER;
 
-                $this->auth->saveTokenData($officer_data['id'],[
-                    Auth::L_EMAIL => $officer_data['email'],
+                $this->auth->saveTokenData($officer->getId(),[
+                    Auth::L_EMAIL => $officer->getEmail(),
                     Auth::L_USER_TYPE => $role_id,
                     Auth::L_TOKEN => $token,
-                    Auth::L_DATA => $officer
+                    Auth::L_DATA => $officer_data
                 ]);
 
                 return $this->response->sendSuccess($officer_data);
@@ -99,5 +100,26 @@ class AuthController extends ControllerBase {
             }
         }
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
+    }
+
+    public function changeStatusAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $status = $this->request->getPost('status');
+
+        if ($status == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $auth = UserAuth::findFirst(array(
+            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
+            'bind' => array('id' => $this->auth->getClientId())
+        ));
+        if ($auth != false) {
+            $auth->changeStatus($status);
+            if ($auth->save()) {
+                return $this->response->sendSuccess('');
+            }
+        }
+        return $this->response->sendError();
     }
 } 
