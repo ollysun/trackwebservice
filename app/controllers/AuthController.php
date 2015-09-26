@@ -92,7 +92,7 @@ class AuthController extends ControllerBase {
                 [
                     'name' => '',
                     'email' => $email,
-                    'link' => $this->config->fe_base_url.'/site/forgotpassword?ican='.md5($admin->getId()),
+                    'link' => $this->config->fe_base_url.'/site/resetpassword?token='.md5($admin->getId()) . "&_key_=". $admin->getId(),
                     'year'=> date('Y')
                 ],
                 'Courier Plus',
@@ -118,7 +118,6 @@ class AuthController extends ControllerBase {
         $admin = UserAuth::findFirst($userAuthId);
 
         if($admin) {
-            // TODO - Change password
             $admin->changePassword($password);
 
             if($admin->save()) {
@@ -128,6 +127,28 @@ class AuthController extends ControllerBase {
             }
         }
         return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
+    }
+
+    /**
+     * Validates password reset token
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function validatePasswordResetTokenAction()
+    {
+        $token = $this->request->getPost('token');
+        $key = $this->request->getPost('key');
+
+        if (in_array(null, [$token, $key])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        if($token == md5($key)) {
+            $admin = UserAuth::findFirst($key);
+            if($admin) {
+                return $this->response->sendSuccess();
+            }
+        }
+        return $this->response->sendError(ResponseMessage::INVALID_TOKEN);
     }
 
     public function validateAction(){

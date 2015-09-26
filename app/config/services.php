@@ -137,6 +137,7 @@ $di->set('dispatcher', function () {
             array('controller' => 'admin', 'action' => 'login'),
             array('controller' => 'auth', 'action' => 'resetPassword'),
             array('controller' => 'auth', 'action' => 'forgotPassword'),
+            array('controller' => 'auth', 'action' => 'validatePasswordResetToken'),
             array('controller' => 'user', 'action' => 'login'),
             array('controller' => 'parcel', 'action' => 'history'),
         ))
