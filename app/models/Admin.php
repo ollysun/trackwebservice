@@ -272,7 +272,6 @@ class Admin extends \Phalcon\Mvc\Model
      */
     public function initialize()
     {
-        $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('role_id', 'Role', 'id', array('alias' => 'Role'));
         $this->belongsTo('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
     }
@@ -301,13 +300,13 @@ class Admin extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'user_auth_id' => 'user_auth_id',
-            'fullname' => 'fullname', 
+            'fullname' => 'fullname',
             'role_id' => 'role_id',
             'branch_id' => 'branch_id',
-            'phone' => 'phone', 
-            'staff_id' => 'staff_id', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
+            'phone' => 'phone',
+            'staff_id' => 'staff_id',
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
         );
     }
 
@@ -453,7 +452,7 @@ class Admin extends \Phalcon\Mvc\Model
         }
 
         if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
+            $where[] = 'UserAuth.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
@@ -516,8 +515,8 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     public static function getById($id, $role_id=null){
-        $condition = 'id = :id: AND status = :status:';
-        $bind = array('id' => $id, 'status' => Status::ACTIVE);
+        $condition = 'id = :id:';
+        $bind = array('id' => $id);
 
         if ($role_id != null){
             $condition .= ' AND role_id=:role_id:';
