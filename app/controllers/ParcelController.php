@@ -174,12 +174,24 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $id = $this->request->getQuery('id');
+        $waybill_number = $this->request->getQuery('waybill_number');
+        $with_linked = $this->request->getQuery('with_linked');
 
-        if (is_null($id)) {
+        if (is_null($id) && is_null($waybill_number)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $parcel = Parcel::fetchOne($id);
+        if (is_null($waybill_number)) {
+            $value = $id;
+            $fetch_with = 'id';
+        } else {
+            $value = $waybill_number;
+            $fetch_with = 'waybill_number';
+        }
+
+        $with_linked = ($with_linked == 0 || $with_linked == 'false') ? false : true;
+
+        $parcel = Parcel::fetchOne($value, $with_linked, $fetch_with);
         if ($parcel != false) {
             return $this->response->sendSuccess($parcel);
         }

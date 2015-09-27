@@ -618,6 +618,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->created_branch_id = $created_branch_id;
     }
 
+<<<<<<< HEAD
     /**
      * @author Olawale Lawal <wale@cottacush.com>
      * @param int $route_id
@@ -628,6 +629,8 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
 
+=======
+>>>>>>> dev
     /**
      * Returns the value of field id
      *
@@ -943,7 +946,8 @@ class Parcel extends \Phalcon\Mvc\Model
      *
      * @return integer
      */
-    public function getCreatedBranchId(){
+    public function getCreatedBranchId()
+    {
         return $this->created_branch_id;
     }
 
@@ -991,7 +995,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
         $this->belongsTo('bank_account_id', 'Bank_Account', 'id', array('alias' => 'Bank_Account'));
         $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
+<<<<<<< HEAD
         $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
+=======
+        $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
+>>>>>>> dev
     }
 
     /**
@@ -1088,8 +1096,12 @@ class Parcel extends \Phalcon\Mvc\Model
             'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
+<<<<<<< HEAD
             'created_branch_id'=> $this->getCreatedBranchId(),
             'route_id'=> $this->getRouteId()
+=======
+            'created_branch_id' => $this->getCreatedBranchId()
+>>>>>>> dev
         );
     }
 
@@ -1205,20 +1217,23 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public static function fetchOne($id, $in_recursion = false)
+    public static function fetchOne($fetch_value, $in_recursion = false, $fetch_by = 'id')
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*'])
+            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*'])
             ->from('Parcel')
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
             ->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
             ->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
             ->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch')
-            ->where('Parcel.id = :id:');
+            ->leftJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch')
+            ->leftJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
+        $builder = $builder->where("Parcel.$fetch_by = :$fetch_by:", [$fetch_by => $fetch_value]);
 
-        $data = $builder->getQuery()->execute(['id' => $id]);
+
+        $data = $builder->getQuery()->execute();
         if (count($data) == 0) return false;
 
         $result = $data[0]->parcel->getData();
@@ -1227,14 +1242,18 @@ class Parcel extends \Phalcon\Mvc\Model
         $result['receiver'] = $data[0]->receiver->getData();
         $result['receiver_address'] = $data[0]->receiverAddress->getData();
         $result['created_branch'] = $data[0]->createdBranch->getData();
+        $result['to_branch'] = $data[0]->toBranch->getData();
+        $result['from_branch'] = $data[0]->fromBranch->getData();
 
         if (!$in_recursion) {
-            $linkage = LinkedParcel::getByChildId($id);
+            $linkage = LinkedParcel::getByChildId($result['id']);
             if ($linkage != false) {
                 $result['parent'] = Parcel::fetchOne($linkage->getParentId(), true);
             } else {
                 $result['parent'] = null;
             }
+
+            $result['parcels'] = $data[0]->parcel->getChildren()->toArray();
         }
 
         return $result;
@@ -1475,7 +1494,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Bank.*';
             $builder->leftJoin('Bank', 'Bank.id = BankAccount.bank_id');
         }
-        if (isset($fetch_with['with_created_branch'])){
+        if (isset($fetch_with['with_created_branch'])) {
             $columns[] = 'CreatedBranch.*';
             $builder->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
             $columns[] = 'CreatedBranchState.*';
