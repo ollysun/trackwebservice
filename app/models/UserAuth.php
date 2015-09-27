@@ -293,4 +293,11 @@ class UserAuth extends \Phalcon\Mvc\Model
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
+
+    public function changeDetails($email, $status)
+    {
+        $this->setEmail($email);
+        $this->setStatus($status);
+        $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
 }
