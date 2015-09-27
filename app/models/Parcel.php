@@ -618,7 +618,6 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->created_branch_id = $created_branch_id;
     }
 
-<<<<<<< HEAD
     /**
      * @author Olawale Lawal <wale@cottacush.com>
      * @param int $route_id
@@ -629,8 +628,6 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
 
-=======
->>>>>>> dev
     /**
      * Returns the value of field id
      *
@@ -995,11 +992,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
         $this->belongsTo('bank_account_id', 'Bank_Account', 'id', array('alias' => 'Bank_Account'));
         $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
-<<<<<<< HEAD
         $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
-=======
         $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
->>>>>>> dev
     }
 
     /**
@@ -1096,12 +1090,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
-<<<<<<< HEAD
             'created_branch_id'=> $this->getCreatedBranchId(),
             'route_id'=> $this->getRouteId()
-=======
-            'created_branch_id' => $this->getCreatedBranchId()
->>>>>>> dev
         );
     }
 
