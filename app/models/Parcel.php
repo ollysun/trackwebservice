@@ -208,6 +208,11 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $seal_id;
 
+    /**
+     * @var integer
+     */
+    protected $route_id;
+
 
     /**
      * Method to set the value of field id
@@ -614,6 +619,16 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param int $route_id
+     */
+    public function setRouteId($route_id)
+    {
+        $this->route_id = $route_id;
+    }
+
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -949,6 +964,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->seal_id = $seal_id;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return int
+     */
+    public function getRouteId()
+    {
+        return $this->route_id;
+    }
+
 
     /**
      * Initialize method for model.
@@ -968,6 +992,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('payment_type', 'Payment_type', 'id', array('alias' => 'Payment_type'));
         $this->belongsTo('bank_account_id', 'Bank_Account', 'id', array('alias' => 'Bank_Account'));
         $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
+        $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
         $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
     }
 
@@ -1025,7 +1050,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'is_billing_overridden' => 'is_billing_overridden',
             'reference_number' => 'reference_number',
             'created_branch_id' => 'created_branch_id',
-            'seal_id' => 'seal_id'
+            'seal_id' => 'seal_id',
+            'route_id' => 'route_id'
         );
     }
 
@@ -1064,7 +1090,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
-            'created_branch_id' => $this->getCreatedBranchId()
+            'created_branch_id'=> $this->getCreatedBranchId(),
+            'route_id'=> $this->getRouteId()
         );
     }
 
@@ -1072,7 +1099,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null
+                             $reference_number = null, $route_id = null
     )
     {
         $this->setParcelType($parcel_type);
@@ -1108,6 +1135,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setIsBillingOverridden($is_billing_overridden);
         $this->setReferenceNumber($reference_number);
         $this->setCreatedBranchId($from_branch_id);
+        $this->setRouteId($route_id);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1145,6 +1173,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setIsBillingOverridden(0);
         $this->setReferenceNumber(null);
         $this->setCreatedBranchId($from_branch_id);
+        $this->setRouteId(null);
     }
 
     private function getEntityTypeLabel()
@@ -1371,6 +1400,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Parcel.waybill_number LIKE :waybill_number:';
             $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';
         }
+        if (isset($filter_by['route_id'])) {
+            $where[] = 'Parcel.route_id = :route_id:';
+            $bind['route_id'] = $filter_by['route_id'];
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
@@ -1457,6 +1490,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'CreatedBranchState.*';
             $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
         }
+        if (isset($fetch_with['with_route'])){
+            $columns[] = 'Routes.*';
+            $builder->leftJoin('Route', 'Routes.id = Parcel.route_id', 'Routes');
+        }
 
         if (isset($fetch_with['with_sender'])) {
             $columns[] = 'Sender.*';
@@ -1515,6 +1552,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_created_branch'])) {
                     $parcel['created_branch'] = $item->createdBranch->getData();
                     $parcel['created_branch']['state'] = $item->createdBranchState->getData();
+                }
+                if (isset($fetch_with['with_route'])) {
+                    $parcel['route'] = $item->Routes->getData();
                 }
             }
             $result[] = $parcel;
@@ -1694,7 +1734,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number']);
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
