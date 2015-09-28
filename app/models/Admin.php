@@ -272,7 +272,6 @@ class Admin extends \Phalcon\Mvc\Model
      */
     public function initialize()
     {
-        $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('role_id', 'Role', 'id', array('alias' => 'Role'));
         $this->belongsTo('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
     }
@@ -453,7 +452,7 @@ class Admin extends \Phalcon\Mvc\Model
         }
 
         if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
+            $where[] = 'UserAuth.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
