@@ -142,7 +142,7 @@ class ParcelController extends ControllerBase
 
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-            $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
+            $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if ($waybill_numbers) {
             if ($is_corporate_lead == 1) {
                 $city = City::fetchOne($sender_address['city_id'], ['with_state' => 1, 'with_country' => 1]);
@@ -506,7 +506,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getClientId(), ParcelHistory::MSG_FOR_SWEEPER);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -536,7 +536,7 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr, $seal_id);
+        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
         if ($bag_info != false) {
             return $this->response->sendSuccess($bag_info);
         }
@@ -600,7 +600,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId());
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId());
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
@@ -623,8 +623,8 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
-        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
 
         if (!isset($waybill_numbers, $to_branch_id, $held_by_id, $admin_id)) {
@@ -740,7 +740,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $route_id = $this->request->getPost('route_id');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (is_null($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -790,8 +790,8 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
-        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
 
         if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])) {
@@ -908,7 +908,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -985,7 +985,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (!isset($waybill_numbers, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -1031,7 +1031,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (!isset($waybill_numbers, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
