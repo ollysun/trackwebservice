@@ -30,7 +30,7 @@ class ManifestController extends ControllerBase {
                 return $this->response->sendError(ResponseMessage::MANIFEST_NOT_RECEIVABLE);
             }
 
-            $manifest->recieve($this->auth->getClientId(), $status);
+            $manifest->recieve($this->auth->getPersonId(), $status);
             if ($manifest->save()) {
                 return $this->response->sendSuccess();
             }
