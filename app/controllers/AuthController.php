@@ -22,8 +22,8 @@ class AuthController extends ControllerBase {
                     return $this->response->sendError();
                 }
 
-                if ($this->auth->clientTokenExists($officer_data['id'])) {
-                    $this->auth->loadTokenData($officer_data['id']);
+                if ($this->auth->clientTokenExists($officer->getId())) {
+                    $this->auth->loadTokenData($officer->getId());
                     $token = $this->auth->getToken();
                 } else {
                     $token = $this->auth->generateToken();
