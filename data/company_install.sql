@@ -1,19 +1,3 @@
-/*
-SQLyog Ultimate v11.33 (64 bit)
-MySQL - 5.6.17 : Database - tnt_2
-*********************************************************************
-*/
-
-
-/*!40101 SET NAMES utf8 */;
-
-/*!40101 SET SQL_MODE=''*/;
-
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-/*Table structure for table `company` */
-
 CREATE TABLE `company` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
@@ -40,10 +24,10 @@ CREATE TABLE `company` (
   KEY `relations_officer_id` (`relations_officer_id`),
   CONSTRAINT `company_fk0` FOREIGN KEY (`status`) REFERENCES `status` (`id`),
   CONSTRAINT `company_ibfk_1` FOREIGN KEY (`city_id`) REFERENCES `city` (`id`),
-  CONSTRAINT `company_ibfk_2` FOREIGN KEY (`primary_contact_id`) REFERENCES `company_user` (`id`),
-  CONSTRAINT `company_ibfk_3` FOREIGN KEY (`sec_contact_id`) REFERENCES `company_user` (`id`),
   CONSTRAINT `company_ibfk_4` FOREIGN KEY (`relations_officer_id`) REFERENCES `admin` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
 
 /*Table structure for table `company_user` */
 
@@ -71,6 +55,10 @@ CREATE TABLE `company_user` (
 INSERT INTO `role` (`id`, `name`) VALUES (6, 'company_admin');
 INSERT INTO `role` (`id`, `name`) VALUES (7, 'company_officer');
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+ALTER TABLE company ADD CONSTRAINT `company_ibfk_2` FOREIGN KEY (`primary_contact_id`) REFERENCES `company_user` (`id`);
+ALTER TABLE company ADD  CONSTRAINT `company_ibfk_3` FOREIGN KEY (`sec_contact_id`) REFERENCES `company_user` (`id`);
+
+
+ALTER TABLE `company` CHANGE `credit_limit` `credit_limit` DECIMAL(10,0)  NULL;
+ALTER TABLE `company` CHANGE `discount` `discount` FLOAT  NULL;

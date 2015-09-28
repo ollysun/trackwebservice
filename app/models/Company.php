@@ -1,5 +1,6 @@
 <?php
 
+use Phalcon\Di;
 use Phalcon\Mvc\Model\Validator\Email as Email;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
@@ -477,20 +478,20 @@ class Company extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'name' => 'name', 
-            'reg_no' => 'reg_no', 
-            'email' => 'email', 
-            'phone_number' => 'phone_number', 
-            'address' => 'address', 
-            'city_id' => 'city_id', 
-            'credit_limit' => 'credit_limit', 
-            'discount' => 'discount', 
-            'primary_contact_id' => 'primary_contact_id', 
-            'sec_contact_id' => 'sec_contact_id', 
+            'id' => 'id',
+            'name' => 'name',
+            'reg_no' => 'reg_no',
+            'email' => 'email',
+            'phone_number' => 'phone_number',
+            'address' => 'address',
+            'city_id' => 'city_id',
+            'credit_limit' => 'credit_limit',
+            'discount' => 'discount',
+            'primary_contact_id' => 'primary_contact_id',
+            'sec_contact_id' => 'sec_contact_id',
             'relations_officer_id' => 'relations_officer_id',
             'created_date' => 'created_date',
-            'modified_date' => 'modified_date', 
+            'modified_date' => 'modified_date',
             'status' => 'status'
         );
     }
@@ -516,72 +517,38 @@ class Company extends \Phalcon\Mvc\Model
         );
     }
 
-    public function createWithUsers(&$data)
+    public static function add($company_data)
     {
-        if (!isset($data['primary_contact'], $data['company'])){
+        $company = new Company();
+        $company->initData($company_data['name'],
+            $company_data['reg_no'],
+            $company_data['email'],
+            $company_data['phone_number'],
+            $company_data['address'],
+            $company_data['city_id'],
+            $company_data['credit_limit'],
+            $company_data['discount'],
+            $company_data['relations_officer_id']);
+        if ($company->save()) {
+            return $company;
+        } else {
             return false;
         }
-
-        $transactionManager = new TransactionManager();
-        $transaction = $transactionManager->get();
-
-        try{
-            $company_data = $data['company'];
-            $this->setTransaction($transaction);
-            $this->initData(
-                $company_data['name'],
-                $company_data['reg_no'],
-                $company_data['email'],
-                $company_data['phone_number'],
-                $company_data['address'],
-                $company_data['city_id'],
-                $company_data['credit_limit'],
-                $company_data['discount'],
-                $company_data['relations_officer_id']);
-            if ($this->save()){
-                $primary_contact_id = $this->createUser(Role::COMPANY_ADMIN, $data['primary_contact'], $transaction);
-                $data['primary_contact']['id'] = $primary_contact_id;
-                $secondary_contact_id = null;
-                $check = (!empty($primary_contact_id));
-                if ($check){
-                    if (isset($data['secondary_contact'])){
-                        $secondary_contact_id = $this->createUser(Role::COMPANY_OFFICER, $data['secondary_contact'], $transaction);
-                        $data['secondary_contact']['id'] = $secondary_contact_id;
-                    }
-                }
-
-                if ($check){
-                    $this->setPrimaryContactId($primary_contact_id);
-                    $this->setSecContactId($secondary_contact_id);
-                    if ($this->save()){
-                        $transactionManager->commit();
-                        return true;
-                    }
-                }
-            }
-        }catch (Exception $e) {
-
-        }
-
-        $transactionManager->rollback();
-        return false;
     }
 
-    private function createUser($role_id, $data, &$transaction)
+    public function createUser($role_id, $data)
     {
         $user = new CompanyUser();
-        $user->setTransaction($transaction);
-
         $auth = new UserAuth();
-        $auth->setTransaction($transaction);
         $auth->initData($data['email'], $data['password'], UserAuth::ENTITY_TYPE_CORPORATE);
-        if ($auth->save()){
-            $user->initData($this->getId(), $auth->getId(), $role_id, $data['firstname'], $data['lastname'], $data['phone_number']);
-            if ($user->save()){
-                return $user->getId();
-            }
+        if (!$auth->save()) {
+            return false;
         }
-        return null;
+        $user->initData($this->getId(), $auth->getId(), $role_id, $data['firstname'], $data['lastname'], $data['phone_number']);
+        if ($user->save()) {
+            return $user;
+        }
+        return false;
     }
 
     public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
@@ -623,13 +590,15 @@ class Company extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function changeStatus($status)
+    public
+    function changeStatus($status)
     {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function fetchAll($offset, $count, $filter_by, $fetch_with)
+    public
+    function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -640,12 +609,12 @@ class Company extends \Phalcon\Mvc\Model
         $bind = [];
         $where = [];
 
-        if (isset($filter_by['status'])){
+        if (isset($filter_by['status'])) {
             $where[] = 'status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
-        if (isset($fetch_with['with_city'])){
+        if (isset($fetch_with['with_city'])) {
             $builder->innerJoin('City', 'City.id = Company.city_id');
             $builder->innerJoin('State', 'State.id = City.state_id');
             $columns[] = 'City.*';
@@ -657,15 +626,15 @@ class Company extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute($bind);
         $result = [];
-        foreach($data as $item){
+        foreach ($data as $item) {
             $company = [];
-            if (isset($item->company)){
+            if (isset($item->company)) {
                 $company = $item->company->getData();
-                if (isset($fetch_with['with_city'])){
+                if (isset($fetch_with['with_city'])) {
                     $company['city'] = $item->city->getData();
                     $company['state'] = $item->state->getData();
                 }
-            }else{
+            } else {
                 $company = $item->getData();
             }
             $result[] = $company;
@@ -673,7 +642,8 @@ class Company extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public function fetchOne($filter_by, $fetch_with)
+    public
+    function fetchOne($filter_by, $fetch_with)
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -683,12 +653,12 @@ class Company extends \Phalcon\Mvc\Model
         $bind = [];
         $where = [];
 
-        if (isset($filter_by['id'])){
+        if (isset($filter_by['id'])) {
             $where[] = 'Company.id = :id:';
             $bind['id'] = $filter_by['id'];
         }
 
-        if (isset($fetch_with['with_city'])){
+        if (isset($fetch_with['with_city'])) {
             $builder->innerJoin('City', 'City.id = Company.city_id');
             $builder->innerJoin('State', 'State.id = City.state_id');
             $columns[] = 'City.*';
@@ -700,30 +670,30 @@ class Company extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute($bind);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
 
         $company = [];
-        if (isset($data[0]->company)){
+        if (isset($data[0]->company)) {
             $company = $data[0]->company->getData();
-            if (isset($fetch_with['with_city'])){
+            if (isset($fetch_with['with_city'])) {
                 $company['city'] = $data[0]->city->getData();
                 $company['state'] = $data[0]->state->getData();
             }
-        }else{
+        } else {
             $company = $data[0]->getData();
         }
 
-        if (isset($fetch_with['with_primary_contact'])){
+        if (isset($fetch_with['with_primary_contact'])) {
             $company['primary_contact'] = CompanyUser::fetchOne(['id' => $company['primary_contact_id']], []);
         }
 
-        if (isset($fetch_with['with_secondary_contact'])){
+        if (isset($fetch_with['with_secondary_contact'])) {
             $company['secondary_contact'] = CompanyUser::fetchOne(['id' => $company['sec_contact_id']], []);
         }
 
-        if (isset($fetch_with['with_relations_officer'])){
+        if (isset($fetch_with['with_relations_officer'])) {
             $company['relations_officer'] = Admin::fetchOne(['id' => $company['relations_officer_id']]);
         }
 
@@ -734,8 +704,30 @@ class Company extends \Phalcon\Mvc\Model
     {
         $name = Text::removeExtraSpaces(strtolower($name));
         return Company::findFirst([
-            'name = :name:',
-            ['name' => $name]
+            'conditions' => 'name = :name:',
+            'bind' => ['name' => $name]
         ]);
+    }
+
+    /**
+     * Send notification to contact
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $contact
+     * @return bool
+     */
+    public static function notifyContact($contact)
+    {
+        return EmailMessage::send(
+            EmailMessage::USER_ACCOUNT_CREATION,
+            [
+                'name' => $contact['firstname'] . ' ' . $contact['lastname'],
+                'email' => $contact['email'],
+                'password' => $contact['password'],
+                'link' => Di::getDefault()->getConfig()->fe_base_url . '/site/changePassword?ican=' . md5($contact['id']) . '&salt=' . $contact['id'],
+                'year' => date('Y')
+            ],
+            'Courier Plus',
+            $contact['email']
+        );
     }
 }
