@@ -1055,10 +1055,9 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
                 continue;
             }
-
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN, $auth_data['branch_id']);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_GROUNDSMAN, $auth_data['branch_id'], $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
             if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
         }
