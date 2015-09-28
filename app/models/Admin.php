@@ -527,4 +527,19 @@ class Admin extends \Phalcon\Mvc\Model
             'bind' => $bind
         ));
     }
+
+    /**
+     * Get's the email of the admin via the UserAuth Model
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getEmail()
+    {
+        $userAuth = UserAuth::findFirst($this->getUserAuthId());
+
+        if($userAuth) {
+            return $userAuth->getEmail();
+        }
+
+        return false;
+    }
 }
