@@ -300,13 +300,13 @@ class Admin extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'user_auth_id' => 'user_auth_id',
-            'fullname' => 'fullname', 
+            'fullname' => 'fullname',
             'role_id' => 'role_id',
             'branch_id' => 'branch_id',
-            'phone' => 'phone', 
-            'staff_id' => 'staff_id', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
+            'phone' => 'phone',
+            'staff_id' => 'staff_id',
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
         );
     }
 
@@ -515,8 +515,8 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     public static function getById($id, $role_id=null){
-        $condition = 'id = :id: AND status = :status:';
-        $bind = array('id' => $id, 'status' => Status::ACTIVE);
+        $condition = 'id = :id:';
+        $bind = array('id' => $id);
 
         if ($role_id != null){
             $condition .= ' AND role_id=:role_id:';
@@ -526,5 +526,20 @@ class Admin extends \Phalcon\Mvc\Model
             $condition,
             'bind' => $bind
         ));
+    }
+
+    /**
+     * Get's the email of the admin via the UserAuth Model
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getEmail()
+    {
+        $userAuth = UserAuth::findFirst($this->getUserAuthId());
+
+        if($userAuth) {
+            return $userAuth->getEmail();
+        }
+
+        return false;
     }
 }

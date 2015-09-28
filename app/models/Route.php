@@ -93,4 +93,20 @@ class Route extends \Phalcon\Mvc\Model
 
         return $query->toArray();
     }
+
+    /**
+     * Returns the details of the route
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return array
+     */
+
+    public function getData() {
+        return array(
+            'id' => $this->id,
+            'name' => $this->name,
+            'code' => $this->code,
+            'created_date' => $this->created_date,
+            'branch_id' => $this->branch_id
+        );
+    }
 }

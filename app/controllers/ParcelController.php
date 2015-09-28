@@ -174,12 +174,24 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $id = $this->request->getQuery('id');
+        $waybill_number = $this->request->getQuery('waybill_number');
+        $with_linked = $this->request->getQuery('with_linked');
 
-        if (is_null($id)) {
+        if (is_null($id) && is_null($waybill_number)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $parcel = Parcel::fetchOne($id);
+        if (is_null($waybill_number)) {
+            $value = $id;
+            $fetch_with = 'id';
+        } else {
+            $value = $waybill_number;
+            $fetch_with = 'waybill_number';
+        }
+
+        $with_linked = ($with_linked == 0 || $with_linked == 'false') ? false : true;
+
+        $parcel = Parcel::fetchOne($value, $with_linked, $fetch_with);
         if ($parcel != false) {
             return $this->response->sendSuccess($parcel);
         }
@@ -231,6 +243,7 @@ class ParcelController extends ControllerBase
         $waybill_number = $this->request->getQuery('waybill_number');
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
         $created_branch_id = $this->request->getQuery('created_branch_id');
+        $route_id = $this->request->getQuery('route_id');
 
         $filter_by = [];
         if (!is_null($manifest_id)) {
@@ -347,6 +360,9 @@ class ParcelController extends ControllerBase
         if (!is_null($created_branch_id)) {
             $filter_by['created_branch_id'] = $created_branch_id;
         }
+        if (!is_null($route_id)) {
+            $filter_by['route_id'] = $route_id;
+        }
 
         return $filter_by;
     }
@@ -372,6 +388,7 @@ class ParcelController extends ControllerBase
         $with_holder = $this->request->getQuery('with_holder');
         $with_bank_account = $this->request->getQuery('with_bank_account');
         $with_created_branch = $this->request->getQuery('with_created_branch');
+        $with_route = $this->request->getQuery('with_route');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -411,6 +428,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_created_branch)) {
             $fetch_with['with_created_branch'] = true;
+        }
+        if (!is_null($with_route)) {
+            $fetch_with['with_route'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -719,18 +739,15 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = $this->request->getPost('held_by_id');
+        $route_id = $this->request->getPost('route_id');
+        $admin_id = $this->auth->getClientId();
 
-        if (in_array(null, [$waybill_numbers, $held_by_id])) {
+        if (is_null($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
-
-        if ($auth_data['branch']['branch_type'] != BranchType::EC) {
-            return $this->response->sendError(ResponseMessage::CAN_ONLY_DELIVER_FROM_EC);
-        }
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -751,16 +768,10 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            //checking if the parcel is held by the correct person
-            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
-            if ($held_parcel_record == false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
-                continue;
-            }
-
-            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId(), Status::PARCEL_FOR_DELIVERY);
+            $parcel->setRouteId($route_id);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
             if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
         }
