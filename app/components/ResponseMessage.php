@@ -101,4 +101,14 @@ class ResponseMessage
     const ACCOUNT_DOES_NOT_EXIST = 'Account does not exist';
     const UNABLE_TO_RESET_PASSWORD = 'Unable to reset password';
     const INVALID_TOKEN = 'Invalid password reset token';
+
+    const COMPANY_EXISTING = 'Another company with this same name exists';
+    const UNABLE_TO_CREATE_COMPANY = 'Could not create company';
+    const UNABLE_TO_CREATE_COMPANY_PRIMARY_CONTACT = 'Could not create company primary contact';
+    const UNABLE_TO_CREATE_COMPANY_SECONDARY_CONTACT = 'Could not create company secondary contact';
+    const UNABLE_TO_LINK_CONTACTS_TO_COMPANY = 'Unable to link secondary and primary contact to company';
+    const INVALID_CITY_SUPPLIED = 'Invalid city supplied';
+    const INVALID_RELATIONS_OFFICER_ID = 'Invalid relations officer id supplied';
+    const PRIMARY_CONTACT_EXISTS = 'Primary contact already exists';
+    const SECONDARY_CONTACT_EXISTS = 'Secondary contact already exists';
 }
