@@ -100,11 +100,11 @@ class CompanyController extends ControllerBase
 
 
         $primary_contact_data['id'] = $primary_contact->id;
-        Company::notifyContact($primary_contact_data);
+        $company->notifyContact($primary_contact_data);
 
         if (isset($data['secondary_contact'])) {
             $data['secondary_contact']['id'] = $secondary_contact->id;
-            Company::notifyContact($data['secondary_contact']);
+            $company->notifyContact($data['secondary_contact']);
         }
 
         $this->db->commit();

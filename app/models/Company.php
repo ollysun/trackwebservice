@@ -715,13 +715,14 @@ class Company extends \Phalcon\Mvc\Model
      * @param $contact
      * @return bool
      */
-    public static function notifyContact($contact)
+    public function notifyContact($contact)
     {
         return EmailMessage::send(
-            EmailMessage::USER_ACCOUNT_CREATION,
+            EmailMessage::COMPANY_USER_ACCOUNT_CREATION,
             [
                 'name' => $contact['firstname'] . ' ' . $contact['lastname'],
                 'email' => $contact['email'],
+                'company_name' => ucwords($this->name),
                 'password' => $contact['password'],
                 'link' => Di::getDefault()->getConfig()->fe_base_url . '/site/changePassword?ican=' . md5($contact['id']) . '&salt=' . $contact['id'],
                 'year' => date('Y')
