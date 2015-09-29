@@ -1796,7 +1796,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id)
+    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -1804,9 +1804,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
+            $check = true;
 
             if ($this->save()) {
-                $check = $this->alterSubs();
+                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG || $alter_children) {
+                    $check = $this->alterSubs();
+                }
 
                 if (!$check) {
                     $transactionManager->rollback();
@@ -1838,9 +1841,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setFromBranchId($this->getToBranchId());
             $this->setToBranchId($to_branch_id);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
+            $check = true;
 
             if ($this->save()) {
-                $check = $this->alterSubs();
+                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                    $check = $this->alterSubs();
+                }
 
                 if (!$check) {
                     $transactionManager->rollback();
@@ -1870,9 +1876,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
+            $check = true;
 
             if ($this->save()) {
-                $check = $this->alterSubs();
+                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                    $check = $this->alterSubs();
+                }
 
                 if (!$check) {
                     $transactionManager->rollback();
@@ -1913,9 +1922,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
             $this->setStatus($status);
             $this->setModifiedDate(date('Y-m-d H:i:s'));
+            $check = true;
 
             if ($this->save()) {
-                $check = $this->alterSubs();
+                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                    $check = $this->alterSubs();
+                }
 
                 if (!$check) {
                     $transactionManager->rollback();
@@ -2146,10 +2158,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
     public function alterSubs()
     {
-        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG) {
-            return true;
-        }
-
         $connection = $this->getWriteConnection();
         $sql = Parcel::SQL_UPDATE_SUBS;
 
