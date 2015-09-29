@@ -597,8 +597,46 @@ class Company extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public
-    function fetchAll($offset, $count, $filter_by, $fetch_with)
+    /**
+     * Used to set up the where clause with its bind parameters
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
+    private static function filterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['status'])) {
+            $where[] = 'status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+        return ['where' => $where, 'bind' => $bind];
+    }
+
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS company_count')
+            ->from('Company');
+
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        return intval($data[0]->company_count);
+    }
+
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -606,8 +644,9 @@ class Company extends \Phalcon\Mvc\Model
             ->limit($count, $offset);
 
         $columns = ['Company.*'];
-        $bind = [];
-        $where = [];
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         if (isset($filter_by['status'])) {
             $where[] = 'status = :status:';
@@ -642,8 +681,7 @@ class Company extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public
-    function fetchOne($filter_by, $fetch_with)
+    public static function fetchOne($filter_by, $fetch_with)
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
