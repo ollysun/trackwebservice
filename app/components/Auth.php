@@ -228,4 +228,19 @@ class Auth
         $cache_key = $this->getCacheKey();
         return $this->cache->isExisting($cache_key);
     }
+
+    /**
+     * Get's the id of currently logged admin or company user
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function getPersonId()
+    {
+        $this->loadTokenData($this->getClientId());
+
+        if(isset($this->data, $this->data['id'])) {
+            return $this->data['id'];
+        }
+        return false;
+    }
 } 
