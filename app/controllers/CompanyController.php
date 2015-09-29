@@ -111,4 +111,109 @@ class CompanyController extends ControllerBase
 
         return $this->response->sendSuccess($company->toArray());
     }
+
+    /**
+     * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getAllCompanyAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = ['status'];
+        $fetch_params = ['with_city', 'with_total_count'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
+
+        $companies = Company::fetchAll($offset, $count, $filter_by, $fetch_with);
+        $result = [];
+        if (!empty($with_total_count)) {
+            $count = Company::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'companies' => $companies
+            ];
+        } else {
+            $result = $companies;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Fetches the details of a company. More info can be hydrated using certain params starting with 'with'.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getCompanyInfoAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $filter_params = ['id'];
+        $fetch_params = ['with_city', 'with_primary_contact', 'with_secondary_contact', 'with_relations_officer'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param){
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param){
+            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        }
+
+        $company = Company::fetchOne($filter_params, $fetch_with);
+        if ($company != false){
+            return $this->response->sendSuccess($company);
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Gets the total company count based on possible filters.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getCompanyCountAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $filter_params = ['status'];
+
+        $filter_by = [];
+        foreach ($filter_params as $param){
+            $$param = $this->request->getQuery($param);
+            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        }
+
+        $count = Company::getTotalCount($filter_by);
+        if ($count === null) {
+            return $this->response->sendError();
+        }
+        return $this->response->sendSuccess($count);
+    }
 } 
