@@ -3,7 +3,7 @@
 /**
  * @author Adegoke Obasa <goke@cottacush.com>
  */
-class MigrateAdminTask extends BaseTask
+class Migrate_adminTask extends BaseTask
 {
     /**
      * Main Action
