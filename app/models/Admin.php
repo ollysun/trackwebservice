@@ -407,7 +407,7 @@ class Admin extends \Phalcon\Mvc\Model
      * @return object - containing userAuth and admin properties
      */
     public static function fetchByIdentifier($email, $staff_id, $not_id = null){
-        $id_condition = (empty($not_id)) ? '' : ' AND UserAuth.id != :id:';
+        $id_condition = (is_null($not_id)) ? '' : ' AND Admin.id != :id:';
         $bind = (empty($not_id)) ? [] : ['id' => $not_id];
         $bind['email'] = $email;
         $bind['staff_id'] = $staff_id;
@@ -417,7 +417,7 @@ class Admin extends \Phalcon\Mvc\Model
             ->columns(['Admin.*', 'UserAuth.*'])
             ->from('UserAuth')
             ->innerJoin('Admin', 'Admin.user_auth_id = UserAuth.id')
-            ->where('Admin.staff_id = :staff_id: OR UserAuth.email = :email:' . $id_condition, $bind);
+            ->where('(Admin.staff_id = :staff_id: OR UserAuth.email = :email:)' . $id_condition, $bind);
 
         $data = $builder->getQuery()->execute();
 
