@@ -519,6 +519,8 @@ class Company extends \Phalcon\Mvc\Model
 
     public static function add($company_data)
     {
+        $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
+        $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],
