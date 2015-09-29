@@ -21,7 +21,7 @@ class TellerController extends ControllerBase {
 
         $auth_data = $this->auth->getData();
         $branch_id = $auth_data['branch']['id'];
-        $created_by = $this->auth->getClientId();
+        $created_by = $this->auth->getPersonId();
         $paid_by = isset($paid_by) ? $paid_by: $created_by;
 
 

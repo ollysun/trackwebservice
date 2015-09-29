@@ -25,13 +25,21 @@ class Util
                 [
                     'fallback' => "$tag",
                     'color' => '#205081',
-                    'author_name' => 'TNT SERVICE - '. $request->getServer('SERVER_NAME'),
+                    'author_name' => 'TNT SERVICE - ' . $request->getServer('SERVER_NAME'),
                     'title' => "$tag",
                     'text' => $text
                 ]
             ]];
 
         $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public static function getCurrentDateTime()
+    {
+        return date('Y-m-d H:i:s');
     }
 
 

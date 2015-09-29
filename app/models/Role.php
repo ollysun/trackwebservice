@@ -7,6 +7,8 @@ class Role extends \Phalcon\Mvc\Model
     const SWEEPER = 3;
     const DISPATCHER = 4;
     const GROUNDSMAN = 5;
+    const COMPANY_ADMIN = 6;
+    const COMPANY_OFFICER = 7;
     const INACTIVE_USER = -1;
     /**
      *

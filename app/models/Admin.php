@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Model\Validator\Email as Email;
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Admin extends \Phalcon\Mvc\Model
 {
@@ -13,21 +14,15 @@ class Admin extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var integer
+     */
+    protected $user_auth_id;
+
+    /**
+     *
      * @var string
      */
     protected $fullname;
-
-    /**
-     *
-     * @var string
-     */
-    protected $email;
-
-    /**
-     *
-     * @var string
-     */
-    protected $password;
 
     /**
      *
@@ -66,12 +61,6 @@ class Admin extends \Phalcon\Mvc\Model
     protected $modified_date;
 
     /**
-     *
-     * @var integer
-     */
-    protected $status;
-
-    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -85,6 +74,19 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field user_auth_id
+     *
+     * @param integer $user_auth_id
+     * @return $this
+     */
+    public function setUserAuthId($user_auth_id)
+    {
+        $this->user_auth_id = $user_auth_id;
+
+        return $this;
+    }
+
+    /**
      * Method to set the value of field fullname
      *
      * @param string $fullname
@@ -93,36 +95,6 @@ class Admin extends \Phalcon\Mvc\Model
     public function setFullname($fullname)
     {
         $this->fullname = Text::removeExtraSpaces(strtolower($fullname));
-
-        return $this;
-    }
-
-    /**
-     * Method to set the value of field email
-     *
-     * @param string $email
-     * @return $this
-     */
-    public function setEmail($email)
-    {
-        $this->email = strtolower(trim($email));
-
-        return $this;
-    }
-
-    /**
-     * Method to set the value of field password
-     *
-     * @param string $password
-     * @return $this
-     */
-    public function setPassword($password)
-    {
-        /**
-         * @var \Phalcon\Security $security
-         */
-        $security = $this->getDI()->getSecurity();
-        $this->password = $security->hash($password);
 
         return $this;
     }
@@ -206,19 +178,6 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     /**
-     * Method to set the value of field status
-     *
-     * @param integer $status
-     * @return $this
-     */
-    public function setStatus($status)
-    {
-        $this->status = $status;
-
-        return $this;
-    }
-
-    /**
      * Returns the value of field id
      *
      * @return integer
@@ -229,6 +188,16 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field user_auth_id
+     *
+     * @return integer
+     */
+    public function getUserAuthId()
+    {
+        return $this->user_auth_id;
+    }
+
+    /**
      * Returns the value of field fullname
      *
      * @return string
@@ -236,26 +205,6 @@ class Admin extends \Phalcon\Mvc\Model
     public function getFullname()
     {
         return $this->fullname;
-    }
-
-    /**
-     * Returns the value of field email
-     *
-     * @return string
-     */
-    public function getEmail()
-    {
-        return $this->email;
-    }
-
-    /**
-     * Returns the value of field password
-     *
-     * @return string
-     */
-    public function getPassword()
-    {
-        return $this->password;
     }
 
     /**
@@ -319,21 +268,10 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     /**
-     * Returns the value of field status
-     *
-     * @return integer
-     */
-    public function getStatus()
-    {
-        return $this->status;
-    }
-
-    /**
      * Initialize method for model.
      */
     public function initialize()
     {
-        $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('role_id', 'Role', 'id', array('alias' => 'Role'));
         $this->belongsTo('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
     }
@@ -357,47 +295,67 @@ class Admin extends \Phalcon\Mvc\Model
     /**
      * Independent Column Mapping.
      */
-    public function columnMap()
-    {
-        return array(
-            'id' => 'id', 
-            'fullname' => 'fullname', 
-            'email' => 'email', 
-            'password' => 'password', 
-            'role_id' => 'role_id',
-            'branch_id' => 'branch_id',
-            'phone' => 'phone', 
-            'staff_id' => 'staff_id', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
-            'status' => 'status'
-        );
-    }
+//    public function columnMap()
+//    {
+//        return array(
+//            'id' => 'id',
+//            'user_auth_id' => 'user_auth_id',
+//            'fullname' => 'fullname',
+//            'role_id' => 'role_id',
+//            'branch_id' => 'branch_id',
+//            'phone' => 'phone',
+//            'staff_id' => 'staff_id',
+//            'created_date' => 'created_date',
+//            'modified_date' => 'modified_date',
+//        );
+//    }
 
 
-    public function initData($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone){
+    public function initData($branch_id, $role_id, $staff_id, $auth_id, $fullname, $phone){
+        $this->setUserAuthId($auth_id);
         $this->setBranchId($branch_id);
         $this->setRoleId($role_id);
         $this->setStaffId($staff_id);
-        $this->setEmail($email);
-        $this->setPassword($password);
         $this->setFullname($fullname);
         $this->setPhone($phone);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
-        $this->setStatus(Status::INACTIVE);
     }
 
-    public function changePassword($password){
-        $this->setPassword($password);
-        $this->setModifiedDate(date('Y-m-d H:i:s'));
-        $this->setStatus(Status::ACTIVE);
+    public function createWithAuth($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone)
+    {
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $this->setTransaction($transaction);
+
+            $auth = new UserAuth();
+            $auth->setTransaction($transaction);
+            $auth->initData($email, $password, UserAuth::ENTITY_TYPE_ADMIN);
+            if ($auth->save()){
+                $this->initData($branch_id, $role_id, $staff_id, $auth->getId(), $fullname, $phone);
+                if ($this->save()){
+                    $transactionManager->commit();
+                    return true;
+                }
+            }
+        } catch (Exception $e) {
+        }
+
+        $transactionManager->rollback();
+        return false;
     }
 
-    public function changeStatus($status){
-        $this->setStatus($status);
+    public function changeDetails($branch_id, $role_id, $staff_id, $fullname, $phone)
+    {
+        $this->setBranchId($branch_id);
+        $this->setRoleId($role_id);
+        $this->setStaffId($staff_id);
+        $this->setFullname($fullname);
+        $this->setPhone($phone);
+
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
@@ -409,28 +367,27 @@ class Admin extends \Phalcon\Mvc\Model
     public function getData(){
         return array(
             'id' => $this->getId(),
+            'user_auth_id' => $this->getUserAuthId(),
             'fullname' => $this->getFullname(),
-            'email' => $this->getEmail(),
             'role_id' => $this->getRoleId(),
             'branch_id' => $this->getBranchId(),
             'phone' => $this->getPhone(),
             'staff_id' => $this->getStaffId(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
-            'status' => $this->getStatus()
         );
     }
 
-    public static function fetchLoginData($identifier){
+    public static function fetchLoginData($user_auth_id){
         $obj = new Admin();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['Admin.*', 'Role.*', 'Branch.*'])
             ->from('Admin')
             ->innerJoin('Role', 'Admin.role_id = Role.id')
             ->innerJoin('Branch', 'Admin.branch_id = Branch.id')
-            ->where('(email = :identifier: OR staff_id = :identifier:) AND Admin.status IN ('. Status::ACTIVE . ',' . Status::INACTIVE . ')');
+            ->where('(user_auth_id = :user_auth_id:)');
 
-        $data = $builder->getQuery()->execute(['identifier' => $identifier]);
+        $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
 
         if (count($data) == 0){
             return false;
@@ -442,20 +399,43 @@ class Admin extends \Phalcon\Mvc\Model
         return $admin;
     }
 
-    public static function fetchByIdentifier($email, $staff_id){
-        return Admin::findFirst(array(
-            'email = :email: OR staff_id = :staff_id: ',
-            'bind' => array('email' => $email, 'staff_id' => $staff_id)
-        ));
+    /**
+     * Get the Admin model attributed to the idenfier (either email or staff id)
+     * @param $email - Email of the admin
+     * @param $staff_id - Staff id
+     * @param $not_id - Used to exclude an admin id on search, useful for change the email or staff id of an admin
+     * @return object - containing userAuth and admin properties
+     */
+    public static function fetchByIdentifier($email, $staff_id, $not_id = null){
+        $id_condition = (empty($not_id)) ? '' : ' AND UserAuth.id != :id:';
+        $bind = (empty($not_id)) ? [] : ['id' => $not_id];
+        $bind['email'] = $email;
+        $bind['staff_id'] = $staff_id;
+
+        $obj = new Admin();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Admin.*', 'UserAuth.*'])
+            ->from('UserAuth')
+            ->innerJoin('Admin', 'Admin.user_auth_id = UserAuth.id')
+            ->where('Admin.staff_id = :staff_id: OR UserAuth.email = :email:' . $id_condition, $bind);
+
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0){
+            return false;
+        }
+
+        return $data[0];
     }
 
     public static function fetchAll($offset, $count, $filter_by=array()){
         $obj = new Admin();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Admin.*', 'Role.*', 'Branch.*'])
+            ->columns(['Admin.*', 'Role.*', 'Branch.*', 'UserAuth.*'])
             ->from('Admin')
             ->innerJoin('Role', 'Admin.role_id = Role.id')
             ->innerJoin('Branch', 'Admin.branch_id = Branch.id')
+            ->innerJoin('UserAuth', 'UserAuth.id = Admin.user_auth_id')
             ->limit($count, $offset);
 
         $bind = [];
@@ -472,7 +452,7 @@ class Admin extends \Phalcon\Mvc\Model
         }
 
         if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
+            $where[] = 'UserAuth.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
@@ -493,6 +473,8 @@ class Admin extends \Phalcon\Mvc\Model
         $result = [];
         foreach($data as $item){
             $admin = $item->admin->getData();
+            $admin['email'] = $item->userAuth->getEmail();
+            $admin['status'] = $item->userAuth->getStatus();
             $admin['branch'] = $item->branch->toArray();
             $admin['role'] = $item->role->toArray();
             $result[] = $admin;
@@ -504,15 +486,16 @@ class Admin extends \Phalcon\Mvc\Model
     public static function fetchOne($filter_by){
         $obj = new Admin();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Admin.*', 'Role.*', 'Branch.*'])
+            ->columns(['Admin.*', 'Role.*', 'Branch.*', 'UserAuth.*'])
             ->from('Admin')
             ->innerJoin('Role', 'Admin.role_id = Role.id')
-            ->innerJoin('Branch', 'Admin.branch_id = Branch.id');
+            ->innerJoin('Branch', 'Admin.branch_id = Branch.id')
+            ->innerJoin('UserAuth', 'UserAuth.id = Admin.user_auth_id');
 
         if (isset($filter_by['staff_id'])){
             $builder->where('Admin.staff_id = :staff_id:', ['staff_id' => strtoupper(trim($filter_by['staff_id']))]);
         } else if (isset($filter_by['email'])){
-            $builder->where('Admin.email = :email:', ['email' => strtolower(trim($filter_by['email']))]);
+            $builder->where('UserAuth.email = :email:', ['email' => strtolower(trim($filter_by['email']))]);
         } else if (isset($filter_by['id'])){
             $builder->where('Admin.id = :id:', ['id' => $filter_by['id']]);
         }
@@ -523,6 +506,8 @@ class Admin extends \Phalcon\Mvc\Model
             return false;
         }
         $admin = $data[0]->admin->getData();
+        $admin['email'] = $data[0]->userAuth->getEmail();
+        $admin['status'] = $data[0]->userAuth->getStatus();
         $admin['branch'] = $data[0]->branch->toArray();
         $admin['role'] = $data[0]->role->toArray();
 
@@ -530,8 +515,8 @@ class Admin extends \Phalcon\Mvc\Model
     }
 
     public static function getById($id, $role_id=null){
-        $condition = 'id = :id: AND status = :status:';
-        $bind = array('id' => $id, 'status' => Status::ACTIVE);
+        $condition = 'id = :id:';
+        $bind = array('id' => $id);
 
         if ($role_id != null){
             $condition .= ' AND role_id=:role_id:';
@@ -541,5 +526,20 @@ class Admin extends \Phalcon\Mvc\Model
             $condition,
             'bind' => $bind
         ));
+    }
+
+    /**
+     * Get's the email of the admin via the UserAuth Model
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getEmail()
+    {
+        $userAuth = UserAuth::findFirst($this->getUserAuthId());
+
+        if($userAuth) {
+            return $userAuth->getEmail();
+        }
+
+        return false;
     }
 }

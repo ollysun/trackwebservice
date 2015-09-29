@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use PhalconUtils\S3\S3Client;
 
 /**
  * Class ControllerBase
@@ -9,6 +10,7 @@ use Phalcon\Mvc\Controller;
  * @property Phalcon\Security security
  * @property mixed cache
  * @property Auth auth
+ * @property S3Client s3Client
  */
 class ControllerBase extends Controller
 {
