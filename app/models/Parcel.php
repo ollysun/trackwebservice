@@ -1796,7 +1796,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id)
+    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -1806,7 +1806,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setModifiedDate(date('Y-m-d H:i:s'));
 
             if ($this->save()) {
-                $check = $this->alterSubs();
+                $check = $this->alterSubs($alter_children);
 
                 if (!$check) {
                     $transactionManager->rollback();
@@ -2144,9 +2144,9 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function alterSubs()
+    public function alterSubs($alter_children = false)
     {
-        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG) {
+        if ($this->getEntityType() != Parcel::ENTITY_TYPE_BAG && !$alter_children) {
             return true;
         }
 
