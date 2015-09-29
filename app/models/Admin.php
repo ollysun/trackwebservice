@@ -295,20 +295,20 @@ class Admin extends \Phalcon\Mvc\Model
     /**
      * Independent Column Mapping.
      */
-    public function columnMap()
-    {
-        return array(
-            'id' => 'id',
-            'user_auth_id' => 'user_auth_id',
-            'fullname' => 'fullname',
-            'role_id' => 'role_id',
-            'branch_id' => 'branch_id',
-            'phone' => 'phone',
-            'staff_id' => 'staff_id',
-            'created_date' => 'created_date',
-            'modified_date' => 'modified_date',
-        );
-    }
+//    public function columnMap()
+//    {
+//        return array(
+//            'id' => 'id',
+//            'user_auth_id' => 'user_auth_id',
+//            'fullname' => 'fullname',
+//            'role_id' => 'role_id',
+//            'branch_id' => 'branch_id',
+//            'phone' => 'phone',
+//            'staff_id' => 'staff_id',
+//            'created_date' => 'created_date',
+//            'modified_date' => 'modified_date',
+//        );
+//    }
 
 
     public function initData($branch_id, $role_id, $staff_id, $auth_id, $fullname, $phone){
