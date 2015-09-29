@@ -1756,7 +1756,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
             }
-            $waybill_number = $this->getWaybillNumber();
+            $waybill_number = [$this->getWaybillNumber()];
 
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
