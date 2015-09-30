@@ -124,7 +124,7 @@ class CompanyController extends ControllerBase
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
-        $filter_params = ['status'];
+        $filter_params = ['status', 'name'];
         $fetch_params = ['with_city', 'with_total_count'];
 
         $possible_params = array_merge($filter_params, $fetch_params);
@@ -202,7 +202,7 @@ class CompanyController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN]);
 
-        $filter_params = ['status'];
+        $filter_params = ['status', 'name'];
 
         $filter_by = [];
         foreach ($filter_params as $param){
