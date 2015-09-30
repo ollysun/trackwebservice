@@ -9,7 +9,7 @@ class ManifestController extends ControllerBase {
      * @return $this
      */
     public function receiveAction(){
-        $this->auth->allowOnly([Role::OFFICER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $manifest_id = $this->request->getPost('manifest_id');
         $status = $this->request->getPost('status');
@@ -43,7 +43,7 @@ class ManifestController extends ControllerBase {
      * @return $this
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder', 'with_parcels'];
 
@@ -73,7 +73,7 @@ class ManifestController extends ControllerBase {
      * @return $this
      */
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -123,7 +123,7 @@ class ManifestController extends ControllerBase {
      */
     public function countAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $filter_params = [
             'type_id', 'from_branch_id', 'to_branch_id', 'sender_admin_id', 'receiver_admin_id', 'held_by_id', 'status',
