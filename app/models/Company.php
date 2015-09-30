@@ -614,6 +614,12 @@ class Company extends \Phalcon\Mvc\Model
             $where[] = 'status = :status:';
             $bind['status'] = $filter_by['status'];
         }
+
+        if (isset($filter_by['name'])){
+            $where[] = 'name LIKE :name:';
+            $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
+        }
+
         return ['where' => $where, 'bind' => $bind];
     }
 
@@ -649,11 +655,6 @@ class Company extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
-
-        if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
-            $bind['status'] = $filter_by['status'];
-        }
 
         if (isset($fetch_with['with_city'])) {
             $builder->innerJoin('City', 'City.id = Company.city_id');
