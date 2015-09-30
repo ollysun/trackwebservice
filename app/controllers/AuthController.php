@@ -1,52 +1,66 @@
 <?php
 
-
-class AuthController extends ControllerBase {
-    public function loginAction(){
+/**
+ * Class AuthController
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
+ * @author Rahman Shitu <rahman@cottacush.com>
+ */
+class AuthController extends ControllerBase
+{
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function loginAction()
+    {
         $identifier = $this->request->getPost('identifier'); //email
         $password = $this->request->getPost('password');
 
-        if (in_array(null, array($identifier, $password))){
+        if (in_array(null, array($identifier, $password))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $officer = UserAuth::fetchByEmail($identifier);
-        if ($officer != false){
-            if ($this->security->checkHash($password, $officer->getPassword())){
-                $officer_data = false;
-                if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN){
-                    $officer_data = Admin::fetchLoginData($officer->getId());
+        $authUser = UserAuth::fetchByEmail($identifier);
+        if ($authUser != false) {
+            if ($this->security->checkHash($password, $authUser->getPassword())) {
+                $userData = false;
+                if ($authUser->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN) {
+                    $userData = Admin::fetchLoginData($authUser->getId());
+                } else if ($authUser->getEntityType() == UserAuth::ENTITY_TYPE_CORPORATE) {
+                    $userData = Company::fetchLoginData($authUser->getId());
                 }
 
-                if (empty($officer_data)){
-                    return $this->response->sendError();
+                if (empty($userData)) {
+                    return $this->response->sendError('Could not fetch user login data');
                 }
 
-                if ($this->auth->clientTokenExists($officer->getId())) {
-                    $this->auth->loadTokenData($officer->getId());
+                if ($this->auth->clientTokenExists($authUser->getId())) {
+                    $this->auth->loadTokenData($authUser->getId());
                     $token = $this->auth->getToken();
                 } else {
                     $token = $this->auth->generateToken();
                 }
 
-                $officer_data['email'] = $officer->getEmail();
-                $officer_data['status'] = $officer->getStatus();
-                $role_id = ($officer->getStatus() == Status::ACTIVE) ? $officer_data['role_id'] : Role::INACTIVE_USER;
+                $userData['email'] = $authUser->getEmail();
+                $userData['status'] = $authUser->getStatus();
+                $role_id = ($authUser->getStatus() == Status::ACTIVE) ? $userData['role_id'] : Role::INACTIVE_USER;
 
-                $this->auth->saveTokenData($officer->getId(),[
-                    Auth::L_EMAIL => $officer->getEmail(),
+                $this->auth->saveTokenData($authUser->getId(), [
+                    Auth::L_EMAIL => $authUser->getEmail(),
                     Auth::L_USER_TYPE => $role_id,
                     Auth::L_TOKEN => $token,
-                    Auth::L_DATA => $officer_data
+                    Auth::L_DATA => $userData
                 ]);
 
-                return $this->response->sendSuccess($officer_data);
+                return $this->response->sendSuccess($userData);
             }
         }
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
-    public function changePasswordAction(){
+    public function changePasswordAction()
+    {
         $password = $this->request->getPost('password');
 
         if ($password == null) {
@@ -58,7 +72,7 @@ class AuthController extends ControllerBase {
         }
 
         $admin = UserAuth::findFirst(array(
-            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
+            "id = :id: AND status IN (" . Status::ACTIVE . "," . Status::INACTIVE . ")",
             'bind' => array('id' => $this->auth->getClientId())
         ));
         if ($admin != false) {
@@ -74,7 +88,8 @@ class AuthController extends ControllerBase {
      * Forgot password action
      * @author Adegoke Obasa <goke@cottacush.com>
      */
-    public function forgotPasswordAction(){
+    public function forgotPasswordAction()
+    {
         $email = $this->request->getPost('identifier');
 
         if ($email == null) {
@@ -86,15 +101,15 @@ class AuthController extends ControllerBase {
             'bind' => ['email' => $email]
         ]);
 
-        if($admin) {
+        if ($admin) {
             // Send password reset email
             EmailMessage::send(
                 EmailMessage::RESET_PASSWORD,
                 [
                     'name' => '',
                     'email' => $email,
-                    'link' => $this->config->fe_base_url.'/site/resetpassword?token='.md5($admin->getId()) . "&_key_=". $admin->getId(),
-                    'year'=> date('Y')
+                    'link' => $this->config->fe_base_url . '/site/resetpassword?token=' . md5($admin->getId()) . "&_key_=" . $admin->getId(),
+                    'year' => date('Y')
                 ],
                 'Courier Plus',
                 $email
@@ -108,7 +123,8 @@ class AuthController extends ControllerBase {
      * Reset password action
      * @author Adegoke Obasa <goke@cottacush.com>
      */
-    public function resetPasswordAction(){
+    public function resetPasswordAction()
+    {
         $userAuthId = $this->request->getPost('user_auth_id');
         $password = $this->request->getPost('password');
 
@@ -118,10 +134,10 @@ class AuthController extends ControllerBase {
 
         $admin = UserAuth::findFirst($userAuthId);
 
-        if($admin) {
+        if ($admin) {
             $admin->changePassword($password);
 
-            if($admin->save()) {
+            if ($admin->save()) {
                 return $this->response->sendSuccess();
             } else {
                 return $this->response->sendError(ResponseMessage::UNABLE_TO_RESET_PASSWORD);
@@ -143,33 +159,34 @@ class AuthController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if($token == md5($key)) {
+        if ($token == md5($key)) {
             $admin = UserAuth::findFirst($key);
-            if($admin) {
+            if ($admin) {
                 return $this->response->sendSuccess();
             }
         }
         return $this->response->sendError(ResponseMessage::INVALID_TOKEN);
     }
 
-    public function validateAction(){
+    public function validateAction()
+    {
         $temp = $this->request->getQuery('identifier');
         $identifier = !empty($temp) ? $temp : $this->auth->getEmail(); //email or staff id
         $password = $this->request->getQuery('password');
 
-        if (in_array(null, array($identifier, $password))){
+        if (in_array(null, array($identifier, $password))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $officer = UserAuth::fetchByEmail($identifier);
-        if ($officer != false){
-            if ($this->security->checkHash($password, $officer->getPassword())){
+        if ($officer != false) {
+            if ($this->security->checkHash($password, $officer->getPassword())) {
                 $officer_data = false;
-                if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN){
+                if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN) {
                     $officer_data = Admin::fetchLoginData($officer->getId());
                 }
 
-                if (empty($officer_data)){
+                if (empty($officer_data)) {
                     return $this->response->sendError();
                 }
 
@@ -180,7 +197,8 @@ class AuthController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
-    public function changeStatusAction(){
+    public function changeStatusAction()
+    {
         $this->auth->allowOnly([Role::ADMIN]);
         $status = $this->request->getPost('status');
 
@@ -189,7 +207,7 @@ class AuthController extends ControllerBase {
         }
 
         $auth = UserAuth::findFirst(array(
-            "id = :id: AND status IN (". Status::ACTIVE . "," . Status::INACTIVE . ")",
+            "id = :id: AND status IN (" . Status::ACTIVE . "," . Status::INACTIVE . ")",
             'bind' => array('id' => $this->auth->getClientId())
         ));
         if ($auth != false) {

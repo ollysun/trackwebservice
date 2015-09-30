@@ -614,6 +614,12 @@ class Company extends \Phalcon\Mvc\Model
             $where[] = 'status = :status:';
             $bind['status'] = $filter_by['status'];
         }
+
+        if (isset($filter_by['name'])){
+            $where[] = 'name LIKE :name:';
+            $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
+        }
+
         return ['where' => $where, 'bind' => $bind];
     }
 
@@ -649,11 +655,6 @@ class Company extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
-
-        if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
-            $bind['status'] = $filter_by['status'];
-        }
 
         if (isset($fetch_with['with_city'])) {
             $builder->innerJoin('City', 'City.id = Company.city_id');
@@ -770,5 +771,32 @@ class Company extends \Phalcon\Mvc\Model
             'Courier Plus',
             $contact['email']
         );
+    }
+
+    /**
+     * Get company user login data
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $user_auth_id
+     * @return bool
+     */
+    public static function fetchLoginData($user_auth_id){
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
+            ->from('CompanyUser')
+            ->innerJoin('Role', 'CompanyUser.role_id = Role.id')
+            ->innerJoin('Company', 'Company.id = CompanyUser.company_id')
+            ->where('(user_auth_id = :user_auth_id:)');
+
+        $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
+
+        if (count($data) == 0){
+            return false;
+        }
+        $user = $data[0]->companyUser->toArray();
+        $user['company'] = $data[0]->company->toArray();
+        $user['role'] = $data[0]->role->toArray();
+
+        return $user;
     }
 }
