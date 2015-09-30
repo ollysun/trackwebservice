@@ -772,4 +772,31 @@ class Company extends \Phalcon\Mvc\Model
             $contact['email']
         );
     }
+
+    /**
+     * Get company user login data
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $user_auth_id
+     * @return bool
+     */
+    public static function fetchLoginData($user_auth_id){
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
+            ->from('CompanyUser')
+            ->innerJoin('Role', 'CompanyUser.role_id = Role.id')
+            ->innerJoin('Company', 'Company.id = CompanyUser.company_id')
+            ->where('(user_auth_id = :user_auth_id:)');
+
+        $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
+
+        if (count($data) == 0){
+            return false;
+        }
+        $user = $data[0]->companyUser->toArray();
+        $user['company'] = $data[0]->company->toArray();
+        $user['role'] = $data[0]->role->toArray();
+
+        return $user;
+    }
 }
