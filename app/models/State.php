@@ -195,7 +195,8 @@ class State extends \Phalcon\Mvc\Model
             'id' => $this->getId(),
             'country_id' => $this->getCountryId(),
             'region_id' => $this->getRegionId(),
-            'name' => $this->getName()
+            'name' => $this->getName(),
+            'code' => $this->getCode()
         );
     }
 
