@@ -792,10 +792,10 @@ class Company extends \Phalcon\Mvc\Model
         if (count($data) == 0){
             return false;
         }
-        $admin = $data[0]->companyUser->toArray();
-        $admin['company'] = $data[0]->company->toArray();
-        $admin['role'] = $data[0]->role->toArray();
+        $user = $data[0]->companyUser->toArray();
+        $user['company'] = $data[0]->company->toArray();
+        $user['role'] = $data[0]->role->toArray();
 
-        return $admin;
+        return $user;
     }
 }
