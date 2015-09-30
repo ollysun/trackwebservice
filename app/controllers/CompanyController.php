@@ -77,7 +77,7 @@ class CompanyController extends ControllerBase
         if (!$primary_contact) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_PRIMARY_CONTACT);
         }
-        $company->setPrimaryContactId($primary_contact->id);
+        $company->setPrimaryContactId($primary_contact->getId());
 
 
         if (isset($data['secondary_contact'])) {
@@ -88,7 +88,7 @@ class CompanyController extends ControllerBase
             if (!$secondary_contact) {
                 return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_SECONDARY_CONTACT);
             }
-            $company->setSecContactId($secondary_contact->id);
+            $company->setSecContactId($secondary_contact->getId());
         } else {
             $secondary_contact = null;
             $company->setSecContactId(null);
@@ -99,11 +99,11 @@ class CompanyController extends ControllerBase
         }
 
 
-        $primary_contact_data['id'] = $primary_contact->id;
+        $primary_contact_data['id'] = $primary_contact->getId();
         $company->notifyContact($primary_contact_data);
 
         if (isset($data['secondary_contact'])) {
-            $data['secondary_contact']['id'] = $secondary_contact->id;
+            $data['secondary_contact']['id'] = $secondary_contact->getId();
             $company->notifyContact($data['secondary_contact']);
         }
 
@@ -225,6 +225,49 @@ class CompanyController extends ControllerBase
             return $this->response->sendError();
         }
         return $this->response->sendSuccess($count);
+    }
+
+    /**
+     * create a company officer or admin
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createUserAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN]);
+
+        $postData = $this->request->getJsonRawBody(true);
+        $requiredFields = ['firstname', 'lastname', 'phone_number', 'email', 'company_id', 'role_id'];
+
+        $requestValidator = new RequestValidator($postData, $requiredFields);
+        if (!$requestValidator->validateFields()) {
+            return $this->response->send($requestValidator->printValidationMessage());
+        }
+
+        $company = Company::findFirst($postData['company_id']);
+        if (!$company) {
+            return $this->response->sendError('Invalid company id');
+        }
+
+        if (UserAuth::findFirstByEmail($postData['email'])) {
+            return $this->response->sendError('User already exists');
+        }
+
+        if (!in_array($postData['role_id'], [Role::COMPANY_ADMIN, Role::COMPANY_OFFICER])) {
+            return $this->response->sendError('Invalid company user role');
+        }
+
+        $postData['password'] = $this->auth->generateToken(6);
+        $user = $company->createUser($postData['role_id'], $postData);
+
+        if (!$user) {
+            return $this->response->sendError('Could not create user');
+        }
+
+        $postData['id'] = $user->getId();
+        $company->notifyContact($postData);
+
+        $userData = $user->toArray();
+        return $this->response->sendSuccess($userData);
     }
 
     /**
