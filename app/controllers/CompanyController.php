@@ -269,4 +269,88 @@ class CompanyController extends ControllerBase
         $userData = $user->toArray();
         return $this->response->sendSuccess($userData);
     }
-} 
+
+    /**
+     * Get company user
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return $this
+     */
+    public function getUserAction()
+    {
+        $filter_params = ['id', 'email'];
+        $fetch_params = ['with_company'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $company = CompanyUser::fetchOne($filter_params, $fetch_with);
+        if ($company != false) {
+            return $this->response->sendSuccess($company);
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Get all company users
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getAllUsersAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = ['company_id', 'role_id', 'email'];
+        $fetch_params = ['with_company'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $users = CompanyUser::fetchAll($offset, $count, $filter_by, $fetch_with);
+        if (!empty($with_total_count)) {
+            $count = CompanyUser::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'users' => $users
+            ];
+        } else {
+            $result = $users;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+}
+
