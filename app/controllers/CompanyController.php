@@ -240,7 +240,7 @@ class CompanyController extends ControllerBase
 
         $requestValidator = new RequestValidator($postData, $requiredFields);
         if (!$requestValidator->validateFields()) {
-            return $this->response->send($requestValidator->printValidationMessage());
+            return $this->response->sendError($requestValidator->printValidationMessage());
         }
 
         $company = Company::findFirst($postData['company_id']);
