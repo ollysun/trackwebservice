@@ -390,7 +390,7 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_CITY_SUPPLIED);
         }
 
-        $receiver_state = City::findFirst($postData->receiever_state_id);
+        $receiver_state = State::findFirst($postData->receiever_state_id);
         if (!$receiver_state) {
             return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_STATE_SUPPLIED);
         }
