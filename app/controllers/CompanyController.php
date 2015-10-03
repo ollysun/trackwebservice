@@ -240,7 +240,7 @@ class CompanyController extends ControllerBase
 
         $requestValidator = new RequestValidator($postData, $requiredFields);
         if (!$requestValidator->validateFields()) {
-            return $this->response->send($requestValidator->printValidationMessage());
+            return $this->response->sendError($requestValidator->printValidationMessage());
         }
 
         $company = Company::findFirst($postData['company_id']);
@@ -317,7 +317,7 @@ class CompanyController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = ['company_id', 'role_id', 'email'];
-        $fetch_params = ['with_company'];
+        $fetch_params = ['with_company', 'with_total_count'];
 
         $possible_params = array_merge($filter_params, $fetch_params);
 

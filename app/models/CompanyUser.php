@@ -578,7 +578,8 @@ class CompanyUser extends \Phalcon\Mvc\Model
         $obj = new CompanyUser();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS company_user_count')
-            ->from('Company');
+            ->from('CompanyUser')
+            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id');
 
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
