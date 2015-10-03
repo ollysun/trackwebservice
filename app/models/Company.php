@@ -1,9 +1,15 @@
 <?php
 
 use Phalcon\Di;
+use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Validator\Email as Email;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
+/**
+ * Class Company
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
+ * @method Resultset getCorporateShipmentRequests($condition)
+ */
 class Company extends \Phalcon\Mvc\Model
 {
 
@@ -454,6 +460,7 @@ class Company extends \Phalcon\Mvc\Model
         $this->belongsTo('approved_by', 'User', 'id', array('alias' => 'User'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
+        $this->hasMany('id', 'CorporateShipmentRequest', 'company_id', ['alias' => 'CorporateShipmentRequests']);
     }
 
     /**
@@ -615,7 +622,7 @@ class Company extends \Phalcon\Mvc\Model
             $bind['status'] = $filter_by['status'];
         }
 
-        if (isset($filter_by['name'])){
+        if (isset($filter_by['name'])) {
             $where[] = 'name LIKE :name:';
             $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
         }
@@ -637,7 +644,7 @@ class Company extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return null;
         }
 
@@ -779,7 +786,8 @@ class Company extends \Phalcon\Mvc\Model
      * @param $user_auth_id
      * @return bool
      */
-    public static function fetchLoginData($user_auth_id){
+    public static function fetchLoginData($user_auth_id)
+    {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
@@ -790,7 +798,7 @@ class Company extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
         $user = $data[0]->companyUser->toArray();
