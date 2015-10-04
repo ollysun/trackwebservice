@@ -99,7 +99,6 @@ class Route extends \Phalcon\Mvc\Model
      * @author Olawale Lawal <wale@cottacush.com>
      * @return array
      */
-
     public function getData() {
         return array(
             'id' => $this->id,
@@ -108,5 +107,17 @@ class Route extends \Phalcon\Mvc\Model
             'created_date' => $this->created_date,
             'branch_id' => $this->branch_id
         );
+    }
+
+    /**
+     * Updates the details of a route
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return array
+     */
+    public function editDetails($name, $branch_id)
+    {
+        $this->name = $name;
+        $this->branch_id = $branch_id;
+        $this->updated_date = Util::getCurrentDateTime();
     }
 }
