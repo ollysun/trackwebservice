@@ -45,4 +45,38 @@ class RouteController extends ControllerBase
         $branchId = $this->request->getQuery('branch_id');
         return $this->response->sendSuccess(Route::getAll($branchId));
     }
+
+    /**
+     * Updates the details of a route
+     * @author Olawale Lawal <walee@cottacush.com>
+     */
+    public function editAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $route_id = $this->request->getPost('route_id');
+        $name = $this->request->getPost('name');
+        $branch_id = $this->request->getPost('branch_id');
+
+        if (in_array(null, array($route_id, $name, $branch_id))) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        // Validate Branch
+        $branch = Branch::findFirst($branch_id);
+        if(!$branch) {
+            return $this->response->sendError(ResponseMessage::INVALID_BRANCH);
+        }
+
+        $route = Route::findFirst($route_id);
+        if($route == false) {
+            return $this->response->sendError(ResponseMessage::INVALID_ROUTE);
+        }
+
+        $route->editDetails($name, $branch_id);
+        if($route->save()) {
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_EDIT_ROUTE);
+    }
 }
