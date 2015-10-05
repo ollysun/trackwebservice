@@ -1404,6 +1404,26 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Parcel.route_id = :route_id:';
             $bind['route_id'] = $filter_by['route_id'];
         }
+        if (isset($filter_by['history_status'])) {
+            $where[] = 'ParcelHistory.status = :history_status:';
+            $bind['history_status'] = $filter_by['history_status'];
+        }
+        if (isset($filter_by['history_start_created_date'])) {
+            $where[] = 'ParcelHistory.created_date >= :history_start_created_date:';
+            $bind['history_start_created_date'] = $filter_by['history_start_created_date'];
+        }
+        if (isset($filter_by['history_end_created_date'])) {
+            $where[] = 'ParcelHistory.created_date <= :history_end_created_date:';
+            $bind['history_end_created_date'] = $filter_by['history_end_created_date'];
+        }
+        if (isset($filter_by['history_from_branch_id'])) {
+            $where[] = 'ParcelHistory.from_branch_id <= :history_from_branch_id:';
+            $bind['history_from_branch_id'] = $filter_by['history_from_branch_id'];
+        }
+        if (isset($filter_by['history_to_branch_id'])) {
+            $where[] = 'ParcelHistory.to_branch_id <= :history_to_branch_id:';
+            $bind['history_to_branch_id'] = $filter_by['history_to_branch_id'];
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
@@ -1442,6 +1462,10 @@ class Parcel extends \Phalcon\Mvc\Model
         } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
+        if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
+            $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
+            $builder->groupBy('Parcel.id');
         }
 
         //model hydration
@@ -1583,6 +1607,10 @@ class Parcel extends \Phalcon\Mvc\Model
         } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
+        if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
+            $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
+            $builder->columns('COUNT(DISTINCT Parcel.id) AS parcel_count');
         }
 
         $builder->where(join(' AND ', $where));
