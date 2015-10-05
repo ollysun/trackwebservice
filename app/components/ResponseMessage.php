@@ -98,6 +98,8 @@ class ResponseMessage
 
     const STAFF_DOES_NOT_EXIST = 'Staff does not exist';
     const UNABLE_TO_CREATE_ROUTE = 'Unable to create route';
+    const UNABLE_TO_EDIT_ROUTE = 'Unable to edit route';
+    const INVALID_ROUTE = 'Route does not exist';
     const ACCOUNT_DOES_NOT_EXIST = 'Account does not exist';
     const UNABLE_TO_RESET_PASSWORD = 'Unable to reset password';
     const INVALID_TOKEN = 'Invalid password reset token';
@@ -111,4 +113,8 @@ class ResponseMessage
     const INVALID_RELATIONS_OFFICER_ID = 'Invalid relations officer id supplied';
     const PRIMARY_CONTACT_EXISTS = 'Primary contact already exists';
     const SECONDARY_CONTACT_EXISTS = 'Secondary contact already exists';
+    const INVALID_COMPANY_ID_SUPPLIED = 'Invalid company id supplied';
+    const INVALID_RECEIVER_CITY_SUPPLIED = 'Invalid receiver city supplied';
+    const INVALID_RECEIVER_STATE_SUPPLIED = 'Invalid receiver state supplied';
+    const COULD_NOT_CREATE_REQUEST = 'Could not create request';
 }

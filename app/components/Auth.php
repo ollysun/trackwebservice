@@ -185,7 +185,9 @@ class Auth
     public function allowOnly($user_type)
     {
         $allowed = false;
-        if (is_array($user_type)) {
+        if ($this->getUserType() == Role::SUPER_ADMIN){
+            $allowed = true;
+        }else if (is_array($user_type)) {
             $allowed = (in_array($this->getUserType(), $user_type));
         } else {
             $allowed = ($this->getUserType() == $user_type);
