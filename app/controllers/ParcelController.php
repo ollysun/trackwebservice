@@ -19,59 +19,60 @@ class ParcelController extends ControllerBase
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
+        Util::slackDebug("Parcel Payload >>", json_encode($payload));
 
-              /*  $payload = '{
-            "sender": {
-                "firstname": "Rotimo",
-                "lastname": "Akintewe",
-                "phone": "+2348033438870",
-                "email": "akintewe.rotimi@gmail.com"
-            },
-            "receiver": {
-                "firstname": "Dapo",
-                "lastname": "Olotu",
-                "phone": "09023454321",
-                "email": "dapo.olotu@gmail.com"
-            },
-            "sender_address": {
-                "id": null,
-                "street1": "3 Cuttacosh Road, Abule Egba.",
-                "street2": "",
-                "city_id": "23",
-                "state_id": "1",
-                "country_id": "1"
-            },
-            "receiver_address": {
-                "id": null,
-                "street1": "9, Ojo Street, Akoka",
-                "street2": "",
-                "city_id": "23",
-                "state_id": "1",
-                "country_id": "1"
-            },
-            "parcel": {
-                "parcel_type": "1",
-                "no_of_package": "1",
-                "weight": "176",
-                "parcel_value": "23000",
-                "amount_due": "23000",
-                "cash_on_delivery": 1,
-                "cash_on_delivery_amount": "120000",
-                "delivery_type": "2",
-                "payment_type": "2",
-                "shipping_type": "1",
-                "other_info": "This is the other information needed",
-                "cash_amount": null,
-                "pos_amount": null,
-                "pos_trans_id": null,
-                "package_value": 200.00,
-                "is_billing_overridden": 1,
-                "reference_number": "R34324232"
-            },
-            "is_corporate_lead": 0,
-            "to_hub": 1
-        }';
-                $payload = json_decode($payload, true);*/
+        /*  $payload = '{
+      "sender": {
+          "firstname": "Rotimo",
+          "lastname": "Akintewe",
+          "phone": "+2348033438870",
+          "email": "akintewe.rotimi@gmail.com"
+      },
+      "receiver": {
+          "firstname": "Dapo",
+          "lastname": "Olotu",
+          "phone": "09023454321",
+          "email": "dapo.olotu@gmail.com"
+      },
+      "sender_address": {
+          "id": null,
+          "street1": "3 Cuttacosh Road, Abule Egba.",
+          "street2": "",
+          "city_id": "23",
+          "state_id": "1",
+          "country_id": "1"
+      },
+      "receiver_address": {
+          "id": null,
+          "street1": "9, Ojo Street, Akoka",
+          "street2": "",
+          "city_id": "23",
+          "state_id": "1",
+          "country_id": "1"
+      },
+      "parcel": {
+          "parcel_type": "1",
+          "no_of_package": "1",
+          "weight": "176",
+          "parcel_value": "23000",
+          "amount_due": "23000",
+          "cash_on_delivery": 1,
+          "cash_on_delivery_amount": "120000",
+          "delivery_type": "2",
+          "payment_type": "2",
+          "shipping_type": "1",
+          "other_info": "This is the other information needed",
+          "cash_amount": null,
+          "pos_amount": null,
+          "pos_trans_id": null,
+          "package_value": 200.00,
+          "is_billing_overridden": 1,
+          "reference_number": "R34324232"
+      },
+      "is_corporate_lead": 0,
+      "to_hub": 1
+  }';
+          $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -141,7 +142,7 @@ class ParcelController extends ControllerBase
 
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-            $bank_account, $parcel, $to_branch_id, $this->auth->getClientId());
+            $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if ($waybill_numbers) {
             if ($is_corporate_lead == 1) {
                 $city = City::fetchOne($sender_address['city_id'], ['with_state' => 1, 'with_country' => 1]);
@@ -173,18 +174,35 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $id = $this->request->getQuery('id');
+        $waybill_number = $this->request->getQuery('waybill_number');
+        $with_linked = $this->request->getQuery('with_linked');
 
-        if (is_null($id)) {
+        if (is_null($id) && is_null($waybill_number)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $parcel = Parcel::fetchOne($id);
+        if (is_null($waybill_number)) {
+            $value = $id;
+            $fetch_with = 'id';
+        } else {
+            $value = $waybill_number;
+            $fetch_with = 'waybill_number';
+        }
+
+        $with_linked = ($with_linked == 0 || $with_linked == 'false') ? false : true;
+
+        $parcel = Parcel::fetchOne($value, $with_linked, $fetch_with);
         if ($parcel != false) {
             return $this->response->sendSuccess($parcel);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     */
     private function getFilterParams()
     {
         $manifest_id = $this->request->getQuery('manifest_id');
@@ -224,6 +242,8 @@ class ParcelController extends ControllerBase
         $end_modified_date = $this->request->getQuery('end_modified_date');
         $waybill_number = $this->request->getQuery('waybill_number');
         $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
+        $created_branch_id = $this->request->getQuery('created_branch_id');
+        $route_id = $this->request->getQuery('route_id');
 
         $filter_by = [];
         if (!is_null($manifest_id)) {
@@ -337,10 +357,21 @@ class ParcelController extends ControllerBase
         if (!is_null($waybill_number_arr)) {
             $filter_by['waybill_number_arr'] = $waybill_number_arr;
         }
+        if (!is_null($created_branch_id)) {
+            $filter_by['created_branch_id'] = $created_branch_id;
+        }
+        if (!is_null($route_id)) {
+            $filter_by['route_id'] = $route_id;
+        }
 
         return $filter_by;
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     */
     public function getAllAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
@@ -356,6 +387,8 @@ class ParcelController extends ControllerBase
         $with_receiver_address = $this->request->getQuery('with_receiver_address');
         $with_holder = $this->request->getQuery('with_holder');
         $with_bank_account = $this->request->getQuery('with_bank_account');
+        $with_created_branch = $this->request->getQuery('with_created_branch');
+        $with_route = $this->request->getQuery('with_route');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -392,6 +425,12 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_bank_account)) {
             $fetch_with['with_bank_account'] = true;
+        }
+        if (!is_null($with_created_branch)) {
+            $fetch_with['with_created_branch'] = true;
+        }
+        if (!is_null($with_route)) {
+            $fetch_with['with_route'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -467,7 +506,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getClientId(), ParcelHistory::MSG_FOR_SWEEPER);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -484,6 +523,7 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
         $status = $this->request->getPost('status');
+        $seal_id = $this->request->getPost('seal_id', null, '');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id, $status])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -496,7 +536,7 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getClientId(), $status, $waybill_number_arr);
+        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
         if ($bag_info != false) {
             return $this->response->sendSuccess($bag_info);
         }
@@ -560,7 +600,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId());
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId());
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
@@ -583,8 +623,8 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
-        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
 
         if (!isset($waybill_numbers, $to_branch_id, $held_by_id, $admin_id)) {
@@ -699,18 +739,15 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = $this->request->getPost('held_by_id');
+        $route_id = $this->request->getPost('route_id');
+        $admin_id = $this->auth->getPersonId();
 
-        if (in_array(null, [$waybill_numbers, $held_by_id])) {
+        if (is_null($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
-
-        if ($auth_data['branch']['branch_type'] != BranchType::EC) {
-            return $this->response->sendError(ResponseMessage::CAN_ONLY_DELIVER_FROM_EC);
-        }
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -731,16 +768,10 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            //checking if the parcel is held by the correct person
-            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
-            if ($held_parcel_record == false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
-                continue;
-            }
-
-            $check = $parcel->checkIn($held_parcel_record, $this->auth->getClientId(), Status::PARCEL_FOR_DELIVERY);
+            $parcel->setRouteId($route_id);
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
             if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
         }
@@ -759,8 +790,8 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getClientId() : $this->request->getPost('held_by_id');
-        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getClientId() : $this->request->getPost('admin_id');
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
 
         if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])) {
@@ -877,7 +908,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -954,7 +985,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (!isset($waybill_numbers, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -1000,7 +1031,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getClientId();
+        $admin_id = $this->auth->getPersonId();
 
         if (!isset($waybill_numbers, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -1024,10 +1055,9 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
                 continue;
             }
-
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_GROUNDSMAN, $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN, $auth_data['branch_id']);
+            $check = $parcel->changeDestination(Status::PARCEL_FOR_GROUNDSMAN, $auth_data['branch_id'], $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
             if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
         }
@@ -1049,21 +1079,86 @@ class ParcelController extends ControllerBase
         //------------------------------------------
         $possible_params = array_merge($filter_params, $fetch_params);
 
-        foreach ($possible_params as $param){
+        foreach ($possible_params as $param) {
             $$param = $this->request->getQuery($param);
         }
 
         $filter_by = [];
-        foreach ($filter_params as $param){
-            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
         }
 
         $fetch_with = [];
-        foreach ($fetch_params as $param){
-            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
         }
         //------------------------------------------
 
         return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
+    }
+
+    /**
+     * Add a parcel delivery receipt
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createParcelDeliveryReceiptAction()
+    {
+        $waybill_number = $this->request->getPost('waybill_number', null, null);
+        $delivered_by = $this->request->getPost('delivered_by', null, null);
+        if (!isset($waybill_number)) {
+            return $this->response->sendError('Waybill number required');
+        }
+
+        //check if parcel with waybill_number exists
+        $parcel = Parcel::findFirstByWaybillNumber($waybill_number);
+        if (!$parcel) {
+            return $this->response->sendError('Parcel with waybill number does not exist');
+        }
+
+        //check if delivering user exists
+        $user = Admin::findFirst($delivered_by);
+        if (!$user) {
+            return $this->response->sendError('Invalid delivery user');
+        }
+
+        //check if post has files
+        if (!$this->request->hasFiles()) {
+            return $this->response->sendError('signature or snapshot file required');
+        }
+
+        $allowedExtensions = ['png', 'jpg', 'jpeg'];
+        $receipt_paths = [];
+
+        /** @var \Phalcon\Http\Request\File $file */
+        foreach ($this->request->getUploadedFiles() as $file) {
+            if (in_array($file->getKey(), ['signature', 'snapshot'])) {
+                if (in_array($file->getExtension(), $allowedExtensions)) {
+                    if (DeliveryReceipt::doesReceiptExist($waybill_number, $file->getKey())) {
+                        return $this->response->sendError($file->getKey() . ' receipt for parcel already exists');
+                    }
+
+                    $receipt_file_name = $waybill_number . "_" . $file->getKey() . "_receipt." . $file->getExtension();
+                    $receipt_path = $this->s3Client->createObject($file->getTempName(), $receipt_file_name);
+                    if (!$receipt_path) {
+                        return $this->response->sendError('Could not upload ' . $file->getKey() . ' receipt to S3');
+                    }
+
+                    $receipt_paths[] = $receipt_path;
+
+                    if (!DeliveryReceipt::add($waybill_number, $receipt_path, $delivered_by, $file->getKey())) {
+                        return $this->response->sendError('Could not save ' . $file->getKey() . ' receipt');
+                    }
+
+                } else {
+                    return $this->response->sendError('Invalid extension for ' . $file->getKey() . '. Only ' . implode(', ', $allowedExtensions) . ' allowed');
+                }
+            }
+        }
+
+        return $this->response->sendSuccess(['receipts' => $receipt_paths]);
     }
 }
