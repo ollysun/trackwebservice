@@ -367,7 +367,7 @@ class CompanyController extends ControllerBase
             'receiver_address', 'company_id',
             'receiver_state_id', 'receiver_city_id',
             'estimated_weight', 'no_of_packages',
-            'shipment_value', 'shipping_cost'];
+            'parcel_value'];
 
         $requestValidator = new RequestValidator($postData, $required_fields);
         if (!$requestValidator->validateFields()) {
@@ -379,6 +379,8 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
         }
 
+
+        $postData->created_by = $this->auth->getPersonId();
         $company_user = CompanyUser::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' =>
             ['id' => $postData->created_by, 'company_id' => $company->getId()]]);
         if (!$company_user) {
@@ -396,7 +398,6 @@ class CompanyController extends ControllerBase
         }
 
         $postData->status = CorporateShipmentRequest::STATUS_PENDING;
-        $postData->created_by = $this->auth->getPersonId();
 
         if (($request = CorporateShipmentRequest::add($postData))) {
             return $this->response->sendSuccess($request);
@@ -412,22 +413,11 @@ class CompanyController extends ControllerBase
      */
     public function getShipmentRequestsAction()
     {
-        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
-
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $company_id = $this->request->getQuery('company_id', null, null);
         $status = $this->request->getQuery('status', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
-
-        if (is_null($company_id)) {
-            return $this->response->sendError('company_id is required');
-        }
-
-        $company = Company::findFirst($company_id);
-        if (!$company) {
-            return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
-        }
 
         $params = ['limit' => intval($count), 'offset' => $offset];
         if (!is_null($status)) {
@@ -435,11 +425,25 @@ class CompanyController extends ControllerBase
             $params['bind']['status'] = $status;
         }
 
-        $requests = $company->getCorporateShipmentRequests($params)->toArray();
+        if (!is_null($company_id)) {
+            $company = Company::findFirst($company_id);
+            if (!$company) {
+                return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
+            }
+            $requests = $company->getCorporateShipmentRequests($params)->toArray();
+        } else {
+            $requests = CorporateShipmentRequest::find($params)->toArray();
+        }
+
 
         if (!empty($with_total_count)) {
+            if (is_null($company_id)) {
+                $count = CorporateShipmentRequest::count(['limit' => [intval($count) => $offset]]);
+            } else {
+                $count = $company->getCorporateShipmentRequests(null)->count();
+            }
             $data = [
-                'total_count' => $company->getCorporateShipmentRequests(null)->count(),
+                'total_count' => $count,
                 'requests' => $requests
             ];
         } else {
