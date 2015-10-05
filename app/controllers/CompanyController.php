@@ -367,7 +367,7 @@ class CompanyController extends ControllerBase
             'receiver_address', 'company_id',
             'receiver_state_id', 'receiver_city_id',
             'estimated_weight', 'no_of_packages',
-            'shipment_value', 'shipping_cost', 'created_by'];
+            'shipment_value', 'shipping_cost'];
 
         $requestValidator = new RequestValidator($postData, $required_fields);
         if (!$requestValidator->validateFields()) {
@@ -396,6 +396,7 @@ class CompanyController extends ControllerBase
         }
 
         $postData->status = CorporateShipmentRequest::STATUS_PENDING;
+        $postData->created_by = $this->auth->getPersonId();
 
         if (($request = CorporateShipmentRequest::add($postData))) {
             return $this->response->sendSuccess($request);
