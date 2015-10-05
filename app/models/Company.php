@@ -519,6 +519,8 @@ class Company extends \Phalcon\Mvc\Model
 
     public static function add($company_data)
     {
+        $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
+        $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],
@@ -597,15 +599,14 @@ class Company extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public
-    function fetchAll($offset, $count, $filter_by, $fetch_with)
+    /**
+     * Used to set up the where clause with its bind parameters
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
+    private static function filterConditions($filter_by)
     {
-        $obj = new Company();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Company')
-            ->limit($count, $offset);
-
-        $columns = ['Company.*'];
         $bind = [];
         $where = [];
 
@@ -613,6 +614,47 @@ class Company extends \Phalcon\Mvc\Model
             $where[] = 'status = :status:';
             $bind['status'] = $filter_by['status'];
         }
+
+        if (isset($filter_by['name'])){
+            $where[] = 'name LIKE :name:';
+            $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
+        }
+
+        return ['where' => $where, 'bind' => $bind];
+    }
+
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS company_count')
+            ->from('Company');
+
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0){
+            return null;
+        }
+
+        return intval($data[0]->company_count);
+    }
+
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with)
+    {
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Company')
+            ->limit($count, $offset);
+
+        $columns = ['Company.*'];
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         if (isset($fetch_with['with_city'])) {
             $builder->innerJoin('City', 'City.id = Company.city_id');
@@ -642,8 +684,7 @@ class Company extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public
-    function fetchOne($filter_by, $fetch_with)
+    public static function fetchOne($filter_by, $fetch_with)
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -730,5 +771,32 @@ class Company extends \Phalcon\Mvc\Model
             'Courier Plus',
             $contact['email']
         );
+    }
+
+    /**
+     * Get company user login data
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $user_auth_id
+     * @return bool
+     */
+    public static function fetchLoginData($user_auth_id){
+        $obj = new Company();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
+            ->from('CompanyUser')
+            ->innerJoin('Role', 'CompanyUser.role_id = Role.id')
+            ->innerJoin('Company', 'Company.id = CompanyUser.company_id')
+            ->where('(user_auth_id = :user_auth_id:)');
+
+        $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
+
+        if (count($data) == 0){
+            return false;
+        }
+        $user = $data[0]->companyUser->toArray();
+        $user['company'] = $data[0]->company->toArray();
+        $user['role'] = $data[0]->role->toArray();
+
+        return $user;
     }
 }

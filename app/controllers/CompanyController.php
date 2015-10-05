@@ -77,7 +77,7 @@ class CompanyController extends ControllerBase
         if (!$primary_contact) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_PRIMARY_CONTACT);
         }
-        $company->setPrimaryContactId($primary_contact->id);
+        $company->setPrimaryContactId($primary_contact->getId());
 
 
         if (isset($data['secondary_contact'])) {
@@ -88,7 +88,7 @@ class CompanyController extends ControllerBase
             if (!$secondary_contact) {
                 return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_SECONDARY_CONTACT);
             }
-            $company->setSecContactId($secondary_contact->id);
+            $company->setSecContactId($secondary_contact->getId());
         } else {
             $secondary_contact = null;
             $company->setSecContactId(null);
@@ -99,11 +99,11 @@ class CompanyController extends ControllerBase
         }
 
 
-        $primary_contact_data['id'] = $primary_contact->id;
+        $primary_contact_data['id'] = $primary_contact->getId();
         $company->notifyContact($primary_contact_data);
 
         if (isset($data['secondary_contact'])) {
-            $data['secondary_contact']['id'] = $secondary_contact->id;
+            $data['secondary_contact']['id'] = $secondary_contact->getId();
             $company->notifyContact($data['secondary_contact']);
         }
 
@@ -111,4 +111,246 @@ class CompanyController extends ControllerBase
 
         return $this->response->sendSuccess($company->toArray());
     }
-} 
+
+    /**
+     * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getAllCompanyAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = ['status', 'name'];
+        $fetch_params = ['with_city', 'with_total_count'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $companies = Company::fetchAll($offset, $count, $filter_by, $fetch_with);
+        $result = [];
+        if (!empty($with_total_count)) {
+            $count = Company::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'companies' => $companies
+            ];
+        } else {
+            $result = $companies;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Fetches the details of a company. More info can be hydrated using certain params starting with 'with'.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getCompanyInfoAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $filter_params = ['id'];
+        $fetch_params = ['with_city', 'with_primary_contact', 'with_secondary_contact', 'with_relations_officer'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $company = Company::fetchOne($filter_params, $fetch_with);
+        if ($company != false) {
+            return $this->response->sendSuccess($company);
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Gets the total company count based on possible filters.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function getCompanyCountAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $filter_params = ['status', 'name'];
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            $$param = $this->request->getQuery($param);
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $count = Company::getTotalCount($filter_by);
+        if ($count === null) {
+            return $this->response->sendError();
+        }
+        return $this->response->sendSuccess($count);
+    }
+
+    /**
+     * create a company officer or admin
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createUserAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN]);
+
+        $postData = $this->request->getJsonRawBody(true);
+        $requiredFields = ['firstname', 'lastname', 'phone_number', 'email', 'company_id', 'role_id'];
+
+        $requestValidator = new RequestValidator($postData, $requiredFields);
+        if (!$requestValidator->validateFields()) {
+            return $this->response->sendError($requestValidator->printValidationMessage());
+        }
+
+        $company = Company::findFirst($postData['company_id']);
+        if (!$company) {
+            return $this->response->sendError('Invalid company id');
+        }
+
+        if (UserAuth::findFirstByEmail($postData['email'])) {
+            return $this->response->sendError('User already exists');
+        }
+
+        if (!in_array($postData['role_id'], [Role::COMPANY_ADMIN, Role::COMPANY_OFFICER])) {
+            return $this->response->sendError('Invalid company user role');
+        }
+
+        $postData['password'] = $this->auth->generateToken(6);
+        $user = $company->createUser($postData['role_id'], $postData);
+
+        if (!$user) {
+            return $this->response->sendError('Could not create user');
+        }
+
+        $postData['id'] = $user->getId();
+        $company->notifyContact($postData);
+
+        $userData = $user->toArray();
+        return $this->response->sendSuccess($userData);
+    }
+
+    /**
+     * Get company user
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return $this
+     */
+    public function getUserAction()
+    {
+        $filter_params = ['id', 'email'];
+        $fetch_params = ['with_company'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $company = CompanyUser::fetchOne($filter_params, $fetch_with);
+        if ($company != false) {
+            return $this->response->sendSuccess($company);
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Get all company users
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getAllUsersAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_params = ['company_id', 'role_id', 'email'];
+        $fetch_params = ['with_company', 'with_total_count'];
+
+        $possible_params = array_merge($filter_params, $fetch_params);
+
+        foreach ($possible_params as $param) {
+            $$param = $this->request->getQuery($param);
+        }
+
+        $filter_by = [];
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
+        }
+
+        $fetch_with = [];
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
+        }
+
+        $users = CompanyUser::fetchAll($offset, $count, $filter_by, $fetch_with);
+        if (!empty($with_total_count)) {
+            $count = CompanyUser::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'users' => $users
+            ];
+        } else {
+            $result = $users;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+}
+

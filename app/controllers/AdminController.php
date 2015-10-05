@@ -3,7 +3,7 @@
 
 class AdminController extends ControllerBase {
     public function registerAction(){
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::SUPER_ADMIN]);
         //todo: validate phone number
 
         $role_id = $this->request->getPost('role_id');
@@ -27,6 +27,10 @@ class AdminController extends ControllerBase {
         $branch = Branch::fetchById($branch_id);
         if ($branch == false){
             return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
+        }
+
+        if ($role_id == Role::SUPER_ADMIN && $this->auth->getUserType() != Role::SUPER_ADMIN){
+            return $this->response->sendAccessDenied();
         }
 
         if ($role_id == Role::SWEEPER){

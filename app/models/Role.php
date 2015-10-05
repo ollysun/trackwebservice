@@ -9,6 +9,7 @@ class Role extends \Phalcon\Mvc\Model
     const GROUNDSMAN = 5;
     const COMPANY_ADMIN = 6;
     const COMPANY_OFFICER = 7;
+    const SUPER_ADMIN = 8;
     const INACTIVE_USER = -1;
     /**
      *

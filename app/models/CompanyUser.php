@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
+
 class CompanyUser extends \Phalcon\Mvc\Model
 {
 
@@ -299,12 +300,12 @@ class CompanyUser extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'company_id' => 'company_id', 
-            'user_auth_id' => 'user_auth_id', 
-            'role_id' => 'role_id', 
-            'firstname' => 'firstname', 
-            'lastname' => 'lastname', 
+            'id' => 'id',
+            'company_id' => 'company_id',
+            'user_auth_id' => 'user_auth_id',
+            'role_id' => 'role_id',
+            'firstname' => 'firstname',
+            'lastname' => 'lastname',
             'phone_number' => 'phone_number',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date'
@@ -363,9 +364,9 @@ class CompanyUser extends \Phalcon\Mvc\Model
             $auth = new UserAuth();
             $auth->setTransaction($transaction);
             $auth->initData($email, $password, UserAuth::ENTITY_TYPE_CORPORATE);
-            if ($auth->save()){
+            if ($auth->save()) {
                 $this->initData($company_id, $auth->getId(), $role_id, $firstname, $lastname, $phone_number);
-                if ($this->save()){
+                if ($this->save()) {
                     $transactionManager->commit();
                     return true;
                 }
@@ -402,7 +403,8 @@ class CompanyUser extends \Phalcon\Mvc\Model
      * @param $user_auth_id
      * @return array|false
      */
-    public static function fetchLoginData($user_auth_id){
+    public static function fetchLoginData($user_auth_id)
+    {
         $obj = new Admin();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
@@ -413,7 +415,7 @@ class CompanyUser extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
         $login_data = $data[0]->companyUser->toArray();
@@ -445,7 +447,7 @@ class CompanyUser extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute();
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
 
@@ -470,25 +472,13 @@ class CompanyUser extends \Phalcon\Mvc\Model
             ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id')
             ->limit($count, $offset);
 
-        $bind = [];
-        $where = [];
         $columns = ['CompanyUser.*', 'Role.*', 'UserAuth.*'];
 
-        if (isset($filter_by['company_id'])){
-            $where[] = 'CompanyUser.company_id = :company_id:';
-            $bind['company_id'] = $filter_by['company_id'];
-        }
-        if (isset($filter_by['role_id'])) {
-            $where[] = 'CompanyUser.role_id = :role_id:';
-            $bind['role_id'] = $filter_by['role_id'];
-        }
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
-        if (isset($filter_by['email'])){
-            $where[] = 'UserAuth.email LIKE :email:';
-            $bind['email'] = '%' . strtolower(trim($filter_by['email'])) . '%';
-        }
-
-        if (isset($fetch_with['with_company'])){
+        if (isset($fetch_with['with_company'])) {
             $columns[] = 'Company.*';
             $builder->innerJoin('Company', 'Company.id = CompanyUser.company_id');
         }
@@ -497,12 +487,12 @@ class CompanyUser extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach($data as $item){
+        foreach ($data as $item) {
             $user = $item->companyUser->getData();
             $user['email'] = $item->userAuth->getEmail();
             $user['status'] = $item->userAuth->getStatus();
             $user['role'] = $item->role->toArray();
-            if (isset($fetch_with['company'])){
+            if (isset($fetch_with['with_company'])) {
                 $user['company'] = $item->company->getData();
             }
             $result[] = $user;
@@ -523,17 +513,17 @@ class CompanyUser extends \Phalcon\Mvc\Model
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('CompanyUser')
             ->innerJoin('Role', 'CompanyUser.role_id = Role.id')
-            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id');
+            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id')->limit(1);
 
         $columns = ['CompanyUser.*', 'Role.*', 'UserAuth.*'];
 
-        if (isset($filter_by['email'])){
+        if (isset($filter_by['email'])) {
             $builder->where('UserAuth.email = :email:', ['email' => strtolower(trim($filter_by['email']))]);
-        } else if (isset($filter_by['id'])){
+        } else if (isset($filter_by['id'])) {
             $builder->where('CompanyUser.id = :id:', ['id' => $filter_by['id']]);
         }
 
-        if (isset($fetch_with['with_company'])){
+        if (isset($fetch_with['with_company'])) {
             $columns[] = 'Company.*';
             $builder->innerJoin('Company', 'Company.id = CompanyUser.company_id');
         }
@@ -541,7 +531,7 @@ class CompanyUser extends \Phalcon\Mvc\Model
         $builder->columns($columns);
         $data = $builder->getQuery()->execute();
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
 
@@ -549,7 +539,7 @@ class CompanyUser extends \Phalcon\Mvc\Model
         $user['email'] = $data[0]->userAuth->getEmail();
         $user['status'] = $data[0]->userAuth->getStatus();
         $user['role'] = $data[0]->role->toArray();
-        if (isset($fetch_with['with_company'])){
+        if (isset($fetch_with['with_company'])) {
             $user['company'] = $data[0]->company->getData();
         }
 
@@ -563,11 +553,12 @@ class CompanyUser extends \Phalcon\Mvc\Model
      * @param null $role_id
      * @return CompanyUser
      */
-    public static function getById($id, $role_id=null){
+    public static function getById($id, $role_id = null)
+    {
         $condition = 'id = :id: AND status = :status:';
         $bind = array('id' => $id, 'status' => Status::ACTIVE);
 
-        if ($role_id != null){
+        if ($role_id != null) {
             $condition .= ' AND role_id=:role_id:';
             $bind['role_id'] = $role_id;
         }
@@ -575,5 +566,60 @@ class CompanyUser extends \Phalcon\Mvc\Model
             $condition,
             'bind' => $bind
         ));
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $filter_by
+     * @return int|null
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new CompanyUser();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS company_user_count')
+            ->from('CompanyUser')
+            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id');
+
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->company_user_count);
+    }
+
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
+    private static function filterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['company_id'])) {
+            $where[] = 'CompanyUser.company_id = :company_id:';
+            $bind['company_id'] = $filter_by['company_id'];
+        }
+        if (isset($filter_by['role_id'])) {
+            $where[] = 'CompanyUser.role_id = :role_id:';
+            $bind['role_id'] = $filter_by['role_id'];
+        }
+
+        if (isset($filter_by['email'])) {
+            $where[] = 'UserAuth.email LIKE :email:';
+            $bind['email'] = '%' . strtolower(trim($filter_by['email'])) . '%';
+        }
+
+        return ['where' => $where, 'bind' => $bind];
     }
 }

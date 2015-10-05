@@ -1010,7 +1010,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id']);
+            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
@@ -1109,9 +1109,19 @@ class ParcelController extends ControllerBase
     {
         $waybill_number = $this->request->getPost('waybill_number', null, null);
         $delivered_by = $this->request->getPost('delivered_by', null, null);
-        if (!isset($waybill_number)) {
-            return $this->response->sendError('Waybill number required');
+        $email = $this->request->getPost('email', null, null);
+        $phone_number = $this->request->getPost('phone_number', null, null);
+        $name = $this->request->getPost('name', null, null);
+
+        $requiredFields = ['waybill_number', 'delivered_by', 'phone_number', 'name'];
+        $data = ['waybill_number' => $waybill_number, 'delivered_by' => $delivered_by, 'phone_number' => $phone_number, 'name' => $name];
+
+        $requestValidator = new RequestValidator($data, $requiredFields);
+        if (!$requestValidator->validateFields()) {
+            return $this->response->sendError($requestValidator->printValidationMessage());
         }
+
+        $data['email'] = $email;
 
         //check if parcel with waybill_number exists
         $parcel = Parcel::findFirstByWaybillNumber($waybill_number);
@@ -1149,7 +1159,9 @@ class ParcelController extends ControllerBase
 
                     $receipt_paths[] = $receipt_path;
 
-                    if (!DeliveryReceipt::add($waybill_number, $receipt_path, $delivered_by, $file->getKey())) {
+                    $data['receipt_path'] = $receipt_path;
+                    $data['receipt_type'] = $file->getKey();
+                    if (!DeliveryReceipt::add($data)) {
                         return $this->response->sendError('Could not save ' . $file->getKey() . ' receipt');
                     }
 
