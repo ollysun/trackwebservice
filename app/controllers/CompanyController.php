@@ -7,6 +7,7 @@
  */
 class CompanyController extends ControllerBase
 {
+
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @author Rahman Shitu <rahman@cottacush.com>
@@ -351,6 +352,86 @@ class CompanyController extends ControllerBase
         }
 
         return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * make a corporate request
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function makeShipmentRequestAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+
+        $postData = $this->request->getJsonRawBody();
+        $required_fields = ['receiver_firstname',
+            'receiver_address', 'company_id',
+            'receiver_state_id', 'receiver_city_id',
+            'estimated_weight', 'no_of_packages',
+            'shipment_value', 'shipping_cost', 'created_by'];
+
+        $requestValidator = new RequestValidator($postData, $required_fields);
+        if (!$requestValidator->validateFields()) {
+            return $this->response->sendError($requestValidator->printValidationMessage());
+        }
+
+        $company = Company::findFirst($postData->company_id);
+        if (!$company) {
+            return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
+        }
+
+        $company_user = CompanyUser::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' =>
+            ['id' => $postData->created_by, 'company_id' => $company->getId()]]);
+        if (!$company_user) {
+            return $this->response->sendError('Invalid company user');
+        }
+
+        $receiver_city = City::findFirst($postData->receiver_city_id);
+        if (!$receiver_city) {
+            return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_CITY_SUPPLIED);
+        }
+
+        $receiver_state = State::findFirst($postData->receiever_state_id);
+        if (!$receiver_state) {
+            return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_STATE_SUPPLIED);
+        }
+
+        $postData->status = CorporateShipmentRequest::STATUS_PENDING;
+
+        if (($request = CorporateShipmentRequest::add($postData))) {
+            return $this->response->sendSuccess($request);
+        } else {
+            return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
+        }
+
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return $this
+     */
+    public function getShipmentRequestsAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+
+        $company_id = $this->request->getQuery('company_id', null, null);
+        $status = $this->request->getQuery('status', null, null);
+
+        if (is_null($company_id)) {
+            return $this->response->sendError('company_id is required');
+        }
+
+        $company = Company::findFirst($company_id);
+        if (!$company) {
+            return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
+        }
+
+        $condition = null;
+        if (!is_null($status)) {
+            $condition = "status = '$status'";
+        }
+
+        $request = $company->getCorporateShipmentRequests($condition);
+        return $this->response->sendSuccess($request->toArray());
     }
 }
 
