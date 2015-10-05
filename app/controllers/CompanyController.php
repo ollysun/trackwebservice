@@ -411,7 +411,7 @@ class CompanyController extends ControllerBase
      */
     public function getShipmentRequestsAction()
     {
-        //$this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
