@@ -367,7 +367,7 @@ class CompanyController extends ControllerBase
             'receiver_address', 'company_id',
             'receiver_state_id', 'receiver_city_id',
             'estimated_weight', 'no_of_packages',
-            'shipment_value', 'shipping_cost', 'created_by'];
+            'shipment_value', 'shipping_cost'];
 
         $requestValidator = new RequestValidator($postData, $required_fields);
         if (!$requestValidator->validateFields()) {
@@ -396,6 +396,7 @@ class CompanyController extends ControllerBase
         }
 
         $postData->status = CorporateShipmentRequest::STATUS_PENDING;
+        $postData->created_by = $this->auth->getPersonId();
 
         if (($request = CorporateShipmentRequest::add($postData))) {
             return $this->response->sendSuccess($request);
@@ -413,8 +414,11 @@ class CompanyController extends ControllerBase
     {
         $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $company_id = $this->request->getQuery('company_id', null, null);
         $status = $this->request->getQuery('status', null, null);
+        $with_total_count = $this->request->getQuery('with_total_count', null, null);
 
         if (is_null($company_id)) {
             return $this->response->sendError('company_id is required');
@@ -425,13 +429,23 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
         }
 
-        $condition = null;
+        $params = ['limit' => intval($count), 'offset' => $offset];
         if (!is_null($status)) {
-            $condition = "status = '$status'";
+            $params['conditions'] = "status=:status:";
+            $params['bind']['status'] = $status;
         }
 
-        $request = $company->getCorporateShipmentRequests($condition);
-        return $this->response->sendSuccess($request->toArray());
+        $requests = $company->getCorporateShipmentRequests($params)->toArray();
+
+        if (!empty($with_total_count)) {
+            $data = [
+                'total_count' => $company->getCorporateShipmentRequests(null)->count(),
+                'requests' => $requests
+            ];
+        } else {
+            $data = $requests;
+        }
+        return $this->response->sendSuccess($data);
     }
 }
 
