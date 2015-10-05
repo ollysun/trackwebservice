@@ -438,7 +438,7 @@ class CompanyController extends ControllerBase
 
         if (!empty($with_total_count)) {
             $data = [
-                'total_count' => (is_null($company_id)) ? $company->getCorporateShipmentRequests(null)->count() : CorporateShipmentRequest::count(['limit' => [intval($count) => $offset]]),
+                'total_count' => (is_null($company_id)) ? CorporateShipmentRequest::count(['limit' => [intval($count) => $offset]]) : $company->getCorporateShipmentRequests(null)->count() ,
                 'requests' => $requests
             ];
         } else {
