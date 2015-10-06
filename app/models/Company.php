@@ -8,7 +8,7 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 /**
  * Class Company
  * @author Adeyemi Olaoye <yemi@cottacush.com>
- * @method Resultset getCorporateShipmentRequests($condition)
+ * @method Resultset getShipmentRequests($condition)
  */
 class Company extends \Phalcon\Mvc\Model
 {
@@ -460,7 +460,7 @@ class Company extends \Phalcon\Mvc\Model
         $this->belongsTo('approved_by', 'User', 'id', array('alias' => 'User'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
-        $this->hasMany('id', 'CorporateShipmentRequest', 'company_id', ['alias' => 'CorporateShipmentRequests']);
+        $this->hasMany('id', 'ShipmentRequest', 'company_id', ['alias' => 'ShipmentRequest']);
     }
 
     /**

@@ -7,7 +7,6 @@
  */
 class CompanyController extends ControllerBase
 {
-
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @author Rahman Shitu <rahman@cottacush.com>
@@ -397,9 +396,9 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_STATE_SUPPLIED);
         }
 
-        $postData->status = CorporateShipmentRequest::STATUS_PENDING;
+        $postData->status = ShipmentRequest::STATUS_PENDING;
 
-        if (($request = CorporateShipmentRequest::add($postData))) {
+        if (($request = ShipmentRequest::add($postData))) {
             return $this->response->sendSuccess($request);
         } else {
             return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
@@ -430,15 +429,15 @@ class CompanyController extends ControllerBase
             if (!$company) {
                 return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
             }
-            $requests = $company->getCorporateShipmentRequests($params)->toArray();
+            $requests = $company->getShipmentRequests($params)->toArray();
         } else {
-            $requests = CorporateShipmentRequest::find($params)->toArray();
+            $requests = ShipmentRequest::find($params)->toArray();
         }
 
 
         if (!empty($with_total_count)) {
             $data = [
-                'total_count' => (is_null($company_id)) ? CorporateShipmentRequest::count(['limit' => [intval($count) => $offset]]) : $company->getCorporateShipmentRequests(null)->count() ,
+                'total_count' => (is_null($company_id)) ? ShipmentRequest::count(['limit' => [intval($count) => $offset]]) : $company->getShipmentRequests(null)->count(),
                 'requests' => $requests
             ];
         } else {
@@ -446,6 +445,57 @@ class CompanyController extends ControllerBase
         }
 
         return $this->response->sendSuccess($data);
+    }
+
+    /**
+     * make a corporate pickup request
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function makePickupRequestAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+
+        $postData = $this->request->getJsonRawBody();
+        $requestValidator = new RequestValidator($postData, ['pickup', 'destination', 'company_id']);
+        $requestValidator->addRule('company_id', 'model', ['model' => 'Company']);
+
+        if (!$requestValidator->validateFields()) {
+            return $this->response->sendError($requestValidator->printValidationMessage());
+        }
+
+        //validate pickup data
+        $pickupData = $postData->pickup;
+        $contact_required_fields = ['address', 'state_id', 'city_id', 'name', 'phone_number'];
+        $contactValidator = new RequestValidator($pickupData, $contact_required_fields, 'pickup');
+        $contactValidator->addRule('city_id', 'model', ['model' => 'City']);
+        $contactValidator->addRule('state_id', 'model', ['model' => 'State']);
+        if (!$contactValidator->validateFields()) {
+            return $this->response->sendError($contactValidator->printValidationMessage());
+        }
+
+        //validate destination data
+        $destinationData = $postData->destination;
+        $contactValidator->setParameters($destinationData);
+        $contactValidator->setNamespace('destination');
+        if (!$contactValidator->validateFields()) {
+            return $this->response->sendError($contactValidator->printValidationMessage());
+        }
+
+        $postData->created_by = $this->auth->getPersonId();
+        $company_user = CompanyUser::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' =>
+            ['id' => $postData->created_by, 'company_id' => $postData->company_id]]);
+        if (!$company_user) {
+            return $this->response->sendError('Invalid company user');
+        }
+
+        $postData->status = PickupRequest::STATUS_PENDING;
+
+        if (($request = PickupRequest::add($postData))) {
+            return $this->response->sendSuccess($request->toArray());
+        } else {
+            return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
+        }
+
     }
 }
 

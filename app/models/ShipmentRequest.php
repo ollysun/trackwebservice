@@ -2,10 +2,10 @@
 use Phalcon\Mvc\Model;
 
 /**
- * Class CorporateShipmentRequest
- * @author Adeyemi Olaoye <yemexx@cottacush.com>
+ * Class ShipmentRequest
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class CorporateShipmentRequest extends Model
+class ShipmentRequest extends Model
 {
     const STATUS_PENDING = 'pending';
 
@@ -15,26 +15,26 @@ class CorporateShipmentRequest extends Model
      */
     public function initialize()
     {
-        $this->setSource('corporate_shipment_requests');
+        $this->setSource('shipment_requests');
     }
 
     /**
      * Add a new corporate shipment
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $data
-     * @return bool|CorporateShipmentRequest
+     * @return bool|ShipmentRequest
      */
     public static function add($data)
     {
         $data = (array)$data;
-        $corporateShipmentRequest = new self();
+        $shipmentRequest = new self();
 
         foreach ($data as $key => $value) {
-            $corporateShipmentRequest->$key = $value;
+            $shipmentRequest->$key = $value;
         }
 
-        if ($corporateShipmentRequest->save()) {
-            return $corporateShipmentRequest->toArray();
+        if ($shipmentRequest->save()) {
+            return $shipmentRequest->toArray();
         } else {
             return false;
         }

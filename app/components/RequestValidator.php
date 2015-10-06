@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Mvc\Model;
 
 
 /**
@@ -9,25 +10,38 @@ class RequestValidator
 {
     protected $validation_errors = [];
     protected $parameters;
-    protected $required_fields;
+    protected $fields;
+    protected $valid_rules_types = ['isset', 'model'];
+    protected $rules = [];
+    protected $namespace;
 
     /**
-     * @param $parameters
-     * @param $required_fields
+     * @param array $parameters
+     * @param array $fields
+     * @param string $namespace
      */
-    public function __construct($parameters = [], $required_fields = [])
+    public function __construct($parameters = [], $fields = [], $namespace = '')
     {
-        $this->parameters = $parameters;
-        $this->required_fields = $required_fields;
+        $this->setParameters($parameters);
+        $this->fields = $fields;
+        $this->initRules();
+        $this->namespace = $namespace;
     }
 
     /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @return RequestValidationMessage[]
+     * @author Adeyemi Olaoye <yemexx1@gmail.com>
      */
-    public function getMessages()
+    public function initRules()
     {
-        return $this->validation_errors;
+        foreach ($this->fields as $field) {
+            $this->addRule($field);
+        }
+    }
+
+    public function addRule($field, $type = 'isset', $config = null)
+    {
+        $this->rules[$field][] = ['type' => $type, 'field' => $field, 'config' => $config];
+        return $this;
     }
 
     /**
@@ -37,8 +51,15 @@ class RequestValidator
     public function validateFields()
     {
         $isValid = true;
-        foreach ($this->required_fields as $field) {
-            $isValid = $this->validateField($field) && $isValid;
+        foreach ($this->fields as $field) {
+            $rules = $this->rules[$field];
+            foreach ($rules as $key => $rule) {
+                $isRuleValid = $this->{$rule['type'] . 'Validate'}($rule);
+                $isValid = $isRuleValid && $isValid;
+                if (!$isRuleValid) {
+                    continue;
+                }
+            }
         }
         return $isValid;
     }
@@ -46,16 +67,13 @@ class RequestValidator
     /**
      * Validate single field
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $field
+     * @param $rule
      * @return bool
      */
-    public function validateField($field)
+    public function issetValidate($rule)
     {
-        if (is_object($this->parameters) && !property_exists($this->parameters, $field)) {
-            $this->addValidationError($field, "$field is required");
-            return false;
-        } else if (is_array($this->parameters) && !isset($this->parameters[$field])) {
-            $this->addValidationError($field, "$field is required");
+        if (is_array($this->parameters) && !isset($this->parameters[$rule['field']])) {
+            $this->addValidationError($rule['field'], "{{field}} is required");
             return false;
         }
 
@@ -70,6 +88,10 @@ class RequestValidator
      */
     private function addValidationError($field, $message)
     {
+        if (strpos($message, '{{field}}') !== false && strlen($this->namespace) > 0) {
+            $message = str_replace('{{field}}', $this->namespace . '.{{field}}', $message);
+        }
+
         $validationMessage = new RequestValidationMessage($field, $message);
         $this->validation_errors[] = $validationMessage;
         return $validationMessage;
@@ -87,11 +109,50 @@ class RequestValidator
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return RequestValidationMessage[]
+     */
+    public function getMessages()
+    {
+        return $this->validation_errors;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $parameters
      * @return array
      */
     public function setParameters($parameters)
     {
-        $this->parameters = $parameters;
+        $this->parameters = (array)$parameters;
     }
+
+    /**
+     * @author Adeyemi Olaoye <yemexx1@gmail.com>
+     * @param $rule
+     * @return Model
+     */
+    public function modelValidate($rule)
+    {
+        $config = $rule['config'];
+        $model_name = $config['model'];
+        $model = new ReflectionClass($model_name);
+        /** @var Model $instance */
+        $instance = $model->newInstanceWithoutConstructor();
+        if (!$instance::findFirst($this->parameters[$rule['field']])) {
+            $this->addValidationError($rule['field'], 'Invalid {{field}} supplied');
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @param string $namespace
+     */
+    public function setNamespace($namespace)
+    {
+        $this->namespace = $namespace;
+    }
+
+
 }
