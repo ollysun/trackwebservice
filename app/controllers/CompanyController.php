@@ -1,5 +1,7 @@
 <?php
 
+use PhalconUtils\Validation\Validators\RequestValidation;
+
 /**
  * Class CompanyController
  * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -14,83 +16,49 @@ class CompanyController extends ControllerBase
      */
     public function createCompanyAction()
     {
-        $this->auth->allowOnly([Role::ADMIN]);
-        $data = $this->request->getJsonRawBody(true);
+        //$this->auth->allowOnly([Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody();
 
-        if (!isset($data['primary_contact'], $data['company'])) {
+        if (!isset($postData->primary_contact, $postData->company)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $company_data = $data['company'];
-        $primary_contact_data = $data['primary_contact'];
-
-        $companyRequestValidator = new RequestValidator($company_data, ['name', 'reg_no', 'email', 'phone_number', 'address', 'relations_officer_id', 'city_id']);
-        if (!$companyRequestValidator->validateFields()) {
-            return $this->response->sendError($companyRequestValidator->printValidationMessage());
+        $companyRequestValidator = new CompanyRequestValidation($postData, 'company');
+        if (!$companyRequestValidator->validate()) {
+            return $this->response->sendError($companyRequestValidator->getMessages());
         }
-
-        $contactRequiredFields = ['firstname', 'lastname', 'phone_number', 'email'];
-        $contactRequestValidator = new RequestValidator($primary_contact_data, $contactRequiredFields);
-        if (!$contactRequestValidator->validateFields()) {
-            return $this->response->sendError($contactRequestValidator->printValidationMessage());
-        }
-
-        if (isset($data['secondary_contact'])) {
-            $contactRequestValidator->setParameters($data['secondary_contact']);
-            if (!$contactRequestValidator->validateFields()) {
-                return $this->response->sendError($contactRequestValidator->printValidationMessage());
-            }
-        }
-
-        if (!City::findFirst($company_data['city_id'])) {
-            return $this->response->sendError(ResponseMessage::INVALID_CITY_SUPPLIED);
-        }
-
-        $company = Company::getByName($company_data['name']);
-        if ($company) {
-            return $this->response->sendError(ResponseMessage::COMPANY_EXISTING);
-        }
-
-        $relations_officer = Admin::findFirst($company_data['relations_officer_id']);
-        if (!$relations_officer) {
-            return $this->response->sendError(ResponseMessage::INVALID_RELATIONS_OFFICER_ID);
-        }
-
-        $primary_contact_data['password'] = $this->auth->generateToken(6);
-        if (isset($data['secondary_contact'])) {
-            $data['secondary_contact']['password'] = $this->auth->generateToken(6);
-        }
-
 
         $this->db->begin();
-
         /** @var Company $company */
-        if (!($company = Company::add($company_data))) {
+        if (!($company = Company::add((array)$postData->company))) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY);
         }
 
-        if (UserAuth::findFirstByEmail($primary_contact_data['email'])) {
-            return $this->response->sendError(ResponseMessage::PRIMARY_CONTACT_EXISTS);
+        $companyContactValidator = new CompanyContactValidation($postData, 'primary_contact');
+        if (!$companyContactValidator->validate()) {
+            return $this->response->sendError($companyContactValidator->getMessages());
         }
+
+        $postData->primary_contact->password = $this->auth->generateToken(6);
         //create contacts and link to company
-        $primary_contact = $company->createUser(Role::COMPANY_ADMIN, $primary_contact_data);
+        $primary_contact = $company->createUser(Role::COMPANY_ADMIN, (array)$postData->primary_contact);
         if (!$primary_contact) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_PRIMARY_CONTACT);
         }
         $company->setPrimaryContactId($primary_contact->getId());
 
-
-        if (isset($data['secondary_contact'])) {
-            if (UserAuth::findFirstByEmail($data['secondary_contact']['email'])) {
-                return $this->response->sendError(ResponseMessage::SECONDARY_CONTACT_EXISTS);
+        if (property_exists($postData, 'secondary_contact')) {
+            $companyContactValidator->setNamespace('secondary_contact');
+            if (!$companyContactValidator->validate()) {
+                return $this->response->sendError($companyContactValidator->getMessages());
             }
-            $secondary_contact = $company->createUser(Role::COMPANY_OFFICER, $data['secondary_contact']);
+            $postData->secondary_contact->password = $this->auth->generateToken(6);
+            $secondary_contact = $company->createUser(Role::COMPANY_OFFICER, (array)$postData->secondary_contact);
             if (!$secondary_contact) {
                 return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY_SECONDARY_CONTACT);
             }
             $company->setSecContactId($secondary_contact->getId());
         } else {
-            $secondary_contact = null;
             $company->setSecContactId(null);
         }
 
@@ -98,17 +66,15 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::UNABLE_TO_LINK_CONTACTS_TO_COMPANY);
         }
 
+        $postData->primary_contact->id = $primary_contact->getId();
+        $company->notifyContact((array)$postData->primary_contact);
 
-        $primary_contact_data['id'] = $primary_contact->getId();
-        $company->notifyContact($primary_contact_data);
-
-        if (isset($data['secondary_contact'])) {
-            $data['secondary_contact']['id'] = $secondary_contact->getId();
-            $company->notifyContact($data['secondary_contact']);
+        if (property_exists($postData, 'secondary_contact')) {
+            $postData->secondary_contact->id = $secondary_contact->getId();
+            $company->notifyContact((array)$postData->secondary_contact);
         }
 
         $this->db->commit();
-
         return $this->response->sendSuccess($company->toArray());
     }
 
@@ -238,9 +204,10 @@ class CompanyController extends ControllerBase
         $postData = $this->request->getJsonRawBody(true);
         $requiredFields = ['firstname', 'lastname', 'phone_number', 'email', 'company_id', 'role_id'];
 
-        $requestValidator = new RequestValidator($postData, $requiredFields);
-        if (!$requestValidator->validateFields()) {
-            return $this->response->sendError($requestValidator->printValidationMessage());
+        $requestValidator = new RequestValidation($postData);
+        $requestValidator->setRequiredFields($requiredFields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
         }
 
         $company = Company::findFirst($postData['company_id']);
@@ -368,9 +335,10 @@ class CompanyController extends ControllerBase
             'estimated_weight', 'no_of_packages',
             'parcel_value'];
 
-        $requestValidator = new RequestValidator($postData, $required_fields);
-        if (!$requestValidator->validateFields()) {
-            return $this->response->sendError($requestValidator->printValidationMessage());
+        $requestValidator = new RequestValidation($postData);
+        $requestValidator->setRequiredFields($required_fields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
         }
 
         $company = Company::findFirst($postData->company_id);
@@ -456,36 +424,21 @@ class CompanyController extends ControllerBase
         $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $postData = $this->request->getJsonRawBody();
-        $requestValidator = new RequestValidator($postData, ['pickup', 'destination', 'company_id']);
-        $requestValidator->addRule('company_id', 'model', ['model' => 'Company']);
-
-        if (!$requestValidator->validateFields()) {
-            return $this->response->sendError($requestValidator->printValidationMessage());
-        }
-
-        //validate pickup data
-        $pickupData = $postData->pickup;
-        $contact_required_fields = ['address', 'state_id', 'city_id', 'name', 'phone_number'];
-        $contactValidator = new RequestValidator($pickupData, $contact_required_fields, 'pickup');
-        $contactValidator->addRule('city_id', 'model', ['model' => 'City']);
-        $contactValidator->addRule('state_id', 'model', ['model' => 'State']);
-        if (!$contactValidator->validateFields()) {
-            return $this->response->sendError($contactValidator->printValidationMessage());
-        }
-
-        //validate destination data
-        $destinationData = $postData->destination;
-        $contactValidator->setParameters($destinationData);
-        $contactValidator->setNamespace('destination');
-        if (!$contactValidator->validateFields()) {
-            return $this->response->sendError($contactValidator->printValidationMessage());
-        }
-
         $postData->created_by = $this->auth->getPersonId();
-        $company_user = CompanyUser::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' =>
-            ['id' => $postData->created_by, 'company_id' => $postData->company_id]]);
-        if (!$company_user) {
-            return $this->response->sendError('Invalid company user');
+        $pickupRequestValidation = new PickupRequestValidation($postData);
+
+        if (!$pickupRequestValidation->validate()) {
+            return $this->response->sendError($pickupRequestValidation->getMessages());
+        }
+
+        $contactValidator = new PickupContactValidation($postData, 'pickup');
+        if (!$contactValidator->validate()) {
+            return $this->response->sendError($contactValidator->getMessages());
+        }
+
+        $contactValidator->setNamespace('destination');
+        if (!$contactValidator->validate()) {
+            return $this->response->sendError($contactValidator->getMessages());
         }
 
         $postData->status = PickupRequest::STATUS_PENDING;
@@ -495,7 +448,6 @@ class CompanyController extends ControllerBase
         } else {
             return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
         }
-
     }
 }
 
