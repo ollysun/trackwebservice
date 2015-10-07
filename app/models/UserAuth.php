@@ -1,7 +1,10 @@
 <?php
 
-use Phalcon\Mvc\Model\Validator\Email as Email;
-
+/**
+ * Class Admin
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
+ * @author Rahman Shitu <rahman@cottacush.com>
+ */
 class UserAuth extends \Phalcon\Mvc\Model
 {
     const ENTITY_TYPE_ADMIN = 1;
@@ -299,5 +302,21 @@ class UserAuth extends \Phalcon\Mvc\Model
         $this->setEmail($email);
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $identifier
+     * @return \Phalcon\Mvc\ModelInterface
+     */
+    public static function getByIdentifier($identifier)
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['UserAuth.*'])
+            ->from('UserAuth')
+            ->leftJoin('Admin', 'Admin.user_auth_id = UserAuth.id')
+            ->where('UserAuth.email=:identifier: OR Admin.staff_id = :identifier: OR Admin.phone = :identifier:');
+        return $builder->getQuery()->getSingleResult(['identifier'=>$identifier]);
     }
 }
