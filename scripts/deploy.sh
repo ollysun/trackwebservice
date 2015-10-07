@@ -25,7 +25,7 @@ function deploy() {
     echo "Enter ssh key file and press [ENTER]"
     read ssh_key_file
 
-    ssh $username@$host -i $ssh_key_file "cd /var/www/html/$app_folder && git pull"
+    ssh $username@$host -i $ssh_key_file "cd /var/www/html/$app_folder && git pull && composer update"
 }
 
 function tagRelease() {
@@ -33,6 +33,7 @@ function tagRelease() {
     git checkout master
     git pull origin master
     git merge $1
+    git push origin master
     echo "Enter version number and press [ENTER]"
     read version_number
     echo "Enter version message and press [ENTER]"
