@@ -460,7 +460,7 @@ class Company extends \Phalcon\Mvc\Model
         $this->belongsTo('approved_by', 'User', 'id', array('alias' => 'User'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
-        $this->hasMany('id', 'ShipmentRequest', 'company_id', ['alias' => 'ShipmentRequest']);
+        $this->hasMany('id', 'ShipmentRequest', 'company_id', ['alias' => 'ShipmentRequests']);
     }
 
     /**
