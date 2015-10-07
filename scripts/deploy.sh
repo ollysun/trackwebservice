@@ -25,7 +25,7 @@ function deploy() {
     echo "Enter ssh key file and press [ENTER]"
     read ssh_key_file
 
-    ssh $username@$host -i $ssh_key_file "cd /var/www/html/$app_folAdder && git pull && composer update"
+    ssh $username@$host -i $ssh_key_file "cd /var/www/html/$app_folder && git pull && composer update"
 }
 
 function tagRelease() {
