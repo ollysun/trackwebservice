@@ -16,7 +16,7 @@ class CompanyController extends ControllerBase
      */
     public function createCompanyAction()
     {
-        //$this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN]);
         $postData = $this->request->getJsonRawBody();
 
         if (!isset($postData->primary_contact, $postData->company)) {
