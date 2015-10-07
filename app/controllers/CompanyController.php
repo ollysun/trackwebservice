@@ -1,6 +1,6 @@
 <?php
 
-use PhalconUtils\Validation\Validators\RequestValidation;
+use PhalconUtils\Validation\RequestValidation;
 
 /**
  * Class CompanyController
