@@ -21,7 +21,7 @@ class AuthController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $authUser = UserAuth::fetchByEmail($identifier);
+        $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {
             if ($this->security->checkHash($password, $authUser->getPassword())) {
                 $userData = false;
