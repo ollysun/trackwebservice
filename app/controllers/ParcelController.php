@@ -1,4 +1,5 @@
 <?php
+use PhalconUtils\Validation\RequestValidation;
 
 /**
  * Class ParcelController
@@ -967,9 +968,10 @@ class ParcelController extends ControllerBase
         $requiredFields = ['waybill_number', 'delivered_by', 'phone_number', 'name'];
         $data = ['waybill_number' => $waybill_number, 'delivered_by' => $delivered_by, 'phone_number' => $phone_number, 'name' => $name];
 
-        $requestValidator = new RequestValidator($data, $requiredFields);
-        if (!$requestValidator->validateFields()) {
-            return $this->response->sendError($requestValidator->printValidationMessage());
+        $requestValidator = new RequestValidation($data);
+        $requestValidator->setRequiredFields($requiredFields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
         }
 
         $data['email'] = $email;
