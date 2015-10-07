@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS shipment_requests (
   receiver_address      TEXT                                NOT NULL,
   receiver_state_id     INT(11)                             NOT NULL,
   receiver_city_id      INT(11)                             NOT NULL,
-  receiver_company_name INT(11)      DEFAULT NULL,
+  receiver_company_name VARCHAR (255)      DEFAULT NULL,
   company_id            INT(11)                             NOT NULL,
   cash_on_delivery      VARCHAR(50)  DEFAULT NULL,
   reference_number      VARCHAR(100) DEFAULT NULL,

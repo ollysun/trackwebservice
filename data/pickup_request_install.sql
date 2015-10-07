@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS pickup_requests (
   destination_phone_number VARCHAR(100)                        NOT NULL,
   destination_state_id     INT(11)                             NOT NULL,
   destination_city_id      INT(11)                             NOT NULL,
+    company_id            INT(11)                             NOT NULL,
   shipment_description     TEXT        DEFAULT NULL,
   request_detail           TEXT        DEFAULT NULL,
   status                   VARCHAR(50) DEFAULT 'pending',
