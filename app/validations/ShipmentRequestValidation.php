@@ -5,7 +5,7 @@ use PhalconUtils\Validation\Validators\Model;
 
 /**
  * Class ShipmentRequestValidation
- * @author Adeyemi Olaoye <yemexx1@gmail.com>
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
 class ShipmentRequestValidation extends BaseValidation
 {
