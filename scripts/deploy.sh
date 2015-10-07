@@ -33,6 +33,7 @@ function tagRelease() {
     git checkout master
     git pull origin master
     git merge $1
+    git push origin master
     echo "Enter version number and press [ENTER]"
     read version_number
     echo "Enter version message and press [ENTER]"
