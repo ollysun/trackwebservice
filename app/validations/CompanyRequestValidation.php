@@ -20,7 +20,7 @@ class CompanyRequestValidation extends BaseValidation
         ]));
 
         $this->add('name', new Regex([
-            'pattern' => '/[a-z]+/i',
+            'pattern' => '/.*[a-z]+.*/i',
             'message' => 'Invalid company name'
         ]));
 
