@@ -321,7 +321,7 @@ class CompanyController extends ControllerBase
     }
 
     /**
-     * make a corporate request
+     * make a corporate shipment request
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
     public function makeShipmentRequestAction()
@@ -329,87 +329,66 @@ class CompanyController extends ControllerBase
         $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $postData = $this->request->getJsonRawBody();
-        $required_fields = ['receiver_firstname',
-            'receiver_address', 'company_id',
-            'receiver_state_id', 'receiver_city_id',
-            'estimated_weight', 'no_of_packages',
-            'parcel_value'];
+        $postData->created_by = $this->auth->getPersonId();
+        $requestValidator = new ShipmentRequestValidation($postData);
 
-        $requestValidator = new RequestValidation($postData);
-        $requestValidator->setRequiredFields($required_fields);
         if (!$requestValidator->validate()) {
             return $this->response->sendError($requestValidator->getMessages());
         }
 
-        $company = Company::findFirst($postData->company_id);
-        if (!$company) {
-            return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
-        }
-
-
-        $postData->created_by = $this->auth->getPersonId();
-        $company_user = CompanyUser::findFirst(['conditions' => 'id = :id: AND company_id = :company_id:', 'bind' =>
-            ['id' => $postData->created_by, 'company_id' => $company->getId()]]);
-        if (!$company_user) {
-            return $this->response->sendError('Invalid company user');
-        }
-
-        $receiver_city = City::findFirst($postData->receiver_city_id);
-        if (!$receiver_city) {
-            return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_CITY_SUPPLIED);
-        }
-
-        $receiver_state = State::findFirst($postData->receiever_state_id);
-        if (!$receiver_state) {
-            return $this->response->sendError(ResponseMessage::INVALID_RECEIVER_STATE_SUPPLIED);
-        }
-
         $postData->status = ShipmentRequest::STATUS_PENDING;
-
         if (($request = ShipmentRequest::add($postData))) {
             return $this->response->sendSuccess($request);
         } else {
             return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
         }
-
     }
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return $this
      */
-    public function getShipmentRequestsAction()
+    public function getRequestsAction()
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $company_id = $this->request->getQuery('company_id', null, null);
         $status = $this->request->getQuery('status', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
+        $request_type = $this->request->getQuery('type', null, 'shipment');
 
-        $params = ['limit' => intval($count), 'offset' => $offset];
+        if (!in_array(strtolower($request_type), ['shipment', 'pickup'])) {
+            return $this->response->sendError('Invalid request type');
+        }
+
+        $criteria = [];
+        $pagination_params = ['limit' => intval($count), 'offset' => $offset];
         if (!is_null($status)) {
-            $params['conditions'] = "status=:status:";
-            $params['bind']['status'] = $status;
+            $criteria['conditions'] = "status=:status:";
+            $criteria['bind']['status'] = $status;
         }
 
         if (!is_null($company_id)) {
             $company = Company::findFirst($company_id);
             if (!$company) {
                 return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
+            } else if ($company) {
+                $criteria['conditions'] = (isset($criteria['conditions'])) ? $criteria['conditions'] . ' AND company_id = :company_id:' : 'company_id = :company_id:';
+                $criteria['bind']['company_id'] = $company->getId();
             }
-            $requests = $company->getShipmentRequests($params)->toArray();
-        } else {
-            $requests = ShipmentRequest::find($params)->toArray();
         }
+
+        $params = array_merge($criteria, $pagination_params);
+        $requests = ($request_type == 'shipment') ? ShipmentRequest::find($params) : PickupRequest::find($params);
 
 
         if (!empty($with_total_count)) {
             $data = [
-                'total_count' => (is_null($company_id)) ? ShipmentRequest::count(['limit' => [intval($count) => $offset]]) : $company->getShipmentRequests(null)->count(),
-                'requests' => $requests
+                'total_count' => ($request_type == 'shipment') ? ShipmentRequest::count($criteria) : PickupRequest::count($criteria),
+                'requests' => $requests->toArray()
             ];
         } else {
-            $data = $requests;
+            $data = $requests->toArray();
         }
 
         return $this->response->sendSuccess($data);
@@ -450,4 +429,5 @@ class CompanyController extends ControllerBase
         }
     }
 }
+
 
