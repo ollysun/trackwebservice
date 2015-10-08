@@ -61,7 +61,8 @@ class AdminController extends ControllerBase {
                     'year'=> date('Y')
                 ],
                 'Courier Plus',
-                $email
+                $email,
+                ['cc' => ['itsupport@courierplus-ng.com' => 'CourierPlus IT Support']]
             );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
         }
