@@ -39,4 +39,41 @@ class ShipmentRequest extends Model
             return false;
         }
     }
+
+    /**
+     * @author Adeyemi Olaoye <yemexx1@gmail.com>
+     * @param $params
+     * @param $offset
+     * @param $count
+     * @return mixed
+     */
+    public static function getRequests($params, $offset, $count)
+    {
+        if (!isset($params['conditions'], $params['bind'])) {
+            $params['conditions'] = null;
+            $params['bind'] = [];
+        }
+
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('ShipmentRequest')
+            ->columns('ShipmentRequest.*, State.*, City.*')
+            ->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id')
+            ->innerJoin('City', 'City.id = ShipmentRequest.receiver_city_id')
+            ->where($params['conditions'])
+            ->limit($count)
+            ->offset($offset);
+
+        $result = $builder->getQuery()->execute($params['bind']);
+
+        $requests = [];
+        foreach ($result as $data) {
+            $request = $data->shipmentRequest->toArray();
+            $request['city'] = $data->city->toArray();
+            $request['state'] = $data->state->toArray();
+            $requests[] = $request;
+        }
+
+        return $requests;
+    }
 }

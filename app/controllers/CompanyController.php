@@ -379,16 +379,16 @@ class CompanyController extends ControllerBase
         }
 
         $params = array_merge($criteria, $pagination_params);
-        $requests = ($request_type == 'shipment') ? ShipmentRequest::find($params) : PickupRequest::find($params);
+        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($params, $offset, $count) : PickupRequest::getRequests($params, $offset, $count);
 
 
         if (!empty($with_total_count)) {
             $data = [
                 'total_count' => ($request_type == 'shipment') ? ShipmentRequest::count($criteria) : PickupRequest::count($criteria),
-                'requests' => $requests->toArray()
+                'requests' => $requests
             ];
         } else {
-            $data = $requests->toArray();
+            $data = $requests;
         }
 
         return $this->response->sendSuccess($data);

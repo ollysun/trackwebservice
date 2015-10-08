@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Validation\Validator\Email;
 use PhalconUtils\Validation\BaseValidation;
 use PhalconUtils\Validation\Validators\NotExisting;
 
@@ -20,5 +21,8 @@ class CompanyContactValidation extends BaseValidation
             'message' => ($this->getNamespace() == 'primary_contact') ? ResponseMessage::PRIMARY_CONTACT_EXISTS : ResponseMessage::SECONDARY_CONTACT_EXISTS
         ]));
 
+        $this->add('email', new Email([
+            'message' => ':field is not valid'
+        ]));
     }
 }
