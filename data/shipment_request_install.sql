@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS shipment_requests (
   description           TEXT         DEFAULT NULL,
   status                VARCHAR(50)  DEFAULT 'pending',
   created_by            INT(11)                             NOT NULL,
+  created_at            DATETIME                             NOT NULL,
   KEY k_sr_receiver_firstname (receiver_firstname),
   KEY k_sr_receiver_lastname (receiver_lastname),
   KEY k_sr_receiver_phone_number (receiver_phone_number),

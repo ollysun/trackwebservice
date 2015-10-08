@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS pickup_requests (
   request_detail           TEXT        DEFAULT NULL,
   status                   VARCHAR(50) DEFAULT 'pending',
   created_by               INT(11)                             NOT NULL,
+  created_at            DATETIME                             NOT NULL,
   KEY k_pr_pickup_name (pickup_name),
   KEY k_pr_pickup_phone_number (pickup_phone_number),
   KEY k_pr_pickup_state_id (pickup_state_id),
