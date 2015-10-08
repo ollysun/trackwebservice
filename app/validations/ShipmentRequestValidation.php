@@ -36,7 +36,7 @@ class ShipmentRequestValidation extends BaseValidation
         ]));
 
         $this->add('receiver_city_id', new Model([
-            'model' => State::class,
+            'model' => City::class,
             'message' => ResponseMessage::INVALID_RECEIVER_CITY_SUPPLIED
         ]));
 
