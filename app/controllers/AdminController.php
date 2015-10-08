@@ -1,8 +1,10 @@
 <?php
 
 
-class AdminController extends ControllerBase {
-    public function registerAction(){
+class AdminController extends ControllerBase
+{
+    public function registerAction()
+    {
         $this->auth->allowOnly([Role::ADMIN, Role::SUPER_ADMIN]);
         //todo: validate phone number
 
@@ -14,54 +16,55 @@ class AdminController extends ControllerBase {
         $phone = $this->request->getPost('phone');
         $password = $this->auth->generateToken(6);
 
-        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $password, $branch_id))){
+        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $password, $branch_id))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $email = strtolower(trim($email));
         $staff_id = strtoupper(trim($staff_id));
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false){
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
             return $this->response->sendError(ResponseMessage::INVALID_EMAIL);
         }
 
         $branch = Branch::fetchById($branch_id);
-        if ($branch == false){
+        if ($branch == false) {
             return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
         }
 
-        if ($role_id == Role::SUPER_ADMIN && $this->auth->getUserType() != Role::SUPER_ADMIN){
+        if ($role_id == Role::SUPER_ADMIN && $this->auth->getUserType() != Role::SUPER_ADMIN) {
             return $this->response->sendAccessDenied();
         }
 
-        if ($role_id == Role::SWEEPER){
-            if ($branch->getBranchType() != BranchType::HUB){
+        if ($role_id == Role::SWEEPER) {
+            if ($branch->getBranchType() != BranchType::HUB) {
                 return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB);
             }
         }
 
         $admin_details = Admin::fetchByIdentifier($email, $staff_id);
-        if ($admin_details != false){
-            if ($admin_details->userAuth->getEmail() == $email){
+        if ($admin_details != false) {
+            if ($admin_details->userAuth->getEmail() == $email) {
                 return $this->response->sendError(ResponseMessage::EXISTING_EMAIL);
-            }else if ($admin_details->admin->getStaffId() == $staff_id){
+            } else if ($admin_details->admin->getStaffId() == $staff_id) {
                 return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
             }
         }
 
         $admin = new Admin();
         $check = $admin->createWithAuth($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone);
-        if ($check){
+        if ($check) {
             EmailMessage::send(
                 EmailMessage::USER_ACCOUNT_CREATION,
                 [
                     'name' => $fullname,
                     'email' => $email,
                     'password' => $password,
-                    'link' => $this->config->fe_base_url.'/site/changePassword?ican='.md5($admin->getId()).'&salt='.$admin->getId(),
-                    'year'=> date('Y')
+                    'link' => $this->config->fe_base_url . '/site/changePassword?ican=' . md5($admin->getId()) . '&salt=' . $admin->getId(),
+                    'year' => date('Y')
                 ],
                 'Courier Plus',
                 $email,
+                EmailMessage::DEFAULT_FROM_EMAIL,
                 ['cc' => ['itsupport@courierplus-ng.com' => 'CourierPlus IT Support']]
             );
             return $this->response->sendSuccess(['id' => $admin->getId()]);
@@ -69,7 +72,8 @@ class AdminController extends ControllerBase {
         return $this->response->sendError();
     }
 
-    public function editAction(){
+    public function editAction()
+    {
         $this->auth->allowOnly([Role::ADMIN]);
         //todo: validate phone number
 
@@ -82,32 +86,32 @@ class AdminController extends ControllerBase {
         $phone = $this->request->getPost('phone');
         $status = $this->request->getPost('status');
 
-        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id))){
+        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $email = strtolower(trim($email));
         $staff_id = strtoupper(trim($staff_id));
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false){
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
             return $this->response->sendError(ResponseMessage::INVALID_EMAIL);
         }
 
         $branch = Branch::fetchById($branch_id);
-        if ($branch == false){
+        if ($branch == false) {
             return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
         }
 
-        if ($role_id == Role::SWEEPER){
-            if ($branch->getBranchType() != BranchType::HUB){
+        if ($role_id == Role::SWEEPER) {
+            if ($branch->getBranchType() != BranchType::HUB) {
                 return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB);
             }
         }
 
         $admin_details = Admin::fetchByIdentifier($email, $staff_id, $admin_id);
-        if ($admin_details != false){
-            if ($admin_details->userAuth->getEmail() == $email){
+        if ($admin_details != false) {
+            if ($admin_details->userAuth->getEmail() == $email) {
                 return $this->response->sendError(ResponseMessage::EXISTING_EMAIL);
-            }else if ($admin_details->admin->getStaffId() == $staff_id){
+            } else if ($admin_details->admin->getStaffId() == $staff_id) {
                 return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
             }
         }
@@ -127,7 +131,8 @@ class AdminController extends ControllerBase {
         return $this->response->sendError(ResponseMessage::STAFF_DOES_NOT_EXIST);
     }
 
-    public function getAllAction(){
+    public function getAllAction()
+    {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
 
@@ -141,16 +146,27 @@ class AdminController extends ControllerBase {
         $email = $this->request->getQuery('email');
 
         $filter_by = [];
-        if (!is_null($role_id)){ $filter_by['role_id'] = $role_id; }
-        if (!is_null($branch_id)){ $filter_by['branch_id'] = $branch_id; }
-        if (!is_null($status)){ $filter_by['status'] = $status; }
-        if (!is_null($staff_id)){ $filter_by['staff_id'] = $staff_id; }
-        if (!is_null($email)){ $filter_by['email'] = $email; }
+        if (!is_null($role_id)) {
+            $filter_by['role_id'] = $role_id;
+        }
+        if (!is_null($branch_id)) {
+            $filter_by['branch_id'] = $branch_id;
+        }
+        if (!is_null($status)) {
+            $filter_by['status'] = $status;
+        }
+        if (!is_null($staff_id)) {
+            $filter_by['staff_id'] = $staff_id;
+        }
+        if (!is_null($email)) {
+            $filter_by['email'] = $email;
+        }
 
         return $this->response->sendSuccess(Admin::fetchAll($offset, $count, $filter_by));
     }
 
-    public function getOneAction(){
+    public function getOneAction()
+    {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $staff_id = $this->request->getQuery('staff_id');
@@ -158,12 +174,16 @@ class AdminController extends ControllerBase {
         $id = $this->request->getQuery('id');
 
         $filter_by = [];
-        if (!is_null($staff_id)){ $filter_by['staff_id'] = $staff_id; }
-        else if (!is_null($email)){ $filter_by['email'] = $email; }
-        else if (!is_null($id)){ $filter_by['id'] = $id; }
+        if (!is_null($staff_id)) {
+            $filter_by['staff_id'] = $staff_id;
+        } else if (!is_null($email)) {
+            $filter_by['email'] = $email;
+        } else if (!is_null($id)) {
+            $filter_by['id'] = $id;
+        }
 
         $admin_data = Admin::fetchOne($filter_by);
-        if ($admin_data != false){
+        if ($admin_data != false) {
             return $this->response->sendSuccess($admin_data);
         }
         return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
