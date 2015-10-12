@@ -85,6 +85,71 @@ class ShipmentRequest extends BaseModel
     }
 
     /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $id
+     * @param array $fetch_with
+     * @return array|bool
+     */
+    public static function getOne($id, $fetch_with = [])
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('ShipmentRequest');
+        $columns = ['ShipmentRequest.*'];
+
+        if (in_array('with_receiver_state', $fetch_with)) {
+            $columns[] = 'State.*';
+            $builder = $builder->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id');
+        }
+
+        if (in_array('with_receiver_city', $fetch_with)) {
+            $columns[] = 'City.*';
+            $builder = $builder->innerJoin('City', 'City.id = ShipmentRequest.receiver_city_id');
+        }
+
+        if (in_array('with_company', $fetch_with)) {
+            $columns[] = 'Company.*';
+            $builder = $builder->innerJoin('Company', 'Company.id = ShipmentRequest.company_id');
+        }
+
+        if (in_array('with_created_by', $fetch_with)) {
+            $columns[] = 'CompanyUser.*';
+            $builder = $builder->innerJoin('CompanyUser', 'CompanyUser.id = ShipmentRequest.created_by');
+        }
+
+        $builder->andWhere('ShipmentRequest.id = :id:', ['id' => $id]);
+        $builder = $builder->columns($columns);
+        $result = $builder->getQuery()->execute();
+
+        if (count($result) == 0) {
+            return false;
+        }
+
+        $request = [];
+
+        if (isset($result[0]->shipmentRequest)) {
+            $request = $result[0]->shipmentRequest->getData();
+            if (in_array('with_receiver_city', $fetch_with)) {
+                $request['receiver_city'] = $result[0]->city->getData();
+            }
+            if (in_array('with_receiver_state', $fetch_with)) {
+                $request['receiver_state'] = $result[0]->state->getData();
+            }
+            if (in_array('with_company', $fetch_with)) {
+                $request['company'] = $result[0]->company->getData();
+            }
+            if (in_array('with_created_by', $fetch_with)) {
+                $request['created_by'] = $result[0]->companyUser->getData();
+            }
+        } else {
+            $request = $result[0]->getData();
+        }
+
+        return $request;
+    }
+
+
+    /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $builder
      * @param $filter_by
@@ -121,5 +186,14 @@ class ShipmentRequest extends BaseModel
         $builder = self::addFetchCriteria($builder, $filter_by);
         $count = $builder->columns($columns)->getQuery()->getSingleResult();
         return $count['count'];
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->toArray();
     }
 }
