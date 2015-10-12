@@ -1424,6 +1424,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'ParcelHistory.to_branch_id <= :history_to_branch_id:';
             $bind['history_to_branch_id'] = $filter_by['history_to_branch_id'];
         }
+        if (isset($filter_by['created_branch_id'])) {
+            $where[] = 'Parcel.created_branch_id = :created_branch_id:';
+            $bind['created_branch_id'] = $filter_by['created_branch_id'];
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
