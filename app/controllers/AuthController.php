@@ -181,7 +181,6 @@ class AuthController extends ControllerBase
         $officer = UserAuth::fetchByEmail($identifier);
         if ($officer != false) {
             if ($this->security->checkHash($password, $officer->getPassword())) {
-                $officer_data = false;
                 if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN) {
                     $officer_data = Admin::fetchLoginData($officer->getId());
                 } else {
