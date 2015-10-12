@@ -41,13 +41,14 @@ class ShipmentRequest extends Model
     }
 
     /**
-     * @author Adeyemi Olaoye <yemexx1@gmail.com>
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $params
      * @param $offset
      * @param $count
+     * @param array $fetch_with
      * @return mixed
      */
-    public static function getRequests($params, $offset, $count)
+    public static function getRequests($params, $offset, $count, $fetch_with = [])
     {
         if (!isset($params['conditions'], $params['bind'])) {
             $params['conditions'] = null;
@@ -56,11 +57,20 @@ class ShipmentRequest extends Model
 
         $obj = new self();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('ShipmentRequest')
-            ->columns('ShipmentRequest.*, State.*, City.*')
-            ->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id')
-            ->innerJoin('City', 'City.id = ShipmentRequest.receiver_city_id')
-            ->where($params['conditions'])
+            ->from('ShipmentRequest');
+        $columns = ['ShipmentRequest.*'];
+
+        if (in_array('with_receiver_state', $fetch_with)) {
+            $columns[] = 'State.*';
+            $builder = $builder->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id');
+        }
+
+        if (in_array('with_receiver_city', $fetch_with)) {
+            $columns[] = 'City.*';
+            $builder = $builder->innerJoin('City', 'City.id = ShipmentRequest.receiver_city_id');
+        }
+
+        $builder = $builder->columns($columns)->where($params['conditions'])
             ->limit($count)
             ->offset($offset);
 
@@ -68,9 +78,13 @@ class ShipmentRequest extends Model
 
         $requests = [];
         foreach ($result as $data) {
-            $request = $data->shipmentRequest->toArray();
-            $request['city'] = $data->city->toArray();
-            $request['state'] = $data->state->toArray();
+            $request = (property_exists($data, 'shipmentRequest')) ? $data->shipmentRequest->toArray() : $data->toArray();
+            if (in_array('with_receiver_city', $fetch_with)) {
+                $request['receiver_city'] = $data->city->toArray();
+            }
+            if (in_array('with_receiver_state', $fetch_with)) {
+                $request['receiver_state'] = $data->state->toArray();
+            }
             $requests[] = $request;
         }
 

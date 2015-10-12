@@ -57,7 +57,7 @@ class PickupRequest extends Model
      * @param $count
      * @return array
      */
-    public static function getRequests($params, $offset, $count)
+    public static function getRequests($params, $offset, $count, $fetch_with = [])
     {
         if (!isset($params['conditions'], $params['bind'])) {
             $params['conditions'] = null;
@@ -66,25 +66,52 @@ class PickupRequest extends Model
 
         $obj = new self();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('PickupRequest')
-            ->columns(['PickupRequest.*', 'PickupState.*', 'PickupCity.*', 'DestinationState.*', 'DestinationCity.*'])
-            ->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState')
-            ->innerJoin('City', 'PickupCity.id = PickupRequest.pickup_city_id', 'PickupCity')
-            ->innerJoin('State', 'DestinationState.id = PickupRequest.destination_state_id', 'DestinationState')
-            ->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity')
-            ->where($params['conditions'])
-            ->limit($count)
-            ->offset($offset);
+            ->from('PickupRequest');
+        $columns = ['PickupRequest.*'];
 
+        if (in_array('pickup_state', $fetch_with)) {
+            $columns[] = 'PickupState.*';
+            $builder = $builder->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState');
+        }
+
+        if (in_array('pickup_city', $fetch_with)) {
+            $columns[] = 'PickupCity.*';
+            $builder = $builder->innerJoin('City', 'PickupCity.id = PickupRequest.pickup_city_id', 'PickupCity');
+        }
+
+        if (in_array('destination_state', $fetch_with)) {
+            $columns[] = 'DestinationState.*';
+            $builder = $builder->innerJoin('State', 'DestinationState.id = PickupRequest.destination_state_id', 'DestinationState');
+        }
+
+        if (in_array('destination_city', $fetch_with)) {
+            $columns[] = 'DestinationCity.*';
+            $builder = $builder->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity');
+        }
+
+        $builder = $builder->columns($columns)->where($params['conditions'])->limit($count)->offset($offset);
         $result = $builder->getQuery()->execute($params['bind']);
 
         $requests = [];
         foreach ($result as $data) {
-            $request = $data->pickupRequest->toArray();
-            $request['pickup_city'] = $data->PickupCity->toArray();
-            $request['pickup_state'] = $data->PickupState->toArray();
-            $request['destination_city'] = $data->DestinationCity->toArray();
-            $request['destination_state'] = $data->DestinationState->toArray();
+            $request = (property_exists($data, 'pickupRequest')) ? $data->pickupRequest->toArray() : $data->toArray();
+
+            if (in_array('pickup_city', $fetch_with)) {
+                $request['pickup_city'] = $data->PickupCity->toArray();
+            }
+
+            if (in_array('pickup_state', $fetch_with)) {
+                $request['pickup_state'] = $data->PickupState->toArray();
+            }
+
+            if (in_array('destination_city', $fetch_with)) {
+                $request['destination_city'] = $data->DestinationCity->toArray();
+            }
+
+            if (in_array('destination_state', $fetch_with)) {
+                $request['destination_state'] = $data->DestinationState->toArray();
+            }
+
             $requests[] = $request;
         }
 
