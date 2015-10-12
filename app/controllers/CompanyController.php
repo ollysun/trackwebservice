@@ -415,26 +415,36 @@ class CompanyController extends ControllerBase
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return $this
      */
-    public function getRequestAction()
+    public function getShipmentRequestAction()
     {
-        $request_type = $this->request->getQuery('type', null, 'shipment');
         $request_id = $this->request->getQuery('request_id', null);
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
 
-        if (!in_array(strtolower($request_type), ['shipment', 'pickup'])) {
-            return $this->response->sendError(ResponseMessage::INVALID_REQUEST_TYPE);
-        }
-
-        if(is_null($request_id)) {
+        if (is_null($request_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $request = null;
-        if($request_type == 'shipment') {
-            $request = ShipmentRequest::getOne($request_id, $fetch_with);
-        } else if($request_type == 'pickup') {
-            $request = PickupRequest::find(['id' => $request_id]);
+        $request = ShipmentRequest::getOne($request_id, $fetch_with);
+
+        return $this->response->sendSuccess($request);
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function getPickupRequestAction()
+    {
+        $request_id = $this->request->getQuery('request_id', null);
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+
+        if (is_null($request_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
+
+        $request = null;
+        $request = PickupRequest::getOne($request_id, $fetch_with);
 
         return $this->response->sendSuccess($request);
     }
