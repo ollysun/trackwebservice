@@ -353,39 +353,20 @@ class CompanyController extends ControllerBase
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $company_id = $this->request->getQuery('company_id', null, null);
-        $status = $this->request->getQuery('status', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
         $request_type = $this->request->getQuery('type', null, 'shipment');
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $filter_by = $this->request->getQuery();
 
         if (!in_array(strtolower($request_type), ['shipment', 'pickup'])) {
             return $this->response->sendError('Invalid request type');
         }
 
-        $criteria = [];
-        $pagination_params = ['limit' => intval($count), 'offset' => $offset];
-        if (!is_null($status)) {
-            $criteria['conditions'] = "status=:status:";
-            $criteria['bind']['status'] = $status;
-        }
-
-        if (!is_null($company_id)) {
-            $company = Company::findFirst($company_id);
-            if (!$company) {
-                return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
-            } else if ($company) {
-                $criteria['conditions'] = (isset($criteria['conditions'])) ? $criteria['conditions'] . ' AND company_id = :company_id:' : 'company_id = :company_id:';
-                $criteria['bind']['company_id'] = $company->getId();
-            }
-        }
-
-        $params = array_merge($criteria, $pagination_params);
-        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($params, $offset, $count, $fetch_with) : PickupRequest::getRequests($params, $offset, $count, $fetch_with);
-
+        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($offset, $count, $fetch_with, $filter_by) : PickupRequest::getRequests($offset, $count, $fetch_with, $filter_by);
 
         if (!empty($with_total_count)) {
             $data = [
-                'total_count' => ($request_type == 'shipment') ? ShipmentRequest::count($criteria) : PickupRequest::count($criteria),
+                'total_count' => ($request_type == 'shipment') ? ShipmentRequest::getTotalCount($filter_by) : PickupRequest::getTotalCount($filter_by),
                 'requests' => $requests
             ];
         } else {

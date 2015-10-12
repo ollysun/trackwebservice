@@ -5,7 +5,7 @@ use Phalcon\Mvc\Model;
  * Class CorporatePickupRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class PickupRequest extends Model
+class PickupRequest extends BaseModel
 {
     const STATUS_PENDING = 'pending';
 
@@ -52,18 +52,14 @@ class PickupRequest extends Model
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $params
      * @param $offset
      * @param $count
+     * @param array $fetch_with
+     * @param array $filter_by
      * @return array
      */
-    public static function getRequests($params, $offset, $count, $fetch_with = [])
+    public static function getRequests($offset, $count, $fetch_with = [], $filter_by = [])
     {
-        if (!isset($params['conditions'], $params['bind'])) {
-            $params['conditions'] = null;
-            $params['bind'] = [];
-        }
-
         $obj = new self();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('PickupRequest');
@@ -89,8 +85,9 @@ class PickupRequest extends Model
             $builder = $builder->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity');
         }
 
-        $builder = $builder->columns($columns)->where($params['conditions'])->limit($count)->offset($offset);
-        $result = $builder->getQuery()->execute($params['bind']);
+        $builder = self::addFetchCriteria($builder, $filter_by);
+        $builder = $builder->columns($columns)->limit($count)->offset($offset);
+        $result = $builder->getQuery()->execute();
 
         $requests = [];
         foreach ($result as $data) {
@@ -116,5 +113,44 @@ class PickupRequest extends Model
         }
 
         return $requests;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $builder
+     * @param $filter_by
+     * @return Model\Query\Builder|Model\Query\BuilderInterface
+     */
+    private static function addFetchCriteria($builder, $filter_by)
+    {
+        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
+            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
+            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
+            $builder = Util::betweenDateRange($builder, 'PickupRequest.created_at', $from, $to);
+        }
+
+        if (isset($filter_by['status'])) {
+            $builder->andWhere('PickupRequest.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
+        }
+
+        if (isset($filter_by['company_id'])) {
+            $builder->andWhere('PickupRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $filter_by
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()->from('PickupRequest');
+        $columns = ['COUNT(*) AS count'];
+        $builder = self::addFetchCriteria($builder, $filter_by);
+        $count = $builder->columns($columns)->getQuery()->getSingleResult();
+        return $count['count'];
     }
 }
