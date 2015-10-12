@@ -42,5 +42,22 @@ class Util
         return date('Y-m-d H:i:s');
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $pattern
+     * @param $params
+     * @return array
+     */
+    public static function filterArrayKeysWithPattern($pattern, $params)
+    {
+        $filtered = [];
+        foreach ($params as $key => $value) {
+            if (preg_match($pattern, $key)) {
+                $filtered[] = $key;
+            }
+        }
+        return $filtered;
+    }
+
 
 }

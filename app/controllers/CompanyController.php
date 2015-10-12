@@ -356,6 +356,7 @@ class CompanyController extends ControllerBase
         $status = $this->request->getQuery('status', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
         $request_type = $this->request->getQuery('type', null, 'shipment');
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
 
         if (!in_array(strtolower($request_type), ['shipment', 'pickup'])) {
             return $this->response->sendError('Invalid request type');
@@ -379,16 +380,16 @@ class CompanyController extends ControllerBase
         }
 
         $params = array_merge($criteria, $pagination_params);
-        $requests = ($request_type == 'shipment') ? ShipmentRequest::find($params) : PickupRequest::find($params);
+        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($params, $offset, $count, $fetch_with) : PickupRequest::getRequests($params, $offset, $count, $fetch_with);
 
 
         if (!empty($with_total_count)) {
             $data = [
                 'total_count' => ($request_type == 'shipment') ? ShipmentRequest::count($criteria) : PickupRequest::count($criteria),
-                'requests' => $requests->toArray()
+                'requests' => $requests
             ];
         } else {
-            $data = $requests->toArray();
+            $data = $requests;
         }
 
         return $this->response->sendSuccess($data);
