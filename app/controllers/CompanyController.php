@@ -380,7 +380,7 @@ class CompanyController extends ControllerBase
         }
 
         $params = array_merge($criteria, $pagination_params);
-        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($params, $offset, $count, $fetch_with) : PickupRequest::getRequests($params, $offset, $count . $fetch_with);
+        $requests = ($request_type == 'shipment') ? ShipmentRequest::getRequests($params, $offset, $count, $fetch_with) : PickupRequest::getRequests($params, $offset, $count, $fetch_with);
 
 
         if (!empty($with_total_count)) {
