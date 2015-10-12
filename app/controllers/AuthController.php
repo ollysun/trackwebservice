@@ -184,6 +184,8 @@ class AuthController extends ControllerBase
                 $officer_data = false;
                 if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN) {
                     $officer_data = Admin::fetchLoginData($officer->getId());
+                } else if ($officer->getEntityType() == UserAuth::ENTITY_TYPE_CORPORATE) {
+                    $officer_data = CompanyUser::fetchLoginData($officer->getId());
                 }
 
                 if (empty($officer_data)) {
