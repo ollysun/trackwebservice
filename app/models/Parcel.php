@@ -1514,6 +1514,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'CreatedBranchState.*';
             $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
         }
+        if (isset($fetch_with['with_created_by'])){
+            $columns[] = 'CreatedBy.*';
+            $builder->innerJoin('CreatedBy', 'CreatedBy.id = Parcel.created_by', 'CreatedBy');
+        }
         if (isset($fetch_with['with_route'])){
             $columns[] = 'Routes.*';
             $builder->leftJoin('Route', 'Routes.id = Parcel.route_id', 'Routes');
@@ -1579,6 +1583,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 if (isset($fetch_with['with_route'])) {
                     $parcel['route'] = $item->Routes->getData();
+                }
+                if (isset($fetch_with['with_created_by'])){
+                    $parcel['created_by'] = $item->createdBy->getData();
                 }
             }
             $result[] = $parcel;
