@@ -1125,7 +1125,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null, $request_type = 0
+                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS
     )
     {
         $this->setParcelType($parcel_type);
@@ -1201,7 +1201,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber(null);
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId(null);
-        $this->setRequestType(0);
+        $this->setRequestType(RequestType::OTHERS);
     }
 
     private function getEntityTypeLabel()

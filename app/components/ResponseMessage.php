@@ -117,4 +117,6 @@ class ResponseMessage
     const INVALID_RECEIVER_CITY_SUPPLIED = 'Invalid receiver city supplied';
     const INVALID_RECEIVER_STATE_SUPPLIED = 'Invalid receiver state supplied';
     const COULD_NOT_CREATE_REQUEST = 'Could not create request';
+
+    const INVALID_REQUEST_TYPE = 'Invalid request type';
 }
