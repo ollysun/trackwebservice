@@ -55,6 +55,11 @@ class ShipmentRequest extends BaseModel
             ->from('ShipmentRequest');
         $columns = ['ShipmentRequest.*'];
 
+        if (in_array('with_company', $fetch_with)) {
+            $columns[] = 'Company.*';
+            $builder = $builder->innerJoin('Company', 'Company.id = ShipmentRequest.company_id');
+        }
+
         if (in_array('with_receiver_state', $fetch_with)) {
             $columns[] = 'State.*';
             $builder = $builder->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id');
@@ -72,6 +77,9 @@ class ShipmentRequest extends BaseModel
         $requests = [];
         foreach ($result as $data) {
             $request = (property_exists($data, 'shipmentRequest')) ? $data->shipmentRequest->toArray() : $data->toArray();
+            if (in_array('with_company', $fetch_with)) {
+                $request['company'] = $data->company->toArray();
+            }
             if (in_array('with_receiver_city', $fetch_with)) {
                 $request['receiver_city'] = $data->city->toArray();
             }
