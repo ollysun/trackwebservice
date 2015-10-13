@@ -526,10 +526,17 @@ class Company extends \Phalcon\Mvc\Model
         );
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $company_data
+     * @return bool|Company
+     */
     public static function add($company_data)
     {
         $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
         $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);;
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],

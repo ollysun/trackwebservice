@@ -1,7 +1,7 @@
 CREATE TABLE `company` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
-  `reg_no` varchar(128) NOT NULL,
+  `reg_no` varchar(128) DEFAULT NULL,
   `email` varchar(128) NOT NULL,
   `phone_number` varchar(20) NOT NULL,
   `address` text NOT NULL,
