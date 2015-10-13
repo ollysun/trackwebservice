@@ -153,4 +153,95 @@ class PickupRequest extends BaseModel
         $count = $builder->columns($columns)->getQuery()->getSingleResult();
         return $count['count'];
     }
+
+    /**
+     * Gets one pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $id
+     * @param array $fetch_with
+     * @return array
+     */
+    public static function getOne($id, $fetch_with = [])
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('PickupRequest');
+        $columns = ['PickupRequest.*'];
+
+        if (in_array('with_pickup_state', $fetch_with)) {
+            $columns[] = 'PickupState.*';
+            $builder = $builder->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState');
+        }
+
+        if (in_array('with_pickup_city', $fetch_with)) {
+            $columns[] = 'PickupCity.*';
+            $builder = $builder->innerJoin('City', 'PickupCity.id = PickupRequest.pickup_city_id', 'PickupCity');
+        }
+
+        if (in_array('with_destination_state', $fetch_with)) {
+            $columns[] = 'DestinationState.*';
+            $builder = $builder->innerJoin('State', 'DestinationState.id = PickupRequest.destination_state_id', 'DestinationState');
+        }
+
+        if (in_array('with_destination_city', $fetch_with)) {
+            $columns[] = 'DestinationCity.*';
+            $builder = $builder->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity');
+        }
+
+
+        if (in_array('with_company', $fetch_with)) {
+            $columns[] = 'Company.*';
+            $builder = $builder->innerJoin('Company', 'Company.id = PickupRequest.company_id');
+        }
+
+        if (in_array('with_created_by', $fetch_with)) {
+            $columns[] = 'CompanyUser.*';
+            $builder = $builder->innerJoin('CompanyUser', 'CompanyUser.id = PickupRequest.created_by');
+        }
+
+        $builder->andWhere('PickupRequest.id = :id:', ['id' => $id]);
+        $builder = $builder->columns($columns);
+        $result = $builder->getQuery()->execute();
+
+        if (count($result) == 0) {
+            return false;
+        }
+
+        $request = [];
+
+        if (isset($result[0]->pickupRequest)) {
+            $request = $result[0]->pickupRequest->getData();
+            if (in_array('with_pickup_city', $fetch_with)) {
+                $request['pickup_city'] = $result[0]->PickupCity->getData();
+            }
+            if (in_array('with_pickup_state', $fetch_with)) {
+                $request['pickup_state'] = $result[0]->PickupState->getData();
+            }
+            if (in_array('with_destination_city', $fetch_with)) {
+                $request['destination_city'] = $result[0]->DestinationCity->getData();
+            }
+            if (in_array('with_destination_state', $fetch_with)) {
+                $request['destination_state'] = $result[0]->DestinationState->getData();
+            }
+            if (in_array('with_company', $fetch_with)) {
+                $request['company'] = $result[0]->company->getData();
+            }
+            if (in_array('with_created_by', $fetch_with)) {
+                $request['created_by'] = $result[0]->companyUser->getData();
+            }
+        } else {
+            $request = $result[0]->getData();
+        }
+
+        return $request;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->toArray();
+    }
 }
