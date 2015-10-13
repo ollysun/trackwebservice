@@ -213,6 +213,11 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $route_id;
 
+    /**
+     * @var integer
+     */
+    protected $request_type;
+
 
     /**
      * Method to set the value of field id
@@ -627,6 +632,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->route_id = $route_id;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param int $request_type
+     */
+    public function setRequestType($request_type)
+    {
+        $this->request_type = $request_type;
+    }
+
 
     /**
      * Returns the value of field id
@@ -973,6 +987,15 @@ class Parcel extends \Phalcon\Mvc\Model
         return $this->route_id;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return int
+     */
+    public function getRequestType()
+    {
+        return $this->request_type;
+    }
+
 
     /**
      * Initialize method for model.
@@ -994,6 +1017,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
         $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
         $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
+        $this->belongsTo('request_type', 'Request_type', 'id', array('alias' => 'RequestType'));
     }
 
     /**
@@ -1051,7 +1075,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'reference_number' => 'reference_number',
             'created_branch_id' => 'created_branch_id',
             'seal_id' => 'seal_id',
-            'route_id' => 'route_id'
+            'route_id' => 'route_id',
+            'request_type' => 'request_type'
         );
     }
 
@@ -1091,7 +1116,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
             'created_branch_id'=> $this->getCreatedBranchId(),
-            'route_id'=> $this->getRouteId()
+            'route_id'=> $this->getRouteId(),
+            'request_type'=> $this->getRequestType()
         );
     }
 
@@ -1099,7 +1125,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null
+                             $reference_number = null, $route_id = null, $request_type = 0
     )
     {
         $this->setParcelType($parcel_type);
@@ -1136,6 +1162,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber($reference_number);
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId($route_id);
+        $this->setRequestType($request_type);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1174,6 +1201,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber(null);
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId(null);
+        $this->setRequestType(0);
     }
 
     private function getEntityTypeLabel()
@@ -1427,6 +1455,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['created_branch_id'])) {
             $where[] = 'Parcel.created_branch_id = :created_branch_id:';
             $bind['created_branch_id'] = $filter_by['created_branch_id'];
+        }
+        if (isset($filter_by['request_type'])) {
+            $where[] = 'Parcel.request_type = :request_type:';
+            $bind['request_type'] = $filter_by['request_type'];
         }
 
         return ['where' => $where, 'bind' => $bind];
@@ -1773,7 +1805,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null);
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2057,8 +2089,14 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getCreatedBy(),
                 1,
                 Parcel::ENTITY_TYPE_SUB,
-                $waybill_number
+                $waybill_number,
+                $this->getBankAccountId(),
+                $this->getIsBillingOverridden(),
+                $this->getReferenceNumber(),
+                $this->getRouteId(),
+                $this->getRequestType()
             );
+
             if (!$sub_parcel->save()) {
                 $check = false;
                 break;
