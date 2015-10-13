@@ -410,6 +410,44 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::COULD_NOT_CREATE_REQUEST);
         }
     }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function getShipmentRequestAction()
+    {
+        $request_id = $this->request->getQuery('request_id', null);
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+
+        if (is_null($request_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $request = null;
+        $request = ShipmentRequest::getOne($request_id, $fetch_with);
+
+        return $this->response->sendSuccess($request);
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function getPickupRequestAction()
+    {
+        $request_id = $this->request->getQuery('request_id', null);
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+
+        if (is_null($request_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $request = null;
+        $request = PickupRequest::getOne($request_id, $fetch_with);
+
+        return $this->response->sendSuccess($request);
+    }
 }
 
 
