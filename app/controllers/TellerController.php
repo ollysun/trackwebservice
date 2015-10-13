@@ -49,7 +49,7 @@ class TellerController extends ControllerBase {
                 $good_parcels[] = $parcel->getId();
             }
         }
-        if(isset($bad_parcels)){
+        if(!empty($bad_parcels)){
             return $this->response->sendError($bad_parcels);
         }
 
