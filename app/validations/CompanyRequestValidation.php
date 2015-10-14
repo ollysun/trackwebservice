@@ -14,7 +14,7 @@ class CompanyRequestValidation extends BaseValidation
 {
     public function initialize()
     {
-        $this->setRequiredFields(['name', 'reg_no', 'email', 'phone_number', 'address', 'relations_officer_id', 'city_id']);
+        $this->setRequiredFields(['name', 'email', 'phone_number', 'address', 'relations_officer_id', 'city_id']);
 
         $this->add('city_id', new Model([
             'model' => City::class
