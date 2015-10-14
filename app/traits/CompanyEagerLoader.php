@@ -56,7 +56,7 @@ trait CompanyEagerLoader
                 if(isset($fetch_with_field['alias'])) {
                     $result[$fetch_with_field['field']] = $data[0]->{$fetch_with_field['alias']}->getData();
                 } else {
-                    $rowName = lcfirst(\Phalcon\Text::camelize($fetch_with_field['ref_model_name']));
+                    $rowName = lcfirst($fetch_with_field['ref_model_name']);
                     $result[$fetch_with_field['field']] = $data[0]->{$rowName}->getData();
                 }
             }
@@ -110,6 +110,13 @@ trait CompanyEagerLoader
                 'foreign_key' => 'relations_officer_id',
                 'reference_key' => 'id',
                 'alias' => 'RelationsOfficer'
+            ],
+            [
+                'field' => 'relations_officer_auth',
+                'model_name' => 'RelationsOfficer',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id'
             ]
         ];
     }
