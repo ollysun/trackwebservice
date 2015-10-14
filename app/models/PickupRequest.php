@@ -8,7 +8,8 @@ use Phalcon\Mvc\Model;
 class PickupRequest extends BaseModel
 {
     const STATUS_PENDING = 'pending';
-
+    const STATUS_CANCELED = 'canceled';
+    const STATUS_APPROVED = 'approved';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -243,6 +244,26 @@ class PickupRequest extends BaseModel
         }
 
         return $request;
+    }
+
+    /**
+     * Links a parcel to the pickup request and changes the status of the request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $pickupRequestId
+     * @param $parcelId
+     * @return bool
+     */
+    public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
+    {
+        $pickupRequest = PickupRequest::findFirst($pickupRequestId);
+        if(!$pickupRequestId) {
+            return false;
+        }
+
+        $pickupRequest->status = PickupRequest::STATUS_APPROVED;
+        $pickupRequest->parcel_id = $parcelId;
+
+        return $pickupRequest->save();
     }
 
     /**
