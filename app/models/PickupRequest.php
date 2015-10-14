@@ -253,7 +253,7 @@ class PickupRequest extends BaseModel
      * @param $parcelId
      * @return bool
      */
-    public function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
+    public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
     {
         $pickupRequest = PickupRequest::findFirst($pickupRequestId);
         if(!$pickupRequestId) {
