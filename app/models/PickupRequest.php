@@ -65,6 +65,11 @@ class PickupRequest extends BaseModel
             ->from('PickupRequest');
         $columns = ['PickupRequest.*'];
 
+        if (in_array('with_company', $fetch_with)) {
+            $columns[] = 'Company.*';
+            $builder = $builder->innerJoin('Company', 'Company.id = PickupRequest.company_id');
+        }
+
         if (in_array('with_pickup_state', $fetch_with)) {
             $columns[] = 'PickupState.*';
             $builder = $builder->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState');
@@ -92,6 +97,10 @@ class PickupRequest extends BaseModel
         $requests = [];
         foreach ($result as $data) {
             $request = (property_exists($data, 'pickupRequest')) ? $data->pickupRequest->toArray() : $data->toArray();
+
+            if (in_array('with_company', $fetch_with)) {
+                $request['company'] = $data->company->getData();
+            }
 
             if (in_array('with_pickup_city', $fetch_with)) {
                 $request['pickup_city'] = $data->PickupCity->toArray();
