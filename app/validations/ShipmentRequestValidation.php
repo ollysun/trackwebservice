@@ -1,5 +1,6 @@
 <?php
 
+use Phalcon\Validation\Validator\Regex;
 use PhalconUtils\Validation\BaseValidation;
 use PhalconUtils\Validation\Validators\Model;
 
@@ -50,6 +51,21 @@ class ShipmentRequestValidation extends BaseValidation
             'conditions' => 'id = :id: AND company_id = :company_id:',
             'bind' => ['id' => $this->getValue('created_by'), 'company_id' => $this->getValue('company_id')],
             'message' => 'Invalid company user'
+        ]));
+
+        $this->add('estimated_weight', new Regex([
+            'pattern' => '/^((?=.*[1-9])\d+(\.\d+)?)$/',
+            'message' => 'invalid :field supplied'
+        ]));
+
+        $this->add('no_of_packages', new Regex([
+            'pattern' => '/^(?!0+$)\d+$/',
+            'message' => 'invalid :field supplied'
+        ]));
+
+        $this->add('parcel_value', new Regex([
+            'pattern' => '/^[\d]+([\.]?[\d]+)?$/',
+            'message' => 'invalid :field supplied'
         ]));
     }
 }
