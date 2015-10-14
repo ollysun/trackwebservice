@@ -41,9 +41,6 @@ class CompanyRequestValidation extends BaseValidation
             'message' => ':field is not valid'
         ]));
 
-        $this->add('phone_number', new NigerianPhoneNumber([
-            'must_include_country_code' => true,
-            'must_include_plus' => true
-        ]));
+        $this->add('phone_number', new NigerianPhoneNumber());
     }
 }
