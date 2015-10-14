@@ -3,6 +3,7 @@ use Phalcon\Validation\Validator\Email;
 use Phalcon\Validation\Validator\Regex;
 use PhalconUtils\Validation\BaseValidation;
 use PhalconUtils\Validation\Validators\Model;
+use PhalconUtils\Validation\Validators\NigerianPhoneNumber;
 use PhalconUtils\Validation\Validators\NotExisting;
 
 /**
@@ -39,5 +40,7 @@ class CompanyRequestValidation extends BaseValidation
         $this->add('email', new Email([
             'message' => ':field is not valid'
         ]));
+
+        $this->add('phone_number', new NigerianPhoneNumber());
     }
 }
