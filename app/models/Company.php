@@ -14,6 +14,7 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 class Company extends \Phalcon\Mvc\Model
 {
 
+    use CompanyEagerLoader;
     /**
      *
      * @var integer
@@ -700,6 +701,14 @@ class Company extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    /**
+     * Fetches the details of a company together with optional related records
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array|bool
+     */
     public static function fetchOne($filter_by, $fetch_with)
     {
         $obj = new Company();
@@ -715,12 +724,8 @@ class Company extends \Phalcon\Mvc\Model
             $bind['id'] = $filter_by['id'];
         }
 
-        if (isset($fetch_with['with_city'])) {
-            $builder->innerJoin('City', 'City.id = Company.city_id');
-            $builder->innerJoin('State', 'State.id = City.state_id');
-            $columns[] = 'City.*';
-            $columns[] = 'State.*';
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -731,27 +736,13 @@ class Company extends \Phalcon\Mvc\Model
             return false;
         }
 
-        $company = [];
         if (isset($data[0]->company)) {
             $company = $data[0]->company->getData();
-            if (isset($fetch_with['with_city'])) {
-                $company['city'] = $data[0]->city->getData();
-                $company['state'] = $data[0]->state->getData();
-            }
+            $relatedRecords = $obj->loadRelatedModels($data);
+
+            $company = array_merge($company, $relatedRecords);
         } else {
             $company = $data[0]->getData();
-        }
-
-        if (isset($fetch_with['with_primary_contact'])) {
-            $company['primary_contact'] = CompanyUser::fetchOne(['id' => $company['primary_contact_id']], []);
-        }
-
-        if (isset($fetch_with['with_secondary_contact'])) {
-            $company['secondary_contact'] = CompanyUser::fetchOne(['id' => $company['sec_contact_id']], []);
-        }
-
-        if (isset($fetch_with['with_relations_officer'])) {
-            $company['relations_officer'] = Admin::fetchOne(['id' => $company['relations_officer_id']]);
         }
 
         return $company;

@@ -412,6 +412,7 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Gets the detail of a shipment request
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return $this
      */
@@ -424,13 +425,13 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $request = null;
         $request = ShipmentRequest::getOne($request_id, $fetch_with);
 
         return $this->response->sendSuccess($request);
     }
 
     /**
+     * Get the details of a pickup request
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return $this
      */
@@ -447,6 +448,32 @@ class CompanyController extends ControllerBase
         $request = PickupRequest::getOne($request_id, $fetch_with);
 
         return $this->response->sendSuccess($request);
+    }
+
+    /**
+     * Gets the details of a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getCompanyAction()
+    {
+
+        $company_id = $this->request->getQuery('company_id', null);
+
+        if (is_null($company_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $filter_by = [
+            'id' => $company_id
+        ];
+
+        $company = Company::fetchOne($filter_by, $fetch_with);
+
+        if($company != false) {
+            return $this->response->sendSuccess(Company::fetchOne($filter_by, $fetch_with));
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 }
 
