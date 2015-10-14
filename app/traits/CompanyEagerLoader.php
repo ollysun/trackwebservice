@@ -96,6 +96,14 @@ trait CompanyEagerLoader
                 'alias' => 'PrimaryContact'
             ],
             [
+                'field' => 'primary_contact_auth',
+                'model_name' => 'PrimaryContact',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id',
+                'alias' => 'PrimaryContactAuth'
+            ],
+            [
                 'field' => 'secondary_contact',
                 'model_name' => 'Company',
                 'ref_model_name' => 'CompanyUser',
