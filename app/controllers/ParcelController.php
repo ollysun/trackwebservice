@@ -140,7 +140,6 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
         }
 
-
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
