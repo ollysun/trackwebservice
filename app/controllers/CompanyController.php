@@ -85,8 +85,6 @@ class CompanyController extends ControllerBase
      */
     public function getAllCompanyAction()
     {
-        $this->auth->allowOnly([Role::ADMIN]);
-
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
