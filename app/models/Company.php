@@ -2,6 +2,7 @@
 
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Resultset;
+
 /**
  * Class Company
  * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -659,9 +660,12 @@ class Company extends EagerModel
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Company')
-            ->limit($count, $offset);
+        $builder = $obj->getModelsManager()->createBuilder();
+        $builder->from('Company');
+
+        if (!isset($fetch_with['no_paginate'])) {
+            $builder->limit($count, $offset);
+        }
 
         $columns = ['Company.*'];
         $filter_cond = self::filterConditions($filter_by);

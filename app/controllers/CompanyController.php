@@ -91,7 +91,7 @@ class CompanyController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = ['status', 'name'];
-        $fetch_params = ['with_city', 'with_total_count'];
+        $fetch_params = ['with_city', 'with_total_count', 'no_paginate'];
 
         $possible_params = array_merge($filter_params, $fetch_params);
 
