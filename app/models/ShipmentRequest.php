@@ -8,7 +8,8 @@ use Phalcon\Mvc\Model;
 class ShipmentRequest extends BaseModel
 {
     const STATUS_PENDING = 'pending';
-
+    const STATUS_APPROVED = 'approved';
+    const STATUS_CANCELED = 'canceled';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -194,6 +195,26 @@ class ShipmentRequest extends BaseModel
         $builder = self::addFetchCriteria($builder, $filter_by);
         $count = $builder->columns($columns)->getQuery()->getSingleResult();
         return $count['count'];
+    }
+
+    /**
+     * Links a parcel to the shipment request and changes the status of the request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $pickupRequestId
+     * @param $parcelId
+     * @return bool
+     */
+    public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
+    {
+        $shipmentRequest = ShipmentRequest::findFirst($pickupRequestId);
+        if(!$pickupRequestId) {
+            return false;
+        }
+
+        $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
+        $shipmentRequest->parcel_id = $parcelId;
+
+        return $shipmentRequest->save();
     }
 
     /**
