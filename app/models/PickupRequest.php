@@ -5,7 +5,7 @@ use Phalcon\Mvc\Model;
  * Class CorporatePickupRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class PickupRequest extends BaseModel
+class PickupRequest extends EagerModel
 {
     const STATUS_PENDING = 'pending';
     const STATUS_CANCELED = 'canceled';
@@ -66,30 +66,8 @@ class PickupRequest extends BaseModel
             ->from('PickupRequest');
         $columns = ['PickupRequest.*'];
 
-        if (in_array('with_company', $fetch_with)) {
-            $columns[] = 'Company.*';
-            $builder = $builder->innerJoin('Company', 'Company.id = PickupRequest.company_id');
-        }
-
-        if (in_array('with_pickup_state', $fetch_with)) {
-            $columns[] = 'PickupState.*';
-            $builder = $builder->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState');
-        }
-
-        if (in_array('with_pickup_city', $fetch_with)) {
-            $columns[] = 'PickupCity.*';
-            $builder = $builder->innerJoin('City', 'PickupCity.id = PickupRequest.pickup_city_id', 'PickupCity');
-        }
-
-        if (in_array('with_destination_state', $fetch_with)) {
-            $columns[] = 'DestinationState.*';
-            $builder = $builder->innerJoin('State', 'DestinationState.id = PickupRequest.destination_state_id', 'DestinationState');
-        }
-
-        if (in_array('with_destination_city', $fetch_with)) {
-            $columns[] = 'DestinationCity.*';
-            $builder = $builder->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity');
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder = self::addFetchCriteria($builder, $filter_by);
         $builder = $builder->columns($columns)->limit($count)->offset($offset);
@@ -98,27 +76,8 @@ class PickupRequest extends BaseModel
         $requests = [];
         foreach ($result as $data) {
             $request = (property_exists($data, 'pickupRequest')) ? $data->pickupRequest->toArray() : $data->toArray();
-
-            if (in_array('with_company', $fetch_with)) {
-                $request['company'] = $data->company->getData();
-            }
-
-            if (in_array('with_pickup_city', $fetch_with)) {
-                $request['pickup_city'] = $data->PickupCity->toArray();
-            }
-
-            if (in_array('with_pickup_state', $fetch_with)) {
-                $request['pickup_state'] = $data->PickupState->toArray();
-            }
-
-            if (in_array('with_destination_city', $fetch_with)) {
-                $request['destination_city'] = $data->DestinationCity->toArray();
-            }
-
-            if (in_array('with_destination_state', $fetch_with)) {
-                $request['destination_state'] = $data->DestinationState->toArray();
-            }
-
+            $relatedRecords = $obj->loadRelatedModels($data, true);
+            $request = array_merge($request, $relatedRecords);
             $requests[] = $request;
         }
 
@@ -178,36 +137,8 @@ class PickupRequest extends BaseModel
             ->from('PickupRequest');
         $columns = ['PickupRequest.*'];
 
-        if (in_array('with_pickup_state', $fetch_with)) {
-            $columns[] = 'PickupState.*';
-            $builder = $builder->innerJoin('State', 'PickupState.id = PickupRequest.pickup_state_id', 'PickupState');
-        }
-
-        if (in_array('with_pickup_city', $fetch_with)) {
-            $columns[] = 'PickupCity.*';
-            $builder = $builder->innerJoin('City', 'PickupCity.id = PickupRequest.pickup_city_id', 'PickupCity');
-        }
-
-        if (in_array('with_destination_state', $fetch_with)) {
-            $columns[] = 'DestinationState.*';
-            $builder = $builder->innerJoin('State', 'DestinationState.id = PickupRequest.destination_state_id', 'DestinationState');
-        }
-
-        if (in_array('with_destination_city', $fetch_with)) {
-            $columns[] = 'DestinationCity.*';
-            $builder = $builder->innerJoin('City', 'DestinationCity.id = PickupRequest.destination_city_id', 'DestinationCity');
-        }
-
-
-        if (in_array('with_company', $fetch_with)) {
-            $columns[] = 'Company.*';
-            $builder = $builder->innerJoin('Company', 'Company.id = PickupRequest.company_id');
-        }
-
-        if (in_array('with_created_by', $fetch_with)) {
-            $columns[] = 'CompanyUser.*';
-            $builder = $builder->innerJoin('CompanyUser', 'CompanyUser.id = PickupRequest.created_by');
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder->andWhere('PickupRequest.id = :id:', ['id' => $id]);
         $builder = $builder->columns($columns);
@@ -221,24 +152,9 @@ class PickupRequest extends BaseModel
 
         if (isset($result[0]->pickupRequest)) {
             $request = $result[0]->pickupRequest->getData();
-            if (in_array('with_pickup_city', $fetch_with)) {
-                $request['pickup_city'] = $result[0]->PickupCity->getData();
-            }
-            if (in_array('with_pickup_state', $fetch_with)) {
-                $request['pickup_state'] = $result[0]->PickupState->getData();
-            }
-            if (in_array('with_destination_city', $fetch_with)) {
-                $request['destination_city'] = $result[0]->DestinationCity->getData();
-            }
-            if (in_array('with_destination_state', $fetch_with)) {
-                $request['destination_state'] = $result[0]->DestinationState->getData();
-            }
-            if (in_array('with_company', $fetch_with)) {
-                $request['company'] = $result[0]->company->getData();
-            }
-            if (in_array('with_created_by', $fetch_with)) {
-                $request['created_by'] = $result[0]->companyUser->getData();
-            }
+
+            $relatedRecords = $obj->loadRelatedModels($result);
+            $request = array_merge($request, $relatedRecords);
         } else {
             $request = $result[0]->getData();
         }
@@ -273,5 +189,71 @@ class PickupRequest extends BaseModel
     public function getData()
     {
         return $this->toArray();
+    }
+
+
+    /**
+     * Returns an array that maps related models
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getFetchWithMap()
+    {
+        return [
+            [
+                'field' => 'company',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'Company',
+                'foreign_key' => 'company_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'pickup_city',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'pickup_city_id',
+                'reference_key' => 'id',
+                'alias' => 'PickupCity'
+            ],
+            [
+                'field' => 'pickup_state',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'pickup_state_id',
+                'reference_key' => 'id',
+                'alias' => 'PickupState'
+            ],
+            [
+                'field' => 'parcel',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'Parcel',
+                'foreign_key' => 'parcel_id',
+                'reference_key' => 'id',
+                'join_type' => 'left'
+            ],
+            [
+                'field' => 'destination_city',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'destination_city_id',
+                'reference_key' => 'id',
+                'alias' => 'DestinationCity'
+            ],
+            [
+                'field' => 'destination_state',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'destination_state_id',
+                'reference_key' => 'id',
+                'alias' => 'DestinationState'
+            ],
+            [
+                'field' => 'created_by',
+                'model_name' => 'PickupRequest',
+                'ref_model_name' => 'CompanyUser',
+                'foreign_key' => 'created_by',
+                'reference_key' => 'id'
+            ],
+        ];
     }
 }

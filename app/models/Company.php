@@ -2,19 +2,14 @@
 
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Resultset;
-use Phalcon\Mvc\Model\Validator\Email as Email;
-use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
-
 /**
  * Class Company
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  * @method Resultset getShipmentRequests($condition)
  * @method Resultset getPickupRequests($condition)
  */
-class Company extends \Phalcon\Mvc\Model
+class Company extends EagerModel
 {
-
-    use CompanyEagerLoader;
     /**
      *
      * @var integer
@@ -806,5 +801,69 @@ class Company extends \Phalcon\Mvc\Model
         $user['role'] = $data[0]->role->toArray();
 
         return $user;
+    }
+
+    /**
+     * Returns an array that maps related models
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getFetchWithMap()
+    {
+        return [
+            [
+                'field' => 'city',
+                'model_name' => 'Company',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'state',
+                'model_name' => 'City',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'state_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'primary_contact',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CompanyUser',
+                'foreign_key' => 'primary_contact_id',
+                'reference_key' => 'id',
+                'alias' => 'PrimaryContact'
+            ],
+            [
+                'field' => 'primary_contact_auth',
+                'model_name' => 'PrimaryContact',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id',
+                'alias' => 'PrimaryContactAuth'
+            ],
+            [
+                'field' => 'secondary_contact',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CompanyUser',
+                'foreign_key' => 'secondary_contact_id',
+                'reference_key' => 'id',
+                'alias' => 'SecondaryContact'
+            ],
+            [
+                'field' => 'relations_officer',
+                'model_name' => 'Company',
+                'ref_model_name' => 'Admin',
+                'foreign_key' => 'relations_officer_id',
+                'reference_key' => 'id',
+                'alias' => 'RelationsOfficer'
+            ],
+            [
+                'field' => 'relations_officer_auth',
+                'model_name' => 'RelationsOfficer',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id'
+            ]
+        ];
     }
 }

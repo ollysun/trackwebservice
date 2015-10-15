@@ -5,7 +5,7 @@ use Phalcon\Mvc\Model;
  * Class ShipmentRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class ShipmentRequest extends BaseModel
+class ShipmentRequest extends EagerModel
 {
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
@@ -56,20 +56,8 @@ class ShipmentRequest extends BaseModel
             ->from('ShipmentRequest');
         $columns = ['ShipmentRequest.*'];
 
-        if (in_array('with_company', $fetch_with)) {
-            $columns[] = 'Company.*';
-            $builder = $builder->innerJoin('Company', 'Company.id = ShipmentRequest.company_id');
-        }
-
-        if (in_array('with_receiver_state', $fetch_with)) {
-            $columns[] = 'State.*';
-            $builder = $builder->innerJoin('State', 'State.id = ShipmentRequest.receiver_state_id');
-        }
-
-        if (in_array('with_receiver_city', $fetch_with)) {
-            $columns[] = 'City.*';
-            $builder = $builder->innerJoin('City', 'City.id = ShipmentRequest.receiver_city_id');
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder = self::addFetchCriteria($builder, $filter_by);
         $builder = $builder->columns($columns)->limit($count)->offset($offset);
@@ -78,15 +66,10 @@ class ShipmentRequest extends BaseModel
         $requests = [];
         foreach ($result as $data) {
             $request = (property_exists($data, 'shipmentRequest')) ? $data->shipmentRequest->toArray() : $data->toArray();
-            if (in_array('with_company', $fetch_with)) {
-                $request['company'] = $data->company->toArray();
-            }
-            if (in_array('with_receiver_city', $fetch_with)) {
-                $request['receiver_city'] = $data->city->toArray();
-            }
-            if (in_array('with_receiver_state', $fetch_with)) {
-                $request['receiver_state'] = $data->state->toArray();
-            }
+
+            $relatedRecords = $obj->loadRelatedModels($data, true);
+            $request = array_merge($request, $relatedRecords);
+
             $requests[] = $request;
         }
 
@@ -224,5 +207,45 @@ class ShipmentRequest extends BaseModel
     public function getData()
     {
         return $this->toArray();
+    }
+
+    /**
+     * Returns an array that maps related models
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getFetchWithMap()
+    {
+        return [
+            [
+                'field' => 'company',
+                'model_name' => 'ShipmentRequest',
+                'ref_model_name' => 'Company',
+                'foreign_key' => 'company_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'receiver_state',
+                'model_name' => 'ShipmentRequest',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'receiver_state_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'receiver_city',
+                'model_name' => 'ShipmentRequest',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'receiver_city_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'parcel',
+                'model_name' => 'ShipmentRequest',
+                'ref_model_name' => 'Parcel',
+                'foreign_key' => 'parcel_id',
+                'reference_key' => 'id',
+                'join_type' => 'left'
+            ]
+        ];
     }
 }
