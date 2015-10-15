@@ -119,4 +119,6 @@ class ResponseMessage
     const COULD_NOT_CREATE_REQUEST = 'Could not create request';
 
     const INVALID_REQUEST_TYPE = 'Invalid request type';
+    const PARCEL_NOT_ACCESSIBLE = 'Parcel not accessible for this action';
+    const PARCEL_CANNOT_CHANGE_RETURN_FLAG = 'The return flag of the parcel could not be altered';
 }

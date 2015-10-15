@@ -1034,4 +1034,65 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess(['receipts' => $receipt_paths]);
     }
+
+    /**
+     * Used to set the return flag of a parcel
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function setReturnFlagAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $return_flag = $this->request->getPost('return_flag', null, 1);
+
+        if (!in_array($return_flag,[0,1])){
+            return $this->response->sendError(ResponseMessage::INVALID_VALUES);
+        }
+
+        if (!isset($waybill_numbers)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
+        $bad_parcel = [];
+
+        /**
+         * @var Parcel $parcel
+         */
+        foreach ($waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            //cannot flag a return for a delivered parcel
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+            }
+
+            //if it is an officer, his branch must be either the to or from branch id
+            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+            }
+
+            //bags and split parcel parent can not be returned
+            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+            }
+
+            $parcel->setForReturn($return_flag);
+            if (!$parcel->save()){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
 }
