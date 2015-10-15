@@ -150,7 +150,7 @@ class ParcelController extends ControllerBase
              * Link Parcel to Pickup Request
              */
             if(isset($payload['pickup_request_id'])) {
-                PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getId());
+                PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getWaybillNumber());
             }
 
             /**
@@ -158,7 +158,7 @@ class ParcelController extends ControllerBase
              * @author Adegoke Obasa <goke@cottacush.com>
              **/
             if(isset($payload['shipment_request_id'])) {
-                ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getId());
+                ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getWaybillNumber());
             }
 
             if ($is_corporate_lead == 1) {

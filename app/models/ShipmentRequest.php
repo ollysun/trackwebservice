@@ -163,6 +163,10 @@ class ShipmentRequest extends EagerModel
             $builder->andWhere('ShipmentRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
         }
 
+        if (isset($filter_by['waybill_number'])) {
+            $builder->andWhere('ShipmentRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
+        }
+
         return $builder;
     }
 
@@ -195,7 +199,7 @@ class ShipmentRequest extends EagerModel
         }
 
         $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
-        $shipmentRequest->parcel_id = $parcelId;
+        $shipmentRequest->waybill_number = $parcelId;
 
         return $shipmentRequest->save();
     }
@@ -242,8 +246,8 @@ class ShipmentRequest extends EagerModel
                 'field' => 'parcel',
                 'model_name' => 'ShipmentRequest',
                 'ref_model_name' => 'Parcel',
-                'foreign_key' => 'parcel_id',
-                'reference_key' => 'id',
+                'foreign_key' => 'waybill_number',
+                'reference_key' => 'waybill_number',
                 'join_type' => 'left'
             ]
         ];

@@ -106,6 +106,10 @@ class PickupRequest extends EagerModel
             $builder->andWhere('PickupRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
         }
 
+        if (isset($filter_by['waybill_number'])) {
+            $builder->andWhere('PickupRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
+        }
+
         return $builder;
     }
 
@@ -177,7 +181,7 @@ class PickupRequest extends EagerModel
         }
 
         $pickupRequest->status = PickupRequest::STATUS_APPROVED;
-        $pickupRequest->parcel_id = $parcelId;
+        $pickupRequest->waybill_number = $parcelId;
 
         return $pickupRequest->save();
     }
@@ -227,8 +231,8 @@ class PickupRequest extends EagerModel
                 'field' => 'parcel',
                 'model_name' => 'PickupRequest',
                 'ref_model_name' => 'Parcel',
-                'foreign_key' => 'parcel_id',
-                'reference_key' => 'id',
+                'foreign_key' => 'waybill_number',
+                'reference_key' => 'waybill_number',
                 'join_type' => 'left'
             ],
             [
