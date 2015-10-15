@@ -210,7 +210,7 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $filter_params = ['manifest_id','show_parents','parent_id','entity_type','is_visible','created_by','user_id','held_by_staff_id','held_by_id','to_branch_id','from_branch_id','parcel_type','sender_id','sender_address_id','receiver_id','receiver_address_id','status','min_weight','max_weight','min_amount_due','max_amount_due','cash_on_delivery','min_delivery_amount','max_delivery_amount','delivery_type','payment_type','shipping_type','min_cash_amount','max_cash_amount','min_pos_amount','max_pos_amount','start_created_date','end_created_date','start_modified_date','end_modified_date','waybill_number','waybill_number_arr','created_branch_id','route_id','history_status','history_start_created_date','history_end_created_date','history_from_branch_id','history_to_branch_id', 'request_type'];
+        $filter_params = ['for_return','manifest_id','show_parents','parent_id','entity_type','is_visible','created_by','user_id','held_by_staff_id','held_by_id','to_branch_id','from_branch_id','parcel_type','sender_id','sender_address_id','receiver_id','receiver_address_id','status','min_weight','max_weight','min_amount_due','max_amount_due','cash_on_delivery','min_delivery_amount','max_delivery_amount','delivery_type','payment_type','shipping_type','min_cash_amount','max_cash_amount','min_pos_amount','max_pos_amount','start_created_date','end_created_date','start_modified_date','end_modified_date','waybill_number','waybill_number_arr','created_branch_id','route_id','history_status','history_start_created_date','history_end_created_date','history_from_branch_id','history_to_branch_id', 'request_type'];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
@@ -1033,5 +1033,66 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess(['receipts' => $receipt_paths]);
+    }
+
+    /**
+     * Used to set the return flag of a parcel
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function setReturnFlagAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $return_flag = $this->request->getPost('return_flag', null, 1);
+
+        if (!in_array($return_flag,[0,1])){
+            return $this->response->sendError(ResponseMessage::INVALID_VALUES);
+        }
+
+        if (!isset($waybill_numbers)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
+        $bad_parcel = [];
+
+        /**
+         * @var Parcel $parcel
+         */
+        foreach ($waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            //cannot flag a return for a delivered parcel
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+            }
+
+            //if it is an officer, his branch must be either the to or from branch id
+            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+            }
+
+            //bags and split parcel parent can not be returned
+            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+            }
+
+            $parcel->setForReturn($return_flag);
+            if (!$parcel->save()){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 }

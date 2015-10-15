@@ -218,6 +218,11 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $request_type;
 
+    /**
+     * @var integer
+     */
+    protected $for_return;
+
 
     /**
      * Method to set the value of field id
@@ -641,6 +646,15 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->request_type = $request_type;
     }
 
+    /**
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param int $for_return
+     */
+    public function setForReturn($for_return)
+    {
+        $this->for_return = $for_return;
+    }
+
 
     /**
      * Returns the value of field id
@@ -996,6 +1010,15 @@ class Parcel extends \Phalcon\Mvc\Model
         return $this->request_type;
     }
 
+    /**
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return int $for_return
+     */
+    public function getForReturn()
+    {
+        return $this->for_return;
+    }
+
 
     /**
      * Initialize method for model.
@@ -1076,7 +1099,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'created_branch_id' => 'created_branch_id',
             'seal_id' => 'seal_id',
             'route_id' => 'route_id',
-            'request_type' => 'request_type'
+            'request_type' => 'request_type',
+            'for_return' => 'for_return'
         );
     }
 
@@ -1117,7 +1141,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'seal_id' => $this->getSealId(),
             'created_branch_id'=> $this->getCreatedBranchId(),
             'route_id'=> $this->getRouteId(),
-            'request_type'=> $this->getRequestType()
+            'request_type'=> $this->getRequestType(),
+            'for_return' => $this->getForReturn()
         );
     }
 
@@ -1163,6 +1188,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId($route_id);
         $this->setRequestType($request_type);
+        $this->setForReturn(0);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1202,6 +1228,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId(null);
         $this->setRequestType(RequestType::OTHERS);
+        $this->setForReturn(0);
     }
 
     private function getEntityTypeLabel()
@@ -1459,6 +1486,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['request_type'])) {
             $where[] = 'Parcel.request_type = :request_type:';
             $bind['request_type'] = $filter_by['request_type'];
+        }
+        if (isset($filter_by['for_return'])) {
+            $where[] = 'Parcel.for_return = :for_return:';
+            $bind['for_return'] = $filter_by['for_return'];
         }
 
         return ['where' => $where, 'bind' => $bind];
