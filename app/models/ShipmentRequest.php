@@ -199,7 +199,7 @@ class ShipmentRequest extends EagerModel
         }
 
         $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
-        $shipmentRequest->parcel_id = $parcelId;
+        $shipmentRequest->waybill_number = $parcelId;
 
         return $shipmentRequest->save();
     }

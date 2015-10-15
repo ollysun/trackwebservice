@@ -181,7 +181,7 @@ class PickupRequest extends EagerModel
         }
 
         $pickupRequest->status = PickupRequest::STATUS_APPROVED;
-        $pickupRequest->parcel_id = $parcelId;
+        $pickupRequest->waybill_number = $parcelId;
 
         return $pickupRequest->save();
     }
