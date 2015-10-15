@@ -144,9 +144,21 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if ($waybill_numbers) {
-            // Link Parcel to Pickup Request
+
+            /**
+             * @author Adegoke Obasa <goke@cottacush.com>
+             * Link Parcel to Pickup Request
+             */
             if(isset($payload['pickup_request_id'])) {
                 PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getId());
+            }
+
+            /**
+             * Link Parcel to Shipment Request
+             * @author Adegoke Obasa <goke@cottacush.com>
+             **/
+            if(isset($payload['shipment_request_id'])) {
+                ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getId());
             }
 
             if ($is_corporate_lead == 1) {
