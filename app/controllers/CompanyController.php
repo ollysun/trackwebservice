@@ -467,14 +467,14 @@ class CompanyController extends ControllerBase
         $pickupRequest = PickupRequest::findFirst($postData->request_id);
 
         if(!$pickupRequest) {
-            $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
         if($pickupRequest->cancelRequest()) {
-            $this->response->sendSuccess();
+            return $this->response->sendSuccess();
         }
 
-        return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
+        return $this->response->sendError($pickupRequest->getMessages());
     }
 
     /**
@@ -496,11 +496,11 @@ class CompanyController extends ControllerBase
         $shipmentRequest = ShipmentRequest::findFirst($postData->request_id);
 
         if(!$shipmentRequest) {
-            $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
         if($shipmentRequest->cancelRequest()) {
-            $this->response->sendSuccess();
+            return $this->response->sendSuccess();
         }
 
         return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
