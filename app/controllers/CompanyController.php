@@ -455,16 +455,16 @@ class CompanyController extends ControllerBase
      */
     public function cancelPickupRequestAction()
     {
-        $request_id = $this->request->getQuery('request_id', null);
+        $postData = $this->request->getJsonRawBody();
 
-        if (is_null($request_id)) {
+        if (!property_exists('request_id', $postData)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         /**
          * @var PickupRequest $pickupRequest
          */
-        $pickupRequest = PickupRequest::findFirst($request_id);
+        $pickupRequest = PickupRequest::findFirst($postData->request_id);
 
         if(!$pickupRequest) {
             $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
@@ -484,16 +484,16 @@ class CompanyController extends ControllerBase
      */
     public function cancelShipmentRequestAction()
     {
-        $request_id = $this->request->getQuery('request_id', null);
+        $postData = $this->request->getJsonRawBody();
 
-        if (is_null($request_id)) {
+        if (!property_exists('request_id', $postData)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         /**
          * @var ShipmentRequest $shipmentRequest
          */
-        $shipmentRequest = ShipmentRequest::findFirst($request_id);
+        $shipmentRequest = ShipmentRequest::findFirst($postData->request_id);
 
         if(!$shipmentRequest) {
             $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
