@@ -5,11 +5,8 @@ use Phalcon\Mvc\Model;
  * Class ShipmentRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class ShipmentRequest extends EagerModel
+class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterface
 {
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_CANCELED = 'canceled';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -212,6 +209,17 @@ class ShipmentRequest extends EagerModel
     public function cancelRequest()
     {
         $this->status = ShipmentRequest::STATUS_CANCELED;
+        return $this->save();
+    }
+
+    /**
+     * Declines a shipment request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function declineRequest()
+    {
+        $this->status = ShipmentRequest::STATUS_DECLINED;
         return $this->save();
     }
 

@@ -122,4 +122,5 @@ class ResponseMessage
     const PARCEL_NOT_ACCESSIBLE = 'Parcel not accessible for this action';
     const PARCEL_CANNOT_CHANGE_RETURN_FLAG = 'The return flag of the parcel could not be altered';
     const UNABLE_TO_CANCEL_REQUEST = 'Unable to cancel request';
+    const UNABLE_TO_DECLINE_REQUEST = 'Unable to decline request';
 }
