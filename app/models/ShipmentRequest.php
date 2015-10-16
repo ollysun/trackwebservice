@@ -1,5 +1,6 @@
 <?php
 use Phalcon\Mvc\Model;
+use Phalcon\Mvc\Model\Resultset;
 
 /**
  * Class ShipmentRequest
@@ -10,14 +11,6 @@ class ShipmentRequest extends EagerModel
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_CANCELED = 'canceled';
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     */
-    public function initialize()
-    {
-        $this->setSource('shipment_requests');
-    }
 
     /**
      * Add a new corporate shipment
@@ -74,6 +67,35 @@ class ShipmentRequest extends EagerModel
         }
 
         return $requests;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $builder
+     * @param $filter_by
+     * @return Model\Query\Builder|Model\Query\BuilderInterface
+     */
+    private static function addFetchCriteria($builder, $filter_by)
+    {
+        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
+            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
+            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
+            $builder = Util::betweenDateRange($builder, 'ShipmentRequest.created_at', $from, $to);
+        }
+
+        if (isset($filter_by['status'])) {
+            $builder->andWhere('ShipmentRequest.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
+        }
+
+        if (isset($filter_by['company_id'])) {
+            $builder->andWhere('ShipmentRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
+        }
+
+        if (isset($filter_by['waybill_number'])) {
+            $builder->andWhere('ShipmentRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
+        }
+
+        return $builder;
     }
 
     /**
@@ -140,36 +162,6 @@ class ShipmentRequest extends EagerModel
         return $request;
     }
 
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $builder
-     * @param $filter_by
-     * @return Model\Query\Builder|Model\Query\BuilderInterface
-     */
-    private static function addFetchCriteria($builder, $filter_by)
-    {
-        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
-            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
-            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
-            $builder = Util::betweenDateRange($builder, 'ShipmentRequest.created_at', $from, $to);
-        }
-
-        if (isset($filter_by['status'])) {
-            $builder->andWhere('ShipmentRequest.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
-        }
-
-        if (isset($filter_by['company_id'])) {
-            $builder->andWhere('ShipmentRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
-        }
-
-        if (isset($filter_by['waybill_number'])) {
-            $builder->andWhere('ShipmentRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
-        }
-
-        return $builder;
-    }
-
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $filter_by
@@ -194,7 +186,7 @@ class ShipmentRequest extends EagerModel
     public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
     {
         $shipmentRequest = ShipmentRequest::findFirst($pickupRequestId);
-        if(!$pickupRequestId) {
+        if (!$pickupRequestId) {
             return false;
         }
 
@@ -202,6 +194,14 @@ class ShipmentRequest extends EagerModel
         $shipmentRequest->waybill_number = $parcelId;
 
         return $shipmentRequest->save();
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function initialize()
+    {
+        $this->setSource('shipment_requests');
     }
 
     /**
@@ -252,4 +252,6 @@ class ShipmentRequest extends EagerModel
             ]
         ];
     }
+
+
 }

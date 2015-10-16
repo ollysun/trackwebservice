@@ -454,7 +454,6 @@ class CompanyController extends ControllerBase
      */
     public function getCompanyAction()
     {
-
         $company_id = $this->request->getQuery('company_id', null);
 
         if (is_null($company_id)) {
@@ -468,10 +467,19 @@ class CompanyController extends ControllerBase
 
         $company = Company::fetchOne($filter_by, $fetch_with);
 
-        if($company != false) {
+        if ($company != false) {
             return $this->response->sendSuccess(Company::fetchOne($filter_by, $fetch_with));
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Get Bulk Shipment Template
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getBulkShipmentTemplateUrlAction()
+    {
+        ShipmentRequest::getBulkTemplateFile();
     }
 }
 
