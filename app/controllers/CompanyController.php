@@ -457,7 +457,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists('request_id', $postData)) {
+        if (!property_exists($postData, 'request_id')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -486,7 +486,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists('request_id', $postData)) {
+        if (!property_exists($postData, 'request_id')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
