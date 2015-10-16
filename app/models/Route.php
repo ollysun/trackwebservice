@@ -78,20 +78,51 @@ class Route extends \Phalcon\Mvc\Model
     /**
      * Gets all routes
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
      * @return array
      */
-    public static function getAll($branchId)
+    public static function getAll($branchId, $offset, $count, $send_all)
     {
-        $query = Route::query()
+        $obj = new Route();
+        $builder = $obj->getModelsManager()->createBuilder()
             ->columns("Route.id, Route.name, Route.code, Route.created_date, Route.updated_date, Branch.name AS branch_name, Branch.code AS branch_code,  Route.branch_id")
+            ->from('Route')
             ->innerJoin('Branch');
 
-        if (!is_null($branchId)) {
-            $query->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
+        if (!isset($send_all)) {
+            $builder->limit($count, $offset);
         }
-        $query = $query->execute();
+
+        if (!is_null($branchId)) {
+            $builder->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
+        }
+        $query = $builder->getQuery()->execute();
 
         return $query->toArray();
+    }
+
+    /**
+     * Returns the number of routes based on condition
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return int
+     * @param $branchId
+     */
+    public static function routeCount($branchId)
+    {
+        $builder = Route::query()
+            ->columns('COUNT(*) AS count');
+
+        //filters
+        if (!is_null($branchId)) {
+            $builder->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
+        }
+        $data = $builder->execute();
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->count);
     }
 
     /**
