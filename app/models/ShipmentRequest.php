@@ -207,19 +207,12 @@ class ShipmentRequest extends EagerModel
     /**
      * Cancels a shipment request by changing the status to canceled
      * @author Adegoke Obasa <goke@cottacush.com>
-     * @param $pickupRequestId
      * @return bool
      */
-    public static function cancelRequest($pickupRequestId)
+    public function cancelRequest()
     {
-        $shipmentRequest = ShipmentRequest::findFirst($pickupRequestId);
-        if(!$pickupRequestId) {
-            return false;
-        }
-
-        $shipmentRequest->status = ShipmentRequest::STATUS_CANCELED;
-
-        return $shipmentRequest->save();
+        $this->status = ShipmentRequest::STATUS_CANCELED;
+        return $this->save();
     }
 
     /**

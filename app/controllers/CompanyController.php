@@ -449,6 +449,64 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Cancels a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function cancelPickupRequestAction()
+    {
+        $request_id = $this->request->getQuery('request_id', null);
+
+        if (is_null($request_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var PickupRequest $pickupRequest
+         */
+        $pickupRequest = PickupRequest::findFirst($request_id);
+
+        if(!$pickupRequest) {
+            $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($pickupRequest->cancelRequest()) {
+            $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
+    }
+
+    /**
+     * Cancels a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function cancelShipmentRequestAction()
+    {
+        $request_id = $this->request->getQuery('request_id', null);
+
+        if (is_null($request_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var ShipmentRequest $shipmentRequest
+         */
+        $shipmentRequest = ShipmentRequest::findFirst($request_id);
+
+        if(!$shipmentRequest) {
+            $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($shipmentRequest->cancelRequest()) {
+            $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
+    }
+
+    /**
      * Gets the details of a company
      * @author Adegoke Obasa <goke@cottacush.com>
      */
