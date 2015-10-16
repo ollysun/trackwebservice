@@ -187,6 +187,24 @@ class PickupRequest extends EagerModel
     }
 
     /**
+     * Cancels a pickup request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $pickupRequestId
+     * @return bool
+     */
+    public static function cancelRequest($pickupRequestId)
+    {
+        $pickupRequest = PickupRequest::findFirst($pickupRequestId);
+        if(!$pickupRequestId) {
+            return false;
+        }
+
+        $pickupRequest->status = PickupRequest::STATUS_CANCELED;
+
+        return $pickupRequest->save();
+    }
+
+    /**
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return array
      */

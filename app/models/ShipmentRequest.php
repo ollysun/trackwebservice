@@ -187,19 +187,37 @@ class ShipmentRequest extends EagerModel
     /**
      * Links a parcel to the shipment request and changes the status of the request
      * @author Adegoke Obasa <goke@cottacush.com>
-     * @param $pickupRequestId
-     * @param $parcelId
+     * @param $shipmentRequestId
+     * @param $waybillNumber
      * @return bool
      */
-    public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
+    public static function linkParcelAndChangeStatus($shipmentRequestId, $waybillNumber)
+    {
+        $shipmentRequest = ShipmentRequest::findFirst($shipmentRequestId);
+        if(!$shipmentRequestId) {
+            return false;
+        }
+
+        $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
+        $shipmentRequest->waybill_number = $waybillNumber;
+
+        return $shipmentRequest->save();
+    }
+
+    /**
+     * Cancels a shipment request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $pickupRequestId
+     * @return bool
+     */
+    public static function cancelRequest($pickupRequestId)
     {
         $shipmentRequest = ShipmentRequest::findFirst($pickupRequestId);
         if(!$pickupRequestId) {
             return false;
         }
 
-        $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
-        $shipmentRequest->waybill_number = $parcelId;
+        $shipmentRequest->status = ShipmentRequest::STATUS_CANCELED;
 
         return $shipmentRequest->save();
     }
