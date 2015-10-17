@@ -121,4 +121,7 @@ class ResponseMessage
     const INVALID_REQUEST_TYPE = 'Invalid request type';
     const PARCEL_NOT_ACCESSIBLE = 'Parcel not accessible for this action';
     const PARCEL_CANNOT_CHANGE_RETURN_FLAG = 'The return flag of the parcel could not be altered';
+    const PARCEL_ALREADY_RETURNED = 'Parcel already returned';
+    const PARCEL_NOT_FOR_RETURN = 'Parcel not for return';
+    const CANNOT_RETURN_PARCEL = 'Parcel not returned';
 }
