@@ -79,6 +79,27 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Edit Company API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function editCompanyAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!isset($postData->company)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $companyRequestValidator = new CompanyUpdateRequestValidation($postData, 'company');
+        if (!$companyRequestValidator->validate()) {
+            return $this->response->sendError($companyRequestValidator->getMessages());
+        }
+
+        echo "Continue";
+    }
+
+    /**
      * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
      * @author Rahman Shitu <rahman@cottacush.com>
      * @return $this
