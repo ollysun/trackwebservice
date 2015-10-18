@@ -449,6 +449,122 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Cancels a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function cancelPickupRequestAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        if (!property_exists($postData, 'request_id')) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var PickupRequest $pickupRequest
+         */
+        $pickupRequest = PickupRequest::findFirst($postData->request_id);
+
+        if(!$pickupRequest) {
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($pickupRequest->cancelRequest()) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
+    }
+
+    /**
+     * Declines a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function declinePickupRequestAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        if (!property_exists($postData, 'request_id')) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var PickupRequest $pickupRequest
+         */
+        $pickupRequest = PickupRequest::findFirst($postData->request_id);
+
+        if(!$pickupRequest) {
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($pickupRequest->declineRequest()) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
+    }
+
+    /**
+     * Cancels a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function cancelShipmentRequestAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        if (!property_exists($postData, 'request_id')) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var ShipmentRequest $shipmentRequest
+         */
+        $shipmentRequest = ShipmentRequest::findFirst($postData->request_id);
+
+        if(!$shipmentRequest) {
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($shipmentRequest->cancelRequest()) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CANCEL_REQUEST);
+    }
+
+    /**
+     * Declines a pickup request
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function declineShipmentRequestAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        if (!property_exists($postData, 'request_id')) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /**
+         * @var ShipmentRequest $shipmentRequest
+         */
+        $shipmentRequest = ShipmentRequest::findFirst($postData->request_id);
+
+        if(!$shipmentRequest) {
+            return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
+        }
+
+        if($shipmentRequest->declineRequest()) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
+    }
+
+    /**
      * Gets the details of a company
      * @author Adegoke Obasa <goke@cottacush.com>
      */

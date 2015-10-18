@@ -5,11 +5,8 @@ use Phalcon\Mvc\Model;
  * Class ShipmentRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class ShipmentRequest extends EagerModel
+class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterface
 {
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_CANCELED = 'canceled';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -104,6 +101,11 @@ class ShipmentRequest extends EagerModel
             $builder = $builder->innerJoin('Company', 'Company.id = ShipmentRequest.company_id');
         }
 
+        if (in_array('with_company_city', $fetch_with) && in_array('with_company', $fetch_with)) {
+            $columns[] = 'CompanyCity.*';
+            $builder = $builder->innerJoin('City', 'CompanyCity.id = Company.city_id', 'CompanyCity');
+        }
+
         if (in_array('with_created_by', $fetch_with)) {
             $columns[] = 'CompanyUser.*';
             $builder = $builder->innerJoin('CompanyUser', 'CompanyUser.id = ShipmentRequest.created_by');
@@ -129,6 +131,9 @@ class ShipmentRequest extends EagerModel
             }
             if (in_array('with_company', $fetch_with)) {
                 $request['company'] = $result[0]->company->getData();
+            }
+            if (in_array('with_company_city', $fetch_with)) {
+                $request['company_city'] = $result[0]->CompanyCity->getData();
             }
             if (in_array('with_created_by', $fetch_with)) {
                 $request['created_by'] = $result[0]->companyUser->getData();
@@ -187,21 +192,43 @@ class ShipmentRequest extends EagerModel
     /**
      * Links a parcel to the shipment request and changes the status of the request
      * @author Adegoke Obasa <goke@cottacush.com>
-     * @param $pickupRequestId
-     * @param $parcelId
+     * @param $shipmentRequestId
+     * @param $waybillNumber
      * @return bool
      */
-    public static function linkParcelAndChangeStatus($pickupRequestId, $parcelId)
+    public static function linkParcelAndChangeStatus($shipmentRequestId, $waybillNumber)
     {
-        $shipmentRequest = ShipmentRequest::findFirst($pickupRequestId);
-        if(!$pickupRequestId) {
+        $shipmentRequest = ShipmentRequest::findFirst($shipmentRequestId);
+        if(!$shipmentRequestId) {
             return false;
         }
 
         $shipmentRequest->status = ShipmentRequest::STATUS_APPROVED;
-        $shipmentRequest->waybill_number = $parcelId;
+        $shipmentRequest->waybill_number = $waybillNumber;
 
         return $shipmentRequest->save();
+    }
+
+    /**
+     * Cancels a shipment request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function cancelRequest()
+    {
+        $this->status = ShipmentRequest::STATUS_CANCELED;
+        return $this->save();
+    }
+
+    /**
+     * Declines a shipment request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function declineRequest()
+    {
+        $this->status = ShipmentRequest::STATUS_DECLINED;
+        return $this->save();
     }
 
     /**
@@ -226,6 +253,13 @@ class ShipmentRequest extends EagerModel
                 'model_name' => 'ShipmentRequest',
                 'ref_model_name' => 'Company',
                 'foreign_key' => 'company_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'company_city',
+                'model_name' => 'Company',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
                 'reference_key' => 'id'
             ],
             [
