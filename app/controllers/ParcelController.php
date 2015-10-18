@@ -432,6 +432,11 @@ class ParcelController extends ControllerBase
         return $this->response->sendError();
     }
 
+    /**
+     * Used for removing parcel from a bag that has not been added to a manifest
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
     public function removeFromBagAction()
     {
         /**

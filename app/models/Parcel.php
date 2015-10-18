@@ -2268,6 +2268,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * Remove one or more parcels from a bag
+     * @author Rahman Shitu <rahman@cottacush.com>
      * @param int $bag_id - The waybill number of a bag
      * @param int[] $parcel_id_arr - An array of parcels id
      * @return bool
@@ -2300,7 +2301,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
         } catch (Exception $e) {
-            var_dump($e->getMessage(), $e->getTraceAsString());exit();
+
         }
         $connection->rollback();
         return false;

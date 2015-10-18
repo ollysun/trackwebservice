@@ -199,6 +199,7 @@ class LinkedParcel extends \Phalcon\Mvc\Model
 
     /**
      * Gets using a parent_id.
+     * @author Rahman Shitu <rahman@cottacush.com>
      * @param int $parent_id
      * @param array|null $child_by_arr
      * @param bool $make_assoc - makes it associative by child_id
