@@ -101,6 +101,11 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
             $builder = $builder->innerJoin('Company', 'Company.id = ShipmentRequest.company_id');
         }
 
+        if (in_array('with_company_city', $fetch_with) && in_array('with_company', $fetch_with)) {
+            $columns[] = 'CompanyCity.*';
+            $builder = $builder->innerJoin('City', 'CompanyCity.id = Company.city_id', 'CompanyCity');
+        }
+
         if (in_array('with_created_by', $fetch_with)) {
             $columns[] = 'CompanyUser.*';
             $builder = $builder->innerJoin('CompanyUser', 'CompanyUser.id = ShipmentRequest.created_by');
@@ -126,6 +131,9 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
             }
             if (in_array('with_company', $fetch_with)) {
                 $request['company'] = $result[0]->company->getData();
+            }
+            if (in_array('with_company_city', $fetch_with)) {
+                $request['company_city'] = $result[0]->CompanyCity->getData();
             }
             if (in_array('with_created_by', $fetch_with)) {
                 $request['created_by'] = $result[0]->companyUser->getData();
@@ -245,6 +253,13 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
                 'model_name' => 'ShipmentRequest',
                 'ref_model_name' => 'Company',
                 'foreign_key' => 'company_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'company_city',
+                'model_name' => 'Company',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
                 'reference_key' => 'id'
             ],
             [
