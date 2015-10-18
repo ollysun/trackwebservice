@@ -16,6 +16,8 @@ return new \Phalcon\Config([
         'viewsDir' => __DIR__ . '/../../app/views/',
         'pluginsDir' => __DIR__ . '/../../app/plugins/',
         'libraryDir' => __DIR__ . '/../../app/library/',
+        'validationsDir' => __DIR__ . '/../../app/validations/',
+        'traitsDir' => __DIR__ . '/../../app/traits/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir' => __DIR__ . '/../../app/tasks/',
         'baseUri' => '/tnt/',

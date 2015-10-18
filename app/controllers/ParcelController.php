@@ -1,4 +1,5 @@
 <?php
+use PhalconUtils\Validation\RequestValidation;
 
 /**
  * Class ParcelController
@@ -139,11 +140,27 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
         }
 
-
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if ($waybill_numbers) {
+
+            /**
+             * @author Adegoke Obasa <goke@cottacush.com>
+             * Link Parcel to Pickup Request
+             */
+            if(isset($payload['pickup_request_id'])) {
+                PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getWaybillNumber());
+            }
+
+            /**
+             * Link Parcel to Shipment Request
+             * @author Adegoke Obasa <goke@cottacush.com>
+             **/
+            if(isset($payload['shipment_request_id'])) {
+                ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getWaybillNumber());
+            }
+
             if ($is_corporate_lead == 1) {
                 $city = City::fetchOne($sender_address['city_id'], ['with_state' => 1, 'with_country' => 1]);
                 if ($city != false) {
@@ -171,7 +188,7 @@ class ParcelController extends ControllerBase
 
     public function getOneAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $id = $this->request->getQuery('id');
         $waybill_number = $this->request->getQuery('waybill_number');
@@ -205,163 +222,14 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $manifest_id = $this->request->getQuery('manifest_id');
-        $show_parents = $this->request->getQuery('show_parents');
-        $parent_id = $this->request->getQuery('parent_id');
-        $entity_type = $this->request->getQuery('entity_type');
-        $is_visible = $this->request->getQuery('is_visible');
-        $created_by = $this->request->getQuery('created_by');
-        $user_id = $this->request->getQuery('user_id'); //either sender_id or receiver_id
-        $held_by_staff_id = $this->request->getQuery('held_by_staff_id');
-        $held_by_id = $this->request->getQuery('held_by_id');
-        $to_branch_id = $this->request->getQuery('to_branch_id');
-        $from_branch_id = $this->request->getQuery('from_branch_id');
-        $parcel_type = $this->request->getQuery('parcel_type');
-        $sender_id = $this->request->getQuery('sender_id');
-        $sender_address_id = $this->request->getQuery('sender_address_id');
-        $receiver_id = $this->request->getQuery('receiver_id');
-        $receiver_address_id = $this->request->getQuery('receiver_address_id');
-        $status = $this->request->getQuery('status');
-        $min_weight = $this->request->getQuery('min_weight');
-        $max_weight = $this->request->getQuery('max_weight');
-        $min_amount_due = $this->request->getQuery('min_amount_due');
-        $max_amount_due = $this->request->getQuery('max_amount_due');
-        $cash_on_delivery = $this->request->getQuery('cash_on_delivery');
-        $min_delivery_amount = $this->request->getQuery('min_delivery_amount');
-        $max_delivery_amount = $this->request->getQuery('max_delivery_amount');
-        $delivery_type = $this->request->getQuery('delivery_type');
-        $payment_type = $this->request->getQuery('payment_type');
-        $shipping_type = $this->request->getQuery('shipping_type');
-        $min_cash_amount = $this->request->getQuery('min_cash_amount');
-        $max_cash_amount = $this->request->getQuery('max_cash_amount');
-        $min_pos_amount = $this->request->getQuery('min_pos_amount');
-        $max_pos_amount = $this->request->getQuery('max_pos_amount');
-        $start_created_date = $this->request->getQuery('start_created_date');
-        $end_created_date = $this->request->getQuery('end_created_date');
-        $start_modified_date = $this->request->getQuery('start_modified_date');
-        $end_modified_date = $this->request->getQuery('end_modified_date');
-        $waybill_number = $this->request->getQuery('waybill_number');
-        $waybill_number_arr = $this->request->getQuery('waybill_number_arr');
-        $created_branch_id = $this->request->getQuery('created_branch_id');
-        $route_id = $this->request->getQuery('route_id');
+        $filter_params = ['for_return','manifest_id','show_parents','parent_id','entity_type','is_visible','created_by','user_id','held_by_staff_id','held_by_id','to_branch_id','from_branch_id','parcel_type','sender_id','sender_address_id','receiver_id','receiver_address_id','status','min_weight','max_weight','min_amount_due','max_amount_due','cash_on_delivery','min_delivery_amount','max_delivery_amount','delivery_type','payment_type','shipping_type','min_cash_amount','max_cash_amount','min_pos_amount','max_pos_amount','start_created_date','end_created_date','start_modified_date','end_modified_date','waybill_number','waybill_number_arr','created_branch_id','route_id','history_status','history_start_created_date','history_end_created_date','history_from_branch_id','history_to_branch_id', 'request_type'];
 
         $filter_by = [];
-        if (!is_null($manifest_id)) {
-            $filter_by['manifest_id'] = $manifest_id;
-        }
-        if (!is_null($show_parents)) {
-            $filter_by['show_parents'] = $show_parents;
-        }
-        if (!is_null($parent_id)) {
-            $filter_by['parent_id'] = $parent_id;
-        }
-        if (!is_null($entity_type)) {
-            $filter_by['entity_type'] = $entity_type;
-        }
-        if (!is_null($is_visible)) {
-            $filter_by['is_visible'] = $is_visible;
-        }
-        if (!is_null($created_by)) {
-            $filter_by['created_by'] = $created_by;
-        }
-        if (!is_null($user_id)) {
-            $filter_by['user_id'] = $user_id;
-        }
-        if (!is_null($held_by_staff_id)) {
-            $filter_by['held_by_staff_id'] = $held_by_staff_id;
-        }
-        if (!is_null($held_by_id)) {
-            $filter_by['held_by_id'] = $held_by_id;
-        }
-        if (!is_null($to_branch_id)) {
-            $filter_by['to_branch_id'] = $to_branch_id;
-        }
-        if (!is_null($from_branch_id)) {
-            $filter_by['from_branch_id'] = $from_branch_id;
-        }
-        if (!is_null($parcel_type)) {
-            $filter_by['parcel_type'] = $parcel_type;
-        }
-        if (!is_null($sender_id)) {
-            $filter_by['sender_id'] = $sender_id;
-        }
-        if (!is_null($sender_address_id)) {
-            $filter_by['sender_address_id'] = $sender_address_id;
-        }
-        if (!is_null($receiver_id)) {
-            $filter_by['receiver_id'] = $receiver_id;
-        }
-        if (!is_null($receiver_address_id)) {
-            $filter_by['receiver_address_id'] = $receiver_address_id;
-        }
-        if (!is_null($status)) {
-            $filter_by['status'] = $status;
-        }
-        if (!is_null($min_weight)) {
-            $filter_by['min_weight'] = $min_weight;
-        }
-        if (!is_null($max_weight)) {
-            $filter_by['max_weight'] = $max_weight;
-        }
-        if (!is_null($min_amount_due)) {
-            $filter_by['min_amount_due'] = $min_amount_due;
-        }
-        if (!is_null($max_amount_due)) {
-            $filter_by['max_amount_due'] = $max_amount_due;
-        }
-        if (!is_null($cash_on_delivery)) {
-            $filter_by['cash_on_delivery'] = $cash_on_delivery;
-        }
-        if (!is_null($min_delivery_amount)) {
-            $filter_by['min_delivery_amount'] = $min_delivery_amount;
-        }
-        if (!is_null($max_delivery_amount)) {
-            $filter_by['max_delivery_amount'] = $max_delivery_amount;
-        }
-        if (!is_null($delivery_type)) {
-            $filter_by['delivery_type'] = $delivery_type;
-        }
-        if (!is_null($payment_type)) {
-            $filter_by['payment_type'] = $payment_type;
-        }
-        if (!is_null($shipping_type)) {
-            $filter_by['shipping_type'] = $shipping_type;
-        }
-        if (!is_null($min_cash_amount)) {
-            $filter_by['min_cash_amount'] = $min_cash_amount;
-        }
-        if (!is_null($max_cash_amount)) {
-            $filter_by['max_cash_amount'] = $max_cash_amount;
-        }
-        if (!is_null($min_pos_amount)) {
-            $filter_by['min_pos_amount'] = $min_pos_amount;
-        }
-        if (!is_null($max_pos_amount)) {
-            $filter_by['max_pos_amount'] = $max_pos_amount;
-        }
-        if (!is_null($start_created_date)) {
-            $filter_by['start_created_date'] = $start_created_date;
-        }
-        if (!is_null($end_created_date)) {
-            $filter_by['end_created_date'] = $end_created_date;
-        }
-        if (!is_null($start_modified_date)) {
-            $filter_by['start_modified_date'] = $start_modified_date;
-        }
-        if (!is_null($end_modified_date)) {
-            $filter_by['end_modified_date'] = $end_modified_date;
-        }
-        if (!is_null($waybill_number)) {
-            $filter_by['waybill_number'] = $waybill_number;
-        }
-        if (!is_null($waybill_number_arr)) {
-            $filter_by['waybill_number_arr'] = $waybill_number_arr;
-        }
-        if (!is_null($created_branch_id)) {
-            $filter_by['created_branch_id'] = $created_branch_id;
-        }
-        if (!is_null($route_id)) {
-            $filter_by['route_id'] = $route_id;
+        foreach ($filter_params as $param) {
+            $$param = $this->request->getQuery($param);
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
         }
 
         return $filter_by;
@@ -389,6 +257,7 @@ class ParcelController extends ControllerBase
         $with_bank_account = $this->request->getQuery('with_bank_account');
         $with_created_branch = $this->request->getQuery('with_created_branch');
         $with_route = $this->request->getQuery('with_route');
+        $with_created_by = $this->request->getQuery('with_created_by');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -431,6 +300,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_route)) {
             $fetch_with['with_route'] = true;
+        }
+        if (!is_null($with_created_by)) {
+            $fetch_with['with_created_by'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -1116,9 +988,10 @@ class ParcelController extends ControllerBase
         $requiredFields = ['waybill_number', 'delivered_by', 'phone_number', 'name'];
         $data = ['waybill_number' => $waybill_number, 'delivered_by' => $delivered_by, 'phone_number' => $phone_number, 'name' => $name];
 
-        $requestValidator = new RequestValidator($data, $requiredFields);
-        if (!$requestValidator->validateFields()) {
-            return $this->response->sendError($requestValidator->printValidationMessage());
+        $requestValidator = new RequestValidation($data);
+        $requestValidator->setRequiredFields($requiredFields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
         }
 
         $data['email'] = $email;
@@ -1172,5 +1045,66 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess(['receipts' => $receipt_paths]);
+    }
+
+    /**
+     * Used to set the return flag of a parcel
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function setReturnFlagAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $return_flag = $this->request->getPost('return_flag', null, 1);
+
+        if (!in_array($return_flag,[0,1])){
+            return $this->response->sendError(ResponseMessage::INVALID_VALUES);
+        }
+
+        if (!isset($waybill_numbers)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
+        $bad_parcel = [];
+
+        /**
+         * @var Parcel $parcel
+         */
+        foreach ($waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            //cannot flag a return for a delivered parcel
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+            }
+
+            //if it is an officer, his branch must be either the to or from branch id
+            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+            }
+
+            //bags and split parcel parent can not be returned
+            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+            }
+
+            $parcel->setForReturn($return_flag);
+            if (!$parcel->save()){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+        }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 }

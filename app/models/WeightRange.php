@@ -320,9 +320,9 @@ class WeightRange extends \Phalcon\Mvc\Model
 
         return WeightRange::findFirst([
             '
-            (min_weight <  :min_weight: AND max_weight > :min_weight:)
+            ((min_weight <  :min_weight: AND max_weight > :min_weight:)
             OR (min_weight <  :max_weight: AND max_weight > :max_weight:)
-            OR (min_weight >=  :min_weight: AND max_weight <= :max_weight:)
+            OR (min_weight >=  :min_weight: AND max_weight <= :max_weight:))
             ' . $id_condition,
             'bind' => $bind
         ]);

@@ -136,10 +136,25 @@ class OnforwardingchargeController extends ControllerBase {
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $status = $this->request->getQuery('status');
+        $with_total_count = $this->request->getQuery('with_total_count');
+        $send_all = $this->request->getQuery('send_all');
 
         $filter_by = [];
         if (!is_null($status)){ $filter_by['status'] = $status; }
+        if (!is_null($send_all)) { $filter_by['send_all'] = true; }
 
-        return $this->response->sendSuccess(OnforwardingCharge::fetchAll($offset, $count, $filter_by));
+        $charges = OnforwardingCharge::fetchAll($offset, $count, $filter_by);
+        $result = [];
+        if ($with_total_count != null) {
+            $count = OnforwardingCharge::chargeCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'charges' => $charges
+            ];
+        } else {
+            $result = $charges;
+        }
+
+        return $this->response->sendSuccess($result);
     }
 }

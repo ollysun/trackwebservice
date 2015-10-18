@@ -280,14 +280,14 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'name' => 'name', 
-            'description' => 'description', 
-            'code' => 'code', 
+            'id' => 'id',
+            'name' => 'name',
+            'description' => 'description',
+            'code' => 'code',
             'amount' => 'amount',
             'percentage' => 'percentage',
             'created_date' => 'created_date',
-            'modified_date' => 'modified_date', 
+            'modified_date' => 'modified_date',
             'status' => 'status'
         );
     }
@@ -380,8 +380,11 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     public static function fetchAll($offset, $count, $filter_by){
         $obj = new OnforwardingCharge();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->from('OnforwardingCharge')
-            ->limit($count, $offset);
+            ->from('OnforwardingCharge');
+
+        if (!isset($filter_by['send_all'])) {
+            $builder->limit($count, $offset);
+        }
 
         $where = [];
         $bind = [];
@@ -394,5 +397,29 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
         return $data->toArray();
+    }
+
+    public static function chargeCount($filter_by){
+        $obj = new OnforwardingCharge();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS charge_count')
+            ->from('OnforwardingCharge');
+
+        $where = [];
+        $bind = [];
+
+        if (isset($filter_by['status'])){
+            $where[] = 'OnforwardingCharge.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->charge_count);
     }
 }
