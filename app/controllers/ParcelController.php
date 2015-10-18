@@ -505,7 +505,7 @@ class ParcelController extends ControllerBase
         if ($check){
             return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
         }
-        return $this->response->sendError();
+        return $this->response->sendError(ResponseMessage::COULD_NOT_REMOVE_FROM_BAG);
     }
 
     public function moveToArrivalAction()

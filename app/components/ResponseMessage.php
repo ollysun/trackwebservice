@@ -94,6 +94,7 @@ class ResponseMessage
     const BAG_DOES_NOT_EXIST = 'Bag does not exist';
     const BAG_IN_MANIFEST = 'Bag is already in a manifest';
     const PARCEL_NOT_IN_BAG = 'Parcel is not in bag';
+    const COULD_NOT_REMOVE_FROM_BAG = 'Unable to remove parcel(s) from bag';
 
     const CAN_ONLY_DELIVER_FROM_EC = 'Must be login to an EC to set parcels for delivery';
 
