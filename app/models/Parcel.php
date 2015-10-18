@@ -13,6 +13,8 @@ class Parcel extends \Phalcon\Mvc\Model
     const ENTITY_TYPE_PARENT = 4;
 
     const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+    const SQL_MAKE_SOME_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id AND child_id IN (:child_id));';
+    const SQL_DELETE_SOME_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id AND child_id IN (:child_id);';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
     const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
 
@@ -2261,6 +2263,46 @@ class Parcel extends \Phalcon\Mvc\Model
                 return true;
             }
         }
+        return false;
+    }
+
+    /**
+     * Remove one or more parcels from a bag
+     * @param int $bag_id - The waybill number of a bag
+     * @param int[] $parcel_id_arr - An array of parcels id
+     * @return bool
+     */
+    public static function removeFromBag($bag_id, $parcel_id_arr)
+    {
+        if (empty($parcel_id_arr)){
+            return true;
+        }
+
+        $clean_arr = [];
+        foreach($parcel_id_arr as $id){
+            $clean_arr[] = intval($id);
+        }
+
+        $child_id_str = implode(',', $clean_arr);
+        $sql_link_delete = str_replace(':child_id', $child_id_str, Parcel::SQL_DELETE_SOME_LINKAGE);
+        $sql_sub_viaible = str_replace(':child_id', $child_id_str, Parcel::SQL_MAKE_SOME_SUB_VISIBLE);
+
+        $manager = new self();
+        $connection = $manager->getWriteConnection();
+        $connection->begin();
+        try {
+            $check = $connection->execute($sql_sub_viaible, ['parent_id' => $bag_id, 'modified_date' => date('Y-m-d H:i:s')]);
+            if ($check) {
+                $check = $connection->execute($sql_link_delete, ['parent_id' => $bag_id]);
+                if ($check){
+                    $connection->commit();
+                    return true;
+                }
+            }
+        } catch (Exception $e) {
+            var_dump($e->getMessage(), $e->getTraceAsString());exit();
+        }
+        $connection->rollback();
         return false;
     }
 
