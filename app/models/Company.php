@@ -1,12 +1,16 @@
 <?php
 
 use Phalcon\Di;
-use Phalcon\Mvc\Model\Validator\Email as Email;
-use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
+use Phalcon\Mvc\Model\Resultset;
 
-class Company extends \Phalcon\Mvc\Model
+/**
+ * Class Company
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
+ * @method Resultset getShipmentRequests($condition)
+ * @method Resultset getPickupRequests($condition)
+ */
+class Company extends EagerModel
 {
-
     /**
      *
      * @var integer
@@ -454,6 +458,8 @@ class Company extends \Phalcon\Mvc\Model
         $this->belongsTo('approved_by', 'User', 'id', array('alias' => 'User'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
+        $this->hasMany('id', 'ShipmentRequest', 'company_id', ['alias' => 'ShipmentRequests']);
+        $this->hasMany('id', 'PickupRequest', 'company_id', ['alias' => 'PickupRequests']);
     }
 
     /**
@@ -517,10 +523,17 @@ class Company extends \Phalcon\Mvc\Model
         );
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $company_data
+     * @return bool|Company
+     */
     public static function add($company_data)
     {
         $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
         $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);;
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],
@@ -615,7 +628,7 @@ class Company extends \Phalcon\Mvc\Model
             $bind['status'] = $filter_by['status'];
         }
 
-        if (isset($filter_by['name'])){
+        if (isset($filter_by['name'])) {
             $where[] = 'name LIKE :name:';
             $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
         }
@@ -637,7 +650,7 @@ class Company extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return null;
         }
 
@@ -647,9 +660,12 @@ class Company extends \Phalcon\Mvc\Model
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->from('Company')
-            ->limit($count, $offset);
+        $builder = $obj->getModelsManager()->createBuilder();
+        $builder->from('Company');
+
+        if (!isset($fetch_with['no_paginate'])) {
+            $builder->limit($count, $offset);
+        }
 
         $columns = ['Company.*'];
         $filter_cond = self::filterConditions($filter_by);
@@ -684,6 +700,14 @@ class Company extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    /**
+     * Fetches the details of a company together with optional related records
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array|bool
+     */
     public static function fetchOne($filter_by, $fetch_with)
     {
         $obj = new Company();
@@ -699,12 +723,8 @@ class Company extends \Phalcon\Mvc\Model
             $bind['id'] = $filter_by['id'];
         }
 
-        if (isset($fetch_with['with_city'])) {
-            $builder->innerJoin('City', 'City.id = Company.city_id');
-            $builder->innerJoin('State', 'State.id = City.state_id');
-            $columns[] = 'City.*';
-            $columns[] = 'State.*';
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -715,27 +735,13 @@ class Company extends \Phalcon\Mvc\Model
             return false;
         }
 
-        $company = [];
         if (isset($data[0]->company)) {
             $company = $data[0]->company->getData();
-            if (isset($fetch_with['with_city'])) {
-                $company['city'] = $data[0]->city->getData();
-                $company['state'] = $data[0]->state->getData();
-            }
+            $relatedRecords = $obj->loadRelatedModels($data);
+
+            $company = array_merge($company, $relatedRecords);
         } else {
             $company = $data[0]->getData();
-        }
-
-        if (isset($fetch_with['with_primary_contact'])) {
-            $company['primary_contact'] = CompanyUser::fetchOne(['id' => $company['primary_contact_id']], []);
-        }
-
-        if (isset($fetch_with['with_secondary_contact'])) {
-            $company['secondary_contact'] = CompanyUser::fetchOne(['id' => $company['sec_contact_id']], []);
-        }
-
-        if (isset($fetch_with['with_relations_officer'])) {
-            $company['relations_officer'] = Admin::fetchOne(['id' => $company['relations_officer_id']]);
         }
 
         return $company;
@@ -779,7 +785,8 @@ class Company extends \Phalcon\Mvc\Model
      * @param $user_auth_id
      * @return bool
      */
-    public static function fetchLoginData($user_auth_id){
+    public static function fetchLoginData($user_auth_id)
+    {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['CompanyUser.*', 'Role.*', 'Company.*'])
@@ -790,7 +797,7 @@ class Company extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->execute(['user_auth_id' => $user_auth_id]);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return false;
         }
         $user = $data[0]->companyUser->toArray();
@@ -798,5 +805,69 @@ class Company extends \Phalcon\Mvc\Model
         $user['role'] = $data[0]->role->toArray();
 
         return $user;
+    }
+
+    /**
+     * Returns an array that maps related models
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getFetchWithMap()
+    {
+        return [
+            [
+                'field' => 'city',
+                'model_name' => 'Company',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'state',
+                'model_name' => 'City',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'state_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'primary_contact',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CompanyUser',
+                'foreign_key' => 'primary_contact_id',
+                'reference_key' => 'id',
+                'alias' => 'PrimaryContact'
+            ],
+            [
+                'field' => 'primary_contact_auth',
+                'model_name' => 'PrimaryContact',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id',
+                'alias' => 'PrimaryContactAuth'
+            ],
+            [
+                'field' => 'secondary_contact',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CompanyUser',
+                'foreign_key' => 'secondary_contact_id',
+                'reference_key' => 'id',
+                'alias' => 'SecondaryContact'
+            ],
+            [
+                'field' => 'relations_officer',
+                'model_name' => 'Company',
+                'ref_model_name' => 'Admin',
+                'foreign_key' => 'relations_officer_id',
+                'reference_key' => 'id',
+                'alias' => 'RelationsOfficer'
+            ],
+            [
+                'field' => 'relations_officer_auth',
+                'model_name' => 'RelationsOfficer',
+                'ref_model_name' => 'UserAuth',
+                'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id'
+            ]
+        ];
     }
 }

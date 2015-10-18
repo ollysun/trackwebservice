@@ -113,4 +113,14 @@ class ResponseMessage
     const INVALID_RELATIONS_OFFICER_ID = 'Invalid relations officer id supplied';
     const PRIMARY_CONTACT_EXISTS = 'Primary contact already exists';
     const SECONDARY_CONTACT_EXISTS = 'Secondary contact already exists';
+    const INVALID_COMPANY_ID_SUPPLIED = 'Invalid company id supplied';
+    const INVALID_RECEIVER_CITY_SUPPLIED = 'Invalid receiver city supplied';
+    const INVALID_RECEIVER_STATE_SUPPLIED = 'Invalid receiver state supplied';
+    const COULD_NOT_CREATE_REQUEST = 'Could not create request';
+
+    const INVALID_REQUEST_TYPE = 'Invalid request type';
+    const PARCEL_NOT_ACCESSIBLE = 'Parcel not accessible for this action';
+    const PARCEL_CANNOT_CHANGE_RETURN_FLAG = 'The return flag of the parcel could not be altered';
+    const UNABLE_TO_CANCEL_REQUEST = 'Unable to cancel request';
+    const UNABLE_TO_DECLINE_REQUEST = 'Unable to decline request';
 }

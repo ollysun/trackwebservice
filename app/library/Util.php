@@ -42,5 +42,45 @@ class Util
         return date('Y-m-d H:i:s');
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $pattern
+     * @param $params
+     * @return array
+     */
+    public static function filterArrayKeysWithPattern($pattern, $params)
+    {
+        $filtered = [];
+        foreach ($params as $key => $value) {
+            if (preg_match($pattern, $key)) {
+                $filtered[] = $key;
+            }
+        }
+        return $filtered;
+    }
+
+
+    /**
+     * set a date range condition
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $builder \Phalcon\Mvc\Model\Query\BuilderInterface
+     * @param $column
+     * @param $from
+     * @param $end
+     * @return \Phalcon\Mvc\Model\Query\Builder|\Phalcon\Mvc\Model\Query\BuilderInterface
+     */
+    public static function betweenDateRange($builder, $column, $from, $end)
+    {
+        if (!is_null($end)) {
+            $builder = $builder->andWhere("$column <= :end:", ['end' => $end], ['end' => PDO::PARAM_STR]);
+        }
+
+        if (!is_null($from)) {
+            $builder = $builder->andWhere("$column >= :from:", ['from' => $from], ['from' => PDO::PARAM_STR]);
+        }
+
+        return $builder;
+    }
+
 
 }

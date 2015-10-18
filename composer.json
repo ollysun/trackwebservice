@@ -1,7 +1,7 @@
 {
   "name": "CourierPlus TNT Service",
   "require": {
-    "phalcon-utils": "1.2.0"
+    "phalcon-utils": "1.4.0"
   },
   "repositories": [
     {

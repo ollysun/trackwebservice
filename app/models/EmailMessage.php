@@ -260,11 +260,12 @@ class EmailMessage extends \Phalcon\Mvc\Model
      * @param $email_message_code
      * @param $msg_params
      * @param $from_name
-     * @param string $from_email
      * @param null $to_email
+     * @param string $from_email
+     * @param array $extras
      * @return bool
      */
-    public static function send($email_message_code, $msg_params, $from_name, $to_email = null, $from_email = self::DEFAULT_FROM_EMAIL)
+    public static function send($email_message_code, $msg_params, $from_name, $to_email = null, $from_email = self::DEFAULT_FROM_EMAIL, $extras = [])
     {
         try {
             $email_msg = self::findFirst([
@@ -276,9 +277,15 @@ class EmailMessage extends \Phalcon\Mvc\Model
             }
             $receiver_email = is_null($to_email) ? $email_msg->getToEmail() : $to_email;
 
+            if(isset($extras['cc'])){
+                $cc = $extras['cc'];
+            }else{
+                $cc = [];
+            }
+
             /** @var MailerHandler $mailer */
             $mailer = \Phalcon\Di::getDefault()->getMailer();
-            return $mailer->send($email_msg->getMessage(), $email_msg->getMessage(), $email_msg->getSubject(), [$receiver_email => ''], [$from_email => $from_name], [], [], $msg_params);
+            return $mailer->send($email_msg->getMessage(), $email_msg->getMessage(), $email_msg->getSubject(), [$receiver_email => ''], [$from_email => $from_name], $cc, [], $msg_params);
         } catch (Exception $e) {
             return false;
         }

@@ -213,6 +213,16 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $route_id;
 
+    /**
+     * @var integer
+     */
+    protected $request_type;
+
+    /**
+     * @var integer
+     */
+    protected $for_return;
+
 
     /**
      * Method to set the value of field id
@@ -627,6 +637,24 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->route_id = $route_id;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param int $request_type
+     */
+    public function setRequestType($request_type)
+    {
+        $this->request_type = $request_type;
+    }
+
+    /**
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param int $for_return
+     */
+    public function setForReturn($for_return)
+    {
+        $this->for_return = $for_return;
+    }
+
 
     /**
      * Returns the value of field id
@@ -973,6 +1001,24 @@ class Parcel extends \Phalcon\Mvc\Model
         return $this->route_id;
     }
 
+    /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return int
+     */
+    public function getRequestType()
+    {
+        return $this->request_type;
+    }
+
+    /**
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return int $for_return
+     */
+    public function getForReturn()
+    {
+        return $this->for_return;
+    }
+
 
     /**
      * Initialize method for model.
@@ -994,6 +1040,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('created_branch_id', 'Branch', 'id', array('alias' => 'CreatedBranch'));
         $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
         $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
+        $this->belongsTo('request_type', 'Request_type', 'id', array('alias' => 'RequestType'));
     }
 
     /**
@@ -1051,7 +1098,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'reference_number' => 'reference_number',
             'created_branch_id' => 'created_branch_id',
             'seal_id' => 'seal_id',
-            'route_id' => 'route_id'
+            'route_id' => 'route_id',
+            'request_type' => 'request_type',
+            'for_return' => 'for_return'
         );
     }
 
@@ -1091,7 +1140,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
             'created_branch_id'=> $this->getCreatedBranchId(),
-            'route_id'=> $this->getRouteId()
+            'route_id'=> $this->getRouteId(),
+            'request_type'=> $this->getRequestType(),
+            'for_return' => $this->getForReturn()
         );
     }
 
@@ -1099,7 +1150,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null
+                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS
     )
     {
         $this->setParcelType($parcel_type);
@@ -1136,6 +1187,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber($reference_number);
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId($route_id);
+        $this->setRequestType($request_type);
+        $this->setForReturn(0);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1174,6 +1227,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReferenceNumber(null);
         $this->setCreatedBranchId($from_branch_id);
         $this->setRouteId(null);
+        $this->setRequestType(RequestType::OTHERS);
+        $this->setForReturn(0);
     }
 
     private function getEntityTypeLabel()
@@ -1404,6 +1459,38 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Parcel.route_id = :route_id:';
             $bind['route_id'] = $filter_by['route_id'];
         }
+        if (isset($filter_by['history_status'])) {
+            $where[] = 'ParcelHistory.status = :history_status:';
+            $bind['history_status'] = $filter_by['history_status'];
+        }
+        if (isset($filter_by['history_start_created_date'])) {
+            $where[] = 'ParcelHistory.created_date >= :history_start_created_date:';
+            $bind['history_start_created_date'] = $filter_by['history_start_created_date'];
+        }
+        if (isset($filter_by['history_end_created_date'])) {
+            $where[] = 'ParcelHistory.created_date <= :history_end_created_date:';
+            $bind['history_end_created_date'] = $filter_by['history_end_created_date'];
+        }
+        if (isset($filter_by['history_from_branch_id'])) {
+            $where[] = 'ParcelHistory.from_branch_id <= :history_from_branch_id:';
+            $bind['history_from_branch_id'] = $filter_by['history_from_branch_id'];
+        }
+        if (isset($filter_by['history_to_branch_id'])) {
+            $where[] = 'ParcelHistory.to_branch_id <= :history_to_branch_id:';
+            $bind['history_to_branch_id'] = $filter_by['history_to_branch_id'];
+        }
+        if (isset($filter_by['created_branch_id'])) {
+            $where[] = 'Parcel.created_branch_id = :created_branch_id:';
+            $bind['created_branch_id'] = $filter_by['created_branch_id'];
+        }
+        if (isset($filter_by['request_type'])) {
+            $where[] = 'Parcel.request_type = :request_type:';
+            $bind['request_type'] = $filter_by['request_type'];
+        }
+        if (isset($filter_by['for_return'])) {
+            $where[] = 'Parcel.for_return = :for_return:';
+            $bind['for_return'] = $filter_by['for_return'];
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
@@ -1442,6 +1529,10 @@ class Parcel extends \Phalcon\Mvc\Model
         } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
+        if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
+            $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
+            $builder->groupBy('Parcel.id');
         }
 
         //model hydration
@@ -1489,6 +1580,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
             $columns[] = 'CreatedBranchState.*';
             $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
+        }
+        if (isset($fetch_with['with_created_by'])){
+            $columns[] = 'CreatedBy.*';
+            $builder->innerJoin('CreatedBy', 'CreatedBy.id = Parcel.created_by', 'CreatedBy');
         }
         if (isset($fetch_with['with_route'])){
             $columns[] = 'Routes.*';
@@ -1556,6 +1651,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_route'])) {
                     $parcel['route'] = $item->Routes->getData();
                 }
+                if (isset($fetch_with['with_created_by'])){
+                    $parcel['created_by'] = $item->createdBy->getData();
+                }
             }
             $result[] = $parcel;
         }
@@ -1583,6 +1681,10 @@ class Parcel extends \Phalcon\Mvc\Model
         } else if (isset($filter_by['held_by_staff_id'])) {
             $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
             $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        }
+        if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
+            $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
+            $builder->columns('COUNT(DISTINCT Parcel.id) AS parcel_count');
         }
 
         $builder->where(join(' AND ', $where));
@@ -1734,7 +1836,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null);
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2018,8 +2120,14 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getCreatedBy(),
                 1,
                 Parcel::ENTITY_TYPE_SUB,
-                $waybill_number
+                $waybill_number,
+                $this->getBankAccountId(),
+                $this->getIsBillingOverridden(),
+                $this->getReferenceNumber(),
+                $this->getRouteId(),
+                $this->getRequestType()
             );
+
             if (!$sub_parcel->save()) {
                 $check = false;
                 break;
