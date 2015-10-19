@@ -133,4 +133,5 @@ class ResponseMessage
 
     const UNABLE_TO_CANCEL_REQUEST = 'Unable to cancel request';
     const UNABLE_TO_DECLINE_REQUEST = 'Unable to decline request';
+    const UNABLET_TO_EDIT_COMPANY = 'Unable to edit company';
 }
