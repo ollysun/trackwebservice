@@ -5,11 +5,8 @@ use Phalcon\Mvc\Model;
  * Class CorporatePickupRequest
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class PickupRequest extends EagerModel
+class PickupRequest extends EagerModel implements CorporateRequestStatusInterface
 {
-    const STATUS_PENDING = 'pending';
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_APPROVED = 'approved';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -187,6 +184,28 @@ class PickupRequest extends EagerModel
     }
 
     /**
+     * Cancels a pickup request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function cancelRequest()
+    {
+        $this->status = PickupRequest::STATUS_CANCELED;
+        return $this->save();
+    }
+
+    /**
+     * Declines a pickup request by changing the status to canceled
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return bool
+     */
+    public function declineRequest()
+    {
+        $this->status = PickupRequest::STATUS_DECLINED;
+        return $this->save();
+    }
+
+    /**
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return array
      */
@@ -194,7 +213,6 @@ class PickupRequest extends EagerModel
     {
         return $this->toArray();
     }
-
 
     /**
      * Returns an array that maps related models

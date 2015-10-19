@@ -1,5 +1,5 @@
 CREATE TABLE `request_type` (
-  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` varchar(45) NOT NULL
 );
 

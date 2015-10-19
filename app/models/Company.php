@@ -533,7 +533,7 @@ class Company extends EagerModel
     {
         $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
         $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
-        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],
@@ -551,6 +551,36 @@ class Company extends EagerModel
         }
     }
 
+    /**
+     * Edits a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $company_data
+     * @return bool|Company
+     */
+    public static function edit($company_data)
+    {
+        $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
+        $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);
+        $company = Company::findFirst($company_data['id']);
+
+        if ($company) {
+            $company->updateData($company_data['name'],
+                $company_data['reg_no'],
+                $company_data['email'],
+                $company_data['phone_number'],
+                $company_data['address'],
+                $company_data['city_id'],
+                $company_data['credit_limit'],
+                $company_data['discount'],
+                $company_data['relations_officer_id']);
+            if ($company->save()) {
+                return $company;
+            }
+        }
+        return false;
+    }
+
     public function createUser($role_id, $data)
     {
         $user = new CompanyUser();
@@ -564,6 +594,37 @@ class Company extends EagerModel
             return $user;
         }
         return false;
+    }
+
+    /**
+     * Updates the details of a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $name
+     * @param $reg_no
+     * @param $email
+     * @param $phone_number
+     * @param $address
+     * @param $city_id
+     * @param $credit_limit
+     * @param $discount
+     * @param $relations_officer_id
+     */
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    {
+        $this->setName($name);
+        $this->setRegNo($reg_no);
+        $this->setEmail($email);
+        $this->setPhoneNumber($phone_number);
+        $this->setAddress($address);
+        $this->setCityId($city_id);
+        $this->setCreditLimit($credit_limit);
+        $this->setDiscount($discount);
+        $this->setRelationsOfficerId($relations_officer_id);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setModifiedDate($now);
+
+        $this->setStatus(Status::ACTIVE);
     }
 
     public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
