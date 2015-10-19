@@ -388,7 +388,7 @@ class CompanyController extends ControllerBase
             $row->created_by = $this->auth->getPersonId();
             $rowValidator->setData($row);
             if (!$rowValidator->validate()) {
-                return $this->response->sendError($rowValidator->getMessages() . ' on row ' . $count);
+                return $this->response->sendError($rowValidator->getMessages() . ' in shipment request ' . $count);
             }
         }
 
@@ -644,15 +644,6 @@ class CompanyController extends ControllerBase
             return $this->response->sendSuccess(Company::fetchOne($filter_by, $fetch_with));
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
-    }
-
-    /**
-     * Get Bulk Shipment Template
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     */
-    public function getBulkShipmentTemplateUrlAction()
-    {
-        ShipmentRequest::getBulkTemplateFile();
     }
 }
 
