@@ -13,6 +13,7 @@
  *     ];
  *     $batch->insert();
  *
+ * @credits https://github.com/JREAM/phalcon-batch
  */
 class Batch
 {
