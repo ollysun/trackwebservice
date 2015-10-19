@@ -1183,4 +1183,56 @@ class ParcelController extends ControllerBase
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
+
+    /**
+     * Used to mark a shipment as returned to the shipper
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return $this
+     */
+    public function markAsReturnedAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $admin_id = $this->auth->getPersonId();
+
+        if (in_array(null, [$waybill_numbers, $admin_id])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        $admin = Admin::findFirst($admin_id);
+        foreach ($waybill_number_arr as $waybill_number) {
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getForReturn() == 0) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_RETURN;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            }  else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
+            } else if ($parcel->getToBranchId() != $parcel->getCreatedBranchId() || (in_array($admin->getRoleId(), [Role::OFFICER]) && $admin->getBranchId() != $parcel->getToBranchId())) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::PARCEL_RETURNED, $admin_id, ParcelHistory::MSG_RETURNED, $auth_data['branch_id']);
+            if (!$check) {
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
 }
