@@ -237,8 +237,6 @@ class RegionController extends ControllerBase
      */
     public function getAllCityAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::COMPANY_OFFICER, Role::COMPANY_ADMIN]);
-
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $paginate = $this->request->getQuery('paginate', null, false);
