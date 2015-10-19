@@ -432,6 +432,82 @@ class ParcelController extends ControllerBase
         return $this->response->sendError();
     }
 
+    /**
+     * Used for removing parcel from a bag that has not been added to a manifest
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function removeFromBagAction()
+    {
+        /**
+         * @var Parcel $parcel
+         */
+
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $bag_waybill_number = $this->request->getPost('bag_waybill_number');
+        $parcel_waybill_number_arr = $this->request->getPost('parcel_waybill_number_list');
+
+        if (in_array(null, [$bag_waybill_number, $parcel_waybill_number_arr])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $parcel_waybill_number_arr = $this->sanitizeWaybillNumbers($parcel_waybill_number_arr);
+        if (empty($parcel_waybill_number_arr)){
+            return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_REMOVE_FROM_BAG);
+        }
+
+        $bag = Parcel::findFirst([
+            'waybill_number = :waybill_number: AND entity_type = :entity_type:',
+            'bind' => ['waybill_number' => $bag_waybill_number, 'entity_type' => Parcel::ENTITY_TYPE_BAG]
+        ]);
+
+        if (empty($bag)){
+            return $this->response->sendError(ResponseMessage::BAG_DOES_NOT_EXIST);
+        }
+
+        //check if the bag has been added to a manifest
+        $held_parcel = HeldParcel::findFirst([
+            'parcel_id = :parcel_id:',
+            'bind' => ['parcel_id' => $bag->getId()]
+        ]);
+        // return error if in a manifest
+        if (!empty($held_parcel)){
+            return $this->response->sendError(ResponseMessage::BAG_IN_MANIFEST);
+        }
+
+        $parcel_arr = Parcel::getByWaybillNumberList($parcel_waybill_number_arr, true);
+        $parcel_id_arr = [];
+        foreach ($parcel_arr as $parcel){
+            $parcel_id_arr[] = $parcel->getId();
+        }
+        $link_arr = LinkedParcel::getByParentId($bag->getId(), $parcel_id_arr, true);
+
+        $bad_parcel = [];
+        $valid_parcel_id_arr = [];
+        foreach ($parcel_waybill_number_arr as $waybill_number){
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            if (!isset($link_arr[$parcel->getId()])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_BAG;
+                continue;
+            }
+
+            $valid_parcel_id_arr[] = $parcel->getId();
+        }
+
+        $check = Parcel::removeFromBag($bag->getId(), $valid_parcel_id_arr);
+        if ($check){
+            return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        }
+        return $this->response->sendError(ResponseMessage::COULD_NOT_REMOVE_FROM_BAG);
+    }
+
     public function moveToArrivalAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);

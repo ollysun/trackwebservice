@@ -196,4 +196,39 @@ class LinkedParcel extends \Phalcon\Mvc\Model
             'bind' => ['child_id' => $child_id]
         ]);
     }
+
+    /**
+     * Gets using a parent_id.
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param int $parent_id
+     * @param array|null $child_by_arr
+     * @param bool $make_assoc - makes it associative by child_id
+     * @return array
+     */
+    public static function getByParentId($parent_id, $child_by_arr = null, $make_assoc = false)
+    {
+        $obj = new LinkedParcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('LinkedParcel')
+            ->where('LinkedParcel.parent_id = :parent_id:', ['parent_id' => $parent_id]);
+
+        if (!empty($child_by_arr)){
+            $builder->inWhere('LinkedParcel.child_id', $child_by_arr);
+        }
+
+        $data = $builder->getQuery()->execute();
+        if ($make_assoc) {
+            $assoc_data = [];
+            /**
+             * @var LinkedParcel $link
+             */
+            foreach ($data as $link) {
+                $assoc_data[$link->getChildId()] = $link;
+            }
+            return $assoc_data;
+        }
+        return $data;
+    }
+
+
 }
