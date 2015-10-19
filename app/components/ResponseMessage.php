@@ -128,5 +128,7 @@ class ResponseMessage
     const PARCEL_CANNOT_CHANGE_RETURN_FLAG = 'The return flag of the parcel could not be altered';
     const UNABLE_TO_CANCEL_REQUEST = 'Unable to cancel request';
     const UNABLE_TO_DECLINE_REQUEST = 'Unable to decline request';
-    const UNABLET_TO_EDIT_COMPANY = 'Unable to edit company';
+    const UNABLE_TO_EDIT_COMPANY = 'Unable to edit company';
+    const COMPANY_USER_ALREADY_EXISTS = 'Company user already exists';
+    const UNABLE_TO_UPDATE_COMPANY_USER = 'Unable to update company user';
 }

@@ -99,7 +99,7 @@ class CompanyController extends ControllerBase
         if(Company::edit((array) $postData->company)) {
             return $this->response->sendSuccess();
         }
-        return $this->response->sendError(ResponseMessage::UNABLET_TO_EDIT_COMPANY);
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_EDIT_COMPANY);
     }
 
     /**
@@ -257,6 +257,35 @@ class CompanyController extends ControllerBase
 
         $userData = $user->toArray();
         return $this->response->sendSuccess($userData);
+    }
+
+    /**
+     * Edit Company User API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function editUserAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!isset($postData->company_user)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $companyContactValidator = new CompanyContactUpdateValidation($postData, 'company_user');
+        if (!$companyContactValidator->validate()) {
+            return $this->response->sendError($companyContactValidator->getMessages());
+        }
+        $this->db->begin();
+
+        if(CompanyUser::updateUser($postData->company_user) && UserAuth::changeEmail($postData->company_user->user_auth_id, $postData->company_user->email)) {
+            $this->db->commit();
+            return $this->response->sendSuccess();
+        }
+
+        $this->db->rollback();
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_UPDATE_COMPANY_USER);
     }
 
     /**
