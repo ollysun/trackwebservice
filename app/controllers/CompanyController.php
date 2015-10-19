@@ -96,7 +96,10 @@ class CompanyController extends ControllerBase
             return $this->response->sendError($companyRequestValidator->getMessages());
         }
 
-        echo "Continue";
+        if(Company::edit((array) $postData->company)) {
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLET_TO_EDIT_COMPANY);
     }
 
     /**
