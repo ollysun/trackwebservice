@@ -318,6 +318,10 @@ class UserAuth extends \Phalcon\Mvc\Model
         $userAuth = UserAuth::findFirst($id);
 
         if($userAuth) {
+            // Check if email was not changed
+            if($email == $userAuth->getEmail()) {
+                return true;
+            }
             $userAuth->setEmail($email);
             $userAuth->setModifiedDate(Util::getCurrentDateTime());
 
