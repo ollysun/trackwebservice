@@ -253,5 +253,49 @@ class ShipmentRequest extends EagerModel
         ];
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $postData
+     * @throws Exception
+     */
+    public static function addBulkRequests($postData)
+    {
+        $batchData = [];
+        foreach ($postData as $row) {
+            $rowData = [];
+            $rowData[] = $row->receiver_firstname;
+            $rowData[] = $row->receiver_address;
+            $rowData[] = $row->company_id;
+            $rowData[] = $row->receiver_state_id;
+            $rowData[] = $row->receiver_city_id;
+            $rowData[] = $row->estimated_weight;
+            $rowData[] = $row->no_of_packages;
+            $rowData[] = $row->parcel_value;
+            $rowData[] = (property_exists($row, 'cash_on_delivery')) ? $row->cash_on_delivery : null;
+            $rowData[] = (property_exists($row, 'description')) ? $row->description : null;
+            $rowData[] = (property_exists($row, 'receiver_lastname')) ? $row->receiver_lastname : null;
+            $rowData[] = (property_exists($row, 'receiver_phone_number')) ? $row->receiver_phone_number : null;
+            $rowData[] = (property_exists($row, 'receiver_company_name')) ? $row->receiver_company_name : null;
+            $rowData[] = (property_exists($row, 'receiver_email')) ? $row->receiver_email : null;
+            $rowData[] = (property_exists($row, 'reference_number')) ? $row->reference_number : null;
+            $rowData[] = $row->created_by;
+            $rowData[] = Util::getCurrentDateTime();
+            $batchData[] = $rowData;
+        }
+
+
+        $batch = new Batch('shipment_requests');
+        $batch->setRows(['receiver_firstname',
+            'receiver_address', 'company_id',
+            'receiver_state_id', 'receiver_city_id',
+            'estimated_weight', 'no_of_packages',
+            'parcel_value', 'cash_on_delivery', 'description',
+            'receiver_lastname', 'receiver_phone_number',
+            'receiver_company_name', 'receiver_email',
+            'reference_number', 'created_by', 'created_at']);
+        $batch->setValues($batchData);
+        $batch->insert();
+    }
+
 
 }

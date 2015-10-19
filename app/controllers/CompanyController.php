@@ -1,5 +1,6 @@
 <?php
 
+
 use PhalconUtils\Validation\RequestValidation;
 
 /**
@@ -343,6 +344,39 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * make a corporate bulk shipment request
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function makeBulkShipmentRequestAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!is_array($postData) || !$postData) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $rowValidator = new ShipmentRequestValidation();
+
+        $count = 0;
+        foreach ($postData as $row) {
+            $count++;
+            $row->created_by = $this->auth->getPersonId();
+            $rowValidator->setData($row);
+            if (!$rowValidator->validate()) {
+                return $this->response->sendError($rowValidator->getMessages() . ' on row ' . $count);
+            }
+        }
+
+        try {
+            ShipmentRequest::addBulkRequests($postData);
+            return $this->response->sendSuccess();
+        } catch (Exception $ex) {
+            return $this->response->sendError($ex->getMessage());
+        }
+    }
+
+    /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return $this
      */
@@ -350,7 +384,6 @@ class CompanyController extends ControllerBase
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
-        $company_id = $this->request->getQuery('company_id', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
         $request_type = $this->request->getQuery('type', null, 'shipment');
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
