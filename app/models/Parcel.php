@@ -1600,6 +1600,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Receiver.*';
             $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver');
         }
+        if (isset($fetch_with['with_delivery_receipt'])) {
+            $columns[] = 'DeliveryReceipt.*';
+            $builder->leftJoin('DeliveryReceipt', 'DeliveryReceipt.waybill_number = Parcel.waybill_number', 'DeliveryReceipt');
+        }
 
         $builder->where(join(' AND ', $where));
 
@@ -1655,6 +1659,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 if (isset($fetch_with['with_created_by'])){
                     $parcel['created_by'] = $item->createdBy->getData();
+                }
+                if (isset($fetch_with['with_delivery_receipt'])){
+                    $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
                 }
             }
             $result[] = $parcel;
