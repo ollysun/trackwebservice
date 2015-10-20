@@ -305,6 +305,32 @@ class UserAuth extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Changes the email of the auth user
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $email
+     * @return bool
+     */
+    public static function changeEmail($id, $email)
+    {
+        /**
+         * @var UserAuth $userAuth
+         */
+        $userAuth = UserAuth::findFirst($id);
+
+        if($userAuth) {
+            // Check if email was not changed
+            if($email == $userAuth->getEmail()) {
+                return true;
+            }
+            $userAuth->setEmail($email);
+            $userAuth->setModifiedDate(Util::getCurrentDateTime());
+
+            return $userAuth->save();
+        }
+        return false;
+    }
+
+    /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $identifier
      * @return \Phalcon\Mvc\ModelInterface
