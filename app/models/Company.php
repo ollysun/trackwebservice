@@ -690,7 +690,7 @@ class Company extends EagerModel
         }
 
         if (isset($filter_by['name'])) {
-            $where[] = 'name LIKE :name:';
+            $where[] = 'Company.name LIKE :name:';
             $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
         }
 
