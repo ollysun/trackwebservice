@@ -736,13 +736,6 @@ class Company extends EagerModel
         $obj->setFetchWith($fetch_with)
             ->joinWith($builder, $columns);
 
-//        if (isset($fetch_with['with_city'])) {
-//            $builder->innerJoin('City', 'City.id = Company.city_id');
-//            $builder->innerJoin('State', 'State.id = City.state_id');
-//            $columns[] = 'City.*';
-//            $columns[] = 'State.*';
-//        }
-
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
 
@@ -755,10 +748,6 @@ class Company extends EagerModel
                 $relatedRecords = $obj->loadRelatedModels($item, true);
 
                 $company = array_merge($company, $relatedRecords);
-//                if (isset($fetch_with['with_city'])) {
-//                    $company['city'] = $item->city->getData();
-//                    $company['state'] = $item->state->getData();
-//                }
             } else {
                 $company = $item->getData();
             }
