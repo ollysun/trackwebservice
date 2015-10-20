@@ -20,59 +20,6 @@ class ParcelController extends ControllerBase
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-
-        /*  $payload = '{
-      "sender": {
-          "firstname": "Rotimo",
-          "lastname": "Akintewe",
-          "phone": "+2348033438870",
-          "email": "akintewe.rotimi@gmail.com"
-      },
-      "receiver": {
-          "firstname": "Dapo",
-          "lastname": "Olotu",
-          "phone": "09023454321",
-          "email": "dapo.olotu@gmail.com"
-      },
-      "sender_address": {
-          "id": null,
-          "street1": "3 Cuttacosh Road, Abule Egba.",
-          "street2": "",
-          "city_id": "23",
-          "state_id": "1",
-          "country_id": "1"
-      },
-      "receiver_address": {
-          "id": null,
-          "street1": "9, Ojo Street, Akoka",
-          "street2": "",
-          "city_id": "23",
-          "state_id": "1",
-          "country_id": "1"
-      },
-      "parcel": {
-          "parcel_type": "1",
-          "no_of_package": "1",
-          "weight": "176",
-          "parcel_value": "23000",
-          "amount_due": "23000",
-          "cash_on_delivery": 1,
-          "cash_on_delivery_amount": "120000",
-          "delivery_type": "2",
-          "payment_type": "2",
-          "shipping_type": "1",
-          "other_info": "This is the other information needed",
-          "cash_amount": null,
-          "pos_amount": null,
-          "pos_trans_id": null,
-          "package_value": 200.00,
-          "is_billing_overridden": 1,
-          "reference_number": "R34324232"
-      },
-      "is_corporate_lead": 0,
-      "to_hub": 1
-  }';
-          $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -1130,7 +1077,7 @@ class ParcelController extends ControllerBase
      */
     public function setReturnFlagAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::SWEEPER, Role::DISPATCHER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $return_flag = $this->request->getPost('return_flag', null, 1);
