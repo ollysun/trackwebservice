@@ -1,0 +1,1 @@
+ALTER TABLE user_auth ADD COLUMN last_login_time TIMESTAMP DEFAULT 0 after modified_date;

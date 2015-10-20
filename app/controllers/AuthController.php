@@ -21,6 +21,7 @@ class AuthController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        /** @var UserAuth $authUser */
         $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {
             if ($this->security->checkHash($password, $authUser->getPassword())) {
@@ -52,6 +53,9 @@ class AuthController extends ControllerBase
                     Auth::L_TOKEN => $token,
                     Auth::L_DATA => $userData
                 ]);
+
+                $authUser->setLastLoginTime(Util::getCurrentDateTime());
+                $authUser->save();
 
                 return $this->response->sendSuccess($userData);
             }

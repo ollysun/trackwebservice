@@ -48,6 +48,12 @@ class UserAuth extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var string
+     */
+    protected $last_login_time;
+
+    /**
+     *
      * @var integer
      */
     protected $status;
@@ -135,6 +141,15 @@ class UserAuth extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param string $last_login_time
+     */
+    public function setLastLoginTime($last_login_time)
+    {
+        $this->last_login_time = $last_login_time;
+    }
+
+
+    /**
      * Method to set the value of field status
      *
      * @param integer $status
@@ -208,6 +223,15 @@ class UserAuth extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @return string
+     */
+    public function getLastLoginTime()
+    {
+        return $this->last_login_time;
+    }
+
+
+    /**
      * Returns the value of field status
      *
      * @return integer
@@ -253,11 +277,13 @@ class UserAuth extends \Phalcon\Mvc\Model
             'entity_type' => 'entity_type',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
+            'last_login_time' => 'last_login_time',
             'status' => 'status'
         );
     }
 
-    public function initData($email, $password, $entity_type){
+    public function initData($email, $password, $entity_type)
+    {
         $this->setEntityType($entity_type);
         $this->setEmail($email);
         $this->setPassword($password);
@@ -268,31 +294,36 @@ class UserAuth extends \Phalcon\Mvc\Model
         $this->setStatus(Status::INACTIVE);
     }
 
-    public function getData(){
+    public function getData()
+    {
         return [
             'id' => $this->getId(),
             'email' => $this->getEmail(),
             'entity_type' => $this->getEntityType(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
+            'last_login_time' => $this->getLastLoginTime(),
             'status' => $this->getStatus()
         ];
     }
 
-    public static function fetchByEmail($email){
+    public static function fetchByEmail($email)
+    {
         return UserAuth::findFirst([
             'email = :email:',
             'bind' => ['email' => $email]
         ]);
     }
 
-    public function changePassword($password){
+    public function changePassword($password)
+    {
         $this->setPassword($password);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
         $this->setStatus(Status::ACTIVE);
     }
 
-    public function changeStatus($status){
+    public function changeStatus($status)
+    {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
@@ -317,6 +348,6 @@ class UserAuth extends \Phalcon\Mvc\Model
             ->from('UserAuth')
             ->leftJoin('Admin', 'Admin.user_auth_id = UserAuth.id')
             ->where('UserAuth.email=:identifier: OR Admin.staff_id = :identifier: OR Admin.phone = :identifier:');
-        return $builder->getQuery()->getSingleResult(['identifier'=>$identifier]);
+        return $builder->getQuery()->getSingleResult(['identifier' => $identifier]);
     }
 }
