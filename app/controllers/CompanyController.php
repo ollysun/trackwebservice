@@ -278,7 +278,7 @@ class CompanyController extends ControllerBase
         }
         $this->db->begin();
 
-        if(CompanyUser::updateUser($postData->company_user) && UserAuth::changeEmail($postData->company_user->user_auth_id, $postData->company_user->email)) {
+        if(CompanyUser::updateUser($postData->company_user) && UserAuth::updateEmailAndStatus($postData->company_user->user_auth_id, $postData->company_user->email, $postData->company_user->status)) {
             $this->db->commit();
             return $this->response->sendSuccess();
         }

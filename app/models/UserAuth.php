@@ -307,10 +307,12 @@ class UserAuth extends \Phalcon\Mvc\Model
     /**
      * Changes the email of the auth user
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $id
      * @param $email
+     * @param $status
      * @return bool
      */
-    public static function changeEmail($id, $email)
+    public static function updateEmailAndStatus($id, $email, $status)
     {
         /**
          * @var UserAuth $userAuth
@@ -318,11 +320,15 @@ class UserAuth extends \Phalcon\Mvc\Model
         $userAuth = UserAuth::findFirst($id);
 
         if($userAuth) {
-            // Check if email was not changed
-            if($email == $userAuth->getEmail()) {
+            $changeEmail = $email != $userAuth->getEmail();
+            $changeStatus = $status != $userAuth->getStatus();
+
+            if(!($changeEmail && $changeStatus)) {
                 return true;
             }
+
             $userAuth->setEmail($email);
+            $userAuth->setStatus($status);
             $userAuth->setModifiedDate(Util::getCurrentDateTime());
 
             return $userAuth->save();
