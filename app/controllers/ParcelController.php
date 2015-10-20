@@ -257,6 +257,7 @@ class ParcelController extends ControllerBase
         $with_bank_account = $this->request->getQuery('with_bank_account');
         $with_created_branch = $this->request->getQuery('with_created_branch');
         $with_route = $this->request->getQuery('with_route');
+        $with_delivery_receipt = $this->request->getQuery('with_delivery_receipt');
         $with_created_by = $this->request->getQuery('with_created_by');
 
         $with_total_count = $this->request->getQuery('with_total_count');
@@ -303,6 +304,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_created_by)) {
             $fetch_with['with_created_by'] = true;
+        }
+        if (!is_null($with_delivery_receipt)) {
+            $fetch_with['with_delivery_receipt'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
