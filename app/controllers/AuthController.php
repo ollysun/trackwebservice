@@ -21,6 +21,7 @@ class AuthController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        /** @var UserAuth $authUser */
         $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {
             if ($this->security->checkHash($password, $authUser->getPassword())) {
@@ -44,6 +45,7 @@ class AuthController extends ControllerBase
 
                 $userData['email'] = $authUser->getEmail();
                 $userData['status'] = $authUser->getStatus();
+                $userData['last_login_time'] = $authUser->getLastLoginTime();
                 $role_id = ($authUser->getStatus() == Status::ACTIVE) ? $userData['role_id'] : Role::INACTIVE_USER;
 
                 $this->auth->saveTokenData($authUser->getId(), [
@@ -52,6 +54,9 @@ class AuthController extends ControllerBase
                     Auth::L_TOKEN => $token,
                     Auth::L_DATA => $userData
                 ]);
+
+                $authUser->setLastLoginTime(time());
+                $authUser->save();
 
                 return $this->response->sendSuccess($userData);
             }
