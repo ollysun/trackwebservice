@@ -718,6 +718,16 @@ class Company extends EagerModel
         return intval($data[0]->company_count);
     }
 
+    /**
+     * Fetches all companies depending on the provided criteria
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
