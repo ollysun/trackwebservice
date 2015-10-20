@@ -718,6 +718,16 @@ class Company extends EagerModel
         return intval($data[0]->company_count);
     }
 
+    /**
+     * Fetches all companies depending on the provided criteria
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
@@ -733,12 +743,8 @@ class Company extends EagerModel
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (isset($fetch_with['with_city'])) {
-            $builder->innerJoin('City', 'City.id = Company.city_id');
-            $builder->innerJoin('State', 'State.id = City.state_id');
-            $columns[] = 'City.*';
-            $columns[] = 'State.*';
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -749,10 +755,9 @@ class Company extends EagerModel
             $company = [];
             if (isset($item->company)) {
                 $company = $item->company->getData();
-                if (isset($fetch_with['with_city'])) {
-                    $company['city'] = $item->city->getData();
-                    $company['state'] = $item->state->getData();
-                }
+                $relatedRecords = $obj->loadRelatedModels($item, true);
+
+                $company = array_merge($company, $relatedRecords);
             } else {
                 $company = $item->getData();
             }
@@ -910,9 +915,10 @@ class Company extends EagerModel
                 'field' => 'secondary_contact',
                 'model_name' => 'Company',
                 'ref_model_name' => 'CompanyUser',
-                'foreign_key' => 'secondary_contact_id',
+                'foreign_key' => 'sec_contact_id',
                 'reference_key' => 'id',
-                'alias' => 'SecondaryContact'
+                'alias' => 'SecondaryContact',
+                'join_type' => 'left'
             ],
             [
                 'field' => 'relations_officer',
