@@ -587,7 +587,7 @@ class CompanyController extends ControllerBase
 
         $this->db->begin();
 
-        if($pickupRequest->declineRequest() && PickupRequestComment::addDeclineComment($postData->request_id, $postData->comment)) {
+        if($pickupRequest->declineRequest() && PickupRequestComment::add($postData->request_id, $postData->comment, PickupRequestComment::COMMENT_TYPE_DECLINED)) {
             $this->db->commit();
             return $this->response->sendSuccess();
         }
@@ -650,7 +650,7 @@ class CompanyController extends ControllerBase
 
         $this->db->begin();
 
-        if($shipmentRequest->declineRequest() && ShipmentRequestComment::addDeclineComment($postData->request_id, $postData->comment)) {
+        if($shipmentRequest->declineRequest() && ShipmentRequestComment::add($postData->request_id, $postData->comment, ShipmentRequestComment::COMMENT_TYPE_DECLINED)) {
             $this->db->commit();
             return $this->response->sendSuccess();
         }

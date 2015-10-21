@@ -20,12 +20,12 @@ class PickupRequestComment extends BaseModel implements CorporateRequestCommentT
      * @param $comment
      * @return bool
      */
-    public static function addDeclineComment($pickupRequestId, $comment)
+    public static function add($pickupRequestId, $comment, $type)
     {
         $pickupRequestComment = new self();
         $pickupRequestComment->pickup_request_id = $pickupRequestId;
         $pickupRequestComment->comment = $comment;
-        $pickupRequestComment->type = self::COMMENT_TYPE_DECLINED;
+        $pickupRequestComment->type = $type;
         return $pickupRequestComment->save();
     }
 }

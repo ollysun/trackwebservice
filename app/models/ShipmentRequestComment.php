@@ -18,14 +18,15 @@ class ShipmentRequestComment extends BaseModel implements CorporateRequestCommen
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $shipmentRequestId
      * @param $comment
+     * @param $type
      * @return bool
      */
-    public static function addDeclineComment($shipmentRequestId, $comment)
+    public static function add($shipmentRequestId, $comment, $type)
     {
         $shipmentRequestComment = new self();
         $shipmentRequestComment->shipment_request_id = $shipmentRequestId;
         $shipmentRequestComment->comment = $comment;
-        $shipmentRequestComment->type = self::COMMENT_TYPE_DECLINED;
+        $shipmentRequestComment->type = $type;
 
         return $shipmentRequestComment->save();
     }
