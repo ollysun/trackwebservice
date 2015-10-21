@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS pickup_request_comments (
   `comment` TEXT NOT NULL,
   `type` VARCHAR(25) NOT NULL,
   `created_at` DATETIME NOT NULL,
-  `modified_at` DATETIME NOT NULL,
+  `updated_at` DATETIME NOT NULL,
   `status` TINYINT(1) DEFAULT 1,
   KEY k_pickup_request_id (pickup_request_id),
   KEY k_type (`type`),

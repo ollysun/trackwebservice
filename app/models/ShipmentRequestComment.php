@@ -10,7 +10,7 @@ class ShipmentRequestComment extends BaseModel implements CorporateRequestCommen
      */
     public function initialize()
     {
-        $this->setSource('shipment_requests_comments');
+        $this->setSource('shipment_request_comments');
     }
 
     /**

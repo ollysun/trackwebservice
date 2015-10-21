@@ -572,7 +572,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists($postData, 'request_id')) {
+        if (!property_exists($postData, 'request_id') || !property_exists($postData, 'comment')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -585,9 +585,14 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
-        if($pickupRequest->declineRequest()) {
+        $this->db->begin();
+
+        if($pickupRequest->declineRequest() && PickupRequestComment::addDeclineComment($postData->request_id, $postData->comment)) {
+            $this->db->commit();
             return $this->response->sendSuccess();
         }
+
+        $this->db->rollback();
 
         return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
     }
@@ -630,7 +635,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists($postData, 'request_id')) {
+        if (!property_exists($postData, 'request_id') || !property_exists($postData, 'comment')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -643,9 +648,14 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
-        if($shipmentRequest->declineRequest()) {
+        $this->db->begin();
+
+        if($shipmentRequest->declineRequest() && ShipmentRequestComment::addDeclineComment($postData->request_id, $postData->comment)) {
+            $this->db->commit();
             return $this->response->sendSuccess();
         }
+
+        $this->db->rollback();
 
         return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
     }

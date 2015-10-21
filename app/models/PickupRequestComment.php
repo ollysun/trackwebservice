@@ -10,7 +10,7 @@ class PickupRequestComment extends BaseModel implements CorporateRequestCommentT
      */
     public function initialize()
     {
-        $this->setSource('pickup_requests_comments');
+        $this->setSource('pickup_request_comments');
     }
 
     /**
@@ -26,7 +26,6 @@ class PickupRequestComment extends BaseModel implements CorporateRequestCommentT
         $pickupRequestComment->pickup_request_id = $pickupRequestId;
         $pickupRequestComment->comment = $comment;
         $pickupRequestComment->type = self::COMMENT_TYPE_DECLINED;
-
         return $pickupRequestComment->save();
     }
 }
