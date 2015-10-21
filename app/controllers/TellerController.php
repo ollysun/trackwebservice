@@ -35,6 +35,12 @@ class TellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
+        $payer = Admin::getById($paid_by);
+        if (false == $payer){
+            return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+        }
+
+
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
         $bad_parcels = array();
         $good_parcels = array();
@@ -53,13 +59,13 @@ class TellerController extends ControllerBase {
             return $this->response->sendError($bad_parcels);
         }
 
-        //check for the pre-exsitence of the teller no breofre the creatio nof the teller
+        //check for the pre-existence of the teller no before the creation of the teller
         $teller = Teller::getTeller($bank_id, $teller_no);
         if($teller === false) {
             $teller = new Teller();
             $teller_id = $teller->saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $good_parcels, $paid_by, $created_by, $branch_id);
             if ($teller_id){
-                return $this->response->sendSuccess(['id' => $teller->getId()]);
+                return $this->response->sendSuccess(['id' => $teller_id]);
             }
         }
         else{

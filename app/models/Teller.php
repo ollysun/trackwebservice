@@ -449,12 +449,13 @@ class Teller extends \Phalcon\Mvc\Model
         return 'teller';
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause=null){
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Teller');
 
-        if (!isset($filter_by['send_all'])){
+        if (!isset($filter_by['send_all'])) {
             $builder->limit($count, $offset);
         }
 
@@ -465,23 +466,31 @@ class Teller extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if ($order_by_clause != null){
+        if ($order_by_clause != null) {
             $builder->orderBy($order_by_clause);
-        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])){
+        } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])) {
             $builder->orderBy('Teller.modified_date');
         } else {
             $builder->orderBy('Teller.id');
         }
 
         //model hydration
-        if (isset($fetch_with['with_bank'])){
+        if (isset($fetch_with['with_bank'])) {
             $columns[] = 'Bank.*';
             $builder->leftJoin('Bank', 'Bank.id = Teller.bank_id');
+        }
+        if (isset($fetch_with['with_branch'])) {
+            $columns[] = 'Branch.*';
+            $builder->leftJoin('Branch', 'Branch.id = Teller.branch_id');
+        }
+        if (isset($fetch_with['with_payer'])) {
+            $columns[] = 'Admin.*';
+            $builder->leftJoin('Admin', 'Admin.id = Teller.paid_by');
         }
 
         $builder->where(join(' AND ', $where));
 
-        if (isset($filter_by['teller_no'])){
+        if (isset($filter_by['teller_no'])) {
             $teller_no = explode(',', $filter_by['teller_no']);
 
             $builder->inWhere('Teller.teller_no', $teller_no);
@@ -491,14 +500,20 @@ class Teller extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach($data as $item){
+        foreach ($data as $item) {
             $teller = [];
-            if ($item->teller == null){
+            if ($item->teller == null) {
                 $teller = $item->getData();
-            }else{
+            } else {
                 $teller = $item->teller->getData();
                 if (isset($fetch_with['with_bank'])) {
                     $teller['bank'] = $item->bank->getData();
+                }
+                if (isset($fetch_with['with_branch'])) {
+                    $teller['branch'] = $item->branch->getData();
+                }
+                if (isset($fetch_with['with_payer'])) {
+                    $teller['payer'] = $item->admin->getData();
                 }
             }
             $result[] = $teller;
@@ -506,7 +521,8 @@ class Teller extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function fetchOne($id, $in_recursion=false){
+    public static function fetchOne($id, $in_recursion = false)
+    {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['Teller.*', 'Parcel.*'])
@@ -524,20 +540,48 @@ class Teller extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    private static function filterConditions($filter_by){
+    private static function filterConditions($filter_by)
+    {
         $bind = [];
         $where = [];
 
         //filters
-        if (isset($filter_by['bank_id'])){ $where[] = 'Teller.bank_id = :bank_id:'; $bind['bank_id'] = $filter_by['bank_id'];}
-        if (isset($filter_by['created_by'])){ $where[] = 'Teller.created_by = :created_by:'; $bind['created_by'] = $filter_by['created_by'];}
-        if (isset($filter_by['min_amount_paid'])){ $where[] = 'Teller.amount_paid >= :min_amount_paid:'; $bind['min_amount_paid'] = $filter_by['min_amount_paid'];}
-        if (isset($filter_by['max_amount_paid'])){ $where[] = 'Teller.amount_paid <= :max_amount_paid:'; $bind['max_amount_paid'] = $filter_by['max_amount_paid'];}
-        if (isset($filter_by['start_created_date'])){ $where[] = 'Teller.created_date >= :start_created_date:'; $bind['start_created_date'] = $filter_by['start_created_date'];}
-        if (isset($filter_by['end_created_date'])){ $where[] = 'Teller.created_date <= :end_created_date:'; $bind['end_created_date'] = $filter_by['end_created_date'];}
-        if (isset($filter_by['start_modified_date'])){ $where[] = 'Teller.modified_date >= :start_modified_date:'; $bind['start_modified_date'] = $filter_by['start_modified_date'];}
-        if (isset($filter_by['end_modified_date'])){ $where[] = 'Teller.modified_date <= :end_modified_date:'; $bind['end_modified_date'] = $filter_by['end_modified_date'];}
-        if (isset($filter_by['teller_no'])){ $where[] = 'Teller.teller_no LIKE :teller_no:'; $bind['teller_no'] = '%' . $filter_by['teller_no'] . '%';}
+        if (isset($filter_by['bank_id'])) {
+            $where[] = 'Teller.bank_id = :bank_id:';
+            $bind['bank_id'] = $filter_by['bank_id'];
+        }
+        if (isset($filter_by['created_by'])) {
+            $where[] = 'Teller.created_by = :created_by:';
+            $bind['created_by'] = $filter_by['created_by'];
+        }
+        if (isset($filter_by['min_amount_paid'])) {
+            $where[] = 'Teller.amount_paid >= :min_amount_paid:';
+            $bind['min_amount_paid'] = $filter_by['min_amount_paid'];
+        }
+        if (isset($filter_by['max_amount_paid'])) {
+            $where[] = 'Teller.amount_paid <= :max_amount_paid:';
+            $bind['max_amount_paid'] = $filter_by['max_amount_paid'];
+        }
+        if (isset($filter_by['start_created_date'])) {
+            $where[] = 'Teller.created_date >= :start_created_date:';
+            $bind['start_created_date'] = $filter_by['start_created_date'];
+        }
+        if (isset($filter_by['end_created_date'])) {
+            $where[] = 'Teller.created_date <= :end_created_date:';
+            $bind['end_created_date'] = $filter_by['end_created_date'];
+        }
+        if (isset($filter_by['start_modified_date'])) {
+            $where[] = 'Teller.modified_date >= :start_modified_date:';
+            $bind['start_modified_date'] = $filter_by['start_modified_date'];
+        }
+        if (isset($filter_by['end_modified_date'])) {
+            $where[] = 'Teller.modified_date <= :end_modified_date:';
+            $bind['end_modified_date'] = $filter_by['end_modified_date'];
+        }
+        if (isset($filter_by['teller_no'])) {
+            $where[] = 'Teller.teller_no LIKE :teller_no:';
+            $bind['teller_no'] = '%' . $filter_by['teller_no'] . '%';
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
@@ -550,7 +594,8 @@ class Teller extends \Phalcon\Mvc\Model
      * @return int
      * @author  Olawale Lawal
      */
-    public static function tellerCount($filter_by){
+    public static function tellerCount($filter_by)
+    {
         $obj = new Teller();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS teller_count')
@@ -564,7 +609,7 @@ class Teller extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
-        if (count($data) == 0){
+        if (count($data) == 0) {
             return null;
         }
 
@@ -587,8 +632,8 @@ class Teller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      */
 
-    public function initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, $status){
-
+    public function initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, $status)
+    {
         $this->setBankId($bank_id);
         $this->setAccountName($account_name);
         $this->setAccountNo($account_no);
@@ -620,25 +665,26 @@ class Teller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      * @return array
      */
-    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $parcel_id_array, $paid_by, $created_by, $branch_id) {
+    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $parcel_id_array, $paid_by, $created_by, $branch_id)
+    {
 
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
         try {
-            $check = true;
             $this->setTransaction($transaction);
 
             $this->initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, Status::TELLER_AWAITING_APPROVAL);
             $check = $this->save();
-
             //saving the parcels with the teller id
             if ($check) {
-                foreach ($parcel_id_array as $parcel_id){
-                    $teller_parcel = new TellerParcel();
-                    $teller_parcel->setTransaction($transaction);
+                $teller_parcel = new TellerParcel();
+                $teller_parcel->setTransaction($transaction);
+                foreach ($parcel_id_array as $parcel_id) {
                     $teller_parcel->initData($this->getId(), $parcel_id);
                     $check = $teller_parcel->save();
                 }
+            } else {
+                return false;
             }
 
             if ($check) {
@@ -646,11 +692,10 @@ class Teller extends \Phalcon\Mvc\Model
                 return $this->getId();
             }
         } catch (Exception $e) {
-
         }
 
         $transactionManager->rollback();
-        return $parcel_id_array;
+        return false;
     }
 
     /**
@@ -659,7 +704,8 @@ class Teller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      * @return array
      */
-    public function getData(){
+    public function getData()
+    {
         return array(
             'id' => $this->getId(),
             'teller_no' => $this->getTellerNo(),
@@ -668,6 +714,8 @@ class Teller extends \Phalcon\Mvc\Model
             'amount_paid' => $this->getAmountPaid(),
             'status' => $this->getStatus(),
             'created_date' => $this->getCreatedDate(),
+            'created_by' => $this->getCreatedBy(),
+            'paid_by' => $this->getPaidBy(),
             'modified_date' => $this->getModifiedDate()
         );
     }
@@ -680,7 +728,8 @@ class Teller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      * @return Teller
      */
-    public static function getTeller($bank_id, $teller_no){
+    public static function getTeller($bank_id, $teller_no)
+    {
         return Teller::findFirst([
             'bank_id = :bank_id: AND teller_no = :teller_no:',
             'bind' => array('bank_id' => $bank_id, 'teller_no' => $teller_no)
