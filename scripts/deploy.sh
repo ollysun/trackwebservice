@@ -95,10 +95,10 @@ function migrate() {
     read db_name
 
     echo "Enter database username: "
-    echo db_user
+    read db_user
 
     echo "Enter database password: "
-    echo db_password
+    read db_password
 
     echo "Running phinx database migration on $1..."
 
