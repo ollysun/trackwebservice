@@ -684,6 +684,53 @@ class CompanyController extends ControllerBase
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
+
+    /**
+     * Links an express centre to a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function linkEcAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        $companyEcRequestValidator = new CompanyExpressCentreRequestValidation($postData);
+        if (!$companyEcRequestValidator->validate()) {
+            return $this->response->sendError($companyEcRequestValidator->getMessages());
+        }
+
+        if(CompanyBranch::add($postData->company_id, $postData->branch_id)) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_LINK_EC_TO_COMPANY);
+    }
+
+    /**
+     * Get's all ECs linked to companies
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getAllEcsAction() {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $with_total_count = $this->request->getQuery('with_total_count', null);
+
+        $filter_by = $this->request->getQuery();
+
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+
+        $ecs = CompanyBranch::fetchAll($offset, $count, $filter_by, $fetch_with);
+        if (!empty($with_total_count)) {
+            $count = CompanyBranch::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'ecs' => $ecs
+            ];
+        } else {
+            $result = $ecs;
+        }
+        return $this->response->sendSuccess($result);
+    }
 }
 
 

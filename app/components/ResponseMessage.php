@@ -136,4 +136,5 @@ class ResponseMessage
     const UNABLE_TO_EDIT_COMPANY = 'Unable to edit company';
     const COMPANY_USER_ALREADY_EXISTS = 'Company user already exists';
     const UNABLE_TO_UPDATE_COMPANY_USER = 'Unable to update company user';
+    const UNABLE_TO_LINK_EC_TO_COMPANY = 'Unable to link EC to company';
 }
