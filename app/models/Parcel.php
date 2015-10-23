@@ -2056,8 +2056,6 @@ class Parcel extends \Phalcon\Mvc\Model
                         if ($parcel_history->save()) {
                             $transactionManager->commit();
                             return true;
-                        }else{
-                            var_dump($parcel_history->getMessages());
                         }
                     }
                 }

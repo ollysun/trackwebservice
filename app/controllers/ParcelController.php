@@ -1239,7 +1239,7 @@ class ParcelController extends ControllerBase
 
         $admin = Admin::findFirst($admin_id);
         $held_by = Admin::findFirst($held_by_id);
-        if (false == $held_by) {
+        if (!$held_by) {
             return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
         }
 
@@ -1264,7 +1264,7 @@ class ParcelController extends ControllerBase
 
             //checking if the parcel is held by the correct person
             $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
-            if ($held_parcel_record == false) {
+            if (!$held_parcel_record) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
                 continue;
             }
@@ -1273,7 +1273,7 @@ class ParcelController extends ControllerBase
             if ($parcel->getForReturn()) {
                 if ($auth_data['branch']['branch_type'] == BranchType::EC) {
                     $hub = Branch::getParentById($auth_data['branch']['id']);
-                    if ($hub == false) {
+                    if (!$hub) {
                         return $this->response->sendError(ResponseMessage::HUB_NOT_EXISTING);
                     } else if ($hub->getBranchType() != BranchType::HUB) {
                         return $this->response->sendError(ResponseMessage::INVALID_HUB_PROVIDED);
