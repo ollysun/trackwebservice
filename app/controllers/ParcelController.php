@@ -1100,6 +1100,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::SWEEPER, Role::DISPATCHER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $comment = $this->request->getPost('comment');
         $return_flag = $this->request->getPost('return_flag', null, 1);
 
         if (!in_array($return_flag, [0, 1])) {
@@ -1130,22 +1131,29 @@ class ParcelController extends ControllerBase
             //cannot flag a return for a delivered parcel
             if ($parcel->getStatus() == Status::PARCEL_DELIVERED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
             }
 
             //if it is an officer, his branch must be either the to or from branch id
             if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+                continue;
             }
 
             //bags and split parcel parent can not be returned
             if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
             }
 
             $parcel->setForReturn($return_flag);
             if (!$parcel->save()) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
                 continue;
+            }
+
+            if (!is_null($comment)) {
+                ParcelComment::add(['type' => ParcelComment::COMMENT_TYPE_RETURNED, 'comment' => $comment, 'created_by' => $this->auth->getPersonId(), 'waybill_number' => $parcel->getWaybillNumber()]);
             }
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
@@ -1221,6 +1229,7 @@ class ParcelController extends ControllerBase
     }
 
     /**
+     * Comment on parcels
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
     public function addCommentAction()
@@ -1229,7 +1238,7 @@ class ParcelController extends ControllerBase
         $parcelCommentValidation = new ParcelCommentValidation($postData);
 
         if (!$parcelCommentValidation->validate()) {
-           return $this->response->sendError($parcelCommentValidation->getMessages());
+            return $this->response->sendError($parcelCommentValidation->getMessages());
         }
 
         $postData->created_by = $this->auth->getPersonId();

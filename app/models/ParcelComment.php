@@ -7,7 +7,8 @@
 class ParcelComment extends BaseModel
 {
 
-    static $comment_types = ['returned'];
+    const COMMENT_TYPE_RETURNED = 'returned';
+    static $comment_types = [self::COMMENT_TYPE_RETURNED];
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
