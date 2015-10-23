@@ -1200,4 +1200,83 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess($result);
     }
+
+    /**
+     * Used to receive shipments from the dispatcher after an attempted delivery
+     * @author Olawale Lawal <wale@cottacush.com>
+     *
+     */
+    public function receiveFromDispatcherAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $held_by_id = $this->request->getPost('held_by_id');
+        $admin_id = $this->auth->getPersonId();
+
+        if (in_array(null, [$waybill_numbers, $admin_id, $held_by_id])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = Admin::findFirst($admin_id);
+        $held_by = Admin::findFirst($held_by_id);
+        if (false == $held_by) {
+            return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number) {
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel == false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getToBranchId() != $admin->getBranchId()) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            }
+
+            //checking if the parcel is held by the correct person
+            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+            if ($held_parcel_record == false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                continue;
+            }
+
+            $status = $parcel->getStatus();
+            if ($parcel->getForReturn()) {
+                if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                    $hub = Branch::getParentById($auth_data['branch']['id']);
+                    if ($hub == false) {
+                        return $this->response->sendError(ResponseMessage::HUB_NOT_EXISTING);
+                    } else if ($hub->getBranchType() != BranchType::HUB) {
+                        return $this->response->sendError(ResponseMessage::INVALID_HUB_PROVIDED);
+                    }
+
+                    $parcel->setToBranchId($hub->getId());
+                    $status = Status::PARCEL_FOR_SWEEPER;
+                } elseif ($auth_data['branch']['branch_type'] == BranchType::HUB) {
+                    $status = Status::PARCEL_ARRIVAL;
+                }
+            } else {
+                $status = Status::PARCEL_FOR_DELIVERY;
+            }
+
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId(), $status, ParcelHistory::MSG_RECEIVED_FROM_DISPATCHER);
+            if (!$check) {
+
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_RECEIVED;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
 }

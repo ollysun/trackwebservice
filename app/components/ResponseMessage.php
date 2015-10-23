@@ -130,6 +130,7 @@ class ResponseMessage
     const PARCEL_ALREADY_RETURNED = 'Parcel already returned';
     const PARCEL_NOT_FOR_RETURN = 'Parcel not for return';
     const CANNOT_RETURN_PARCEL = 'Parcel not returned';
+    const PARCEL_CANNOT_BE_RECEIVED = 'Parcel cannot be received from dispatcher';
 
     const UNABLE_TO_CANCEL_REQUEST = 'Unable to cancel request';
     const UNABLE_TO_DECLINE_REQUEST = 'Unable to decline request';
