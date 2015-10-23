@@ -693,13 +693,14 @@ class CompanyController extends ControllerBase
     public function linkEcAction()
     {
         $postData = $this->request->getJsonRawBody();
+        $createdBy = $this->auth->getPersonId();
 
         $companyEcRequestValidator = new CompanyExpressCentreRequestValidation($postData);
         if (!$companyEcRequestValidator->validate()) {
             return $this->response->sendError($companyEcRequestValidator->getMessages());
         }
 
-        if(CompanyBranch::add($postData->company_id, $postData->branch_id)) {
+        if(CompanyBranch::add($postData->company_id, $postData->branch_id, $createdBy)) {
             return $this->response->sendSuccess();
         }
 
@@ -714,13 +715,14 @@ class CompanyController extends ControllerBase
     public function relinkEcAction()
     {
         $postData = $this->request->getJsonRawBody();
+        $updatedBy = $this->auth->getPersonId();
 
         $companyEcRequestValidator = new CompanyExpressCentreUpdateRequestValidation($postData);
         if (!$companyEcRequestValidator->validate()) {
             return $this->response->sendError($companyEcRequestValidator->getMessages());
         }
 
-        if(CompanyBranch::edit($postData->id, $postData->company_id, $postData->branch_id)) {
+        if(CompanyBranch::edit($postData->id, $postData->company_id, $postData->branch_id, $updatedBy)) {
             return $this->response->sendSuccess();
         }
 

@@ -109,30 +109,35 @@ class CompanyBranch extends EagerModel
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $companyId
      * @param $branchId
+     * @param $createdBy
      * @return bool
      */
-    public static function add($companyId, $branchId)
+    public static function add($companyId, $branchId, $createdBy)
     {
         $companyBranch = new CompanyBranch();
         $companyBranch->company_id = $companyId;
         $companyBranch->branch_id = $branchId;
+        $companyBranch->created_by = $createdBy;
         return $companyBranch->save();
     }
 
     /**
      * Edit a link between company and branch
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $id
      * @param $companyId
      * @param $branchId
+     * @param $updatedBy
      * @return bool
      */
-    public static function edit($id, $companyId, $branchId)
+    public static function edit($id, $companyId, $branchId, $updatedBy)
     {
         $companyBranch = CompanyBranch::findFirst($id);
 
-        if($companyBranch) {
+        if ($companyBranch) {
             $companyBranch->company_id = $companyId;
             $companyBranch->branch_id = $branchId;
+            $companyBranch->last_updated_by = $updatedBy;
             return $companyBranch->save();
         }
 
@@ -147,20 +152,27 @@ class CompanyBranch extends EagerModel
     public function getFetchWithMap()
     {
         return [
-                [
-                    'field' => 'company',
-                    'model_name' => 'CompanyBranch',
-                    'ref_model_name' => 'Company',
-                    'foreign_key' => 'company_id',
-                    'reference_key' => 'id'
-                ],
-                [
-                    'field' => 'branch',
-                    'model_name' => 'CompanyBranch',
-                    'ref_model_name' => 'Branch',
-                    'foreign_key' => 'branch_id',
-                    'reference_key' => 'id'
-                ]
-            ];
+            [
+                'field' => 'company',
+                'model_name' => 'CompanyBranch',
+                'ref_model_name' => 'Company',
+                'foreign_key' => 'company_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'branch',
+                'model_name' => 'CompanyBranch',
+                'ref_model_name' => 'Branch',
+                'foreign_key' => 'branch_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'created_by',
+                'model_name' => 'CompanyBranch',
+                'ref_model_name' => 'Admin',
+                'foreign_key' => 'created_by',
+                'reference_key' => 'id'
+            ]
+        ];
     }
 }
