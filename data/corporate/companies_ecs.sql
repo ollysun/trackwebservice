@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS company_branches;
-
 CREATE TABLE IF NOT EXISTS company_branches (
     id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     company_id INT(11) NOT NULL,
