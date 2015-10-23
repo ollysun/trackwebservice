@@ -130,14 +130,17 @@ class BranchController extends ControllerBase
         return $this->response->sendSuccess($branch);
     }
 
+    /**
+     * Get all ECs
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
     public function getAllECAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $hub_id = $this->request->getQuery('hub_id');
-        if (is_null($hub_id)) {
-            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
-        }
 
         return $this->response->sendSuccess(Branch::fetchAllEC($hub_id));
     }
