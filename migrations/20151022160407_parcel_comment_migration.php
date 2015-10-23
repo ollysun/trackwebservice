@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class ParcelComment extends AbstractMigration
+class ParcelCommentMigration extends AbstractMigration
 {
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -18,7 +18,6 @@ class ParcelComment extends AbstractMigration
      */
     public function down()
     {
-        $downSql = "DROP TABLE IF EXISTS parcel_comments";
-        $this->execute($downSql);
+        $this->dropTable('parcel_comments');
     }
 }

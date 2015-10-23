@@ -1219,4 +1219,23 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess($result);
     }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function addCommentAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $parcelCommentValidation = new ParcelCommentValidation($postData);
+
+        if (!$parcelCommentValidation->validate()) {
+           return $this->response->sendError($parcelCommentValidation->getMessages());
+        }
+
+        $postData->created_by = $this->auth->getPersonId();
+
+        $status = ParcelComment::add($postData);
+
+        return (($status) ? $this->response->sendSuccess() : $this->response->sendError('Could not add comment'));
+    }
 }
