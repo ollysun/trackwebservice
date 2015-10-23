@@ -17,9 +17,9 @@ class CompanyExpressCentreUpdateRequestValidation extends \PhalconUtils\Validati
     {
         $this->setRequiredFields(['id', 'branch_id', 'company_id']);
 
-        $this->add('company_id', new Model([
-            'model' => Company::class,
-            'message' => 'Company does not exists',
+        $this->add('id', new Model([
+            'model' => CompanyBranch::class,
+            'message' => 'Company Express Centre does not exists',
         ]));
 
         $this->add('company_id', new Model([
