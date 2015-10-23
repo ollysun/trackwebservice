@@ -120,6 +120,26 @@ class CompanyBranch extends EagerModel
     }
 
     /**
+     * Edit a link between company and branch
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $companyId
+     * @param $branchId
+     * @return bool
+     */
+    public static function edit($id, $companyId, $branchId)
+    {
+        $companyBranch = CompanyBranch::findFirst($id);
+
+        if($companyBranch) {
+            $companyBranch->company_id = $companyId;
+            $companyBranch->branch_id = $branchId;
+            return $companyBranch->save();
+        }
+
+        return false;
+    }
+
+    /**
      * Returns an array that maps related models
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return array

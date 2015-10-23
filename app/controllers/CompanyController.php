@@ -707,6 +707,27 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Relinks an express centre to a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function relinkEcAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        $companyEcRequestValidator = new CompanyExpressCentreUpdateRequestValidation($postData);
+        if (!$companyEcRequestValidator->validate()) {
+            return $this->response->sendError($companyEcRequestValidator->getMessages());
+        }
+
+        if(CompanyBranch::edit($postData->id, $postData->company_id, $postData->branch_id)) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_RELINK_EC_TO_COMPANY);
+    }
+
+    /**
      * Get's all ECs linked to companies
      * @author Adegoke Obasa <goke@cottacush.com>
      */
