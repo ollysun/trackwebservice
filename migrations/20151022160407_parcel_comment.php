@@ -9,7 +9,7 @@ class ParcelComment extends AbstractMigration
      */
     public function up()
     {
-        $upSql = file_get_contents(dirname(__FILE__) . '/../data/parcel_comments_install.sql');
+        $upSql = file_get_contents(dirname(__FILE__) . '/../data/parcel/parcel_comments_install.sql');
         $this->execute($upSql);
     }
 
