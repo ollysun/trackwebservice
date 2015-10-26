@@ -441,6 +441,14 @@ class Branch extends \Phalcon\Mvc\Model
         ));
     }
 
+    /**
+     * Fetch All ECs
+     * If hub_id is set, get all ecs belonging to the hub
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $hub_id
+     * @return array
+     */
     public static function fetchAllEC($hub_id)
     {
         $obj = new Branch();
@@ -449,10 +457,18 @@ class Branch extends \Phalcon\Mvc\Model
             ->from('Branch')
             ->innerJoin('State', 'Branch.state_id = State.id')
             ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
-            ->where('BranchMap.parent_id = :hub_id: AND Branch.branch_type = :branch_type: AND Branch.status = :status:')
-            ->orderBy('Branch.name');
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
 
-        $data = $builder->getQuery()->execute(['hub_id' => $hub_id, 'branch_type' => BranchType::EC, 'status' => Status::ACTIVE]);
+        $filters = ['branch_type' => BranchType::EC, 'status' => Status::ACTIVE];
+
+        if(!is_null($hub_id)) {
+            $filters['hub_id'] = $hub_id;
+            $builder->andWhere("BranchMap.parent_id = :hub_id:");
+        }
+
+        $builder = $builder->orderBy('Branch.name');
+
+        $data = $builder->getQuery()->execute($filters);
 
         $result = [];
         foreach ($data as $item) {
