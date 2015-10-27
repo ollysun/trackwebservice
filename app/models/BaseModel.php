@@ -27,4 +27,19 @@ class BaseModel extends Model
         $this->updated_at = Util::getCurrentDateTime();
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $data
+     * @return bool
+     */
+    public static function add($data)
+    {
+        $called_class = get_called_class();
+        $model = new $called_class();
+        foreach ($data as $key => $value) {
+            $model->$key = $value;
+        }
+        return $model->save();
+    }
+
 }
