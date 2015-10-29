@@ -26,6 +26,8 @@ function deploy() {
     read ssh_key_file
 
     ssh $username@$host -i $ssh_key_file "cd /var/www/html/$app_folder && git pull && composer update"
+
+    migrate $1
 }
 
 function tagRelease() {
@@ -77,4 +79,31 @@ function run() {
     fi
 }
 
+function migrate() {
+    # Runs phinx migration
+    # 1 - Environment
+
+    echo "Do you want to run phinx database migration on $1? Y/N"
+    read should_migrate
+
+    if [ ${should_migrate} = "Y" -o ${should_migrate} = "y" ] ; then
+
+    echo "Enter database host: "
+    read db_host
+
+    echo "Enter database name: "
+    read db_name
+
+    echo "Enter database username: "
+    read db_user
+
+    echo "Enter database password: "
+    read db_password
+
+    echo "Running phinx database migration on $1..."
+
+    ssh ${username}@${host} -i ${ssh_key_file} "cd /var/www/html/$app_folder && PHINX_DBHOST=$db_host PHINX_DBNAME=$db_name PHINX_DBUSER=$db_user PHINX_DBPASS=$db_password php vendor/bin/phinx migrate -e $1"
+
+    fi
+}
 run

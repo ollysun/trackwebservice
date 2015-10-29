@@ -20,60 +20,6 @@ class ParcelController extends ControllerBase
         //todo: must be tied to an EC Officer only
         $this->auth->allowOnly([Role::OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
-        Util::slackDebug("Parcel Payload >>", json_encode($payload));
-
-        /*  $payload = '{
-      "sender": {
-          "firstname": "Rotimo",
-          "lastname": "Akintewe",
-          "phone": "+2348033438870",
-          "email": "akintewe.rotimi@gmail.com"
-      },
-      "receiver": {
-          "firstname": "Dapo",
-          "lastname": "Olotu",
-          "phone": "09023454321",
-          "email": "dapo.olotu@gmail.com"
-      },
-      "sender_address": {
-          "id": null,
-          "street1": "3 Cuttacosh Road, Abule Egba.",
-          "street2": "",
-          "city_id": "23",
-          "state_id": "1",
-          "country_id": "1"
-      },
-      "receiver_address": {
-          "id": null,
-          "street1": "9, Ojo Street, Akoka",
-          "street2": "",
-          "city_id": "23",
-          "state_id": "1",
-          "country_id": "1"
-      },
-      "parcel": {
-          "parcel_type": "1",
-          "no_of_package": "1",
-          "weight": "176",
-          "parcel_value": "23000",
-          "amount_due": "23000",
-          "cash_on_delivery": 1,
-          "cash_on_delivery_amount": "120000",
-          "delivery_type": "2",
-          "payment_type": "2",
-          "shipping_type": "1",
-          "other_info": "This is the other information needed",
-          "cash_amount": null,
-          "pos_amount": null,
-          "pos_trans_id": null,
-          "package_value": 200.00,
-          "is_billing_overridden": 1,
-          "reference_number": "R34324232"
-      },
-      "is_corporate_lead": 0,
-      "to_hub": 1
-  }';
-          $payload = json_decode($payload, true);*/
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
         $receiver = (isset($payload['receiver'])) ? $payload['receiver'] : null;
@@ -149,7 +95,7 @@ class ParcelController extends ControllerBase
              * @author Adegoke Obasa <goke@cottacush.com>
              * Link Parcel to Pickup Request
              */
-            if(isset($payload['pickup_request_id'])) {
+            if (isset($payload['pickup_request_id'])) {
                 PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getWaybillNumber());
             }
 
@@ -157,7 +103,7 @@ class ParcelController extends ControllerBase
              * Link Parcel to Shipment Request
              * @author Adegoke Obasa <goke@cottacush.com>
              **/
-            if(isset($payload['shipment_request_id'])) {
+            if (isset($payload['shipment_request_id'])) {
                 ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getWaybillNumber());
             }
 
@@ -183,6 +129,7 @@ class ParcelController extends ControllerBase
             }
             return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
         }
+        Util::slackDebug("Parcel Payload >>", json_encode($payload));
         return $this->response->sendError();
     }
 
@@ -222,7 +169,7 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $filter_params = ['for_return','manifest_id','show_parents','parent_id','entity_type','is_visible','created_by','user_id','held_by_staff_id','held_by_id','to_branch_id','from_branch_id','parcel_type','sender_id','sender_address_id','receiver_id','receiver_address_id','status','min_weight','max_weight','min_amount_due','max_amount_due','cash_on_delivery','min_delivery_amount','max_delivery_amount','delivery_type','payment_type','shipping_type','min_cash_amount','max_cash_amount','min_pos_amount','max_pos_amount','start_created_date','end_created_date','start_modified_date','end_modified_date','waybill_number','waybill_number_arr','created_branch_id','route_id','history_status','history_start_created_date','history_end_created_date','history_from_branch_id','history_to_branch_id', 'request_type'];
+        $filter_params = ['for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible', 'created_by', 'user_id', 'held_by_staff_id', 'held_by_id', 'to_branch_id', 'from_branch_id', 'parcel_type', 'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight', 'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type', 'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount', 'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date', 'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type'];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
@@ -257,6 +204,7 @@ class ParcelController extends ControllerBase
         $with_bank_account = $this->request->getQuery('with_bank_account');
         $with_created_branch = $this->request->getQuery('with_created_branch');
         $with_route = $this->request->getQuery('with_route');
+        $with_delivery_receipt = $this->request->getQuery('with_delivery_receipt');
         $with_created_by = $this->request->getQuery('with_created_by');
 
         $with_total_count = $this->request->getQuery('with_total_count');
@@ -303,6 +251,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_created_by)) {
             $fetch_with['with_created_by'] = true;
+        }
+        if (!is_null($with_delivery_receipt)) {
+            $fetch_with['with_delivery_receipt'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -430,6 +381,82 @@ class ParcelController extends ControllerBase
             return $this->response->sendSuccess();
         }
         return $this->response->sendError();
+    }
+
+    /**
+     * Used for removing parcel from a bag that has not been added to a manifest
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function removeFromBagAction()
+    {
+        /**
+         * @var Parcel $parcel
+         */
+
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+
+        $bag_waybill_number = $this->request->getPost('bag_waybill_number');
+        $parcel_waybill_number_arr = $this->request->getPost('parcel_waybill_number_list');
+
+        if (in_array(null, [$bag_waybill_number, $parcel_waybill_number_arr])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $parcel_waybill_number_arr = $this->sanitizeWaybillNumbers($parcel_waybill_number_arr);
+        if (empty($parcel_waybill_number_arr)) {
+            return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_REMOVE_FROM_BAG);
+        }
+
+        $bag = Parcel::findFirst([
+            'waybill_number = :waybill_number: AND entity_type = :entity_type:',
+            'bind' => ['waybill_number' => $bag_waybill_number, 'entity_type' => Parcel::ENTITY_TYPE_BAG]
+        ]);
+
+        if (empty($bag)) {
+            return $this->response->sendError(ResponseMessage::BAG_DOES_NOT_EXIST);
+        }
+
+        //check if the bag has been added to a manifest
+        $held_parcel = HeldParcel::findFirst([
+            'parcel_id = :parcel_id:',
+            'bind' => ['parcel_id' => $bag->getId()]
+        ]);
+        // return error if in a manifest
+        if (!empty($held_parcel)) {
+            return $this->response->sendError(ResponseMessage::BAG_IN_MANIFEST);
+        }
+
+        $parcel_arr = Parcel::getByWaybillNumberList($parcel_waybill_number_arr, true);
+        $parcel_id_arr = [];
+        foreach ($parcel_arr as $parcel) {
+            $parcel_id_arr[] = $parcel->getId();
+        }
+        $link_arr = LinkedParcel::getByParentId($bag->getId(), $parcel_id_arr, true);
+
+        $bad_parcel = [];
+        $valid_parcel_id_arr = [];
+        foreach ($parcel_waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            if (!isset($link_arr[$parcel->getId()])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_BAG;
+                continue;
+            }
+
+            $valid_parcel_id_arr[] = $parcel->getId();
+        }
+
+        $check = Parcel::removeFromBag($bag->getId(), $valid_parcel_id_arr);
+        if ($check) {
+            return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        }
+        return $this->response->sendError(ResponseMessage::COULD_NOT_REMOVE_FROM_BAG);
     }
 
     public function moveToArrivalAction()
@@ -774,12 +801,17 @@ class ParcelController extends ControllerBase
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
-    public
-    function moveToDeliveredAction()
+    public function moveToDeliveredAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
+
+        //get receipt information
+        $receiver_name = $this->request->getPost('receiver_name');
+        $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
+        $receiver_email = $this->request->getPost('receiver_email');
+
         $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
@@ -839,6 +871,19 @@ class ParcelController extends ControllerBase
                 );
             }
 
+            //create delivery receipt if receiver name and phone number was supplied
+            if (isset($receiver_name, $receiver_phonenumber)) {
+                if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
+                    $data = ['waybill_number' => $waybill_number,
+                        'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL,
+                        'delivered_by' => $this->auth->getPersonId(),
+                        'name' => $receiver_email,
+                        'phone_number' => $receiver_phonenumber,
+                        'email' => $receiver_email];
+                    DeliveryReceipt::add($data);
+                }
+            }
+
             //TODO send email to operations team
         }
 
@@ -851,8 +896,7 @@ class ParcelController extends ControllerBase
      * @author  Olawale Lawal
      * @return array
      */
-    public
-    function cancelAction()
+    public function cancelAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
@@ -897,8 +941,7 @@ class ParcelController extends ControllerBase
      * @author  Olawale Lawal
      * @return array
      */
-    public
-    function assignToGroundsmanAction()
+    public function assignToGroundsmanAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
@@ -1054,12 +1097,13 @@ class ParcelController extends ControllerBase
      */
     public function setReturnFlagAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::SWEEPER, Role::DISPATCHER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $comment = $this->request->getPost('comment');
         $return_flag = $this->request->getPost('return_flag', null, 1);
 
-        if (!in_array($return_flag,[0,1])){
+        if (!in_array($return_flag, [0, 1])) {
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
@@ -1085,26 +1129,201 @@ class ParcelController extends ControllerBase
             $parcel = $parcel_arr[$waybill_number];
 
             //cannot flag a return for a delivered parcel
-            if ($parcel->getStatus() == Status::PARCEL_DELIVERED){
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
             }
 
             //if it is an officer, his branch must be either the to or from branch id
-            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])){
+            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'], [$parcel->getToBranchId(), $parcel->getFromBranchId()])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+                continue;
             }
 
             //bags and split parcel parent can not be returned
-            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])){
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
-            }
-
-            $parcel->setForReturn($return_flag);
-            if (!$parcel->save()){
+            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
                 continue;
             }
+
+            $parcel->setForReturn($return_flag);
+            if (!$parcel->save()) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+
+            if (!is_null($comment)) {
+                ParcelComment::add(['type' => ParcelComment::COMMENT_TYPE_RETURNED, 'comment' => $comment, 'created_by' => $this->auth->getPersonId(), 'waybill_number' => $parcel->getWaybillNumber()]);
+            }
         }
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /**
+     * Used to mark a shipment as returned to the shipper
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return $this
+     */
+    public function markAsReturnedAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $admin_id = $this->auth->getPersonId();
+
+        if (in_array(null, [$waybill_numbers, $admin_id])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        $admin = Admin::findFirst($admin_id);
+        foreach ($waybill_number_arr as $waybill_number) {
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel === false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getForReturn() == 0) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_RETURN;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            } else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
+            } else if ($parcel->getToBranchId() != $parcel->getCreatedBranchId() || (in_array($admin->getRoleId(), [Role::OFFICER]) && $admin->getBranchId() != $parcel->getToBranchId())) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                continue;
+            }
+
+            $check = $parcel->changeStatus(Status::PARCEL_RETURNED, $admin_id, ParcelHistory::MSG_RETURNED, $auth_data['branch_id']);
+            if (!$check) {
+                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                continue;
+            }
+        }
+
+        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /**
+     * Unsort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function unsortAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        if (property_exists($postData, 'waybill_numbers') && !is_array($postData->waybill_numbers)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $result = Parcel::unsortParcels($postData->waybill_numbers);
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Comment on parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function addCommentAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $parcelCommentValidation = new ParcelCommentValidation($postData);
+
+        if (!$parcelCommentValidation->validate()) {
+            return $this->response->sendError($parcelCommentValidation->getMessages());
+        }
+
+        $postData->created_by = $this->auth->getPersonId();
+
+        $status = ParcelComment::add($postData);
+
+        return (($status) ? $this->response->sendSuccess() : $this->response->sendError('Could not add comment'));
+    }
+
+    /**
+     * Used to receive shipments from the dispatcher after an attempted delivery
+     * @author Olawale Lawal <wale@cottacush.com>
+     *
+     */
+    public function receiveFromDispatcherAction()
+    {
+        $this->auth->allowOnly([Role::OFFICER]);
+
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $held_by_id = $this->request->getPost('held_by_id');
+        $admin_id = $this->auth->getPersonId();
+
+        if (in_array(null, [$waybill_numbers, $admin_id, $held_by_id])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $admin = Admin::findFirst($admin_id);
+        $held_by = Admin::findFirst($held_by_id);
+        if (!$held_by) {
+            return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+        }
+
+        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $bad_parcel = [];
+        foreach ($waybill_number_arr as $waybill_number) {
+            $parcel = Parcel::getByWaybillNumber($waybill_number);
+            if ($parcel == false) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            if ($parcel->getToBranchId() != $admin->getBranchId()) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                continue;
+            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                continue;
+            }
+
+            //checking if the parcel is held by the correct person
+            $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+            if (!$held_parcel_record) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                continue;
+            }
+
+            $status = $parcel->getStatus();
+            if ($parcel->getForReturn()) {
+                if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                    $hub = Branch::getParentById($auth_data['branch']['id']);
+                    if (!$hub) {
+                        return $this->response->sendError(ResponseMessage::HUB_NOT_EXISTING);
+                    } else if ($hub->getBranchType() != BranchType::HUB) {
+                        return $this->response->sendError(ResponseMessage::INVALID_HUB_PROVIDED);
+                    }
+
+                    $parcel->setToBranchId($hub->getId());
+                    $status = Status::PARCEL_FOR_SWEEPER;
+                } elseif ($auth_data['branch']['branch_type'] == BranchType::HUB) {
+                    $status = Status::PARCEL_ARRIVAL;
+                }
+            } else {
+                $status = Status::PARCEL_FOR_DELIVERY;
+            }
+
+            $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId(), $status, ParcelHistory::MSG_RECEIVED_FROM_DISPATCHER);
+            if (!$check) {
+
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_RECEIVED;
+                continue;
+            }
+        }
+
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 }

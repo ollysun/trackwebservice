@@ -43,7 +43,25 @@ class RouteController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $branchId = $this->request->getQuery('branch_id');
-        return $this->response->sendSuccess(Route::getAll($branchId));
+        $with_total_count = $this->request->getQuery('with_total_count');
+        $send_all = $this->request->getQuery('send_all');
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $routes = Route::getAll($branchId, $offset, $count, $send_all);
+
+        $result = [];
+        if ($with_total_count != null) {
+            $count = Route::routeCount($branchId);
+            $result = [
+                'total_count' => $count,
+                'routes' => $routes
+            ];
+        } else {
+            $result = $routes;
+        }
+
+        return $this->response->sendSuccess($result);
     }
 
     /**

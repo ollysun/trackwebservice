@@ -322,8 +322,8 @@ class HeldParcel extends \Phalcon\Mvc\Model
             ->where('manifest_id = :manifest_id:')
             ->bind(['manifest_id' => $manifestId])
             ->innerJoin('Parcel')
-            ->innerJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
-            ->innerJoin('User', 'Parcel.sender_id = User.id')
+            ->leftJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
+            ->leftJoin('User', 'Parcel.sender_id = User.id')
             ->execute()
             ->toArray();
     }

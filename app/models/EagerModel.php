@@ -61,6 +61,7 @@ abstract class EagerModel extends BaseModel implements EagerLoaderInterface
      * Returns related records
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $data
+     * @param bool $all
      * @return array
      */
     public function loadRelatedModels($data, $all = false)

@@ -1,5 +1,6 @@
 <?php
 
+
 use PhalconUtils\Validation\RequestValidation;
 
 /**
@@ -76,6 +77,30 @@ class CompanyController extends ControllerBase
 
         $this->db->commit();
         return $this->response->sendSuccess($company->toArray());
+    }
+
+    /**
+     * Edit Company API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function editCompanyAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!isset($postData->company)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $companyRequestValidator = new CompanyUpdateRequestValidation($postData, 'company');
+        if (!$companyRequestValidator->validate()) {
+            return $this->response->sendError($companyRequestValidator->getMessages());
+        }
+
+        if(Company::edit((array) $postData->company)) {
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_EDIT_COMPANY);
     }
 
     /**
@@ -236,6 +261,35 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Edit Company User API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function editUserAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!isset($postData->company_user)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $companyContactValidator = new CompanyContactUpdateValidation($postData, 'company_user');
+        if (!$companyContactValidator->validate()) {
+            return $this->response->sendError($companyContactValidator->getMessages());
+        }
+        $this->db->begin();
+
+        if(CompanyUser::updateUser($postData->company_user) && UserAuth::updateEmailAndStatus($postData->company_user->user_auth_id, $postData->company_user->email, $postData->company_user->status)) {
+            $this->db->commit();
+            return $this->response->sendSuccess();
+        }
+
+        $this->db->rollback();
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_UPDATE_COMPANY_USER);
+    }
+
+    /**
      * Get company user
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return $this
@@ -343,6 +397,39 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * make a corporate bulk shipment request
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function makeBulkShipmentRequestAction()
+    {
+        $this->auth->allowOnly([Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $postData = $this->request->getJsonRawBody();
+
+        if (!is_array($postData) || !$postData) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $rowValidator = new ShipmentRequestValidation();
+
+        $count = 0;
+        foreach ($postData as $row) {
+            $count++;
+            $row->created_by = $this->auth->getPersonId();
+            $rowValidator->setData($row);
+            if (!$rowValidator->validate()) {
+                return $this->response->sendError($rowValidator->getMessages() . ' in shipment request ' . $count);
+            }
+        }
+
+        try {
+            ShipmentRequest::addBulkRequests($postData);
+            return $this->response->sendSuccess();
+        } catch (Exception $ex) {
+            return $this->response->sendError($ex->getMessage());
+        }
+    }
+
+    /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return $this
      */
@@ -350,7 +437,6 @@ class CompanyController extends ControllerBase
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
-        $company_id = $this->request->getQuery('company_id', null, null);
         $with_total_count = $this->request->getQuery('with_total_count', null, null);
         $request_type = $this->request->getQuery('type', null, 'shipment');
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
@@ -486,7 +572,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists($postData, 'request_id')) {
+        if (!property_exists($postData, 'request_id') || !property_exists($postData, 'comment')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -499,9 +585,14 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
-        if($pickupRequest->declineRequest()) {
+        $this->db->begin();
+
+        if($pickupRequest->declineRequest() && PickupRequestComment::add($postData->request_id, $postData->comment, PickupRequestComment::COMMENT_TYPE_DECLINED)) {
+            $this->db->commit();
             return $this->response->sendSuccess();
         }
+
+        $this->db->rollback();
 
         return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
     }
@@ -544,7 +635,7 @@ class CompanyController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
 
-        if (!property_exists($postData, 'request_id')) {
+        if (!property_exists($postData, 'request_id') || !property_exists($postData, 'comment')) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -557,9 +648,14 @@ class CompanyController extends ControllerBase
             return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
         }
 
-        if($shipmentRequest->declineRequest()) {
+        $this->db->begin();
+
+        if($shipmentRequest->declineRequest() && ShipmentRequestComment::add($postData->request_id, $postData->comment, ShipmentRequestComment::COMMENT_TYPE_DECLINED)) {
+            $this->db->commit();
             return $this->response->sendSuccess();
         }
+
+        $this->db->rollback();
 
         return $this->response->sendError(ResponseMessage::UNABLE_TO_DECLINE_REQUEST);
     }
@@ -570,7 +666,6 @@ class CompanyController extends ControllerBase
      */
     public function getCompanyAction()
     {
-
         $company_id = $this->request->getQuery('company_id', null);
 
         if (is_null($company_id)) {
@@ -584,10 +679,80 @@ class CompanyController extends ControllerBase
 
         $company = Company::fetchOne($filter_by, $fetch_with);
 
-        if($company != false) {
+        if ($company != false) {
             return $this->response->sendSuccess(Company::fetchOne($filter_by, $fetch_with));
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Links an express centre to a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function linkEcAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $createdBy = $this->auth->getPersonId();
+
+        $companyEcRequestValidator = new CompanyExpressCentreRequestValidation($postData);
+        if (!$companyEcRequestValidator->validate()) {
+            return $this->response->sendError($companyEcRequestValidator->getMessages());
+        }
+
+        if(CompanyBranch::add($postData->company_id, $postData->branch_id, $createdBy)) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_LINK_EC_TO_COMPANY);
+    }
+
+    /**
+     * Relinks an express centre to a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function relinkEcAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $updatedBy = $this->auth->getPersonId();
+
+        $companyEcRequestValidator = new CompanyExpressCentreUpdateRequestValidation($postData);
+        if (!$companyEcRequestValidator->validate()) {
+            return $this->response->sendError($companyEcRequestValidator->getMessages());
+        }
+
+        if(CompanyBranch::edit($postData->id, $postData->company_id, $postData->branch_id, $updatedBy)) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_RELINK_EC_TO_COMPANY);
+    }
+
+    /**
+     * Get's all ECs linked to companies
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getAllEcsAction() {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $with_total_count = $this->request->getQuery('with_total_count', null);
+
+        $filter_by = $this->request->getQuery();
+
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+
+        $ecs = CompanyBranch::fetchAll($offset, $count, $filter_by, $fetch_with);
+        if (!empty($with_total_count)) {
+            $count = CompanyBranch::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'ecs' => $ecs
+            ];
+        } else {
+            $result = $ecs;
+        }
+        return $this->response->sendSuccess($result);
     }
 }
 
