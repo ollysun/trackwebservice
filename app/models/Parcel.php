@@ -1,4 +1,6 @@
 <?php
+use Phalcon\Exception;
+use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Parcel extends \Phalcon\Mvc\Model
@@ -13,6 +15,8 @@ class Parcel extends \Phalcon\Mvc\Model
     const ENTITY_TYPE_PARENT = 4;
 
     const SQL_MAKE_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+    const SQL_MAKE_SOME_SUB_VISIBLE = 'UPDATE parcel SET is_visible = 1, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id AND child_id IN (:child_id));';
+    const SQL_DELETE_SOME_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id AND child_id IN (:child_id);';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
     const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
 
@@ -1139,9 +1143,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'is_billing_overridden' => $this->getIsBillingOverridden(),
             'reference_number' => $this->getReferenceNumber(),
             'seal_id' => $this->getSealId(),
-            'created_branch_id'=> $this->getCreatedBranchId(),
-            'route_id'=> $this->getRouteId(),
-            'request_type'=> $this->getRequestType(),
+            'created_branch_id' => $this->getCreatedBranchId(),
+            'route_id' => $this->getRouteId(),
+            'request_type' => $this->getRequestType(),
             'for_return' => $this->getForReturn()
         );
     }
@@ -1581,11 +1585,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'CreatedBranchState.*';
             $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
         }
-        if (isset($fetch_with['with_created_by'])){
+        if (isset($fetch_with['with_created_by'])) {
             $columns[] = 'CreatedBy.*';
             $builder->innerJoin('CreatedBy', 'CreatedBy.id = Parcel.created_by', 'CreatedBy');
         }
-        if (isset($fetch_with['with_route'])){
+        if (isset($fetch_with['with_route'])) {
             $columns[] = 'Routes.*';
             $builder->leftJoin('Route', 'Routes.id = Parcel.route_id', 'Routes');
         }
@@ -1597,6 +1601,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_receiver'])) {
             $columns[] = 'Receiver.*';
             $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver');
+        }
+        if (isset($fetch_with['with_delivery_receipt'])) {
+            $columns[] = 'DeliveryReceipt.*';
+            $builder->leftJoin('DeliveryReceipt', 'DeliveryReceipt.waybill_number = Parcel.waybill_number', 'DeliveryReceipt');
         }
 
         $builder->where(join(' AND ', $where));
@@ -1651,8 +1659,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_route'])) {
                     $parcel['route'] = $item->Routes->getData();
                 }
-                if (isset($fetch_with['with_created_by'])){
+                if (isset($fetch_with['with_created_by'])) {
                     $parcel['created_by'] = $item->createdBy->getData();
+                }
+                if (isset($fetch_with['with_delivery_receipt'])) {
+                    $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
                 }
             }
             $result[] = $parcel;
@@ -1909,7 +1920,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = true;
 
             if ($this->save()) {
-                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG || $alter_children) {
+                if ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG || $alter_children) {
                     $check = $this->alterSubs();
                 }
 
@@ -1946,7 +1957,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = true;
 
             if ($this->save()) {
-                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                if ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
                     $check = $this->alterSubs();
                 }
 
@@ -1981,7 +1992,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = true;
 
             if ($this->save()) {
-                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                if ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
                     $check = $this->alterSubs();
                 }
 
@@ -2016,7 +2027,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param int $status
      * @return bool
      */
-    public function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL)
+    public function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL, $message = ParcelHistory::MSG_FOR_ARRIVAL)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2027,7 +2038,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = true;
 
             if ($this->save()) {
-                if($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
+                if ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
                     $check = $this->alterSubs();
                 }
 
@@ -2041,7 +2052,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if ($held_parcel_record->save()) {
                         $parcel_history = new ParcelHistory();
                         $parcel_history->setTransaction($transaction);
-                        $parcel_history->initData($this->getId(), $this->getFromBranchId(), ParcelHistory::MSG_FOR_ARRIVAL, $admin_id, $status, $this->getToBranchId());
+                        $parcel_history->initData($this->getId(), $this->getFromBranchId(), $message, $admin_id, $status, $this->getToBranchId());
                         if ($parcel_history->save()) {
                             $transactionManager->commit();
                             return true;
@@ -2264,6 +2275,47 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
+    /**
+     * Remove one or more parcels from a bag
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @param int $bag_id - The waybill number of a bag
+     * @param int[] $parcel_id_arr - An array of parcels id
+     * @return bool
+     */
+    public static function removeFromBag($bag_id, $parcel_id_arr)
+    {
+        if (empty($parcel_id_arr)) {
+            return true;
+        }
+
+        $clean_arr = [];
+        foreach ($parcel_id_arr as $id) {
+            $clean_arr[] = intval($id);
+        }
+
+        $child_id_str = implode(',', $clean_arr);
+        $sql_link_delete = str_replace(':child_id', $child_id_str, Parcel::SQL_DELETE_SOME_LINKAGE);
+        $sql_sub_viaible = str_replace(':child_id', $child_id_str, Parcel::SQL_MAKE_SOME_SUB_VISIBLE);
+
+        $manager = new self();
+        $connection = $manager->getWriteConnection();
+        $connection->begin();
+        try {
+            $check = $connection->execute($sql_sub_viaible, ['parent_id' => $bag_id, 'modified_date' => date('Y-m-d H:i:s')]);
+            if ($check) {
+                $check = $connection->execute($sql_link_delete, ['parent_id' => $bag_id]);
+                if ($check) {
+                    $connection->commit();
+                    return true;
+                }
+            }
+        } catch (Exception $e) {
+
+        }
+        $connection->rollback();
+        return false;
+    }
+
     public function alterSubs()
     {
         $connection = $this->getWriteConnection();
@@ -2276,5 +2328,92 @@ class Parcel extends \Phalcon\Mvc\Model
             'status' => $this->getStatus(),
             'modified_date' => date('Y-m-d H:i:s'),
         ]);
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_numbers
+     * @return array
+     */
+    public static function unsortParcels($waybill_numbers)
+    {
+        $successful = [];
+        $failed = [];
+        foreach ($waybill_numbers as $waybill_number) {
+            try {
+                self::unsortParcel($waybill_number);
+                $successful[] = $waybill_number;
+            } catch (Exception $ex) {
+                $failed[$waybill_number] = $ex->getMessage();
+            }
+        }
+        return ['successful' => $successful, 'failed' => $failed];
+    }
+
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @return bool
+     * @throws Exception
+     */
+    public static function unsortParcel($waybill_number)
+    {
+        if (!is_string($waybill_number) || !(self::isWaybillNumber($waybill_number) || self::isBagNumber($waybill_number))) {
+            throw new Exception('Invalid waybill number');
+        }
+
+        if(self::isBagNumber($waybill_number)){
+            throw new Exception('Cannot unsort a bag');
+        }
+
+
+        $parcel = Parcel::findFirst(['conditions' => 'waybill_number =:waybill_number:', 'bind' => ['waybill_number' => $waybill_number]]);
+        if (!$parcel) {
+            throw new Exception('Could not find parcel with waybill_number ' . $waybill_number);
+        }
+
+        /** @var Resultset $parcelSortHistory */
+        $parcelSortHistory = ParcelHistory::find(['conditions' => 'parcel_id = :parcel_id:', 'bind' => ['parcel_id' => $parcel->getId()], 'limit' => 2, 'order' => 'id DESC']);
+        if ($parcelSortHistory->count() < 2) {
+            throw new Exception('Parcel ' . $waybill_number . ' does not have a proper sort history. Please confirm that parcel has been sorted');
+        }
+
+        if(!in_array($parcelSortHistory->getFirst()->status->id, [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_GROUNDSMAN, Status::PARCEL_FOR_DELIVERY])){
+
+        }
+
+        $previousParcelState = $parcelSortHistory->getLast();
+        $parcel->from_branch_id = $previousParcelState->from_branch_id;
+        $parcel->to_branch_id = $previousParcelState->to_branch_id;
+        $parcel->setStatus($previousParcelState->status->id);
+
+        if (!$parcel->save()) {
+            throw new Exception('Could not unsort parcel');
+        }
+
+        //rewrite history
+        $parcelSortHistory->getFirst()->delete();
+
+        return true;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @return int
+     */
+    public static function isWaybillNumber($waybill_number)
+    {
+        return preg_match('/^\d[A-Z](\d|\-)+[\d]$/i', $waybill_number);
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $bag_number
+     * @return int
+     */
+    public static function isBagNumber($bag_number){
+        return preg_match('/^[B][\d]{11,}$/i', $bag_number);
     }
 }

@@ -622,4 +622,26 @@ class CompanyUser extends \Phalcon\Mvc\Model
 
         return ['where' => $where, 'bind' => $bind];
     }
+
+    /**
+     * Edits a company user
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $company_user_data
+     * @return bool
+     */
+    public static function updateUser($company_user_data)
+    {
+        $user = CompanyUser::findFirst($company_user_data->id);
+
+        if($user) {
+            $user->setFirstname($company_user_data->firstname);
+            $user->setLastname($company_user_data->lastname);
+            $user->setRoleId($company_user_data->role_id);
+            $user->setPhoneNumber($company_user_data->phone_number);
+            $user->setModifiedDate(Util::getCurrentDateTime());
+
+            return $user->save();
+        }
+        return false;
+    }
 }

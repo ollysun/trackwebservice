@@ -10,6 +10,9 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     const MSG_DELIVERED = 'Parcel delivered';
     const MSG_CANCELLED = 'Parcel cancelled';
     const MSG_ASSIGNED_TO_GROUNDSMAN = 'Parcel assigned to the groundsman';
+    const MSG_RETURNED = 'Parcel returned to the shipper';
+    const MSG_RECEIVED_FROM_DISPATCHER = 'Parcel received from dispatcher';
+
 
     /**
      *

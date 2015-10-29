@@ -533,7 +533,7 @@ class Company extends EagerModel
     {
         $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
         $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
-        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);
         $company = new Company();
         $company->initData($company_data['name'],
             $company_data['reg_no'],
@@ -551,6 +551,36 @@ class Company extends EagerModel
         }
     }
 
+    /**
+     * Edits a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $company_data
+     * @return bool|Company
+     */
+    public static function edit($company_data)
+    {
+        $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
+        $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
+        $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);
+        $company = Company::findFirst($company_data['id']);
+
+        if ($company) {
+            $company->updateData($company_data['name'],
+                $company_data['reg_no'],
+                $company_data['email'],
+                $company_data['phone_number'],
+                $company_data['address'],
+                $company_data['city_id'],
+                $company_data['credit_limit'],
+                $company_data['discount'],
+                $company_data['relations_officer_id']);
+            if ($company->save()) {
+                return $company;
+            }
+        }
+        return false;
+    }
+
     public function createUser($role_id, $data)
     {
         $user = new CompanyUser();
@@ -564,6 +594,37 @@ class Company extends EagerModel
             return $user;
         }
         return false;
+    }
+
+    /**
+     * Updates the details of a company
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $name
+     * @param $reg_no
+     * @param $email
+     * @param $phone_number
+     * @param $address
+     * @param $city_id
+     * @param $credit_limit
+     * @param $discount
+     * @param $relations_officer_id
+     */
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    {
+        $this->setName($name);
+        $this->setRegNo($reg_no);
+        $this->setEmail($email);
+        $this->setPhoneNumber($phone_number);
+        $this->setAddress($address);
+        $this->setCityId($city_id);
+        $this->setCreditLimit($credit_limit);
+        $this->setDiscount($discount);
+        $this->setRelationsOfficerId($relations_officer_id);
+
+        $now = date('Y-m-d H:i:s');
+        $this->setModifiedDate($now);
+
+        $this->setStatus(Status::ACTIVE);
     }
 
     public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
@@ -629,7 +690,7 @@ class Company extends EagerModel
         }
 
         if (isset($filter_by['name'])) {
-            $where[] = 'name LIKE :name:';
+            $where[] = 'Company.name LIKE :name:';
             $bind['name'] = '%' . strtolower(trim($filter_by['name'])) . '%';
         }
 
@@ -657,6 +718,16 @@ class Company extends EagerModel
         return intval($data[0]->company_count);
     }
 
+    /**
+     * Fetches all companies depending on the provided criteria
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array
+     */
     public static function fetchAll($offset, $count, $filter_by, $fetch_with)
     {
         $obj = new Company();
@@ -672,12 +743,8 @@ class Company extends EagerModel
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
-        if (isset($fetch_with['with_city'])) {
-            $builder->innerJoin('City', 'City.id = Company.city_id');
-            $builder->innerJoin('State', 'State.id = City.state_id');
-            $columns[] = 'City.*';
-            $columns[] = 'State.*';
-        }
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -688,10 +755,9 @@ class Company extends EagerModel
             $company = [];
             if (isset($item->company)) {
                 $company = $item->company->getData();
-                if (isset($fetch_with['with_city'])) {
-                    $company['city'] = $item->city->getData();
-                    $company['state'] = $item->state->getData();
-                }
+                $relatedRecords = $obj->loadRelatedModels($item, true);
+
+                $company = array_merge($company, $relatedRecords);
             } else {
                 $company = $item->getData();
             }
@@ -849,9 +915,10 @@ class Company extends EagerModel
                 'field' => 'secondary_contact',
                 'model_name' => 'Company',
                 'ref_model_name' => 'CompanyUser',
-                'foreign_key' => 'secondary_contact_id',
+                'foreign_key' => 'sec_contact_id',
                 'reference_key' => 'id',
-                'alias' => 'SecondaryContact'
+                'alias' => 'SecondaryContact',
+                'join_type' => 'left'
             ],
             [
                 'field' => 'relations_officer',

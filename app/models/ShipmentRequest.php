@@ -1,5 +1,6 @@
 <?php
 use Phalcon\Mvc\Model;
+use Phalcon\Mvc\Model\Resultset;
 
 /**
  * Class ShipmentRequest
@@ -7,14 +8,6 @@ use Phalcon\Mvc\Model;
  */
 class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterface
 {
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     */
-    public function initialize()
-    {
-        $this->setSource('shipment_requests');
-    }
 
     /**
      * Add a new corporate shipment
@@ -71,6 +64,35 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
         }
 
         return $requests;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $builder
+     * @param $filter_by
+     * @return Model\Query\Builder|Model\Query\BuilderInterface
+     */
+    private static function addFetchCriteria($builder, $filter_by)
+    {
+        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
+            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
+            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
+            $builder = Util::betweenDateRange($builder, 'ShipmentRequest.created_at', $from, $to);
+        }
+
+        if (isset($filter_by['status'])) {
+            $builder->andWhere('ShipmentRequest.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
+        }
+
+        if (isset($filter_by['company_id'])) {
+            $builder->andWhere('ShipmentRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
+        }
+
+        if (isset($filter_by['waybill_number'])) {
+            $builder->andWhere('ShipmentRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
+        }
+
+        return $builder;
     }
 
     /**
@@ -145,36 +167,6 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
         return $request;
     }
 
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $builder
-     * @param $filter_by
-     * @return Model\Query\Builder|Model\Query\BuilderInterface
-     */
-    private static function addFetchCriteria($builder, $filter_by)
-    {
-        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
-            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
-            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
-            $builder = Util::betweenDateRange($builder, 'ShipmentRequest.created_at', $from, $to);
-        }
-
-        if (isset($filter_by['status'])) {
-            $builder->andWhere('ShipmentRequest.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
-        }
-
-        if (isset($filter_by['company_id'])) {
-            $builder->andWhere('ShipmentRequest.company_id=:company_id:', ['company_id' => $filter_by['company_id']]);
-        }
-
-        if (isset($filter_by['waybill_number'])) {
-            $builder->andWhere('ShipmentRequest.waybill_number=:waybill_number:', ['waybill_number' => $filter_by['waybill_number']]);
-        }
-
-        return $builder;
-    }
-
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $filter_by
@@ -207,6 +199,14 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
         $shipmentRequest->waybill_number = $waybillNumber;
 
         return $shipmentRequest->save();
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function initialize()
+    {
+        $this->setSource('shipment_requests');
     }
 
     /**
@@ -286,4 +286,50 @@ class ShipmentRequest extends EagerModel implements CorporateRequestStatusInterf
             ]
         ];
     }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $postData
+     * @throws Exception
+     */
+    public static function addBulkRequests($postData)
+    {
+        $batchData = [];
+        foreach ($postData as $row) {
+            $rowData = [];
+            $rowData[] = $row->receiver_firstname;
+            $rowData[] = $row->receiver_address;
+            $rowData[] = $row->company_id;
+            $rowData[] = $row->receiver_state_id;
+            $rowData[] = $row->receiver_city_id;
+            $rowData[] = $row->estimated_weight;
+            $rowData[] = $row->no_of_packages;
+            $rowData[] = $row->parcel_value;
+            $rowData[] = (property_exists($row, 'cash_on_delivery')) ? $row->cash_on_delivery : null;
+            $rowData[] = (property_exists($row, 'description')) ? $row->description : null;
+            $rowData[] = (property_exists($row, 'receiver_lastname')) ? $row->receiver_lastname : null;
+            $rowData[] = (property_exists($row, 'receiver_phone_number')) ? $row->receiver_phone_number : null;
+            $rowData[] = (property_exists($row, 'receiver_company_name')) ? $row->receiver_company_name : null;
+            $rowData[] = (property_exists($row, 'receiver_email')) ? $row->receiver_email : null;
+            $rowData[] = (property_exists($row, 'reference_number')) ? $row->reference_number : null;
+            $rowData[] = $row->created_by;
+            $rowData[] = Util::getCurrentDateTime();
+            $batchData[] = $rowData;
+        }
+
+
+        $batch = new Batch('shipment_requests');
+        $batch->setRows(['receiver_firstname',
+            'receiver_address', 'company_id',
+            'receiver_state_id', 'receiver_city_id',
+            'estimated_weight', 'no_of_packages',
+            'parcel_value', 'cash_on_delivery', 'description',
+            'receiver_lastname', 'receiver_phone_number',
+            'receiver_company_name', 'receiver_email',
+            'reference_number', 'created_by', 'created_at']);
+        $batch->setValues($batchData);
+        $batch->insert();
+    }
+
+
 }
