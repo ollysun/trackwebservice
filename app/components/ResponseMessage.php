@@ -139,4 +139,9 @@ class ResponseMessage
     const UNABLE_TO_UPDATE_COMPANY_USER = 'Unable to update company user';
     const UNABLE_TO_LINK_EC_TO_COMPANY = 'Unable to link EC to company';
     const UNABLE_TO_RELINK_EC_TO_COMPANY = 'Unable to edit EC link to company';
+
+    const INVALID_TYPE = 'Invalid type provided';
+    const INVALID_BILLING_PLAN = 'Invalid billing plan provided';
+    const ANOTHER_HAS_SAME_NAME = 'Another has same name';
+    const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
 }

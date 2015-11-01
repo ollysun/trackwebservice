@@ -240,12 +240,14 @@ class ZoneController extends ControllerBase {
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $zone_id = $this->request->getQuery('zone_id');//optional
+        $billing_plan_id = $this->request->getQuery('billing_plan_id');//optional
         $weight_range_id = $this->request->getQuery('weight_range_id');//optional
         $send_all = $this->request->getQuery('send_all');//optional - nullifies offset and count
 
         $filter_by = [];
         if (!is_null($zone_id)){ $filter_by['zone_id'] = $zone_id; }
         if (!is_null($weight_range_id)){ $filter_by['weight_range_id'] = $weight_range_id; }
+        if (!is_null($billing_plan_id)){ $filter_by['billing_plan_id'] = $billing_plan_id; }
         if (!is_null($send_all)){ $filter_by['send_all'] = $send_all; }
 
         return $this->response->sendSuccess(WeightBilling::fetchAll($offset, $count, $filter_by));
@@ -306,8 +308,13 @@ class ZoneController extends ControllerBase {
         $to_branch_id = $this->request->getPost('to_branch_id');
         $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
         $weight = $this->request->getPost('weight');
+        $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
 
-        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight);
+        if (in_array(null, [$from_branch_id, $to_branch_id, $onforwarding_charge_id, $weight, $weight_billing_plan_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
         if ($calc_weight_billing == false){
             return $this->response->sendError();
         }
