@@ -28,7 +28,7 @@ class BillingplanController extends ControllerBase {
         if ($plan->save()){
             return $this->response->sendSuccess(['id' => $plan->getId()]);
         }
-        return $this->response->sendError();
+        return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
     }
 
     public function editAction()
@@ -54,7 +54,7 @@ class BillingplanController extends ControllerBase {
             if ($plan->save()){
                 return $this->response->sendSuccess();
             }
-            return $this->response->sendError();
+            return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
         }
         return $this->response->sendError(ResponseMessage::BILLING_PLAN_DOES_NOT_EXIST);
     }
@@ -64,7 +64,7 @@ class BillingplanController extends ControllerBase {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
         $plan_id = $this->request->getQuery('plan_id');
-        if (in_array(null, [$plan_id])){
+        if (!isset($plan_id)){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 

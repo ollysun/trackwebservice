@@ -187,7 +187,7 @@ class OnforwardingchargeController extends ControllerBase {
         if ($link->save()){
             return $this->response->sendSuccess(['id' => $link->getId()]);
         }
-        return $this->response->sendError();
+        return $this->response->sendError(ResponseMessage::ONFORWARDING_CITY_NOT_SAVED);
     }
 
     public function unlinkCityAction()
@@ -209,7 +209,7 @@ class OnforwardingchargeController extends ControllerBase {
         if ($link->delete()){
             return $this->response->sendSuccess();
         }
-        return $this->response->sendError();
+        return $this->response->sendError(ResponseMessage::ONFORWARDING_CITY_NOT_SAVED);
     }
 
     public function fetchByCityAction()
