@@ -144,4 +144,10 @@ class ResponseMessage
     const INVALID_BILLING_PLAN = 'Invalid billing plan provided';
     const ANOTHER_HAS_SAME_NAME = 'Another has same name';
     const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
+
+    const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
+    const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';
+
+    const CALC_BILLLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
+    const CALC_BILLLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
 }

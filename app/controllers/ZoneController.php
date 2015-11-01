@@ -306,22 +306,23 @@ class ZoneController extends ControllerBase {
 
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
+        $onforwarding_billing_plan_id = $this->request->getPost('onforwarding_billing_plan_id');
+        $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
         $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
 
-        if (in_array(null, [$from_branch_id, $to_branch_id, $onforwarding_charge_id, $weight, $weight_billing_plan_id])){
+        if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
         if ($calc_weight_billing == false){
-            return $this->response->sendError();
+            return $this->response->sendError(ResponseMessage::CALC_BILLLING_WEIGHT);
         }
 
-        $onforwarding_charge = OnforwardingCharge::fetchById($onforwarding_charge_id);
+        $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
         if ($onforwarding_charge == false){
-            return $this->response->sendError();
+            return $this->response->sendError(ResponseMessage::CALC_BILLLING_ONFORWARDING);
         }
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
