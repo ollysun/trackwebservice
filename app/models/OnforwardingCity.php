@@ -180,9 +180,10 @@ class OnforwardingCity extends EagerModel
      * @param $offset
      * @param $fetch_with
      * @param $filter_by
+     * @param bool $paginate
      * @return array
      */
-    public static function getAll($billingPlanId, $count, $offset, $fetch_with, $filter_by)
+    public static function getAll($billingPlanId, $count, $offset, $fetch_with, $filter_by, $paginate = true)
     {
         $obj = new self();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -195,7 +196,12 @@ class OnforwardingCity extends EagerModel
         $builder->where('OnforwardingCharge.billing_plan_id = :billing_plan_id:', ['billing_plan_id' => $billingPlanId]);
 
         $builder = self::addFetchCriteria($builder, $filter_by);
-        $builder = $builder->columns($columns)->limit($count)->offset($offset);
+        $builder = $builder->columns($columns);
+
+        if($paginate) {
+            $builder->limit($count)->offset($offset);
+        }
+
         $result = $builder->getQuery()->execute();
 
         $cities = [];
@@ -219,6 +225,7 @@ class OnforwardingCity extends EagerModel
     {
         $obj = new self();
         $builder = $obj->getModelsManager()->createBuilder()->from('OnforwardingCity');
+        $builder->innerJoin('OnforwardingCharge', 'OnforwardingCharge.id = OnforwardingCity.onforwarding_charge_id');
         $columns = ['COUNT(*) as count'];
         $builder = self::addFetchCriteria($builder, $filter_by);
         $count = $builder->columns($columns)->getQuery()->getSingleResult();

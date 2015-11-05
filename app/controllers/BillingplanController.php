@@ -151,6 +151,8 @@ class BillingplanController extends ControllerBase {
         $billing_plan_id = $this->request->getQuery('billing_plan_id', null);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, false);
+        $with_total_count = $this->request->getQuery('with_total_count', null);
         $filter_by = array_merge(['billing_plan_id' => $billing_plan_id], $this->request->getQuery());
 
         $fetch_with = array_merge(['with_onforwarding_charge'], Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery()));
@@ -159,7 +161,18 @@ class BillingplanController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        return $this->response->sendSuccess(OnforwardingCity::getAll($billing_plan_id, $count, $offset, $fetch_with, $filter_by));
+        $cities = OnforwardingCity::getAll($billing_plan_id, $count, $offset, $fetch_with, $filter_by, $paginate);
+        if (!empty($with_total_count)) {
+            $count = OnforwardingCity::getTotalCount($filter_by);
+            $result = [
+                'total_count' => $count,
+                'cities' => $cities
+            ];
+        } else {
+            $result = $cities;
+        }
+
+        return $this->response->sendSuccess($result);
     }
 
 } 
