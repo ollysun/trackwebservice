@@ -1,6 +1,6 @@
 <?php
 
-class OnforwardingCity extends \Phalcon\Mvc\Model
+class OnforwardingCity extends EagerModel
 {
 
     /**
@@ -151,9 +151,9 @@ class OnforwardingCity extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'city_id' => 'city_id', 
-            'onforwarding_charge_id' => 'onforwarding_charge_id', 
+            'id' => 'id',
+            'city_id' => 'city_id',
+            'onforwarding_charge_id' => 'onforwarding_charge_id',
             'status' => 'status'
         );
     }
@@ -171,5 +171,97 @@ class OnforwardingCity extends \Phalcon\Mvc\Model
             'city_id = :city_id: AND onforwarding_charge_id = :onforwarding_charge_id:',
             ['city_id' => $city_id, 'onforwarding_charge_id' => $onforwarding_charge_id]
         ]);
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $billingPlanId
+     * @param $count
+     * @param $offset
+     * @param $fetch_with
+     * @param $filter_by
+     * @return array
+     */
+    public static function getAll($billingPlanId, $count, $offset, $fetch_with, $filter_by)
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('OnforwardingCity');
+        $columns = ['OnforwardingCity.*'];
+
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
+
+        $builder->where('OnforwardingCharge.billing_plan_id = :billing_plan_id:', ['billing_plan_id' => $billingPlanId]);
+
+        $builder = self::addFetchCriteria($builder, $filter_by);
+        $builder = $builder->columns($columns)->limit($count)->offset($offset);
+        $result = $builder->getQuery()->execute();
+
+        $cities = [];
+        foreach ($result as $data) {
+            $city = (property_exists($data, 'onforwardingCity')) ? $data->onforwardingCity->toArray() : $data->toArray();
+
+            $relatedRecords = $obj->loadRelatedModels($data, true);
+            $city = array_merge($city, $relatedRecords);
+
+            $cities[] = $city;
+        }
+
+        return $cities;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $filter_by
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()->from('OnforwardingCity');
+        $columns = ['COUNT(*) as count'];
+        $builder = self::addFetchCriteria($builder, $filter_by);
+        $count = $builder->columns($columns)->getQuery()->getSingleResult();
+        return $count['count'];
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $builder
+     * @param $filter_by
+     * @return Model\Query\Builder|Model\Query\BuilderInterface
+     */
+    private static function addFetchCriteria($builder, $filter_by)
+    {
+        if (isset($filter_by['billing_plan_id'])) {
+            $builder->where('OnforwardingCharge.billing_plan_id = :billing_plan_id:', ['billing_plan_id' => $filter_by['billing_plan_id']]);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Returns an array that maps related models
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return array
+     */
+    public function getFetchWithMap()
+    {
+        return [
+            [
+                'field' => 'city',
+                'model_name' => self::class,
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'onforwarding_charge',
+                'model_name' => self::class,
+                'ref_model_name' => 'OnforwardingCharge',
+                'foreign_key' => 'onforwarding_charge_id',
+                'reference_key' => 'id'
+            ],
+        ];
     }
 }

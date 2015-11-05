@@ -140,4 +140,26 @@ class BillingplanController extends ControllerBase {
         }
         return $this->response->sendSuccess($count);
     }
+
+    /**
+     * Get's cities with onforwarding charges for a particular billing plan
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function getCitiesWithChargeAction()
+    {
+        $billing_plan_id = $this->request->getQuery('billing_plan_id', null);
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $filter_by = array_merge(['billing_plan_id' => $billing_plan_id], $this->request->getQuery());
+
+        $fetch_with = array_merge(['with_onforwarding_charge'], Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery()));
+
+        if(is_null($billing_plan_id)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        return $this->response->sendSuccess(OnforwardingCity::getAll($billing_plan_id, $count, $offset, $fetch_with, $filter_by));
+    }
+
 } 
