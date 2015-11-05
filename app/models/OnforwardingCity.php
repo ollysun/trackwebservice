@@ -269,6 +269,20 @@ class OnforwardingCity extends EagerModel
                 'foreign_key' => 'onforwarding_charge_id',
                 'reference_key' => 'id'
             ],
+            [
+                'field' => 'state',
+                'model_name' => City::class,
+                'ref_model_name' => 'State',
+                'foreign_key' => 'state_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'branch',
+                'model_name' => City::class,
+                'ref_model_name' => Branch::class,
+                'foreign_key' => 'branch_id',
+                'reference_key' => 'id'
+            ],
         ];
     }
 }

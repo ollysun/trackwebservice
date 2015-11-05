@@ -434,7 +434,7 @@ class WeightBilling extends \Phalcon\Mvc\Model
             $bind['weight_range_id'] = $filter_by['weight_range_id'];
         }
         if (isset($filter_by['billing_plan_id'])){
-            $where[] = 'WeightBilling.billing_plan_id = :billing_plan_id:';
+            $where[] = 'WeightRange.billing_plan_id = :billing_plan_id:';
             $bind['billing_plan_id'] = $filter_by['billing_plan_id'];
         }
 
