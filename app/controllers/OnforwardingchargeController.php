@@ -16,11 +16,11 @@ class OnforwardingchargeController extends ControllerBase {
         }
 
         $amount = floatval($amount);
-        if ($amount < 0.0 || !preg_match('/^(?=.*[1-9])\d+(\.\d+)?$/', $amount)){
+        if ($amount < 0.0 || !Util::validateFloat($amount)){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
         $percentage = floatval($percentage);
-        if ($percentage < 0.0 || !preg_match('/^(?=.*[1-9])\d+(\.\d+)?$/', $percentage)){
+        if ($percentage < 0.0 || !Util::validateFloat($percentage)){
             return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
@@ -56,11 +56,11 @@ class OnforwardingchargeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
         $amount = floatval($amount);
-        if ($amount < 0.0 || !preg_match('/^(?=.*[1-9])\d+(\.\d+)?$/', $amount)){
+        if ($amount < 0.0 || !Util::validateFloat($amount)){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
         $percentage = floatval($percentage);
-        if ($percentage < 0.0 || !preg_match('/^(?=.*[1-9])\d+(\.\d+)?$/', $percentage)){
+        if ($percentage < 0.0 || Util::validateFloat($percentage)){
             return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
