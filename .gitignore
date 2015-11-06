@@ -3,4 +3,5 @@
 /app/cache/*
 !/app/cache/empty
 .idea
+/vendor
 

@@ -108,6 +108,7 @@ class ResponseMessage
     const ACCOUNT_DOES_NOT_EXIST = 'Account does not exist';
     const UNABLE_TO_RESET_PASSWORD = 'Unable to reset password';
     const INVALID_TOKEN = 'Invalid password reset token';
+    const WRONG_ROUTE = 'The route does not belong to this branch';
 
     const COMPANY_EXISTING = 'Another company with this same NAME exists';
     const UNABLE_TO_CREATE_COMPANY = 'Could not create company';

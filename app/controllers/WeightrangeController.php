@@ -70,10 +70,7 @@ class WeightrangeController extends ControllerBase {
 
         $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $weight_range_id);
         if ($weight_range != false){
-            return $this->response->sendError(
-                'This weight range is intersecting another weight range('
-                .$weight_range->getMinWeight() .',' . $weight_range->getMaxWeight() . ')'
-            );
+            return $this->response->sendError('This weight range is intersecting another weight range');
         }
 
         $weight_range = WeightRange::fetchById($weight_range_id);
