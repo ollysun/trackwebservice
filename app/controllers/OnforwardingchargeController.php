@@ -60,7 +60,7 @@ class OnforwardingchargeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
         $percentage = floatval($percentage);
-        if ($percentage < 0.0 || Util::validateFloat($percentage)){
+        if ($percentage < 0.0 || !Util::validateFloat($percentage)){
             return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
