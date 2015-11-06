@@ -385,14 +385,14 @@ class Address extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'owner_id' => 'owner_id', 
-            'owner_type' => 'owner_type', 
-            'street_address1' => 'street_address1', 
-            'street_address2' => 'street_address2', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
-            'state_id' => 'state_id', 
+            'id' => 'id',
+            'owner_id' => 'owner_id',
+            'owner_type' => 'owner_type',
+            'street_address1' => 'street_address1',
+            'street_address2' => 'street_address2',
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
+            'state_id' => 'state_id',
             'city_id' => 'city_id',
             'country_id' => 'country_id',
             'is_default' => 'is_default',
@@ -400,7 +400,8 @@ class Address extends \Phalcon\Mvc\Model
         );
     }
 
-    public function getData(){
+    public function getData()
+    {
         return array(
             'id' => $this->getId(),
             'owner_id' => $this->getOwnerId(),
@@ -417,7 +418,8 @@ class Address extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city_id, $is_existing=false, $is_user_existing=true){
+    public function initData($owner_id, $owner_type, $street_address1, $street_address2, $state_id, $country_id, $city_id, $is_existing = false, $is_user_existing = true)
+    {
         $this->setOwnerId($owner_id);
         $this->setOwnerType($owner_type);
         $this->setStreetAddress1($street_address1);
@@ -429,14 +431,15 @@ class Address extends \Phalcon\Mvc\Model
         $this->setIsDefault($is_default);
 
         $now = date('Y-m-d H:i:s');
-        if (!$is_existing){
+        if (!$is_existing) {
             $this->setCreatedDate($now);
             $this->setStatus(Status::ACTIVE);
         }
         $this->setModifiedDate($now);
     }
 
-    public function edit($street_address1, $street_address2, $state_id, $country_id, $city_id){
+    public function edit($street_address1, $street_address2, $state_id, $country_id, $city_id)
+    {
         $this->setStreetAddress1($street_address1);
         $this->setStreetAddress2($street_address2);
         $this->setStateId($state_id);
@@ -445,20 +448,22 @@ class Address extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function changeStatus($status){
+    public function changeStatus($status)
+    {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function setAsDefault(){
+    public function setAsDefault()
+    {
         /**
          * @var Phalcon\Db\Adapter\Pdo\Mysql $con
          */
         $obj = new self();
         $con = $obj->getDI()->getDb();
         $modified_date = date('Y-m-d H:i:s');
-        $check = $con->execute(self::SQL_SET_NON_AS_DEFAULT, ['modified_date'=> $modified_date, 'owner_type' => $this->getOwnerType(), 'owner_id' => $this->getOwnerId()]);
-        if ($check){
+        $check = $con->execute(self::SQL_SET_NON_AS_DEFAULT, ['modified_date' => $modified_date, 'owner_type' => $this->getOwnerType(), 'owner_id' => $this->getOwnerId()]);
+        if ($check) {
             $this->setIsDefault(1);
             $this->setModifiedDate($modified_date);
             return $this->save();
@@ -466,10 +471,11 @@ class Address extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function fetchActive($id, $owner_id=null, $owner_type=null){
+    public static function fetchActive($id, $owner_id = null, $owner_type = null)
+    {
         $conditions = 'id = :id: AND owner_id = :owner_id: AND owner_type = :owner_type: AND status = :status:';
         $bind = ['owner_id' => $owner_id, 'owner_type' => $owner_type, 'id' => $id, 'status' => Status::ACTIVE];
-        if ($owner_id == null OR $owner_type == null){
+        if ($owner_id == null OR $owner_type == null) {
             $bind = ['id' => $id, 'status' => Status::ACTIVE];
             $conditions = 'id = :id: AND status = :status:';
         }
@@ -480,14 +486,16 @@ class Address extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function fetchDefault($owner_id, $owner_type){
+    public static function fetchDefault($owner_id, $owner_type)
+    {
         return Address::findFirst([
             'owner_id = :owner_id: AND owner_type = :owner_type: AND status = :status: AND is_default=1',
             'bind' => ['owner_id' => $owner_id, 'owner_type' => $owner_type, 'status' => Status::ACTIVE]
         ]);
     }
 
-    public static function fetchAll($offset, $count, $filter_by = array(), $fetch_with = array()){
+    public static function fetchAll($offset, $count, $filter_by = array(), $fetch_with = array())
+    {
         $obj = new Address();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('Address.*')
@@ -495,7 +503,7 @@ class Address extends \Phalcon\Mvc\Model
             ->limit($count, $offset);
 
         $bind = [];
-        $where = ['Address.status = '.Status::ACTIVE];
+        $where = ['Address.status = ' . Status::ACTIVE];
 
         if (isset($filter_by['owner_id'])) {
             $where[] = 'owner_id = :owner_id:';
@@ -512,16 +520,52 @@ class Address extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute($bind);
 
         $result = [];
-        foreach($data as $item){
+        foreach ($data as $item) {
             $result[] = $item->getData();
         }
         return $result;
     }
 
-    public static function fetchById($id){
+    public static function fetchById($id)
+    {
         return Address::findFirst(array(
             'id = :id:',
             'bind' => ['id' => $id]
         ));
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $addr_obj Address
+     * @param $addr_arr
+     * @return bool
+     */
+    public static function isSame($addr_obj, $addr_arr)
+    {
+        if ($addr_obj->getId() != $addr_arr['id']) {
+            return false;
+        }
+
+        if ($addr_obj->getCityId() != $addr_arr['city_id']) {
+            return false;
+        }
+
+        if ($addr_obj->getStateId() != $addr_arr['state_id']) {
+            return false;
+        }
+
+        if ($addr_obj->getCountryId() != $addr_arr['country_id']) {
+            return false;
+        }
+
+        if (trim(strtolower($addr_obj->getStreetAddress1())) != trim(strtolower($addr_arr['street1']))) {
+            return false;
+        }
+
+        if (trim(strtolower($addr_obj->getStreetAddress2())) != trim(strtolower($addr_arr['street2']))) {
+            return false;
+        }
+
+        return true;
     }
 }
