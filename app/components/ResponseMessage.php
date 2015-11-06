@@ -20,6 +20,7 @@ class ResponseMessage
     const BRANCH_NOT_EXISTING = 'Branch does not exist';
     const INVALID_PACKAGE_COUNT = 'Invalid package count provided';
     const INVALID_AMOUNT = 'Invalid amount(s) provided';
+    const INVALID_PERCENTAGE = 'Invalid percentage(s) provided';
     const INVALID_PAYMENT_TYPE = 'Invalid payment type provided';
     const INVALID_STATUS = 'Invalid status provided';
     const NO_HUB_PROVIDED = 'No HUB provided';

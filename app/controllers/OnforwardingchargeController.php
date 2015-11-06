@@ -19,6 +19,10 @@ class OnforwardingchargeController extends ControllerBase {
         if ($amount < 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
+        $percentage = floatval($percentage);
+        if ($amount < 0.0){
+            return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
+        }
 
         $charge = OnforwardingCharge::fetchByDetails($name, $code);
         if ($charge != false){
@@ -48,12 +52,16 @@ class OnforwardingchargeController extends ControllerBase {
         $amount = $this->request->getPost('amount');
         $percentage = $this->request->getPost('percentage');
 
-        if (in_array(null, [$charge_id, $name, $code])){
+        if (in_array(null, [$charge_id, $name, $code, $percentage, $amount])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
         $amount = floatval($amount);
         if ($amount < 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
+        }
+        $percentage = floatval($percentage);
+        if ($amount < 0.0){
+            return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
         $charge = OnforwardingCharge::fetchByDetails($name, $code, $charge_id);
