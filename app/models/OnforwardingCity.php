@@ -168,8 +168,8 @@ class OnforwardingCity extends EagerModel
     public static function fetchLink($city_id, $onforwarding_charge_id)
     {
         return self::findFirst([
-            'city_id = :city_id: AND onforwarding_charge_id = :onforwarding_charge_id:',
-            ['city_id' => $city_id, 'onforwarding_charge_id' => $onforwarding_charge_id]
+            'conditions' => 'city_id = :city_id: AND onforwarding_charge_id = :onforwarding_charge_id:',
+            'bind' => ['city_id' => $city_id, 'onforwarding_charge_id' => $onforwarding_charge_id]
         ]);
     }
 
