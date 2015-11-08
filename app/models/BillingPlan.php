@@ -380,11 +380,13 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $where = [];
         if (isset($filter_by['company_id']) || is_null($filter_by['company_id'])) {
             if (!is_null($filter_by['company_id'])) {
-//                $where[] = 'BillingPlan.company_id IS NULL';
-//            } else {
                 $where[] = 'BillingPlan.company_id = :company_id:';
                 $bind['company_id'] = $filter_by['company_id'];
             }
+        }
+
+        if (isset($filter_by['company_only'])) {
+            $where[] = 'BillingPlan.company_id IS NOT NULL';
         }
 
         if (isset($filter_by['type'])) {
