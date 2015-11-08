@@ -1,6 +1,6 @@
 CREATE TABLE `return_reason` (
   `id` int UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `statusCode` INT(11) NOT NULL,
-  `meaningOfStatus` VARCHAR(45) NOT NULL,
-  `useageOfStatus` VARCHAR (45) NOT NULL
+  `status_code` INT(11) NOT NULL,
+  `meaning_of_status` VARCHAR(45) NOT NULL,
+  `useage_of_status` VARCHAR (45) NOT NULL
 );
