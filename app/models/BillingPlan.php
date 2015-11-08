@@ -416,8 +416,11 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $obj = new BillingPlan();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('BillingPlan')
-            ->orderBy('BillingPlan.name')
-            ->limit($count, $offset);
+            ->orderBy('BillingPlan.name');
+
+        if (!isset($fetch_with['no_paginate'])) {
+            $builder->limit($count, $offset);
+        }
 
         $columns = ['BillingPlan.*'];
 
