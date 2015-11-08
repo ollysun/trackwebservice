@@ -8,35 +8,14 @@ class WeightrangeController extends ControllerBase {
         $min_weight = $this->request->getPost('min_weight');
         $max_weight = $this->request->getPost('max_weight');
         $increment_weight = $this->request->getPost('increment_weight');
-        $billing_plan_id = $this->request->getPost('billing_plan_id');
 
-        if (in_array(null, [$min_weight, $max_weight, $increment_weight, $billing_plan_id])){
+        if (in_array(null, [$min_weight, $max_weight, $increment_weight])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $min_weight = floatval($min_weight);
         $max_weight = floatval($max_weight);
         $increment_weight = floatval($increment_weight);
-
-        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $billing_plan_id);
-        if ($weight_range != false){
-            return $this->response->sendError(
-                'This range is intersecting another range('
-                .$weight_range->getMinWeight() .',' . $weight_range->getMaxWeight() . ')'
-            );
-        }
-
-        //if billing plan is of type NUMBER, then make min_weight and max_weight integers
-        $plan = BillingPlan::fetchById($billing_plan_id);
-        if (empty($plan)) {
-            $this->response->sendError(ResponseMessage::INVALID_BILLING_PLAN);
-        }
-
-        if ($plan->getType() == BillingPlan::TYPE_NUMBER) {
-            $min_weight = intval($min_weight);
-            $max_weight = intval(ceil($max_weight));
-            $increment_weight = intval(ceil($increment_weight));
-        }
 
         if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ){
             return $this->response->sendError(ResponseMessage::NEGATIVE_WEIGHT);
@@ -48,8 +27,16 @@ class WeightrangeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
         }
 
+        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight);
+        if ($weight_range != false){
+            return $this->response->sendError(
+                'This weight range is intersecting another weight range('
+                .$weight_range->getMinWeight() .',' . $weight_range->getMaxWeight() . ')'
+            );
+        }
+
         $weight_range = new WeightRange();
-        $weight_range->initData($min_weight, $max_weight, $increment_weight,$billing_plan_id);
+        $weight_range->initData($min_weight, $max_weight, $increment_weight);
         if ($weight_range->save()){
             return $this->response->sendSuccess(['id' => $weight_range->getId()]);
         }
@@ -71,36 +58,25 @@ class WeightrangeController extends ControllerBase {
         $min_weight = floatval($min_weight);
         $max_weight = floatval($max_weight);
 
+        if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ){
+            return $this->response->sendError(ResponseMessage::NEGATIVE_WEIGHT);
+        }else if (bccomp($min_weight, $max_weight) != -1){
+            return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
+        }else if ($increment_weight > $max_weight - $min_weight){
+            return $this->response->sendError(ResponseMessage::INCREMENT_WEIGHT_TOO_LARGE);
+        } else if ($increment_weight <= 0.0){
+            return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
+        }
+
+        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $weight_range_id);
+        if ($weight_range != false){
+            return $this->response->sendError('This weight range is intersecting another weight range');
+        }
+
         $weight_range = WeightRange::fetchById($weight_range_id);
         if ($weight_range != false){
-            $other_weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $weight_range->getBillingPlanId(), $weight_range_id);
-            if ($other_weight_range != false){
-                return $this->response->sendError(
-                    'This range is intersecting another range('
-                    .$other_weight_range->getMinWeight() .',' . $other_weight_range->getMaxWeight() . ')'
-                );
-            }
-
             if (bccomp($weight_range->getMinWeight(), 0.0) == 0 and $weight_range->getMinWeight() != $min_weight){
                 return $this->response->sendError(ResponseMessage::BASE_WEIGHT_CHANGE);
-            }
-
-            //if billing plan is of type NUMBER, then make min_weight and max_weight integers
-            $plan = BillingPlan::fetchById($weight_range->getBillingPlanId());
-            if ($plan->getType() == BillingPlan::TYPE_NUMBER){
-                $min_weight = intval($min_weight);
-                $max_weight = intval(ceil($max_weight));
-                $increment_weight = intval(ceil($increment_weight));
-            }
-
-            if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ){
-                return $this->response->sendError(ResponseMessage::NEGATIVE_WEIGHT);
-            }else if (bccomp($min_weight, $max_weight) != -1){
-                return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
-            }else if ($increment_weight > $max_weight - $min_weight){
-                return $this->response->sendError(ResponseMessage::INCREMENT_WEIGHT_TOO_LARGE);
-            } else if ($increment_weight <= 0.0){
-                return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
             }
 
             $weight_range->edit($min_weight, $max_weight, $increment_weight);
@@ -155,13 +131,11 @@ class WeightrangeController extends ControllerBase {
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $status = $this->request->getQuery('status');
-        $billing_plan_id = $this->request->getQuery('billing_plan_id');
         $min_weight = $this->request->getQuery('min_weight');
         $max_weight = $this->request->getQuery('max_weight');
 
         $filter_by = [];
         if (!is_null($status)){ $filter_by['status'] = $status; }
-        if (!is_null($billing_plan_id)){ $filter_by['billing_plan_id'] = $billing_plan_id; }
         if (!is_null($min_weight)){ $filter_by['min_weight'] = $min_weight; }
         if (!is_null($max_weight)){ $filter_by['max_weight'] = $max_weight; }
 
