@@ -331,7 +331,6 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $columns = ['Parcel.*', 'ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
 
         if (isset($filter_by['waybill_number'])) {
-            $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
             $where[] = 'Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :waybill_number:';
             $bind['waybill_number'] = $filter_by['waybill_number'];
         } else if (isset($filter_by['parcel_id'])) {
@@ -350,6 +349,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         }
 
         //doing the left join after any possible inner join
+        $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
         $builder->leftJoin('FromBranch', 'FromBranch.id = ParcelHistory.from_branch_id', 'FromBranch');
         $builder->leftJoin('ToBranch', 'ToBranch.id = ParcelHistory.to_branch_id', 'ToBranch');
 
