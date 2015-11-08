@@ -379,9 +379,9 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $bind = [];
         $where = [];
         if (isset($filter_by['company_id']) || is_null($filter_by['company_id'])) {
-            if ($filter_by['company_id'] == null) {
-                $where[] = 'BillingPlan.company_id IS NULL';
-            } else {
+            if (!is_null($filter_by['company_id'])) {
+//                $where[] = 'BillingPlan.company_id IS NULL';
+//            } else {
                 $where[] = 'BillingPlan.company_id = :company_id:';
                 $bind['company_id'] = $filter_by['company_id'];
             }
@@ -402,6 +402,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
 
     /**
      * @author Abdul-Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
      * @param $offset
      * @param $count
      * @param $filter_by
