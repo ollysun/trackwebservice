@@ -81,7 +81,7 @@ class BillingplanController extends ControllerBase {
      */
     private function getFilterParams()
     {
-        $filter_params = ['company_id', 'type', 'status'];
+        $filter_params = ['company_id', 'type', 'status', 'company_only'];
         $filter_by = [];
         foreach ($filter_params as $param) {
             $$param = $this->request->getQuery($param);
