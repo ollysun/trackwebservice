@@ -42,7 +42,10 @@ class CompanyRequestValidation extends BaseValidation
         ]));
 
         $this->add('phone_number', new NigerianPhoneNumber([
-            'message' => 'Invalid phone number supplied'
+            'message' => 'Invalid phone number supplied for company contact'
         ]));
+
+
+      
     }
 }
