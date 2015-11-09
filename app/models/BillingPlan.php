@@ -483,4 +483,16 @@ class BillingPlan extends \Phalcon\Mvc\Model
 
         return intval($data->plan_count);
     }
+
+    /**
+     * Clones default billing
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $newBillingPlanId
+     * @return bool
+     */
+    public static function cloneDefaultBilling($newBillingPlanId)
+    {
+        $obj = new BillingPlan();
+        return $obj->getWriteConnection()->execute("CALL PopulatePlan($newBillingPlanId)");
+    }
 }

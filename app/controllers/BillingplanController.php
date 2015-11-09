@@ -26,6 +26,8 @@ class BillingplanController extends ControllerBase {
         $plan = new BillingPlan();
         $plan->initData($name, $type, $company_id);
         if ($plan->save()){
+            //TODO Check status of cloning
+            BillingPlan::cloneDefaultBilling($plan->getId());
             return $this->response->sendSuccess(['id' => $plan->getId()]);
         }
         return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
