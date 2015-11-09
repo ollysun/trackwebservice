@@ -11,6 +11,12 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
 
     /**
      *
+     * @var integer
+     */
+    protected $billing_plan_id;
+
+    /**
+     *
      * @var string
      */
     protected $name;
@@ -66,6 +72,19 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field billing_plan_id
+     *
+     * @param integer $billing_plan_id
+     * @return $this
+     */
+    public function setBillingPlanId($billing_plan_id)
+    {
+        $this->billing_plan_id = $billing_plan_id;
 
         return $this;
     }
@@ -177,6 +196,16 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field billing_plan_id
+     *
+     * @return integer
+     */
+    public function getBillingPlanId()
+    {
+        return $this->billing_plan_id;
+    }
+
+    /**
      * Returns the value of field name
      *
      * @return string
@@ -281,6 +310,7 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     {
         return array(
             'id' => 'id',
+            'billing_plan_id' => 'billing_plan_id',
             'name' => 'name',
             'description' => 'description',
             'code' => 'code',
@@ -295,6 +325,7 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
     public function getData(){
         return array(
             'id' => $this->getId(),
+            'billing_plan_id' => $this->getBillingPlanId(),
             'name' => $this->getName(),
             'description' => $this->getDescription(),
             'code' => $this->getCode(),
@@ -306,7 +337,8 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($name, $code, $description, $amount, $percentage){
+    public function initData($name, $code, $description, $amount, $percentage, $billing_plan_id){
+        $this->setBillingPlanId($billing_plan_id);
         $this->setName($name);
         $this->setDescription($description);
         $this->setCode($code);
@@ -377,6 +409,24 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         ]);
     }
 
+    public static function filterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['status'])){
+            $where[] = 'OnforwardingCharge.status = :status:';
+            $bind['status'] = $filter_by['status'];
+        }
+
+        if (isset($filter_by['billing_plan_id'])){
+            $where[] = 'OnforwardingCharge.billing_plan_id = :billing_plan_id:';
+            $bind['billing_plan_id'] = $filter_by['billing_plan_id'];
+        }
+
+        return ['where' => $where, 'bind' => $bind];
+    }
+
     public static function fetchAll($offset, $count, $filter_by){
         $obj = new OnforwardingCharge();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -386,13 +436,9 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
             $builder->limit($count, $offset);
         }
 
-        $where = [];
-        $bind = [];
-
-        if (isset($filter_by['status'])){
-            $where[] = 'OnforwardingCharge.status = :status:';
-            $bind['status'] = $filter_by['status'];
-        }
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
@@ -405,13 +451,9 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
             ->columns('COUNT(*) AS charge_count')
             ->from('OnforwardingCharge');
 
-        $where = [];
-        $bind = [];
-
-        if (isset($filter_by['status'])){
-            $where[] = 'OnforwardingCharge.status = :status:';
-            $bind['status'] = $filter_by['status'];
-        }
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
@@ -421,5 +463,22 @@ class OnforwardingCharge extends \Phalcon\Mvc\Model
         }
 
         return intval($data[0]->charge_count);
+    }
+
+    /**
+     * @param $city_id
+     * @param $billing_plan_id
+     * @return OnforwardingCharge
+     */
+    public static function fetchByCity($city_id, $billing_plan_id){
+        $obj = new OnforwardingCharge();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('OnforwardingCharge')
+            ->innerJoin('OnforwardingCity', 'OnforwardingCity.onforwarding_charge_id = OnforwardingCharge.id')
+            ->where('OnforwardingCity.city_id = :city_id: AND OnforwardingCharge.billing_plan_id = :billing_plan_id:',
+                ['city_id' => $city_id, 'billing_plan_id' => $billing_plan_id]
+            );
+
+        return $builder->getQuery()->getSingleResult();
     }
 }
