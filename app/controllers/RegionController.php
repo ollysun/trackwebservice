@@ -117,16 +117,15 @@ class RegionController extends ControllerBase
         $state_id = $this->request->getPost('state_id');
         $name = $this->request->getPost('name');
         $branch_id = $this->request->getPost('branch_id');
-        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
         $transit_time = $this->request->getPost('transit_time');
 
-        if (in_array(null, [$state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time])) {
+        if (in_array(null, [$state_id, $name, $branch_id, $transit_time])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         if (!City::isExisting($state_id, $name)) {
             $city = new City();
-            $city->initData($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time);
+            $city->initData($state_id, $name, $branch_id, $transit_time);
             if ($city->save()) {
                 return $this->response->sendSuccess(['id' => $city->getId()]);
             }
@@ -168,10 +167,9 @@ class RegionController extends ControllerBase
         $state_id = $this->request->getPost('state_id');
         $name = $this->request->getPost('name');
         $branch_id = $this->request->getPost('branch_id');
-        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
         $transit_time = $this->request->getPost('transit_time');
 
-        if (in_array(null, [$state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time])) {
+        if (in_array(null, [$state_id, $name, $branch_id, $transit_time])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -181,7 +179,7 @@ class RegionController extends ControllerBase
 
         $city = City::fetchActive($city_id);
         if ($city != false) {
-            $city->edit($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time);
+            $city->edit($state_id, $name, $branch_id, $transit_time);
             if ($city->save()) {
                 return $this->response->sendSuccess();
             }
@@ -200,7 +198,6 @@ class RegionController extends ControllerBase
         $with_country = $this->request->getQuery('with_country');
         $with_region = $this->request->getQuery('with_region');
         $with_branch = $this->request->getQuery('with_branch');
-        $with_charge = $this->request->getQuery('with_charge');
 
         if (in_array(null, [$city_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -218,9 +215,6 @@ class RegionController extends ControllerBase
         }
         if (!is_null($with_branch)) {
             $fetch_with['with_branch'] = true;
-        }
-        if (!is_null($with_charge)) {
-            $fetch_with['with_charge'] = true;
         }
 
         $city = City::fetchOne($city_id, $fetch_with);
@@ -252,7 +246,6 @@ class RegionController extends ControllerBase
         $with_country = $this->request->getQuery('with_country');
         $with_region = $this->request->getQuery('with_region');
         $with_branch = $this->request->getQuery('with_branch');
-        $with_charge = $this->request->getQuery('with_charge');
 
         $filter_by = [];
         if (!is_null($state_id)) {
@@ -286,9 +279,6 @@ class RegionController extends ControllerBase
         }
         if (!is_null($with_branch)) {
             $fetch_with['with_branch'] = true;
-        }
-        if (!is_null($with_charge)) {
-            $fetch_with['with_charge'] = true;
         }
 
         return $this->response->sendSuccess(City::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate));
