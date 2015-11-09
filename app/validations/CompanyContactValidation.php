@@ -15,6 +15,16 @@ class CompanyContactValidation extends BaseValidation
     {
         $this->setRequiredFields(['firstname', 'lastname', 'phone_number', 'email']);
 
+        $this->add('firstname', new Regex([
+            'pattern' => '/.*[a-z]+.*/i',
+            'message' => 'Invalid company name'
+        ]));
+
+        $this->add('lastname', new Regex([
+            'pattern' => '/.*[a-z]+.*/i',
+            'message' => 'Invalid company name'
+        ]));
+
         $this->add('email', new NotExisting([
             'model' => UserAuth::class,
             'conditions' => 'email = :email:',
