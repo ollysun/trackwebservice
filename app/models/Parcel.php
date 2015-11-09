@@ -1764,9 +1764,15 @@ class Parcel extends \Phalcon\Mvc\Model
                     $is_existing = ($sender_addr_obj != false);
                     if (!$is_existing) {
                         $sender_addr_obj = new Address();
+                    }else{
+                        if(!Address::isSame($sender_addr_obj, $sender_address)){
+                            $sender_addr_obj = new Address();
+                            $is_existing = false;
+                        }
                     }
                 }
                 if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
+                    Util::slackDebug("Parcel not created", "Sender address id not for sender");
                     $transactionManager->rollback();
                     return false;
                 }
@@ -1791,9 +1797,15 @@ class Parcel extends \Phalcon\Mvc\Model
                     $is_existing = ($receiver_addr_obj != false);
                     if (!$is_existing) {
                         $receiver_addr_obj = new Address();
+                    }else{
+                        if(!Address::isSame($receiver_addr_obj, $receiver_address)){
+                            $receiver_addr_obj = new Address();
+                            $is_existing = false;
+                        }
                     }
                 }
                 if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
+                    Util::slackDebug("Parcel not created", "Receiver address id not for receiver");
                     $transactionManager->rollback();
                     return false;
                 }

@@ -641,12 +641,18 @@ class ParcelController extends ControllerBase
         $route_id = $this->request->getPost('route_id');
         $admin_id = $this->auth->getPersonId();
 
+        $route = Route::findFirst($route_id);
+        $auth_data = $this->auth->getData();
+
         if (is_null($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        } else if (!$route) {
+            return $this->response->sendError(ResponseMessage::INVALID_ROUTE);
+        } else if ($route->getData()['branch_id'] != $auth_data['branch']['id']) {
+            return $this->response->sendError(ResponseMessage::WRONG_ROUTE);
         }
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
-        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -655,8 +661,7 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;
             }
-
-            if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY) {
+            else if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
             } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN])) {
