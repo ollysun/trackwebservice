@@ -26,6 +26,6 @@ class CompanyContactValidation extends BaseValidation
             'message' => ':field is not valid'
         ]));
 
-        $this->add('phone_number', new NigerianPhoneNumber(['message' => 'Invalid phone number supplied']));
+        $this->add('phone_number', new NigerianPhoneNumber(['message' => 'Invalid phone number supplied for secondary contact']));
     }
 }
