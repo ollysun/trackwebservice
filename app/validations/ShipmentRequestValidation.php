@@ -21,8 +21,7 @@ class ShipmentRequestValidation extends BaseValidation
         $required_fields = ['receiver_firstname',
             'receiver_address', 'company_id',
             'receiver_state_id', 'receiver_city_id',
-            'estimated_weight', 'no_of_packages',
-            'parcel_value'];
+            'estimated_weight', 'no_of_packages'];
 
         $this->setRequiredFields($required_fields);
 
@@ -63,9 +62,11 @@ class ShipmentRequestValidation extends BaseValidation
             'message' => 'invalid :field supplied'
         ]));
 
-        $this->add('parcel_value', new Regex([
-            'pattern' => '/^[\d]+([\.]?[\d]+)?$/',
-            'message' => 'invalid :field supplied'
-        ]));
+        if (!is_null($this->getValue('parcel_value'))) {
+            $this->add('parcel_value', new Regex([
+                'pattern' => '/^[\d]+([\.]?[\d]+)?$/',
+                'message' => 'invalid :field supplied'
+            ]));
+        }
     }
 }
