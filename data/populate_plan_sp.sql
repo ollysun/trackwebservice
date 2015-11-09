@@ -1,4 +1,3 @@
-DELIMITER //
 CREATE PROCEDURE PopulatePlan(IN new_billing_plan_id INT)
   BEGIN
     DECLARE v_plan_type, v_default_plan_id INT;
@@ -118,4 +117,4 @@ CREATE PROCEDURE PopulatePlan(IN new_billing_plan_id INT)
 	      END;
 	    END IF;
     END IF;
-  END //
+  END

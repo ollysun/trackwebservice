@@ -1,4 +1,3 @@
-DELIMITER //
 CREATE PROCEDURE OnforwardingChargePlanBuild()
   BEGIN
     DECLARE v_city_id, v_onforwarding_charge, v_finished INTEGER DEFAULT 0;
@@ -93,4 +92,4 @@ CREATE PROCEDURE OnforwardingChargePlanBuild()
     DROP FOREIGN KEY `city_ibfk_4`;
 
     COMMIT;
-  END //
+  END
