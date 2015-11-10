@@ -15,6 +15,14 @@ class ParcelController extends ControllerBase
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
+
+
+    public function getReturnReasonsAction()
+    {
+        $reasons = ReturnReasons::getAll();
+        return $this->response->sendSuccess($reasons);
+    }
+
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
