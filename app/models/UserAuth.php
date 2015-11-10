@@ -350,17 +350,18 @@ class UserAuth extends \Phalcon\Mvc\Model
          */
         $userAuth = UserAuth::findFirst($id);
 
-        if($userAuth) {
+        if ($userAuth) {
             $changeEmail = $email != $userAuth->getEmail();
             $changeStatus = $status != $userAuth->getStatus();
 
-            if(!($changeEmail && $changeStatus)) {
-                return true;
+            if ($changeEmail) {
+                $userAuth->setEmail($email);
             }
 
-            $userAuth->setEmail($email);
-            $userAuth->setStatus($status);
-            $userAuth->setModifiedDate(Util::getCurrentDateTime());
+            if ($changeStatus) {
+                $userAuth->setStatus($status);
+                $userAuth->setModifiedDate(Util::getCurrentDateTime());
+            }
 
             return $userAuth->save();
         }
