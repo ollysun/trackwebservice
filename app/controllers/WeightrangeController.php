@@ -133,11 +133,13 @@ class WeightrangeController extends ControllerBase {
         $status = $this->request->getQuery('status');
         $min_weight = $this->request->getQuery('min_weight');
         $max_weight = $this->request->getQuery('max_weight');
+        $billing_plan_id = $this->request->getQuery('billing_plan_id');
 
         $filter_by = [];
         if (!is_null($status)){ $filter_by['status'] = $status; }
         if (!is_null($min_weight)){ $filter_by['min_weight'] = $min_weight; }
         if (!is_null($max_weight)){ $filter_by['max_weight'] = $max_weight; }
+        if (!is_null($billing_plan_id)){ $filter_by['billing_plan_id'] = $billing_plan_id; }
 
         return $this->response->sendSuccess(WeightRange::fetchAll($offset, $count, $filter_by));
     }
