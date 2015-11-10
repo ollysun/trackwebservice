@@ -28,12 +28,13 @@ class ParcelReturnReasons extends AbstractMigration
 
     public function up()
     {
+        // create return_reasons table
         $upSql = file_get_contents(dirname(__FILE__) . '/../data/parcel/parcel_return.sql');
         $this->execute($upSql);
-    }
-
-    public function down()
-    {
 
     }
+
+
+
+
 }
