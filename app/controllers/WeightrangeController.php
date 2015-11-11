@@ -8,6 +8,7 @@ class WeightrangeController extends ControllerBase {
         $min_weight = $this->request->getPost('min_weight');
         $max_weight = $this->request->getPost('max_weight');
         $increment_weight = $this->request->getPost('increment_weight');
+        $billing_plan_id = $this->request->getPost('billing_plan_id');
 
         if (in_array(null, [$min_weight, $max_weight, $increment_weight])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -27,7 +28,7 @@ class WeightrangeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
         }
 
-        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight);
+        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $billing_plan_id);
         if ($weight_range != false){
             return $this->response->sendError(
                 'This weight range is intersecting another weight range('
@@ -36,7 +37,7 @@ class WeightrangeController extends ControllerBase {
         }
 
         $weight_range = new WeightRange();
-        $weight_range->initData($min_weight, $max_weight, $increment_weight);
+        $weight_range->initData($min_weight, $max_weight, $increment_weight, $billing_plan_id);
         if ($weight_range->save()){
             return $this->response->sendSuccess(['id' => $weight_range->getId()]);
         }
@@ -142,5 +143,32 @@ class WeightrangeController extends ControllerBase {
         if (!is_null($billing_plan_id)){ $filter_by['billing_plan_id'] = $billing_plan_id; }
 
         return $this->response->sendSuccess(WeightRange::fetchAll($offset, $count, $filter_by));
+    }
+
+    /**
+     * Delete's a weight range
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function deleteAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $weight_range_id = $this->request->getPost('weight_range_id');
+
+        // Check if weight range is valid
+        $weightRange = WeightRange::fetchById($weight_range_id);
+        if(!$weightRange) {
+            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_DOES_NOT_EXIST);
+        }
+
+        // Check if there's a pricing for the weight range
+        $weightBillings = WeightBilling::fetchAll(DEFAULT_OFFSET, DEFAULT_COUNT, ['weight_range_id' => $weight_range_id]);
+        if(!empty($weightBillings)) {
+            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING);
+        }
+
+        if($weightRange->delete()) {
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_DELETE_WEIGHT_RANGE);
     }
 } 
