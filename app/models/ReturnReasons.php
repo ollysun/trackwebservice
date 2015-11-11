@@ -2,7 +2,7 @@
 /**
  * Class ReturnReasons
  * @author Babatunde Otaru <tunde@cottacush.com>
- */
+ **/
 
 use Phalcon\Mvc\Model;
 
