@@ -8,6 +8,7 @@ class WeightrangeController extends ControllerBase {
         $min_weight = $this->request->getPost('min_weight');
         $max_weight = $this->request->getPost('max_weight');
         $increment_weight = $this->request->getPost('increment_weight');
+        $billing_plan_id = $this->request->getPost('billing_plan_id');
 
         if (in_array(null, [$min_weight, $max_weight, $increment_weight])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -27,7 +28,7 @@ class WeightrangeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
         }
 
-        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight);
+        $weight_range = WeightRange::getIntersectingRange($min_weight, $max_weight, $billing_plan_id);
         if ($weight_range != false){
             return $this->response->sendError(
                 'This weight range is intersecting another weight range('
@@ -36,7 +37,7 @@ class WeightrangeController extends ControllerBase {
         }
 
         $weight_range = new WeightRange();
-        $weight_range->initData($min_weight, $max_weight, $increment_weight);
+        $weight_range->initData($min_weight, $max_weight, $increment_weight, $billing_plan_id);
         if ($weight_range->save()){
             return $this->response->sendSuccess(['id' => $weight_range->getId()]);
         }
@@ -155,7 +156,7 @@ class WeightrangeController extends ControllerBase {
 
         // Check if weight range is valid
         $weightRange = WeightRange::fetchById($weight_range_id);
-        if($weightRange) {
+        if(!$weightRange) {
             return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_DOES_NOT_EXIST);
         }
 
