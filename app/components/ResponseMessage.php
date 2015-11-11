@@ -72,6 +72,8 @@ class ResponseMessage
     const NEGATIVE_WEIGHT = 'Negative weights not allowed';
     const INVALID_WEIGHT = 'Invalid weight(s) provided';
     const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
+    const WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING = 'Weight range still has existing billing';
+    const UNABLE_TO_DELETE_WEIGHT_RANGE = 'Unable to delete weight range';
     const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
     const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
 
