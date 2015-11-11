@@ -14,7 +14,7 @@ class BillingplanController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if (!in_array($type, [BillingPlan::TYPE_WEIGHT, BillingPlan::TYPE_ON_FORWARDING, BillingPlan::TYPE_NUMBER])){
+        if (!in_array($type, [BillingPlan::TYPE_WEIGHT, BillingPlan::TYPE_ON_FORWARDING, BillingPlan::TYPE_NUMBER, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING])){
             return $this->response->sendError(ResponseMessage::INVALID_TYPE);
         }
 
