@@ -25,8 +25,11 @@ class BillingPlanCloneStoredProcedureUpdate extends AbstractMigration
      * Remember to call "create()" or "update()" and NOT "save()" when working
      * with the Table class.
      */
-    public function change()
+    public function up()
     {
-
+        $stored_procedure_install_sql = file_get_contents(dirname(__FILE__) . '/../data/populate_weight_sp.sql');
+        $this->execute($stored_procedure_install_sql);
+        $stored_procedure_install_sql = file_get_contents(dirname(__FILE__) . '/../data/populate_onforwarding_sp.sql');
+        $this->execute($stored_procedure_install_sql);
     }
 }

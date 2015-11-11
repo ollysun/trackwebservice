@@ -1,4 +1,3 @@
-DELIMITER //
 CREATE PROCEDURE PopulateWeight(IN new_billing_plan_id INT)
   BEGIN
     DECLARE v_plan_type, v_default_weight_plan_id, v_default_onforwarding_plan_id INT;
@@ -67,4 +66,4 @@ CREATE PROCEDURE PopulateWeight(IN new_billing_plan_id INT)
 	END;
 
 				END IF;
-  END //
+  END

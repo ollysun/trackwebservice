@@ -1,4 +1,3 @@
-DELIMITER //
 CREATE PROCEDURE PopulateOnforwarding(IN new_billing_plan_id INT)
   BEGIN
     DECLARE v_plan_type, v_default_weight_plan_id, v_default_onforwarding_plan_id INT;
@@ -64,4 +63,4 @@ CREATE PROCEDURE PopulateOnforwarding(IN new_billing_plan_id INT)
 		CLOSE o_charge_cursor;
 	      END;
 	    END IF;
-  END //
+  END
