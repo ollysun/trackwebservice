@@ -143,4 +143,31 @@ class WeightrangeController extends ControllerBase {
 
         return $this->response->sendSuccess(WeightRange::fetchAll($offset, $count, $filter_by));
     }
+
+    /**
+     * Delete's a weight range
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function deleteAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $weight_range_id = $this->request->getPost('weight_range_id');
+
+        // Check if weight range is valid
+        $weightRange = WeightRange::fetchById($weight_range_id);
+        if($weightRange) {
+            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_DOES_NOT_EXIST);
+        }
+
+        // Check if there's a pricing for the weight range
+        $weightBillings = WeightBilling::fetchAll(DEFAULT_OFFSET, DEFAULT_COUNT, ['weight_range_id' => $weight_range_id]);
+        if(!empty($weightBillings)) {
+            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING);
+        }
+
+        if($weightRange->delete()) {
+            return$this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_DELETE_WEIGHT_RANGE);
+    }
 } 
