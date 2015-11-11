@@ -1,4 +1,4 @@
-INSERT INTO  `tnt`.`return_reasons` (
+INSERT INTO  `return_reasons` (
 `id` ,
 `status_code` ,
 `meaning_of_status` ,
