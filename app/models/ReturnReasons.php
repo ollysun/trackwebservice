@@ -1,13 +1,13 @@
 <?php
-/**
- * Class ReturnReasons
- * @author Babatunde Otaru <tunde@cottacush.com>
- **/
+
 
 use Phalcon\Mvc\Model;
 
 
-
+/**
+ * Class ReturnReasons
+ * @author Babatunde Otaru <tunde@cottacush.com>
+ **/
 class ReturnReasons extends phalcon\Mvc\Model
 {
     /**

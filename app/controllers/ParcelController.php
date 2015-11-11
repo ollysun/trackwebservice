@@ -17,11 +17,11 @@ class ParcelController extends ControllerBase
      */
 
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * Returns Reasons for returning a parcel
+     */
     public function getReturnReasonsAction()
-        /**
-        * @author Babatunde Otaru <tunde@cottacush.com>
-        * Returns Reasons for returning a parcel
-        */
     {
 
         $reasons = ReturnReasons::getAll();
