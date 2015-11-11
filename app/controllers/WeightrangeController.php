@@ -167,7 +167,7 @@ class WeightrangeController extends ControllerBase {
         }
 
         if($weightRange->delete()) {
-            return$this->response->sendSuccess();
+            return $this->response->sendSuccess();
         }
         return $this->response->sendError(ResponseMessage::UNABLE_TO_DELETE_WEIGHT_RANGE);
     }
