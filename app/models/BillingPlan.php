@@ -5,6 +5,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
     const TYPE_WEIGHT = 1;
     const TYPE_ON_FORWARDING = 2;
     const TYPE_NUMBER = 3;
+    const TYPE_WEIGHT_AND_ON_FORWARDING = 4;
 
     /**
      *
