@@ -493,6 +493,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
     public static function cloneDefaultBilling($newBillingPlanId)
     {
         $obj = new BillingPlan();
-        return $obj->getWriteConnection()->execute("CALL PopulatePlan($newBillingPlanId)");
+        $obj->getWriteConnection()->execute("CALL PopulateWeight($newBillingPlanId)");
+        $obj->getWriteConnection()->execute("CALL PopulateOnforwarding($newBillingPlanId)");
     }
 }
