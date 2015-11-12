@@ -6,6 +6,7 @@ use Phalcon\Mvc\Model;
 
 /**
  * Class ReturnReasons
+ * @author James
  * @author Babatunde Otaru <tunde@cottacush.com>
  **/
 class ReturnReasons extends phalcon\Mvc\Model

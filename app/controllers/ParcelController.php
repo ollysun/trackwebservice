@@ -18,12 +18,12 @@ class ParcelController extends ControllerBase
 
 
     /**
+     * @author James
      * @author Babatunde Otaru <tunde@cottacush.com>
      * Returns Reasons for returning a parcel
      */
     public function getReturnReasonsAction()
     {
-
         $reasons = ReturnReasons::getAll();
         return $this->response->sendSuccess($reasons);
     }
