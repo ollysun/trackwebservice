@@ -18,7 +18,6 @@ class ParcelController extends ControllerBase
 
 
     /**
-     * @author James
      * @author Babatunde Otaru <tunde@cottacush.com>
      * Returns Reasons for returning a parcel
      */

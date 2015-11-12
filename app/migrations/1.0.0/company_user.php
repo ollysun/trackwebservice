@@ -67,6 +67,7 @@ class CompanyUserMigration_100 extends Migration
                     'referencedColumns' => array('id')
                 ))
             ),
+
             'options' => array(
                 'TABLE_TYPE' => 'BASE TABLE',
                 'AUTO_INCREMENT' => '',

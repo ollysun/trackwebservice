@@ -6,37 +6,39 @@ use Phalcon\Mvc\Model;
 
 /**
  * Class ReturnReasons
- * @author James
  * @author Babatunde Otaru <tunde@cottacush.com>
  **/
 class ReturnReasons extends phalcon\Mvc\Model
 {
     /**
+     *@author Babatunde Otaru <tunde@cottacush.com>
      *@var integer
      */
     protected $id;
 
 
     /**
-     *
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * @var String
      */
     protected $status_code;
 
     /**
-     *
+     *@author Babatunde Otaru <tunde@cottacush.com>
      * @var String
      */
     protected $meaning_of_status;
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * @var String
      */
     protected $usage_of_status;
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
     * Method to set the database for this model
     **/
     public function getSource()
@@ -47,6 +49,7 @@ class ReturnReasons extends phalcon\Mvc\Model
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * Initialize method for model
      */
     public function initialize()
@@ -56,6 +59,7 @@ class ReturnReasons extends phalcon\Mvc\Model
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
     * Method to set the value of field id
     * @param integer $id
     */
@@ -65,6 +69,7 @@ class ReturnReasons extends phalcon\Mvc\Model
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * Method to set the value of field meaning_of_status
      * @param string $meaning_of_status
      */
@@ -74,6 +79,7 @@ class ReturnReasons extends phalcon\Mvc\Model
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * Method to set the value of field status_code
      * @param string $status_code
      */
@@ -83,6 +89,7 @@ class ReturnReasons extends phalcon\Mvc\Model
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * Method to set the value of field usage_of_status
      * @param string $usage_of_status
      */
@@ -93,6 +100,7 @@ class ReturnReasons extends phalcon\Mvc\Model
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      *Return the value of field meaning_of_status
      * @return integer id
      */
@@ -102,6 +110,7 @@ class ReturnReasons extends phalcon\Mvc\Model
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      *Return the value of field meaning_of_status
      * @return string
      */
@@ -111,6 +120,7 @@ class ReturnReasons extends phalcon\Mvc\Model
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      *Return the value of field status_code
      * @return string
      */
@@ -122,7 +132,8 @@ class ReturnReasons extends phalcon\Mvc\Model
 
 
     /**
-     *Return the value of field usage_of_status
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * Return the value of field usage_of_status
      * @return string
      */
     public function getUsageOfStatus()
@@ -132,6 +143,7 @@ class ReturnReasons extends phalcon\Mvc\Model
 
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * Return Reasons[]
     **/
     public static function getAll()

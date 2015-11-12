@@ -2,6 +2,7 @@
 
 
 class UserController extends ControllerBase {
+
     public function getByPhoneAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
