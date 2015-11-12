@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class ParcelReturnReasons extends AbstractMigration
+class ParcelInsertReasons extends AbstractMigration
 {
     /**
      * Change Method.
@@ -25,14 +25,9 @@ class ParcelReturnReasons extends AbstractMigration
      * Remember to call "create()" or "update()" and NOT "save()" when working
      * with the Table class.
      */
-
     public function up()
-    {// create return_reasons table
-        $upSql = file_get_contents(dirname(__FILE__) . '/../data/parcel/parcel_return.sql');
+    {
+        $upSql = file_get_contents(dirname(__FILE__) . '/../data/parcel/parcel_insert_reasons.sql');
         $this->execute($upSql);
     }
-
-
-
-
 }
