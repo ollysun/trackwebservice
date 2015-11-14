@@ -2,6 +2,12 @@
 
 
 class OnforwardingchargeController extends ControllerBase {
+    /**
+     * Add on forwarding charge
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -48,6 +54,12 @@ class OnforwardingchargeController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edit on forwarding charge
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
