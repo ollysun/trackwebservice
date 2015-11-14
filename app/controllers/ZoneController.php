@@ -144,7 +144,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $increment_cost <= 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
@@ -184,7 +184,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $increment_cost <= 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
