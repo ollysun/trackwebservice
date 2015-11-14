@@ -1,0 +1,1 @@
+INSERT INTO `status` (`id`,`name`) VALUES (23, 'returned');
