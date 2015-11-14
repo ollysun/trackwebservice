@@ -130,6 +130,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendSuccess(Zone::fetchAll($offset, $count, $filter_by));
     }
 
+    /**
+     * Adds billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -171,6 +177,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edits billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
