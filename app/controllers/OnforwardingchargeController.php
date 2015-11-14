@@ -82,15 +82,14 @@ class OnforwardingchargeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
-        $charge = OnforwardingCharge::fetchByDetails($name, $code, $charge_id);
+        $charge = OnforwardingCharge::fetchByDetails($name, $code);
 
         if ($charge != false){
-            if ($charge->hasSameName($name)){
+            if ($charge->hasSameName($name) && $charge->getId() != $charge_id){
                 return $this->response->sendError(ResponseMessage::ONFORWARDING_CHARGE_NAME_EXISTS);
-            }else if ($charge->hasSameCode($code)){
+            }else if ($charge->hasSameCode($code) && $charge->getId() != $charge_id){
                 return $this->response->sendError(ResponseMessage::ONFORWARDING_CHARGE_CODE_EXISTS);
             }
-            return $this->response->sendError();
         }
 
         $charge = OnforwardingCharge::fetchById($charge_id);
