@@ -2,6 +2,13 @@
 
 
 class WeightrangeController extends ControllerBase {
+
+    /**
+     * Adds a weight range
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -42,6 +49,12 @@ class WeightrangeController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edits a weight range
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
