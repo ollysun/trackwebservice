@@ -2,6 +2,13 @@
 
 
 class WeightrangeController extends ControllerBase {
+
+    /**
+     * Adds a weight range
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -20,9 +27,7 @@ class WeightrangeController extends ControllerBase {
 
         if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ){
             return $this->response->sendError(ResponseMessage::NEGATIVE_WEIGHT);
-        }else if (bccomp($min_weight, $max_weight) != -1){
-            return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
-        }else if ($increment_weight > $max_weight - $min_weight){
+        } else if ($increment_weight > $max_weight - $min_weight){
             return $this->response->sendError(ResponseMessage::INCREMENT_WEIGHT_TOO_LARGE);
         } else if ($increment_weight <= 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
@@ -44,6 +49,12 @@ class WeightrangeController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edits a weight range
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -59,11 +70,9 @@ class WeightrangeController extends ControllerBase {
         $min_weight = floatval($min_weight);
         $max_weight = floatval($max_weight);
 
-        if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ){
+        if (bccomp($min_weight, 0.0) == -1 or bccomp($max_weight, 0.0) == -1 ) {
             return $this->response->sendError(ResponseMessage::NEGATIVE_WEIGHT);
-        }else if (bccomp($min_weight, $max_weight) != -1){
-            return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);
-        }else if ($increment_weight > $max_weight - $min_weight){
+        } else if ($increment_weight > $max_weight - $min_weight){
             return $this->response->sendError(ResponseMessage::INCREMENT_WEIGHT_TOO_LARGE);
         } else if ($increment_weight <= 0.0){
             return $this->response->sendError(ResponseMessage::INVALID_WEIGHT);

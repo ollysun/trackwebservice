@@ -130,6 +130,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendSuccess(Zone::fetchAll($offset, $count, $filter_by));
     }
 
+    /**
+     * Adds billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -144,7 +150,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $base_percentage <0 OR $increment_cost <= 0 OR $increment_percentage < 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
@@ -171,6 +177,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edits billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -184,7 +196,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $base_percentage <0 OR $increment_cost <= 0 OR $increment_percentage < 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
