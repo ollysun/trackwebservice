@@ -1605,11 +1605,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_delivery_receipt'])) {
             $columns[] = 'DeliveryReceipt.*';
             $builder->leftJoin('DeliveryReceipt', 'DeliveryReceipt.waybill_number = Parcel.waybill_number', 'DeliveryReceipt');
+            $builder->groupBy('Parcel.waybill_number');
         }
 
         $builder->where(join(' AND ', $where));
-
-        $builder->groupBy('Parcel.waybill_number');
 
         if (isset($filter_by['waybill_number_arr'])) {
             $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
