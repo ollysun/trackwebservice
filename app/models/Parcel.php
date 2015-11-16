@@ -1609,6 +1609,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $builder->where(join(' AND ', $where));
 
+        $builder->groupBy('Parcel.waybill_number');
+
         if (isset($filter_by['waybill_number_arr'])) {
             $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
 
