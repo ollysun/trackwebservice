@@ -1,0 +1,1 @@
+ALTER TABLE shipment_requests MODIFY COLUMN parcel_value INT(10) DEFAULT NULL;

@@ -15,6 +15,18 @@ class ParcelController extends ControllerBase
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
+
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * Returns Reasons for returning a parcel
+     */
+    public function getReturnReasonsAction()
+    {
+        $reasons = ReturnReasons::getAll();
+        return $this->response->sendSuccess($reasons);
+    }
+
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
@@ -641,12 +653,23 @@ class ParcelController extends ControllerBase
         $route_id = $this->request->getPost('route_id');
         $admin_id = $this->auth->getPersonId();
 
+
+        $auth_data = $this->auth->getData();
+
         if (is_null($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        if (!is_null($route_id)) {
+            $route = Route::findFirst($route_id);
+            if (!$route) {
+                return $this->response->sendError(ResponseMessage::INVALID_ROUTE);
+            } else if ($route->getData()['branch_id'] != $auth_data['branch']['id']) {
+                return $this->response->sendError(ResponseMessage::WRONG_ROUTE);
+            }
+        }
+
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
-        $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -654,12 +677,12 @@ class ParcelController extends ControllerBase
             if ($parcel === false) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;
-            }
-
-            if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY) {
+            } else if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
-            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN])) {
+
+             //ensure parcel is in arrival or for groundsman or parcel is for return and is in transit
+            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN]) && !($parcel->getForReturn() == '1' && $parcel->getStatus() == Status::PARCEL_IN_TRANSIT)) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
                 continue;
             } else if ($parcel->getToBranchId() != $auth_data['branch']['id']) {
@@ -667,7 +690,10 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $parcel->setRouteId($route_id);
+            if (!is_null($route_id)) {
+                $parcel->setRouteId($route_id);
+            }
+
             $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;

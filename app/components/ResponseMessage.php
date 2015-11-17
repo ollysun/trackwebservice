@@ -20,6 +20,7 @@ class ResponseMessage
     const BRANCH_NOT_EXISTING = 'Branch does not exist';
     const INVALID_PACKAGE_COUNT = 'Invalid package count provided';
     const INVALID_AMOUNT = 'Invalid amount(s) provided';
+    const INVALID_PERCENTAGE = 'Invalid percentage(s) provided';
     const INVALID_PAYMENT_TYPE = 'Invalid payment type provided';
     const INVALID_STATUS = 'Invalid status provided';
     const NO_HUB_PROVIDED = 'No HUB provided';
@@ -71,6 +72,8 @@ class ResponseMessage
     const NEGATIVE_WEIGHT = 'Negative weights not allowed';
     const INVALID_WEIGHT = 'Invalid weight(s) provided';
     const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
+    const WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING = 'Weight range still has existing billing';
+    const UNABLE_TO_DELETE_WEIGHT_RANGE = 'Unable to delete weight range';
     const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
     const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
 
@@ -108,8 +111,9 @@ class ResponseMessage
     const ACCOUNT_DOES_NOT_EXIST = 'Account does not exist';
     const UNABLE_TO_RESET_PASSWORD = 'Unable to reset password';
     const INVALID_TOKEN = 'Invalid password reset token';
+    const WRONG_ROUTE = 'The route does not belong to this branch';
 
-    const COMPANY_EXISTING = 'Another company with this same name exists';
+    const COMPANY_EXISTING = 'Another company with this same NAME exists';
     const UNABLE_TO_CREATE_COMPANY = 'Could not create company';
     const UNABLE_TO_CREATE_COMPANY_PRIMARY_CONTACT = 'Could not create company primary contact';
     const UNABLE_TO_CREATE_COMPANY_SECONDARY_CONTACT = 'Could not create company secondary contact';
@@ -139,4 +143,17 @@ class ResponseMessage
     const UNABLE_TO_UPDATE_COMPANY_USER = 'Unable to update company user';
     const UNABLE_TO_LINK_EC_TO_COMPANY = 'Unable to link EC to company';
     const UNABLE_TO_RELINK_EC_TO_COMPANY = 'Unable to edit EC link to company';
+
+    const INVALID_TYPE = 'Invalid type provided';
+    const INVALID_BILLING_PLAN = 'Invalid billing plan provided';
+    const ANOTHER_HAS_SAME_NAME = 'Another has same name';
+    const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
+    const BILLING_PLAN_NOT_SAVED = 'Could not save billing plan';
+
+    const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
+    const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';
+    const ONFORWARDING_CITY_NOT_SAVED = 'City could not linked to onforwarding charge';
+
+    const CALC_BILLLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
+    const CALC_BILLLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
 }
