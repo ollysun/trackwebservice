@@ -23,12 +23,6 @@ class City extends \Phalcon\Mvc\Model
 
     /**
      *
-     * @var integer
-     */
-    protected $onforwarding_charge_id;
-
-    /**
-     *
      * @var string
      */
     protected $name;
@@ -79,19 +73,6 @@ class City extends \Phalcon\Mvc\Model
     public function setStateId($state_id)
     {
         $this->state_id = $state_id;
-
-        return $this;
-    }
-
-    /**
-     * Method to set the value of field onforwarding_charge_id
-     *
-     * @param integer $onforwarding_charge_id
-     * @return $this
-     */
-    public function setOnforwardingChargeId($onforwarding_charge_id)
-    {
-        $this->onforwarding_charge_id = $onforwarding_charge_id;
 
         return $this;
     }
@@ -205,16 +186,6 @@ class City extends \Phalcon\Mvc\Model
     }
 
     /**
-     * Returns the value of field onforwarding_charge_id
-     *
-     * @return integer
-     */
-    public function getOnforwardingChargeId()
-    {
-        return $this->onforwarding_charge_id;
-    }
-
-    /**
      * Returns the value of field name
      *
      * @return string
@@ -298,7 +269,6 @@ class City extends \Phalcon\Mvc\Model
             'id' => 'id',
             'state_id' => 'state_id',
             'branch_id' => 'branch_id',
-            'onforwarding_charge_id' => 'onforwarding_charge_id',
             'name' => 'name',
             'transit_time' => 'transit_time',
             'created_date' => 'created_date',
@@ -313,7 +283,6 @@ class City extends \Phalcon\Mvc\Model
             'id' => $this->getId(),
             'state_id' => $this->getStateId(),
             'branch_id' => $this->getBranchId(),
-            'onforwarding_charge_id' => $this->getOnforwardingChargeId(),
             'name' => $this->getName(),
             'transit_time' => $this->getTransitTime(),
             'created_date' => $this->getCreatedDate(),
@@ -322,12 +291,11 @@ class City extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time)
+    public function initData($state_id, $name, $branch_id, $transit_time)
     {
         $this->setStateId($state_id);
         $this->setName($name);
         $this->setBranchId($branch_id);
-        $this->setOnforwardingChargeId($onforwarding_charge_id);
         $this->setTransitTime($transit_time);
 
         $now = date('Y-m-d H:i:s');
@@ -336,12 +304,11 @@ class City extends \Phalcon\Mvc\Model
         $this->setStatus(Status::ACTIVE);
     }
 
-    public function edit($state_id, $name, $branch_id, $onforwarding_charge_id, $transit_time)
+    public function edit($state_id, $name, $branch_id, $transit_time)
     {
         $this->setStateId($state_id);
         $this->setName($name);
         $this->setBranchId($branch_id);
-        $this->setOnforwardingChargeId($onforwarding_charge_id);
         $this->setTransitTime($transit_time);
 
         $this->setModifiedDate(date('Y-m-d H:i:s'));
@@ -409,7 +376,8 @@ class City extends \Phalcon\Mvc\Model
             $bind['branch_id'] = $filter_by['branch_id'];
         }
         if (isset($filter_by['onforwarding_charge_id'])) {
-            $where[] = 'City.onforwarding_charge_id = :onforwarding_charge_id:';
+            $builder->innerJoin('OnforwardingCity', 'OnforwardingCity.city_id = City.id');
+            $where[] = 'OnforwardingCity.onforwarding_charge_id = :onforwarding_charge_id:';
             $bind['onforwarding_charge_id'] = $filter_by['onforwarding_charge_id'];
         }
         if (isset($filter_by['transit_time'])) {
@@ -447,11 +415,6 @@ class City extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_branch'])) {
             $columns[] = 'Branch.*';
             $builder->innerJoin('Branch', 'Branch.id = City.branch_id');
-        }
-
-        if (isset($fetch_with['with_charge'])) {
-            $columns[] = 'OnforwardingCharge.*';
-            $builder->innerJoin('OnforwardingCharge', 'OnforwardingCharge.id = City.onforwarding_charge_id');
         }
 
         $builder->columns($columns);
@@ -514,11 +477,6 @@ class City extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_branch'])) {
             $columns[] = 'Branch.*';
             $builder->innerJoin('Branch', 'Branch.id = City.branch_id');
-        }
-
-        if (isset($fetch_with['with_charge'])) {
-            $columns[] = 'OnforwardingCharge.*';
-            $builder->innerJoin('OnforwardingCharge', 'OnforwardingCharge.id = City.onforwarding_charge_id');
         }
 
         $builder->columns($columns);
