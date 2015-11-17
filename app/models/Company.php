@@ -517,7 +517,7 @@ class Company extends EagerModel
             'primary_contact_id' => $this->getPrimaryContactId(),
             'sec_contact_id' => $this->getSecContactId(),
             'relations_officer_id' => $this->getRelationsOfficerId(),
-            'created_date' => $this->getSecContactId(),
+            'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus()
         );
