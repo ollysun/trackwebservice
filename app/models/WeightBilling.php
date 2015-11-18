@@ -490,6 +490,16 @@ class WeightBilling extends \Phalcon\Mvc\Model
         return $info;
     }
 
+    /**
+     * Calculate billing base on destinations, weight and billing plan
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $from_branch_id
+     * @param $to_branch_id
+     * @param $weight
+     * @param $billing_plan_id
+     * @return bool|float
+     */
     public static function calcBilling($from_branch_id, $to_branch_id, $weight, $billing_plan_id){
         /**
          * @var WeightBilling $weight_billing
@@ -513,7 +523,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
             $increment_steps = intval($increment_steps) + 1;
         }
 
-        $incr_billing = round(($increment_steps - 1) * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+        $incr_billing = 0;
+        if($increment_steps > 0) {
+            $incr_billing = round(($increment_steps - 1) * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+        }
 
         return $base_billing + $incr_billing;
     }
