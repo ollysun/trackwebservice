@@ -442,6 +442,32 @@ class Branch extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Get total number of ecs
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param  int $hub_id
+     * @return int
+     */
+    public static function getEcCount($hub_id)
+    {
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) as ec_count')
+            ->from('Branch')
+            ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
+        $builder->andWhere("BranchMap.parent_id = :hub_id:");
+
+        $filters = ['branch_type' => BranchType::EC, 'status' => Status::ACTIVE];
+
+        if(!is_null($hub_id)) {
+            $filters['hub_id'] = $hub_id;
+            $builder->andWhere("BranchMap.parent_id = :hub_id:");
+        }
+        $count = $builder->getQuery()->execute($filters);
+         return intval($count[0]->ec_count);
+    }
+
+    /**
      * Fetch All ECs
      * If hub_id is set, get all ecs belonging to the hub
      * @author Rahman Shitu <rahman@cottacush.com>
@@ -490,7 +516,6 @@ class Branch extends \Phalcon\Mvc\Model
             ->orderBy('Branch.name');
 
         $data = $builder->getQuery()->execute(['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE]);
-
         $result = [];
         foreach ($data as $item) {
             $branch = $item->branch->getData();
@@ -553,6 +578,55 @@ class Branch extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    /**
+     * Getting a filter condition for the
+     * @author Babatunde Otaru<tunde@cottacush.com>
+     * @params $filter
+     * @return array
+     */
+    private static function filterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['state_id'])) {
+            $where[] = 'Branch.state_id = :state_id:';
+            $bind['state_id'] = $filter_by['state_id'];
+        }
+        if (isset($filter_by['branch_type'])) {
+            $where[] = 'Branch.branch_type = :branch_type:';
+            $bind['branch_type'] = $filter_by['branch_type'];
+        }
+
+        return ['where' => $where, 'bind' => $bind];
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @params filter[]
+     * @return int totalCount
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS branch_count')
+            ->from('Branch');
+
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->branch_count);
+    }
+
     public static function fetchOne($filter_by)
     {
         $obj = new Branch();
@@ -586,4 +660,5 @@ class Branch extends \Phalcon\Mvc\Model
 
         return $result;
     }
+
 }
