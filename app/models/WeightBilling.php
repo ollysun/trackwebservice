@@ -525,7 +525,7 @@ class WeightBilling extends \Phalcon\Mvc\Model
 
         $incr_billing = 0;
         if($increment_steps > 0) {
-            $incr_billing = round(($increment_steps - 1) * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+            $incr_billing = round($increment_steps * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
         }
 
         return $base_billing + $incr_billing;
