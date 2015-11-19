@@ -103,7 +103,7 @@ class CorporateUploadTask extends BaseTask
         $company->setSecContactId(new \Phalcon\Db\RawValue(null));
 
         /** @var Admin $relationsOfficer */
-        $relationsOfficer = Admin::findFirstByStaffId('CSL/004');
+        $relationsOfficer = Admin::findFirstByStaffId('CSL/0004');
         if (!$relationsOfficer) {
             $this->printToConsole('FAILED: Could not find relations officer. Data: ' . $this->printStringArray($data));
             return false;
