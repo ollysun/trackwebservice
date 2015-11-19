@@ -141,11 +141,17 @@ class BranchController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $hub_id = $this->request->getQuery('hub_id');
+        $paginate = $this->request->getQuery('paginate', null, true);
+        $paginate = ($paginate == "0" || $paginate == "false") ? false : true;
 
-        $branch_data = Branch::fetchAllEC($hub_id);
-        $total_count = Branch::getEcCount($hub_id);
-        $result = [ 'total_count'=> $total_count,'branch_data' => $branch_data];
 
+        if ($paginate) {
+            $branch_data = Branch::fetchAllEC($hub_id);
+            $total_count = Branch::getEcCount($hub_id);
+            $result = ['total_count' => $total_count, 'branch_data' => $branch_data];
+        } else {
+            $result = Branch::fetchAllEC($hub_id);
+        }
         return $this->response->sendSuccess($result);
     }
 
@@ -188,14 +194,13 @@ class BranchController extends ControllerBase
             $fetch_with['with_parent'] = true;
         }
 
-        $branch_data =  Branch::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate);
+        $branch_data = Branch::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate);
 
-        if(paginate){
+        if ($paginate) {
             $total_count = Branch::getTotalCount($filter_by);
             $result = ['total_count' => $total_count, 'branch_data' => $branch_data];
             return $this->response->sendSuccess($result);
-         }
-        else {
+        } else {
             return $this->response->sendSuccess($branch_data);
         }
 
