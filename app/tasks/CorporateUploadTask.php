@@ -57,8 +57,6 @@ class CorporateUploadTask extends BaseTask
         $email_address = isset($data[9]) ? $data[9] : '';
 
         if (strlen($company_name) == 0) {
-            //$this->printToConsole('Could not upload company. Reason: Invalid company name. Data: ' );
-            //$this->printStringArray($data);
             return false;
         }
 
