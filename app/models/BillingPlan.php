@@ -419,7 +419,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
             ->from('BillingPlan')
             ->orderBy('BillingPlan.name');
 
-        if (!isset($fetch_with['no_paginate'])) {
+        if (!isset($filter_by['no_paginate'])) {
             $builder->limit($count, $offset);
         }
 
