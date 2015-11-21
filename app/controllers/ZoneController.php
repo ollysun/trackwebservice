@@ -130,6 +130,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendSuccess(Zone::fetchAll($offset, $count, $filter_by));
     }
 
+    /**
+     * Adds billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function addBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -144,7 +150,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $base_percentage <=0 OR $increment_cost <= 0 OR $increment_percentage <= 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
@@ -171,6 +177,12 @@ class ZoneController extends ControllerBase {
         return $this->response->sendError();
     }
 
+    /**
+     * Edits billing
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
     public function editBillingAction(){
         $this->auth->allowOnly([Role::ADMIN]);
 
@@ -184,7 +196,7 @@ class ZoneController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if ($base_cost <= 0 OR $base_percentage <=0 OR $increment_cost <= 0 OR $increment_percentage <= 0){
+        if ($base_cost <= 0 OR $increment_cost < 0){
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
         }
 
@@ -240,12 +252,14 @@ class ZoneController extends ControllerBase {
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $zone_id = $this->request->getQuery('zone_id');//optional
+        $billing_plan_id = $this->request->getQuery('billing_plan_id');//optional
         $weight_range_id = $this->request->getQuery('weight_range_id');//optional
         $send_all = $this->request->getQuery('send_all');//optional - nullifies offset and count
 
         $filter_by = [];
         if (!is_null($zone_id)){ $filter_by['zone_id'] = $zone_id; }
         if (!is_null($weight_range_id)){ $filter_by['weight_range_id'] = $weight_range_id; }
+        if (!is_null($billing_plan_id)){ $filter_by['billing_plan_id'] = $billing_plan_id; }
         if (!is_null($send_all)){ $filter_by['send_all'] = $send_all; }
 
         return $this->response->sendSuccess(WeightBilling::fetchAll($offset, $count, $filter_by));
@@ -304,17 +318,23 @@ class ZoneController extends ControllerBase {
 
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');
-        $onforwarding_charge_id = $this->request->getPost('onforwarding_charge_id');
+        $onforwarding_billing_plan_id = $this->request->getPost('onforwarding_billing_plan_id');
+        $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
+        $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
 
-        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight);
-        if ($calc_weight_billing == false){
-            return $this->response->sendError();
+        if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $onforwarding_charge = OnforwardingCharge::fetchById($onforwarding_charge_id);
+        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
+        if ($calc_weight_billing == false){
+            return $this->response->sendError(ResponseMessage::CALC_BILLLING_WEIGHT);
+        }
+
+        $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
         if ($onforwarding_charge == false){
-            return $this->response->sendError();
+            return $this->response->sendError(ResponseMessage::CALC_BILLLING_ONFORWARDING);
         }
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();

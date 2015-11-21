@@ -72,6 +72,8 @@ class ResponseMessage
     const NEGATIVE_WEIGHT = 'Negative weights not allowed';
     const INVALID_WEIGHT = 'Invalid weight(s) provided';
     const WEIGHT_RANGE_DOES_NOT_EXIST = 'Weight range does not exists';
+    const WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING = 'Weight range still has existing billing';
+    const UNABLE_TO_DELETE_WEIGHT_RANGE = 'Unable to delete weight range';
     const BASE_WEIGHT_CHANGE = 'Base weight of 0.0 cannot be changed';
     const INCREMENT_WEIGHT_TOO_LARGE = 'The increment weight is larger than range';
 
@@ -141,4 +143,17 @@ class ResponseMessage
     const UNABLE_TO_UPDATE_COMPANY_USER = 'Unable to update company user';
     const UNABLE_TO_LINK_EC_TO_COMPANY = 'Unable to link EC to company';
     const UNABLE_TO_RELINK_EC_TO_COMPANY = 'Unable to edit EC link to company';
+
+    const INVALID_TYPE = 'Invalid type provided';
+    const INVALID_BILLING_PLAN = 'Invalid billing plan provided';
+    const ANOTHER_HAS_SAME_NAME = 'Another has same name';
+    const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
+    const BILLING_PLAN_NOT_SAVED = 'Could not save billing plan';
+
+    const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
+    const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';
+    const ONFORWARDING_CITY_NOT_SAVED = 'City could not linked to onforwarding charge';
+
+    const CALC_BILLLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
+    const CALC_BILLLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
 }
