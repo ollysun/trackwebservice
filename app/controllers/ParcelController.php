@@ -897,7 +897,6 @@ class ParcelController extends ControllerBase
                 );
             }
 
-
             //create delivery receipt if receiver name and phone number was supplied
             if (isset($receiver_name, $receiver_phonenumber)) {
                 if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
