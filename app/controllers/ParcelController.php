@@ -836,8 +836,8 @@ class ParcelController extends ControllerBase
         //get receipt information
         $receiver_name = $this->request->getPost('receiver_name');
         $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
-        $receiver_email = !empty($this->request->getPost('receiver_email')) ? $this->request->getPost('receiver_email') : null;
-        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery');
+        $receiver_email = $this->request->getPost('receiver_email',null,null);
+        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery',null,Util::getCurrentDateTime());
         $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
