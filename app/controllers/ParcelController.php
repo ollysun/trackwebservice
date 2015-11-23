@@ -836,8 +836,8 @@ class ParcelController extends ControllerBase
         //get receipt information
         $receiver_name = $this->request->getPost('receiver_name');
         $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
-        $receiver_email = $this->request->getPost('receiver_email');
-
+        $receiver_email = $this->request->getPost('receiver_email',null,null);
+        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery',null,Util::getCurrentDateTime());
         $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
@@ -903,11 +903,15 @@ class ParcelController extends ControllerBase
                     $data = ['waybill_number' => $waybill_number,
                         'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL,
                         'delivered_by' => $this->auth->getPersonId(),
-                        'name' => $receiver_email,
+                        'name' => $receiver_name,
                         'phone_number' => $receiver_phonenumber,
-                        'email' => $receiver_email];
-                    DeliveryReceipt::add($data);
+                        'delivered_at' => $date_and_time_of_delivery];
                 }
+                if(isset($receiver_email)){
+                    $data['email'] = $receiver_email;
+                }
+
+                DeliveryReceipt::add($data);
             }
 
             //TODO send email to operations team
