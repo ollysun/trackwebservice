@@ -29,7 +29,7 @@ class DeliveryReceiptsDeliveryDateAlteration extends AbstractMigration
     {
         $table = $this->table(delivery_receipts);
         if(!$table->hasColumn(delivered_at)) {
-            $table->addColumn('delivered_at','datetime');
+            $table->addColumn('delivered_at','datetime',['null' => false]);
             $table->update();
         }
 
