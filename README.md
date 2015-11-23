@@ -54,8 +54,8 @@ brew install redis
     DocumentRoot "<WebServer Directory>/tnt-service/public"
     ServerName local.courierplus.tntservice
     ServerAlias local.courierplus.tntservice.com
-    SetEnv AWS_KEY AKIAIHZQOXQPVD73RVGA
-    SetEnv AWS_SECRET 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
+    SetEnv AWS_KEY ************
+    SetEnv AWS_SECRET ***********
     ErrorLog "/var/log/apache2/local.courierplus.tntservice.error"
     CustomLog "/var/log/apache2/local.courierplus.tntservice.access.log" common
     <Directory "<WebServer Directory>/tnt-service/public">
