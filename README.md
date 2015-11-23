@@ -85,11 +85,16 @@ Create `tnt` database
 
 Contributors
 ------------
-Adegoke Obasa <goke@cottacush.com>
-Adeyemi Olaoye <yemi@cottacush.com>
-Akintewe Rotimi <akintewe.rotimi@gmail.com>
-Boyewa Akindolani <boye@cottacush.com>
-Olawale Lawal <wale@cottacush.com>
-Rahman Shitu <rahman@cottacush.com>
+- Adegoke Obasa <goke@cottacush.com>
+
+- Adeyemi Olaoye <yemi@cottacush.com>
+
+- Akintewe Rotimi <akintewe.rotimi@gmail.com>
+
+- Boyewa Akindolani <boye@cottacush.com>
+
+- Olawale Lawal <wale@cottacush.com>
+
+- Rahman Shitu <rahman@cottacush.com>
 
 
