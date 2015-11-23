@@ -50,7 +50,7 @@ class DeliveryReceipt extends Model
         foreach ($data as $key => $value) {
             $delivery_receipt->$key = $value;
         }
-        $delivery_receipt->delivered_at = Util::getCurrentDateTime();
-        $delivery_receipt->save();
+        if($delivery_receipt->deliverd_at == null){$delivery_receipt->delivered_at = Util::getCurrentDateTime();}
+        return $delivery_receipt->save();
     }
 }
