@@ -732,7 +732,8 @@ class Company extends EagerModel
     {
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder();
-        $builder->from('Company');
+        $builder->from('Company')
+        ->orderBy('Company.name');
 
         if (!isset($fetch_with['no_paginate'])) {
             $builder->limit($count, $offset);
