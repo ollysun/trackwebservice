@@ -432,9 +432,6 @@ class BillingPlan extends \Phalcon\Mvc\Model
 
         //filters
         $filter_cond = self::filterConditions($filter_by);
-        if (isset($filter_by['company_name'])) {
-            $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id');
-        }
         if (isset($filter_by['company_name']) || isset($fetch_with['with_company'])) {
             $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id');
         }
