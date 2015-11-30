@@ -61,7 +61,7 @@ class DeliveryReceipt extends Model
      * Get Base S3 Url
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public static function getBaseS3Url()
+    public static function getS3BaseUrl()
     {
         $s3Config = Di::getDefault()->getConfig()->aws->s3;
         return  '//s3-' . $s3Config->region . '.amazonaws.com/' . $s3Config->bucket . '/' . $s3Config->namespace . '/';

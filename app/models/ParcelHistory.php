@@ -367,7 +367,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                     $signature_delivery_receipt = $item->parcel->getDeliveryReceipts("receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_SIGNATURE . "'");
                     $signature_delivery_receipt = ($signature_delivery_receipt->getFirst()) ? $signature_delivery_receipt->getFirst()->toArray() : false;
                     if ($signature_delivery_receipt) {
-                        $signature_delivery_receipt['receipt_path'] = DeliveryReceipt::getBaseS3Url() . $signature_delivery_receipt['receipt_path'];
+                        $signature_delivery_receipt['receipt_path'] = DeliveryReceipt::getS3BaseUrl() . $signature_delivery_receipt['receipt_path'];
                         $result[$item->parcel->waybill_number]['delivery_receipt'] = $signature_delivery_receipt;
                     }
                 }
