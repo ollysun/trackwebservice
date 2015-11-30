@@ -57,7 +57,7 @@ class ZeroOnforwardingChargesTask extends BaseTask
                 }
                 $ids = implode(',', $ids);
                 $connection = (new BaseModel())->getWriteConnection();
-                $status = $connection->update('onforwarding_charge', ['amount', 'percentage'], [0, 0], "billing_plan_id IN ($ids)");
+                $status = $connection->update('onforwarding_charge', ['amount', 'percentage', 'modified_date'], [0, 0, Util::getCurrentDateTime()], "billing_plan_id IN ($ids)");
                 if(!$status) {
                     $this->printToConsole("Unable to update onforwarding charge for *$companyName*");
                 }
