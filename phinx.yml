@@ -7,7 +7,7 @@ environments:
 
     development:
         adapter: mysql
-        host: 127.0.0.1
+        host: localhost
         name: tnt
         user: root
         pass: ''
