@@ -1045,6 +1045,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->belongsTo('route_id', 'Route', 'id', array('alias' => 'Route'));
         $this->hasManyToMany('id', 'LinkedParcel', 'parent_id', 'child_id', 'Parcel', 'id', ['alias' => 'Children']);
         $this->belongsTo('request_type', 'Request_type', 'id', array('alias' => 'RequestType'));
+        $this->hasMany('waybill_number', 'DeliveryReceipt', 'waybill_number', array('alias' => 'DeliveryReceipts'));
     }
 
     /**
