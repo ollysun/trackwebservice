@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Mvc\Model;
 
 /**
@@ -50,7 +51,19 @@ class DeliveryReceipt extends Model
         foreach ($data as $key => $value) {
             $delivery_receipt->$key = $value;
         }
-        if($delivery_receipt->delivered_at == null){$delivery_receipt->delivered_at = Util::getCurrentDateTime();}
+        if ($delivery_receipt->delivered_at == null) {
+            $delivery_receipt->delivered_at = Util::getCurrentDateTime();
+        }
         return $delivery_receipt->save();
+    }
+
+    /**
+     * Get Base S3 Url
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public static function getBaseS3Url()
+    {
+        $s3Config = Di::getDefault()->getConfig()->aws->s3;
+        return  '//s3-' . $s3Config->region . '.amazonaws.com/' . $s3Config->bucket . '/' . $s3Config->namespace . '/';
     }
 }
