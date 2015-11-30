@@ -37,7 +37,9 @@ class RemoveOldData extends AbstractMigration
         $this->adapter->beginTransaction();
 
         $this->execute("DELETE FROM held_parcel WHERE (parcel_id IN(SELECT id FROM parcel WHERE created_date BETWEEN '{$start_date}' AND '{$end_date}'))");
+        $this->execute("DELETE FROM shipment_requests_comments WHERE (created_at BETWEEN '{$start_date}' AND '{$end_date}')");
         $this->execute("DELETE FROM shipment_requests WHERE (created_at BETWEEN '{$start_date}' AND '{$end_date}')");
+        $this->execute("DELETE FROM pickup_requests_comments WHERE (created_at BETWEEN '{$start_date}' AND '{$end_date}')");
         $this->execute("DELETE FROM pickup_requests WHERE (created_at BETWEEN '{$start_date}' AND '{$end_date}')");
 
         $this->execute("DELETE FROM parcel_teller WHERE (created_date BETWEEN '{$start_date}' AND '{$end_date}')");
