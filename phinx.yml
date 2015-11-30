@@ -7,8 +7,8 @@ environments:
 
     development:
         adapter: mysql
-        host: localhost
-        name: tnt
+        host: 127.0.0.1
+        name: prod-tnt
         user: root
         pass: ''
         port: 3306
