@@ -27,7 +27,7 @@ class RemoveOldData extends AbstractMigration
      */
 
     /**
-     * @author Olawale Lawal <wale@cottacush.com?
+     * @author Olawale Lawal <wale@cottacush.com>
      */
     public function up()
     {
