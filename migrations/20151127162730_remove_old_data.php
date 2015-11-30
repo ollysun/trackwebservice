@@ -52,7 +52,7 @@ class RemoveOldData extends AbstractMigration
         $this->execute("DELETE FROM manifest WHERE (created_date BETWEEN '{$start_date}' AND '{$end_date}')");
         $this->execute("DELETE FROM bank_account WHERE (created_date BETWEEN '{$start_date}' AND '{$end_date}')");
         $this->execute("DELETE FROM address WHERE (created_date BETWEEN '{$start_date}' AND '{$end_date}')");
-        $this->execute("DELETE FROM user WHERE created_date BETWEEN '{$start_date}' AND '{$end_date}')");
+        $this->execute("DELETE FROM user WHERE created_date BETWEEN '{$start_date}' AND '{$end_date}'");
 
         $this->adapter->commitTransaction();
     }
