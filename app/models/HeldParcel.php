@@ -314,8 +314,12 @@ class HeldParcel extends \Phalcon\Mvc\Model
         $columns[] = 'ToBranch.code AS destination_code';
 
         // Shipper
-        $columns[] = 'User.firstname AS shipper_firstname';
-        $columns[] = 'User.lastname AS shipper_lastname';
+        $columns[] = 'Shipper.firstname AS shipper_firstname';
+        $columns[] = 'Shipper.lastname AS shipper_lastname';
+
+        // Receiver
+        $columns[] = 'Receiver.firstname AS receiver_firstname';
+        $columns[] = 'Receiver.lastname AS receiver_lastname';
 
         return HeldParcel::query()
             ->columns($columns)
@@ -323,7 +327,8 @@ class HeldParcel extends \Phalcon\Mvc\Model
             ->bind(['manifest_id' => $manifestId])
             ->innerJoin('Parcel')
             ->leftJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
-            ->leftJoin('User', 'Parcel.sender_id = User.id')
+            ->leftJoin('User', 'Parcel.sender_id = Shipper.id', 'Shipper')
+            ->leftJoin('User', 'Parcel.receiver_id = Receiver.id', 'Receiver')
             ->execute()
             ->toArray();
     }
