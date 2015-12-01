@@ -1766,8 +1766,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $is_existing = ($sender_addr_obj != false);
                     if (!$is_existing) {
                         $sender_addr_obj = new Address();
-                    }else{
-                        if(!Address::isSame($sender_addr_obj, $sender_address)){
+                    } else {
+                        if (!Address::isSame($sender_addr_obj, $sender_address)) {
                             $sender_addr_obj = new Address();
                             $is_existing = false;
                         }
@@ -1799,8 +1799,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $is_existing = ($receiver_addr_obj != false);
                     if (!$is_existing) {
                         $receiver_addr_obj = new Address();
-                    }else{
-                        if(!Address::isSame($receiver_addr_obj, $receiver_address)){
+                    } else {
+                        if (!Address::isSame($receiver_addr_obj, $receiver_address)) {
                             $receiver_addr_obj = new Address();
                             $is_existing = false;
                         }
@@ -2377,7 +2377,7 @@ class Parcel extends \Phalcon\Mvc\Model
             throw new Exception('Invalid waybill number');
         }
 
-        if(self::isBagNumber($waybill_number)){
+        if (self::isBagNumber($waybill_number)) {
             throw new Exception('Cannot unsort a bag');
         }
 
@@ -2393,7 +2393,7 @@ class Parcel extends \Phalcon\Mvc\Model
             throw new Exception('Parcel ' . $waybill_number . ' does not have a proper sort history. Please confirm that parcel has been sorted');
         }
 
-        if(!in_array($parcelSortHistory->getFirst()->status->id, [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_GROUNDSMAN, Status::PARCEL_FOR_DELIVERY])){
+        if (!in_array($parcelSortHistory->getFirst()->status->id, [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_GROUNDSMAN, Status::PARCEL_FOR_DELIVERY])) {
 
         }
 
@@ -2427,7 +2427,23 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $bag_number
      * @return int
      */
-    public static function isBagNumber($bag_number){
+    public static function isBagNumber($bag_number)
+    {
         return preg_match('/^[B][\d]{11,}$/i', $bag_number);
+    }
+
+    /**
+     * Get proof of delivery - receiver detail or signature delivery receipt
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getProofOfDelivery()
+    {
+        $delivery_receipt = $this->getDeliveryReceipts("receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_SIGNATURE .
+            "' OR receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL . "'");
+        $delivery_receipt = ($delivery_receipt->getFirst()) ? $delivery_receipt->getFirst()->toArray() : false;
+        if ($delivery_receipt && $delivery_receipt['receipt_type'] == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
+            $delivery_receipt['receipt_path'] = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt['receipt_path'];
+        }
+        return $delivery_receipt;
     }
 }
