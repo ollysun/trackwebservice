@@ -27,6 +27,12 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess($reasons);
     }
 
+    /**
+     * Creates a new parcel
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
     public function addAction()
     {
         //todo: must be tied to an EC Officer only

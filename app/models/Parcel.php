@@ -227,6 +227,21 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $for_return;
 
+    /**
+     * @var integer
+     */
+    protected $weight_billing_plan_id;
+
+    /**
+     * @var integer
+     */
+    protected $onforwarding_billing_plan_id;
+
+    /**
+     * @var string
+     */
+    protected $billing_type;
+
 
     /**
      * Method to set the value of field id
@@ -659,6 +674,32 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->for_return = $for_return;
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param int $weight_billing_plan_id
+     */
+    public function setWeightBillingPlanId($weight_billing_plan_id)
+    {
+        $this->weight_billing_plan_id = $weight_billing_plan_id;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param int $onforwarding_billing_plan_id
+     */
+    public function setOnforwardingBillingPlanId($onforwarding_billing_plan_id)
+    {
+        $this->onforwarding_billing_plan_id = $onforwarding_billing_plan_id;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param string $billing_type
+     */
+    public function setBillingType($billing_type)
+    {
+        $this->billing_type = $billing_type;
+    }
 
     /**
      * Returns the value of field id
@@ -1023,6 +1064,32 @@ class Parcel extends \Phalcon\Mvc\Model
         return $this->for_return;
     }
 
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return int
+     */
+    public function getWeightBillingPlanId()
+    {
+        return $this->weight_billing_plan_id;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return int
+     */
+    public function getOnforwardingBillingPlanId()
+    {
+        return $this->onforwarding_billing_plan_id;
+    }
+
+    /**
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return string
+     */
+    public function getBillingType()
+    {
+        return $this->billing_type;
+    }
 
     /**
      * Initialize method for model.
@@ -1105,7 +1172,10 @@ class Parcel extends \Phalcon\Mvc\Model
             'seal_id' => 'seal_id',
             'route_id' => 'route_id',
             'request_type' => 'request_type',
-            'for_return' => 'for_return'
+            'for_return' => 'for_return',
+            'billing_type' => 'billing_type',
+            'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
+            'weight_billing_plan_id' => 'weight_billing_plan_id'
         );
     }
 
@@ -1155,7 +1225,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS
+                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null
     )
     {
         $this->setParcelType($parcel_type);
@@ -1194,6 +1264,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setRouteId($route_id);
         $this->setRequestType($request_type);
         $this->setForReturn(0);
+        $this->setBillingType($billing_type);
+        $this->setWeightBillingPlanId($weight_billing_plan_id);
+        $this->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1234,6 +1307,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setRouteId(null);
         $this->setRequestType(RequestType::OTHERS);
         $this->setForReturn(0);
+        $this->setBillingType(null);
+        $this->setWeightBillingPlanId(null);
+        $this->setOnforwardingBillingPlanId(null);
     }
 
     private function getEntityTypeLabel()
@@ -1861,7 +1937,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type']);
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'],
+                    $parcel_data['billing_type'], $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2150,7 +2227,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getIsBillingOverridden(),
                 $this->getReferenceNumber(),
                 $this->getRouteId(),
-                $this->getRequestType()
+                $this->getRequestType(),
+                $this->getBillingType(),
+                $this->getWeightBillingPlanId(),
+                $this->getOnforwardingBillingPlanId()
             );
 
             if (!$sub_parcel->save()) {
