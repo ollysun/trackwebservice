@@ -681,7 +681,7 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
 
-             //ensure parcel is in arrival or for groundsman or parcel is for return and is in transit
+                //ensure parcel is in arrival or for groundsman or parcel is for return and is in transit
             } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN]) && !($parcel->getForReturn() == '1' && $parcel->getStatus() == Status::PARCEL_IN_TRANSIT)) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
                 continue;
@@ -829,15 +829,15 @@ class ParcelController extends ControllerBase
      */
     public function moveToDeliveredAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
 
         //get receipt information
         $receiver_name = $this->request->getPost('receiver_name');
         $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
-        $receiver_email = $this->request->getPost('receiver_email',null,null);
-        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery',null,Util::getCurrentDateTime());
+        $receiver_email = $this->request->getPost('receiver_email', null, null);
+        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
@@ -907,7 +907,7 @@ class ParcelController extends ControllerBase
                         'phone_number' => $receiver_phonenumber,
                         'delivered_at' => $date_and_time_of_delivery];
                 }
-                if(isset($receiver_email)){
+                if (isset($receiver_email)) {
                     $data['email'] = $receiver_email;
                 }
 
@@ -1196,7 +1196,7 @@ class ParcelController extends ControllerBase
      */
     public function markAsReturnedAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getPersonId();
