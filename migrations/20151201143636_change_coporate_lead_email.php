@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class DeliveryReceiptsDeliveryDateAlteration extends AbstractMigration
+class ChangeCoporateLeadEmail extends AbstractMigration
 {
     /**
      * Change Method.
@@ -27,11 +27,7 @@ class DeliveryReceiptsDeliveryDateAlteration extends AbstractMigration
      */
     public function change()
     {
-        $table = $this->table('delivery_receipts');
-        if(!$table->hasColumn('delivered_at')) {
-            $table->addColumn('delivered_at','datetime',['null' => false]);
-            $table->update();
-        }
-
+        $sql = "UPDATE email_message SET to_email = 'ngsales@courierplus-ng' WHERE `email_message_code` = 'marketing_opportunity'";
+        $this->execute($sql);
     }
 }
