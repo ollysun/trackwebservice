@@ -208,6 +208,7 @@ class ParcelController extends ControllerBase
     }
 
     /**
+     * @author Adegoke Obasa <goke@cottacush.com>
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @author Rahman Shitu <rahman@cottacush.com>
      * @author Olawale Lawal <wale@cottacush.com>
@@ -231,6 +232,7 @@ class ParcelController extends ControllerBase
         $with_route = $this->request->getQuery('with_route');
         $with_delivery_receipt = $this->request->getQuery('with_delivery_receipt');
         $with_created_by = $this->request->getQuery('with_created_by');
+        $with_payment_type = $this->request->getQuery('with_payment_type');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -279,6 +281,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_delivery_receipt)) {
             $fetch_with['with_delivery_receipt'] = true;
+        }
+        if (!is_null($with_payment_type)) {
+            $fetch_with['with_payment_type'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);

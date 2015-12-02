@@ -1700,6 +1700,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.waybill_number');
         }
 
+        if(isset($fetch_with['with_payment_type'])) {
+            $columns[] = 'PaymentType.*';
+            $builder->innerJoin('PaymentType', 'PaymentType.id = Parcel.payment_type', 'PaymentType');
+        }
+
         $builder->where(join(' AND ', $where));
 
         if (isset($filter_by['waybill_number_arr'])) {
@@ -1757,6 +1762,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 if (isset($fetch_with['with_delivery_receipt'])) {
                     $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
+                }
+                if(isset($fetch_with['with_payment_type'])) {
+                    $parcel['payment_type'] = $item->paymentType->toArray();
                 }
             }
             $result[] = $parcel;
