@@ -38,10 +38,10 @@ class RemoveOldData extends AbstractMigration
                   `teller_id` bigint(20) NOT NULL,
                   `created_date` datetime DEFAULT NULL,
                   PRIMARY KEY (`id`),
-                  KEY `parcel_teller_fk2_idx` (`teller_id`),
-                  KEY `parcel_id` (`parcel_id`),
-                  CONSTRAINT `parcel_teller_fk2` FOREIGN KEY (`teller_id`) REFERENCES `teller` (`id`),
-                  CONSTRAINT `teller_parcel_ibfk_1` FOREIGN KEY (`parcel_id`) REFERENCES `parcel` (`id`));';
+                  KEY `k_teller_parcel_teller_id` (`teller_id`),
+                  KEY `k_teller_parcel_parcel_id` (`parcel_id`),
+                  CONSTRAINT `fk_teller_parcel_teller_teller_id` FOREIGN KEY (`teller_id`) REFERENCES `teller` (`id`),
+                  CONSTRAINT `fk_teller_parcel_teller_parcel_id` FOREIGN KEY (`parcel_id`) REFERENCES `parcel` (`id`));';
             $this->execute($sql);
         }
 
