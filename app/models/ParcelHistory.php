@@ -363,6 +363,9 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                 $result[$item->parcel->waybill_number]['parcel'] = $item->parcel->getData();
                 $result[$item->parcel->waybill_number]['sender'] = User::findFirst($item->parcel->sender_id)->toArray();
                 $result[$item->parcel->waybill_number]['receiver'] = User::findFirst($item->parcel->receiver_id)->toArray();
+                if ($item->parcel->getStatus() == Status::PARCEL_DELIVERED) {
+                    $result[$item->parcel->waybill_number]['delivery_receipt'] = $item->parcel->getProofOfDelivery();
+                }
             }
             $history = $item->parcelHistory->getData();
             $history['from_branch'] = (is_null($item->fromBranch->id)) ? null : $item->fromBranch->getData();
