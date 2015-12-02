@@ -1048,12 +1048,12 @@ class ParcelController extends ControllerBase
                 $fetch_with[$param] = true;
             }
         }
-        //------------------------------------------
+
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
         if(!empty($parcelHistory)){
             return $this->response->sendSuccess($parcelHistory);
         }
-        return $this->response->sendError('Parcel does not exist');
+        return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
     }
 
     /**
