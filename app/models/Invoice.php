@@ -21,8 +21,6 @@ class Invoice extends BaseModel
      */
     public static function generate($data)
     {
-        // Generate Invoice Number
-        $data['invoice_number'] =  self::generateInvoiceNumber();
         return self::add($data);
     }
 
@@ -31,7 +29,7 @@ class Invoice extends BaseModel
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return string
      */
-    private static function generateInvoiceNumber()
+    public static function generateInvoiceNumber()
     {
         $invoiceNumber = 'TP-' . date('Ymd-His') . '-' . rand(0,10);
         return $invoiceNumber;

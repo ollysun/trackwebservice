@@ -33,6 +33,7 @@ class InvoiceParcel extends BaseModel
             $rowData[] = $parcel->net_amount;
             $rowData[] = Util::getCurrentDateTime();
             $rowData[] = Util::getCurrentDateTime();
+            $values[] = $rowData;
         }
         $batch = new Batch('invoice_parcels');
         $batch->setRows(['invoice_number', 'waybill_number', 'discount', 'net_amount', 'created_at', 'updated_at']);

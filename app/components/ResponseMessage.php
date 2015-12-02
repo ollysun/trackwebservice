@@ -156,4 +156,5 @@ class ResponseMessage
 
     const CALC_BILLLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
     const CALC_BILLLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
+    const UNABLE_TO_CREATE_INVOICE = 'Unable to create invoice';
 }

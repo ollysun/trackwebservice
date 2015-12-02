@@ -20,13 +20,18 @@ class InvoiceController extends ControllerBase
             return $this->response->sendError($invoiceRequestValidator->getMessages());
         }
 
+        // Generate Invoice Number
+        $postData->invoice_number =  Invoice::generateInvoiceNumber();
         $invoice = Invoice::generate((array) $postData);
 
         if($invoice) {
             // Add Invoice Parcels
-
+            //TODO validate waybill numbers
+            InvoiceParcel::addParcels($postData->invoice_number, $postData->parcels);
+            return $this->response->sendSuccess();
+        } else {
+            return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_INVOICE);
         }
-        return $this->response->sendSuccess();
     }
 
     /**
