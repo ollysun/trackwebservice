@@ -1588,6 +1588,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['billing_type'] = $filter_by['billing_type'];
         }
 
+        if(isset($filter_by['company_id'])) {
+            $where[] = 'Company.id = :company_id:';
+            $bind['company_id'] = $filter_by['company_id'];
+        }
+
         return ['where' => $where, 'bind' => $bind];
     }
 
@@ -1629,6 +1634,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
             $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
             $builder->groupBy('Parcel.id');
+        }
+
+        if (isset($filter_by['company_id'])) {
+            $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
+            $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
         }
 
         //model hydration
@@ -1797,6 +1807,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
             $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');
             $builder->columns('COUNT(DISTINCT Parcel.id) AS parcel_count');
+        }
+
+        if (isset($filter_by['company_id'])) {
+            $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
+            $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
         }
 
         $builder->where(join(' AND ', $where));
