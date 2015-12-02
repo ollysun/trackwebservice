@@ -1582,9 +1582,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['for_return'] = $filter_by['for_return'];
         }
 
-        if(isset($filter_by['billing_method'])) {
-            $where[] = 'Parcel.billing_method = :billing_method:';
-            $bind['billing_method'] = $filter_by['billing_method'];
+        if(isset($filter_by['billing_type'])) {
+            $where[] = 'Parcel.billing_type = :billing_type:';
+            $bind['billing_type'] = $filter_by['billing_type'];
         }
 
         return ['where' => $where, 'bind' => $bind];
