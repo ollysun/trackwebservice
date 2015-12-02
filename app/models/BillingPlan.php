@@ -390,6 +390,11 @@ class BillingPlan extends \Phalcon\Mvc\Model
             $where[] = 'BillingPlan.company_id IS NOT NULL';
         }
 
+        if( isset($filter_by['company_name'])) {
+            $where[] = 'Company.name LIKE :name:';
+            $bind['name'] = '%' . strtolower(trim($filter_by['company_name'])) . '%';
+        }
+
         if (isset($filter_by['type'])) {
             $where[] = 'BillingPlan.type = :type:';
             $bind['type'] = $filter_by['type'];
@@ -427,13 +432,15 @@ class BillingPlan extends \Phalcon\Mvc\Model
 
         //filters
         $filter_cond = self::filterConditions($filter_by);
+        if (isset($filter_by['company_name']) || isset($fetch_with['with_company'])) {
+            $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id');
+        }
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
         //model hydration
         if (isset($fetch_with['with_company'])) {
             $columns[] = 'Company.*';
-            $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id');
         }
 
         $builder->where(join(' AND ', $where), $bind);
@@ -470,6 +477,9 @@ class BillingPlan extends \Phalcon\Mvc\Model
             ->columns('COUNT(*) AS plan_count')
             ->from('BillingPlan');
 
+        if (isset($filter_by['company_name'])) {
+            $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id');
+        }
         //filters
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
