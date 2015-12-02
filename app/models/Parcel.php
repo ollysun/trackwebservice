@@ -1636,11 +1636,6 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.id');
         }
 
-        if (isset($filter_by['company_id'])) {
-            $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
-            $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
-        }
-
         //model hydration
         if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
@@ -1723,6 +1718,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->inWhere('Parcel.waybill_number', $waybill_number_arr);
         }
 
+        if (isset($fetch_with['with_company'])) {
+            $columns[] = 'Company.*';
+            $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
+            $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
+        }
+
         $builder->columns($columns);
         $data = $builder->getQuery()->execute($bind);
 
@@ -1775,6 +1776,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 if(isset($fetch_with['with_payment_type'])) {
                     $parcel['payment_type'] = $item->paymentType->toArray();
+                }
+                if(isset($fetch_with['with_company']) ) {
+                    $parcel['company'] = $item->company->toArray();
                 }
             }
             $result[] = $parcel;
