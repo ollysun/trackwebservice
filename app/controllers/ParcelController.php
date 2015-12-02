@@ -194,7 +194,7 @@ class ParcelController extends ControllerBase
             'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount',
             'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
             'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
-            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type'];
+            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type', 'company_id'];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
