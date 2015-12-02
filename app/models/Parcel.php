@@ -1385,6 +1385,15 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    /**
+     * Adds filter conditions
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @author Rahman Shitu <goke@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
     private static function filterConditions($filter_by)
     {
         $bind = [];
@@ -1571,6 +1580,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['for_return'])) {
             $where[] = 'Parcel.for_return = :for_return:';
             $bind['for_return'] = $filter_by['for_return'];
+        }
+
+        if(isset($filter_by['billing_method'])) {
+            $where[] = 'Parcel.billing_method = :billing_method:';
+            $bind['billing_method'] = $filter_by['billing_method'];
         }
 
         return ['where' => $where, 'bind' => $bind];
