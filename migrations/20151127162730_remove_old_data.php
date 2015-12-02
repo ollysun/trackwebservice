@@ -61,7 +61,7 @@ class RemoveOldData extends AbstractMigration
             $this->execute($sql);
         }
 
-        if (!$this->hasTable('shipment_request_comments')) {
+        if (!$this->hasTable('pickup_request_comments')) {
             $sql = 'CREATE TABLE IF NOT EXISTS pickup_request_comments (
                   `id` INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
                   `pickup_request_id` INT(11) NOT NULL,
