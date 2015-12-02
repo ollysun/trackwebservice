@@ -51,6 +51,7 @@ class DeliveryReceipt extends Model
         foreach ($data as $key => $value) {
             $delivery_receipt->$key = $value;
         }
+
         if ($delivery_receipt->delivered_at == null) {
             $delivery_receipt->delivered_at = Util::getCurrentDateTime();
         }
