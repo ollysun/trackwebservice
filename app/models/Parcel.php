@@ -1217,7 +1217,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'created_branch_id' => $this->getCreatedBranchId(),
             'route_id' => $this->getRouteId(),
             'request_type' => $this->getRequestType(),
-            'for_return' => $this->getForReturn()
+            'for_return' => $this->getForReturn(),
+            'billing_type' => $this->getBillingType()
         );
     }
 
