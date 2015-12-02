@@ -10,6 +10,11 @@ class WeightRange extends \Phalcon\Mvc\Model
     protected $id;
 
     /**
+     * @var integer
+     */
+    protected $billing_plan_id;
+
+    /**
      *
      * @var double
      */
@@ -54,6 +59,19 @@ class WeightRange extends \Phalcon\Mvc\Model
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field billing_plan_id
+     *
+     * @param integer $billing_plan_id
+     * @return $this
+     */
+    public function setBillingPlanId($billing_plan_id)
+    {
+        $this->billing_plan_id = $billing_plan_id;
 
         return $this;
     }
@@ -147,6 +165,16 @@ class WeightRange extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Returns the value of field billing_plan_id
+     *
+     * @return integer
+     */
+    public function getBillingPlanId()
+    {
+        return $this->billing_plan_id;
+    }
+
+    /**
      * Returns the value of field min_weight
      *
      * @return double
@@ -237,7 +265,8 @@ class WeightRange extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
+            'billing_plan_id' => 'billing_plan_id',
             'min_weight' => 'min_weight', 
             'max_weight' => 'max_weight', 
             'increment_weight' => 'increment_weight', 
@@ -250,6 +279,7 @@ class WeightRange extends \Phalcon\Mvc\Model
     public function getData(){
         return array(
             'id' => $this->getId(),
+            'billing_plan_id' => $this->getBillingPlanId(),
             'min_weight' => $this->getMinWeight(),
             'max_weight' => $this->getMaxWeight(),
             'increment_weight' => $this->getIncrementWeight(),
@@ -259,10 +289,12 @@ class WeightRange extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($min_weight, $max_weight, $increment_weight){
+    public function initData($min_weight, $max_weight, $increment_weight, $billing_plan_id)
+    {
         $this->setMinWeight($min_weight);
         $this->setMaxWeight($max_weight);
         $this->setIncrementWeight($increment_weight);
+        $this->setBillingPlanId($billing_plan_id);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -301,6 +333,7 @@ class WeightRange extends \Phalcon\Mvc\Model
         $bind = [];
 
         if (isset($filter_by['status'])){$where[] = 'WeightRange.status = :status:';$bind['status'] = $filter_by['status'];}
+        if (isset($filter_by['billing_plan_id'])){$where[] = 'WeightRange.billing_plan_id = :billing_plan_id:';$bind['billing_plan_id'] = $filter_by['billing_plan_id'];}
         if (isset($filter_by['min_weight'])){$where[] = 'WeightRange.min_weight >= :min_weight:';$bind['min_weight'] = $filter_by['min_weight'];}
         if (isset($filter_by['max_weight'])){$where[] = 'WeightRange.max_weight <= :max_weight:';$bind['max_weight'] = $filter_by['max_weight'];}
 
@@ -309,17 +342,18 @@ class WeightRange extends \Phalcon\Mvc\Model
         return $data->toArray();
     }
 
-    public static function getIntersectingRange($min_weight, $max_weight, $id = null){
+    public static function getIntersectingRange($min_weight, $max_weight, $billing_plan_id, $id = null){
         $min_weight = floatval($min_weight);
         $max_weight = floatval($max_weight);
 
-        $bind = ['min_weight' => $min_weight, 'max_weight' => $max_weight];
+        $bind = ['min_weight' => $min_weight, 'max_weight' => $max_weight, 'billing_plan_id' => $billing_plan_id];
         if ($id != null){ $bind['id'] = $id; }
 
         $id_condition = ($id == null) ? '' : ' AND id != :id:';
 
         return WeightRange::findFirst([
             '
+            billing_plan_id = :billing_plan_id: AND
             ((min_weight <  :min_weight: AND max_weight > :min_weight:)
             OR (min_weight <  :max_weight: AND max_weight > :max_weight:)
             OR (min_weight >=  :min_weight: AND max_weight <= :max_weight:))

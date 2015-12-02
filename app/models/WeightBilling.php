@@ -433,6 +433,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
             $where[] = 'WeightBilling.weight_range_id = :weight_range_id:';
             $bind['weight_range_id'] = $filter_by['weight_range_id'];
         }
+        if (isset($filter_by['billing_plan_id'])){
+            $where[] = 'WeightRange.billing_plan_id = :billing_plan_id:';
+            $bind['billing_plan_id'] = $filter_by['billing_plan_id'];
+        }
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
@@ -452,9 +456,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
      * @param $from_branch_id
      * @param $to_branch_id
      * @param $weight
+     * @param $billing_plan_id
      * @return array|bool
      */
-    public static function fetchForCalc($from_branch_id, $to_branch_id, $weight){
+    public static function fetchForCalc($from_branch_id, $to_branch_id, $weight, $billing_plan_id){
         $obj = new WeightBilling();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['WeightBilling.*', 'WeightRange.*'])
@@ -468,8 +473,9 @@ class WeightBilling extends \Phalcon\Mvc\Model
             ((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
             OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))
             AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight > :weight:)
+            AND WeightRange.billing_plan_id = :billing_plan_id:
             ',
-            ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight]
+            ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight, 'billing_plan_id' => $billing_plan_id]
         );
 
         $data = $builder->getQuery()->execute();
@@ -484,13 +490,23 @@ class WeightBilling extends \Phalcon\Mvc\Model
         return $info;
     }
 
-    public static function calcBilling($from_branch_id, $to_branch_id, $weight){
+    /**
+     * Calculate billing base on destinations, weight and billing plan
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $from_branch_id
+     * @param $to_branch_id
+     * @param $weight
+     * @param $billing_plan_id
+     * @return bool|float
+     */
+    public static function calcBilling($from_branch_id, $to_branch_id, $weight, $billing_plan_id){
         /**
          * @var WeightBilling $weight_billing
          * @var WeightRange $weight_range
          */
 
-        $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight);
+        $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight, $billing_plan_id);
         if ($billing_info == false){
             return false;
         }
@@ -507,7 +523,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
             $increment_steps = intval($increment_steps) + 1;
         }
 
-        $incr_billing = round(($increment_steps - 1) * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+        $incr_billing = 0;
+        if($increment_steps > 0) {
+            $incr_billing = round($increment_steps * (($weight_billing->getIncrementCost() * $weight_billing->getIncrementPercentage()) + $weight_billing->getIncrementCost()));
+        }
 
         return $base_billing + $incr_billing;
     }

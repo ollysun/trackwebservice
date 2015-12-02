@@ -83,4 +83,14 @@ class Util
     }
 
 
+    /**
+     * Regex float validation
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param float
+     * @return bool
+     */
+    public static function validateFloat($float)
+    {
+        return preg_match('/^-?(?=.*[0-9])\d+(\.\d+)?$/', $float);
+    }
 }
