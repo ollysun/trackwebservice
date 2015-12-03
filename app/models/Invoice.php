@@ -99,6 +99,12 @@ class Invoice extends EagerModel
      */
     private static function addFetchCriteria($builder, $filter_by)
     {
+        if (isset($filter_by['from_created_at']) || $filter_by['to_created_at']) {
+            $from = (isset($filter_by['from_created_at'])) ? $filter_by['from_created_at'] . ' 00:00:00' : null;
+            $to = (isset($filter_by['to_created_at'])) ? $filter_by['to_created_at'] . ' 23:59:59' : null;
+            $builder = Util::betweenDateRange($builder, 'Invoice.created_at', $from, $to);
+        }
+
         if (isset($filter_by['status'])) {
             $builder->andWhere('Invoice.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
         }
