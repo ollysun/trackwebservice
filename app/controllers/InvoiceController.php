@@ -16,22 +16,31 @@ class InvoiceController extends ControllerBase
         $postData = $this->request->getJsonRawBody();
 
         $invoiceRequestValidator = new InvoiceValidation($postData);
-        if(!$invoiceRequestValidator->validate()) {
+        if (!$invoiceRequestValidator->validate()) {
             return $this->response->sendError($invoiceRequestValidator->getMessages());
         }
 
         // Generate Invoice Number
-        $postData->invoice_number =  Invoice::generateInvoiceNumber();
-        $invoice = Invoice::generate((array) $postData);
+        $postData->invoice_number = Invoice::generateInvoiceNumber();
+        $invoice = Invoice::generate((array)$postData);
 
-        if($invoice) {
+        if ($invoice) {
             // Add Invoice Parcels
             //TODO validate waybill numbers
+
+            if (!InvoiceParcel::validateParcels($postData->parcels)) {
+                return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
+            }
+
+            if(!InvoiceParcel::validateInvoiceParcel($postData->parcels)) {
+                return $this->response->sendError(ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
+            }
+
             InvoiceParcel::addParcels($postData->invoice_number, $postData->parcels);
+
             return $this->response->sendSuccess();
-        } else {
-            return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_INVOICE);
         }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_INVOICE);
     }
 
     /**
