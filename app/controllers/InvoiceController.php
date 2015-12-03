@@ -26,13 +26,11 @@ class InvoiceController extends ControllerBase
 
         if ($invoice) {
             // Add Invoice Parcels
-            //TODO validate waybill numbers
-
             if (!InvoiceParcel::validateParcels($postData->parcels)) {
                 return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
             }
 
-            if(!InvoiceParcel::validateInvoiceParcel($postData->parcels)) {
+            if (!InvoiceParcel::validateInvoiceParcel($postData->parcels)) {
                 return $this->response->sendError(ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
             }
 
@@ -49,6 +47,24 @@ class InvoiceController extends ControllerBase
      */
     public function getAllAction()
     {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $with_total_count = $this->request->getQuery('with_total_count', null, null);
 
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $filter_by = $this->request->getQuery();
+
+        $invoices = Invoice::fetchAll($offset, $count, $fetch_with, $filter_by);
+
+        if (!empty($with_total_count)) {
+            $data = [
+                'total_count' => Invoice::getTotalCount($filter_by),
+                'invoices' => $invoices
+            ];
+        } else {
+            $data = $invoices;
+        }
+
+        return $this->response->sendSuccess($data);
     }
 }
