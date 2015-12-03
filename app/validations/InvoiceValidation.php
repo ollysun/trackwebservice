@@ -1,5 +1,6 @@
 <?php
 use PhalconUtils\Validation\BaseValidation;
+use PhalconUtils\Validation\Validators\Model;
 use PhalconUtils\Validation\Validators\NotExisting;
 
 /**
@@ -16,5 +17,10 @@ class InvoiceValidation extends BaseValidation
     function initialize()
     {
         $this->setRequiredFields(['address', 'to_address', 'currency', 'reference', 'parcels']);
+
+        $this->add('company_id', new Model([
+            'model' => Company::class,
+            'message' => 'Company does not exists'
+        ]));
     }
 }
