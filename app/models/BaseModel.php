@@ -28,6 +28,7 @@ class BaseModel extends Model
     }
 
     /**
+     * Save data to model
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $data
      * @return bool
@@ -40,6 +41,49 @@ class BaseModel extends Model
             $model->$key = $value;
         }
         return $model->save();
+    }
+
+
+    /**
+     * Get total count of data set
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $filter_by
+     * @return null
+     */
+    public static function getTotalCount($filter_by)
+    {
+        $called_class = get_called_class();
+        $model = new $called_class();
+        $builder = $model->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS total_count')
+            ->from(get_called_class());
+
+        $filter_cond = $model::getFilterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $builder->where(join(' AND ', $where));
+        $count = $builder->getQuery()->getSingleResult($bind);
+        return empty($count) ? null : intval($count);
+    }
+
+    /**
+     * Get filter conditions
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $filter_by
+     * @return array
+     */
+    public static function getFilterConditions($filter_by)
+    {
+        $bind = [];
+        $where = [];
+        foreach ($filter_by as $filter => $value) {
+            if (isset($value)) {
+                $where[] = "$filter = :$filter:";
+                $bind[$filter] = $value;
+            }
+        }
+        return ['where' => $where, 'bind' => $bind];
     }
 
 }

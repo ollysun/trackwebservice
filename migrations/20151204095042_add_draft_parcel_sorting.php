@@ -16,7 +16,7 @@ class AddDraftParcelSorting extends AbstractMigration
     public function change()
     {
         $this->table('parcel_draft_sorts')
-            ->addColumn('waybill_number', 'string', ['limit' => 25, 'null' => false])
+            ->addColumn('waybill_number', 'string', ['limit' => 25, 'null' => true])
             ->addColumn('sort_number', 'string', ['limit' => 25, 'null' => false])
             ->addColumn('to_branch', 'integer', ['limit' => 11, 'null' => false])
             ->addColumn('created_by', 'integer', ['limit' => 11, 'null' => false])

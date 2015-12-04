@@ -25,7 +25,7 @@ class ParcelDraftSort extends EagerModel
         $builder->limit($count, $offset);
         $columns = ['ParcelDraftSort.*'];
 
-        $filter_cond = self::filterConditions(['created_by' => $created_by]);
+        $filter_cond = self::getFilterConditions(['created_by' => $created_by]);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
         $obj->setFetchWith(['to_branch'])->joinWith($builder, $columns);
@@ -49,27 +49,6 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $filter_by
-     * @return null
-     */
-    public static function getTotalCount($filter_by)
-    {
-        $obj = new self();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->columns('COUNT(*) AS total_count')
-            ->from('ParcelDraftSort');
-
-        $filter_cond = self::filterConditions($filter_by);
-        $where = $filter_cond['where'];
-        $bind = $filter_cond['bind'];
-
-        $builder->where(join(' AND ', $where));
-        $count = $builder->getQuery()->getSingleResult($bind);
-        return empty($count) ? null : $count;
-    }
-
-    /**
      *  Create draft parcel sorts
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $waybill_numbers
@@ -89,23 +68,6 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
-     * filter conditions
-     * @author Rahman Shitu <yemi@cottacush.com>
-     * @param $filter_by
-     * @return array
-     */
-    private static function filterConditions($filter_by)
-    {
-        $bind = [];
-        $where = [];
-        if (isset($filter_by['created_by'])) {
-            $where[] = 'created_by = :created_by:';
-            $bind['created_by'] = $filter_by['created_by'];
-        }
-        return ['where' => $where, 'bind' => $bind];
-    }
-
-    /**
      * @inheritdoc
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
@@ -116,7 +78,7 @@ class ParcelDraftSort extends EagerModel
 
     /**
      * Returns an array that maps related models
-     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return array
      */
     public function getFetchWithMap()
