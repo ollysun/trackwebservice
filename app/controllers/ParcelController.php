@@ -10,14 +10,6 @@ use PhalconUtils\Validation\RequestValidation;
 class ParcelController extends ControllerBase
 {
     /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @author Rahman Shitu <rahman@cottacush.com>
-     * @author Olawale Lawal <wale@cottacush.com>
-     * @return $this
-     */
-
-
-    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * Returns Reasons for returning a parcel
      */
@@ -1281,7 +1273,6 @@ class ParcelController extends ControllerBase
     /**
      * Used to receive shipments from the dispatcher after an attempted delivery
      * @author Olawale Lawal <wale@cottacush.com>
-     *
      */
     public function receiveFromDispatcherAction()
     {
@@ -1355,5 +1346,13 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /***
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getDraftSortingsAction()
+    {
+
     }
 }
