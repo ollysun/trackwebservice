@@ -1351,7 +1351,7 @@ class ParcelController extends ControllerBase
     /***
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function getDraftSortingsAction()
+    public function getDraftSortsAction()
     {
 
     }
