@@ -56,7 +56,7 @@ class BaseModel extends Model
         $model = new $called_class();
         $builder = $model->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS total_count')
-            ->from(get_called_class());
+            ->from($called_class);
 
         $filter_cond = $model::getFilterConditions($filter_by);
         $where = $filter_cond['where'];
@@ -64,7 +64,7 @@ class BaseModel extends Model
 
         $builder->where(join(' AND ', $where));
         $count = $builder->getQuery()->getSingleResult($bind);
-        return empty($count) ? null : intval($count);
+        return !is_null($count) ? $count['total_count'] : null;
     }
 
     /**

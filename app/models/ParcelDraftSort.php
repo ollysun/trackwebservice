@@ -16,16 +16,20 @@ class ParcelDraftSort extends EagerModel
      * @param $created_by
      * @param $count
      * @param $offset
+     * @param bool $paginate
      * @return array
      */
-    public static function getDraftSorts($created_by, $count, $offset)
+    public static function getDraftSorts($created_by, $count, $offset, $paginate)
     {
         $obj = new ParcelDraftSort();
         $builder = $obj->getModelsManager()->createBuilder();
         $builder->from('ParcelDraftSort');
-        $builder->limit($count, $offset);
-        $columns = ['ParcelDraftSort.*'];
 
+        if ($paginate) {
+            $builder->limit($count, $offset);
+        }
+
+        $columns = ['ParcelDraftSort.*'];
         $filter_cond = self::getFilterConditions(['created_by' => $created_by]);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
@@ -37,13 +41,9 @@ class ParcelDraftSort extends EagerModel
 
         $result = [];
         foreach ($data as $item) {
-            if (isset($item->parcelDraftSort)) {
-                $parcelDraftSort = $item->parcelDraftSort->getData();
-                $relatedRecords = $obj->loadRelatedModels($item, true);
-                $parcelDraftSort = array_merge($parcelDraftSort, $relatedRecords);
-            } else {
-                $parcelDraftSort = $item->getData();
-            }
+            $parcelDraftSort = $item->toArray();
+            $relatedRecords = $obj->loadRelatedModels($item, true);
+            $parcelDraftSort = array_merge($parcelDraftSort, $relatedRecords);
             $result[] = $parcelDraftSort;
         }
         return $result;
@@ -110,7 +110,7 @@ class ParcelDraftSort extends EagerModel
         $draftParcelSort->waybill_number = $parcel->getWaybillNumber();
         $draftParcelSort->to_branch = $to_branch;
         $draftParcelSort->created_by = $created_by->getId();
-        $sort_number = 'DSP' . $to_branch . $created_by->getId() . time();
+        $sort_number = 'DSP' . $created_by->getId() . $to_branch . $parcel->getId();
         $draftParcelSort->sort_number = $sort_number;
         return $draftParcelSort->save();
     }

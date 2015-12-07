@@ -1358,10 +1358,16 @@ class ParcelController extends ControllerBase
         $created_by = $this->auth->getPersonId();
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, 0);
 
-        $draftSorts = ParcelDraftSort::getDraftSorts($created_by, $offset, $count);
-        $total_count = ParcelDraftSort::getTotalCount(['created_by' => $created_by]);
-        $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
+        $draftSorts = ParcelDraftSort::getDraftSorts($created_by, $count, $offset, $paginate);
+
+        if ($paginate) {
+            $total_count = ParcelDraftSort::getTotalCount(['created_by' => $created_by]);
+            return $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
+        } else {
+            return $this->response->sendSuccess($draftSorts);
+        }
     }
 
     /**
