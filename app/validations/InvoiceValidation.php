@@ -1,7 +1,6 @@
 <?php
 use PhalconUtils\Validation\BaseValidation;
 use PhalconUtils\Validation\Validators\Model;
-use PhalconUtils\Validation\Validators\NotExisting;
 
 /**
  * @author Adegoke Obasa <goke@cottacush.com>
