@@ -33,7 +33,7 @@ class Invoice extends EagerModel
      */
     public static function generateInvoiceNumber()
     {
-        $invoiceNumber = 'CP-' . date('Ymd-His') . '-' . rand(0, 10);
+        $invoiceNumber = 'IN-' . date('Ymd-His') . '-' . rand(0, 10);
         return $invoiceNumber;
     }
 
