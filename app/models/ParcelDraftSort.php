@@ -55,34 +55,64 @@ class ParcelDraftSort extends EagerModel
      * @param $waybill_numbers
      * @param $to_branch
      * @param $created_by
+     * @return array
      */
     public static function createDraftParcelSorts($waybill_numbers, $to_branch, $created_by)
     {
+        $created_by = Admin::findFirst($created_by);
+        $success = [];
+        $failed = [];
+
         foreach ($waybill_numbers as $waybill_number) {
-            $draftParcelSort = new ParcelDraftSort();
-            $draftParcelSort->waybill_number = $waybill_number;
-            $draftParcelSort->to_branch = $to_branch;
-            $draftParcelSort->created_by = $created_by;
-            $sort_number = 'DS' . $to_branch . $created_by . time();
-            $draftParcelSort->sort_number = $sort_number;
-            $draftParcelSort->save();
+            try {
+                if (self::createDraftParcelSort($waybill_number, $to_branch, $created_by)) {
+                    $success[] = $waybill_number;
+                } else {
+                    $failed[$waybill_number] = 'An error occurred while saving draft sort';
+                }
+            } catch (Exception $ex) {
+                $failed[$waybill_number] = $ex->getMessage();
+            }
         }
+
+        return ['success' => $success, 'failed' => $failed];
     }
 
-    private static function createDraftParceSort($waybill_number, $to_branch, $created_by)
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number string
+     * @param $to_branch int
+     * @param $created_by Admin
+     * @return bool
+     * @throws Exception
+     */
+    public static function createDraftParcelSort($waybill_number, $to_branch, $created_by)
     {
         $draftParcelSort = new ParcelDraftSort();
         if (!Parcel::isWaybillNumber($waybill_number)) {
             throw new Exception('Invalid waybill number');
         }
 
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
 
-        $draftParcelSort->waybill_number = $waybill_number;
+        if (!$parcel) {
+            throw new Exception('Parcel does not exist');
+        }
+
+        if ($parcel->getToBranchId() != $created_by->getBranchId()) {
+            throw new Exception('Parcel is not expected in this branch');
+        }
+
+        if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT) {
+            throw new Exception('Parcel is not in transit');
+        }
+
+        $draftParcelSort->waybill_number = $parcel->getWaybillNumber();
         $draftParcelSort->to_branch = $to_branch;
         $draftParcelSort->created_by = $created_by;
-        $sort_number = 'DS' . $to_branch . $created_by . time();
+        $sort_number = 'DSP' . $to_branch . $created_by->getId() . time();
         $draftParcelSort->sort_number = $sort_number;
-        $draftParcelSort->save();
+        return $draftParcelSort->save();
     }
 
     /**

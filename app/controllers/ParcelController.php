@@ -1,5 +1,6 @@
 <?php
 use PhalconUtils\Validation\RequestValidation;
+use PhalconUtils\Validation\Validators\Model;
 
 /**
  * Class ParcelController
@@ -1369,6 +1370,21 @@ class ParcelController extends ControllerBase
      */
     public function draftSortAction()
     {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['waybill_numbers', 'to_branch'], ['cancelOnFail' => true]);
+        $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
 
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->waybill_numbers)) {
+            return $this->response->sendError('waybill_numbers must be an array');
+        }
+
+        $result = ParcelDraftSort::createDraftParcelSorts($postData->waybill_numbers, $postData->to_branch, $this->auth->getPersonId());
+
+        return $this->response->sendSuccess($result);
     }
 }
