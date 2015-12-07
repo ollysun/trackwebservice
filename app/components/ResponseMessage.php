@@ -159,4 +159,5 @@ class ResponseMessage
     const UNABLE_TO_CREATE_INVOICE = 'Unable to create invoice';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST = 'One of the parcel(s) does not exists';
     const INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Invoice already exists for one of the parcels';
+    const CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Credit note already exists for one of the parcels';
 }

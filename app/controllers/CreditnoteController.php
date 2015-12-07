@@ -25,7 +25,13 @@ class CreditnoteController extends ControllerBase
 
         if($creditNote) {
             // Validate parcels
+            if(CreditNoteParcel::validateInvoiceParcels($postData->parcels)) {
+                return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
+            }
 
+            if (!CreditNoteParcel::validateCreditNoteParcel($postData->parcels)) {
+                return $this->response->sendError(ResponseMessage::CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
+            }
         }
 
         return $this->response->sendSuccess($creditNote);

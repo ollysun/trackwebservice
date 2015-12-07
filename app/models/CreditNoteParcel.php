@@ -6,6 +6,23 @@
 class CreditNoteParcel extends EagerModel
 {
     /**
+     * Validates that invoice parcels exist
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $parcels
+     * @return bool
+     */
+    public static function validateInvoiceParcels($parcels)
+    {
+        $invoiceParcelIds = [];
+        foreach ($parcels as $parcel) {
+            $invoiceParcelIds[] = $parcel->invoice_parcel_id;
+        }
+
+        $foundInvoiceParcels = InvoiceParcel::query()->inWhere('id', $invoiceParcelIds)->execute()->toArray();
+        return empty($foundInvoiceParcels);
+    }
+
+    /**
      * @author Adegoke Obasa <goke@cottacush.com>
      */
     public function initialize()

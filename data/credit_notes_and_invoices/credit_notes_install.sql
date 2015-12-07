@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS credit_note_parcels (
   KEY k_invoice_parcel_id(`invoice_parcel_id`),
   KEY k_created_at(`created_at`),
   KEY k_updated_at(`updated_at`),
+  UNIQUE u_invoice_parcel_id(`invoice_parcel_id`),
   KEY k_status(`status`),
   CONSTRAINT f_cnp_invoices_status_status FOREIGN KEY (`status`) REFERENCES `status` (`id`),
   CONSTRAINT f_cnp_cn_credit_note_number FOREIGN KEY (`credit_note_number`) REFERENCES `credit_notes` (`credit_note_number`),
