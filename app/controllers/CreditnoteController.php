@@ -24,6 +24,7 @@ class CreditnoteController extends ControllerBase
         $creditNote = CreditNote::add($postData);
 
         if($creditNote) {
+            // Validate parcels
 
         }
 
