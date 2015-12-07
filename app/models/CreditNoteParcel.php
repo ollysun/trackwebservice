@@ -19,7 +19,24 @@ class CreditNoteParcel extends EagerModel
         }
 
         $foundInvoiceParcels = InvoiceParcel::query()->inWhere('id', $invoiceParcelIds)->execute()->toArray();
-        return empty($foundInvoiceParcels);
+        return count($foundInvoiceParcels) == count($parcels);
+    }
+
+    /**
+     * Validates that the credit note parcel does not exists
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $parcels
+     * @return bool
+     */
+    public static function validateCreditNoteParcel($parcels)
+    {
+        $invoiceParcelIds = [];
+        foreach ($parcels as $parcel) {
+            $invoiceParcelIds[] = $parcel->waybill_number;
+        }
+
+        $foundCreditNoteParcels = CreditNoteParcel::query()->inWhere('invoice_parcel_id', $invoiceParcelIds)->execute()->toArray();
+        return empty($foundCreditNoteParcels);
     }
 
     /**
