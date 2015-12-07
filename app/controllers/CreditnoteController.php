@@ -22,7 +22,7 @@ class CreditnoteController extends ControllerBase
         $this->db->begin();
 
         // Generate credit notes
-        $postData->credit_note_number = CreditNote::generateCreditNumber();
+        $postData->credit_note_number = CreditNote::generateCreditNoteNumber();
         $creditNote = CreditNote::add($postData);
 
         if($creditNote) {

@@ -18,7 +18,7 @@ class CreditNote extends EagerModel
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return string
      */
-    public static function generateCreditNumber()
+    public static function generateCreditNoteNumber()
     {
         $time = microtime(true) * 10000;
         return 'CN-' . $time;
