@@ -32,7 +32,7 @@ class CreditNoteParcel extends EagerModel
     {
         $invoiceParcelIds = [];
         foreach ($parcels as $parcel) {
-            $invoiceParcelIds[] = $parcel->waybill_number;
+            $invoiceParcelIds[] = $parcel->invoice_parcel_id;
         }
 
         $foundCreditNoteParcels = CreditNoteParcel::query()->inWhere('invoice_parcel_id', $invoiceParcelIds)->execute()->toArray();

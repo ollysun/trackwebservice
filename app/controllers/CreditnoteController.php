@@ -19,13 +19,19 @@ class CreditnoteController extends ControllerBase
             return $this->response->sendError($creditNoteRequestValidation->getMessages());
         }
 
+        $this->db->begin();
+
         // Generate credit notes
         $postData->credit_note_number = CreditNote::generateCreditNumber();
         $creditNote = CreditNote::add($postData);
 
         if($creditNote) {
+            if(!$postData->parcels) {
+                return $this->response->sendError(ResponseMessage::INVOICE_PARCEL_IS_REQUIRED_TO_CREATE_CREDIT_NOTE);
+            }
+
             // Validate parcels
-            if(CreditNoteParcel::validateInvoiceParcels($postData->parcels)) {
+            if(!CreditNoteParcel::validateInvoiceParcels($postData->parcels)) {
                 return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
             }
 
@@ -33,6 +39,8 @@ class CreditnoteController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
             }
         }
+
+        $this->db->rollback();
 
         return $this->response->sendSuccess($creditNote);
     }

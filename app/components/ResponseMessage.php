@@ -160,4 +160,5 @@ class ResponseMessage
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST = 'One of the parcel(s) does not exists';
     const INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Invoice already exists for one of the parcels';
     const CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Credit note already exists for one of the parcels';
+    const INVOICE_PARCEL_IS_REQUIRED_TO_CREATE_CREDIT_NOTE = 'At least one invoice parcel is needed to create a credit note';
 }

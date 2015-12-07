@@ -39,7 +39,8 @@ class BaseModel extends Model
         foreach ($data as $key => $value) {
             $model->$key = $value;
         }
-        return $model->save();
+        $status = $model->save();
+        return $status;
     }
 
 }
