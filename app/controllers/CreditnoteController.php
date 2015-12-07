@@ -3,7 +3,7 @@
 /**
  * @author Adegoke Obasa <goke@cottacush.com>
  */
-class CreditNoteController extends ControllerBase
+class CreditnoteController extends ControllerBase
 {
     /**
      * Create Credit Note API
@@ -14,6 +14,19 @@ class CreditNoteController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN]);
         $postData = $this->request->getJsonRawBody();
 
+        $creditNoteRequestValidation = new CreditNoteRequestValidation();
+        if($creditNoteRequestValidation->validate($postData)) {
+            return $this->response->sendError($creditNoteRequestValidation->getMessages());
+        }
 
+        // Generate credit notes
+        $postData->credit_note_number = CreditNote::generateCreditNumber();
+        $creditNote = CreditNote::add($postData);
+
+        if($creditNote) {
+
+        }
+
+        return $this->response->sendSuccess($creditNote);
     }
 }
