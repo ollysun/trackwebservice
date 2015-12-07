@@ -8,17 +8,21 @@ class CreditNoteParcel extends EagerModel
     /**
      * Validates that invoice parcels exist
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $invoiceNumber
      * @param $parcels
      * @return bool
      */
-    public static function validateInvoiceParcels($parcels)
+    public static function validateInvoiceParcels($invoiceNumber, $parcels)
     {
         $invoiceParcelIds = [];
         foreach ($parcels as $parcel) {
             $invoiceParcelIds[] = $parcel->invoice_parcel_id;
         }
 
-        $foundInvoiceParcels = InvoiceParcel::query()->inWhere('id', $invoiceParcelIds)->execute()->toArray();
+        $foundInvoiceParcels = InvoiceParcel::query()
+            ->inWhere('id', $invoiceParcelIds)
+            ->andWhere('invoice_number = :invoice_number:', ['invoice_number' => $invoiceNumber])
+            ->execute()->toArray();
         return count($foundInvoiceParcels) == count($parcels);
     }
 
@@ -46,6 +50,34 @@ class CreditNoteParcel extends EagerModel
     {
         $this->setSource('credit_note_parcels');
     }
+
+    /**
+     * Add Parcels for a credit note
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $creditNoteNumber
+     * @param $parcels
+     * @throws Exception
+     */
+    public static function addParcels($creditNoteNumber, $parcels)
+    {
+        $values = [];
+
+        foreach ($parcels as $parcel) {
+            $rowData = [];
+            $rowData[] = $creditNoteNumber;
+            $rowData[] = $parcel->invoice_parcel_id;
+            $rowData[] = $parcel->deducted_amount;
+            $rowData[] = $parcel->new_net_amount;
+            $rowData[] = Util::getCurrentDateTime();
+            $rowData[] = Util::getCurrentDateTime();
+            $values[] = $rowData;
+        }
+        $batch = new Batch('credit_note_parcels');
+        $batch->setRows(['credit_note_number', 'invoice_parcel_id', 'deducted_amount', 'new_net_amount', 'created_at', 'updated_at']);
+        $batch->setValues($values);
+        $batch->insert();
+    }
+
 
     /**
      * Returns an array that maps related models

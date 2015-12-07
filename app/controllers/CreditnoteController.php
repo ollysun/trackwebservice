@@ -14,8 +14,8 @@ class CreditnoteController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN]);
         $postData = $this->request->getJsonRawBody();
 
-        $creditNoteRequestValidation = new CreditNoteRequestValidation();
-        if($creditNoteRequestValidation->validate($postData)) {
+        $creditNoteRequestValidation = new CreditNoteRequestValidation($postData);
+        if(!$creditNoteRequestValidation->validate()) {
             return $this->response->sendError($creditNoteRequestValidation->getMessages());
         }
 
@@ -26,22 +26,26 @@ class CreditnoteController extends ControllerBase
         $creditNote = CreditNote::add($postData);
 
         if($creditNote) {
+            // Validate parcels
             if(!$postData->parcels) {
                 return $this->response->sendError(ResponseMessage::INVOICE_PARCEL_IS_REQUIRED_TO_CREATE_CREDIT_NOTE);
             }
 
-            // Validate parcels
-            if(!CreditNoteParcel::validateInvoiceParcels($postData->parcels)) {
-                return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
+            if(!CreditNoteParcel::validateInvoiceParcels($postData->invoice_number, $postData->parcels)) {
+                return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST_OR_DOES_NOT_BELONG_TO_INVOICE);
             }
 
             if (!CreditNoteParcel::validateCreditNoteParcel($postData->parcels)) {
                 return $this->response->sendError(ResponseMessage::CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
             }
+
+            $this->db->commit();
+            CreditNoteParcel::addParcels($postData->credit_note_number, $postData->parcels);
+
+            return $this->response->sendSuccess($creditNote);
         }
 
         $this->db->rollback();
-
-        return $this->response->sendSuccess($creditNote);
+        $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_CREDIT_NOTE);
     }
 }
