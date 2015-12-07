@@ -75,7 +75,7 @@ class ParcelDraftSort extends EagerModel
             }
         }
 
-        return ['success' => $success, 'failed' => $failed];
+        return ['successful' => $success, 'failed' => $failed];
     }
 
     /**
@@ -109,7 +109,7 @@ class ParcelDraftSort extends EagerModel
 
         $draftParcelSort->waybill_number = $parcel->getWaybillNumber();
         $draftParcelSort->to_branch = $to_branch;
-        $draftParcelSort->created_by = $created_by;
+        $draftParcelSort->created_by = $created_by->getId();
         $sort_number = 'DSP' . $to_branch . $created_by->getId() . time();
         $draftParcelSort->sort_number = $sort_number;
         return $draftParcelSort->save();
