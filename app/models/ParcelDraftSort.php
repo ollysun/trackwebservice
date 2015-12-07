@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Exception;
 
 /**
  * Class ParcelDraftSort
@@ -62,9 +63,26 @@ class ParcelDraftSort extends EagerModel
             $draftParcelSort->waybill_number = $waybill_number;
             $draftParcelSort->to_branch = $to_branch;
             $draftParcelSort->created_by = $created_by;
-            $sort_number = 'S' . $to_branch . $created_by . time();
+            $sort_number = 'DS' . $to_branch . $created_by . time();
             $draftParcelSort->sort_number = $sort_number;
+            $draftParcelSort->save();
         }
+    }
+
+    private static function createDraftParceSort($waybill_number, $to_branch, $created_by)
+    {
+        $draftParcelSort = new ParcelDraftSort();
+        if (!Parcel::isWaybillNumber($waybill_number)) {
+            throw new Exception('Invalid waybill number');
+        }
+
+
+        $draftParcelSort->waybill_number = $waybill_number;
+        $draftParcelSort->to_branch = $to_branch;
+        $draftParcelSort->created_by = $created_by;
+        $sort_number = 'DS' . $to_branch . $created_by . time();
+        $draftParcelSort->sort_number = $sort_number;
+        $draftParcelSort->save();
     }
 
     /**

@@ -1349,9 +1349,25 @@ class ParcelController extends ControllerBase
     }
 
     /***
+     * Get parcels that have been draft sorted by user
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
     public function getDraftSortsAction()
+    {
+        $created_by = $this->auth->getPersonId();
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $draftSorts = ParcelDraftSort::getDraftSorts($created_by, $offset, $count);
+        $total_count = ParcelDraftSort::getTotalCount(['created_by' => $created_by]);
+        $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
+    }
+
+    /**
+     * Draft sort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function draftSortAction()
     {
 
     }
