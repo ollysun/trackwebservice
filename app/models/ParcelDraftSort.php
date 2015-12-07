@@ -33,7 +33,7 @@ class ParcelDraftSort extends EagerModel
         $filter_cond = self::getFilterConditions(['created_by' => $created_by]);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
-        $obj->setFetchWith(['to_branch'])->joinWith($builder, $columns);
+        $obj->setFetchWith(['with_to_branch'])->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -41,9 +41,13 @@ class ParcelDraftSort extends EagerModel
 
         $result = [];
         foreach ($data as $item) {
-            $parcelDraftSort = $item->toArray();
-            $relatedRecords = $obj->loadRelatedModels($item, true);
-            $parcelDraftSort = array_merge($parcelDraftSort, $relatedRecords);
+            if (isset($item->parcelDraftSort)) {
+                $parcelDraftSort = $item->parcelDraftSort->toArray();
+                $relatedRecords = $obj->loadRelatedModels($item, true);
+                $parcelDraftSort = array_merge($parcelDraftSort, $relatedRecords);
+            } else {
+                $parcelDraftSort = $item->toArray();
+            }
             $result[] = $parcelDraftSort;
         }
         return $result;
@@ -138,6 +142,14 @@ class ParcelDraftSort extends EagerModel
                 'ref_model_name' => 'Branch',
                 'foreign_key' => 'to_branch',
                 'reference_key' => 'id'
+            ],
+
+            [
+                'field' => 'parcel',
+                'model_name' => 'ParcelDraftSort',
+                'ref_model_name' => 'Parcel',
+                'foreign_key' => 'waybill_number',
+                'reference_key' => 'waybill_number'
             ]
         ];
     }
