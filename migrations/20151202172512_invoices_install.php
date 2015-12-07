@@ -28,7 +28,7 @@ class InvoicesInstall extends AbstractMigration
     public function up()
     {
 
-        if ($this->hasTable('parcel') && $this->hasTable('invoices')) {
+        if ($this->hasTable('parcel')) {
             $sql = file_get_contents(dirname(__FILE__) . '/../data/credit_notes_and_invoices/invoices_install.sql');
             $this->execute($sql);
         }
