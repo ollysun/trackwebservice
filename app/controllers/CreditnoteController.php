@@ -48,4 +48,31 @@ class CreditnoteController extends ControllerBase
         $this->db->rollback();
         $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_CREDIT_NOTE);
     }
+
+    /**
+     * Get all credit notes API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getAllAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $with_total_count = $this->request->getQuery('with_total_count', null, null);
+
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $filter_by = $this->request->getQuery();
+
+        $creditNotes = CreditNote::fetchAll($offset, $count, $fetch_with, $filter_by);
+
+        if (!empty($with_total_count)) {
+            $data = [
+                'total_count' => CreditNote::getTotalCount($filter_by),
+                'credit_notes' => $creditNotes
+            ];
+        } else {
+            $data = $creditNotes;
+        }
+
+        return $this->response->sendSuccess($data);
+    }
 }
