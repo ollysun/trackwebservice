@@ -73,14 +73,15 @@ class BaseModel extends Model
      * @param $filter_by
      * @return array
      */
-    public static function getFilterConditions($filter_by)
+    public static function getFilterConditions($filter_by = [])
     {
         $bind = [];
         $where = [];
         foreach ($filter_by as $filter => $value) {
             if (isset($value)) {
-                $where[] = "$filter = :$filter:";
-                $bind[$filter] = $value;
+                $filter_placeholder = str_replace('.', '_', strtolower($filter));
+                $where[] = "$filter = :$filter_placeholder:";
+                $bind[$filter_placeholder] = $value;
             }
         }
         return ['where' => $where, 'bind' => $bind];

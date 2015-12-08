@@ -1389,7 +1389,7 @@ class ParcelController extends ControllerBase
         $draftSorts = ParcelDraftSort::getDraftSorts($created_by, $count, $offset, $paginate);
 
         if ($paginate) {
-            $total_count = ParcelDraftSort::getTotalCount(['created_by' => $created_by]);
+            $total_count = ParcelDraftSort::getTotalCount(['ParcelDraftSort.created_by' => $created_by]);
             return $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
         } else {
             return $this->response->sendSuccess($draftSorts);

@@ -30,10 +30,10 @@ class ParcelDraftSort extends EagerModel
         }
 
         $columns = ['ParcelDraftSort.*'];
-        $filter_cond = self::getFilterConditions(['created_by' => $created_by]);
+        $filter_cond = self::getFilterConditions(['ParcelDraftSort.created_by' => $created_by]);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
-        $obj->setFetchWith(['with_to_branch'])->joinWith($builder, $columns);
+        $obj->setFetchWith(['with_to_branch', 'with_parcel', 'with_from_branch', 'with_receiver_address', 'with_receiver_address_city', 'with_receiver_address_state'])->joinWith($builder, $columns);
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -150,6 +150,39 @@ class ParcelDraftSort extends EagerModel
                 'ref_model_name' => 'Parcel',
                 'foreign_key' => 'waybill_number',
                 'reference_key' => 'waybill_number'
+            ],
+
+            [
+                'field' => 'from_branch',
+                'model_name' => 'Parcel',
+                'ref_model_name' => 'Branch',
+                'foreign_key' => 'from_branch_id',
+                'reference_key' => 'id',
+                'alias' => 'ToBranch'
+            ],
+
+            [
+                'field' => 'receiver_address',
+                'model_name' => 'Parcel',
+                'ref_model_name' => 'Address',
+                'foreign_key' => 'receiver_address_id',
+                'reference_key' => 'id'
+            ],
+
+            [
+                'field' => 'receiver_address_city',
+                'model_name' => 'Address',
+                'ref_model_name' => 'City',
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id'
+            ],
+
+            [
+                'field' => 'receiver_address_state',
+                'model_name' => 'Address',
+                'ref_model_name' => 'State',
+                'foreign_key' => 'state_id',
+                'reference_key' => 'id'
             ]
         ];
     }
