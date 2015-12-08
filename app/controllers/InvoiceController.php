@@ -67,4 +67,20 @@ class InvoiceController extends ControllerBase
 
         return $this->response->sendSuccess($data);
     }
+
+    /**
+     * Get Invoice API
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @return $this
+     */
+    public function getAction()
+    {
+        $filter_by = $this->request->getQuery();
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $invoice = Invoice::fetchOne($filter_by, $fetch_with);
+        if ($invoice != false) {
+            return $this->response->sendSuccess($invoice);
+        }
+        return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
 }

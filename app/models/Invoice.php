@@ -117,6 +117,57 @@ class Invoice extends EagerModel
     }
 
     /**
+     * Fetches the details of an invoice together with optional related records
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $filter_by
+     * @param $fetch_with
+     * @return array|bool
+     */
+    public static function fetchOne($filter_by, $fetch_with)
+    {
+        $obj = new self();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from(self::class);
+
+        $columns = [self::class . '.*'];
+        $bind = [];
+        $where = [];
+
+        if (isset($filter_by['id'])) {
+            $where[] = self::class . '.id = :id:';
+            $bind['id'] = $filter_by['id'];
+        }
+
+        if (isset($filter_by['invoice_number'])) {
+            $where[] = self::class . '.invoice_number = :invoice_number:';
+            $bind['invoice_number'] = $filter_by['invoice_number'];
+        }
+
+        $obj->setFetchWith($fetch_with)
+            ->joinWith($builder, $columns);
+
+        $builder->columns($columns);
+        $builder->where(join(' AND ', $where));
+
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return false;
+        }
+
+        if (isset($data[0]->company)) {
+            $model = $data[0]->{lcfirst(self::class)}->toArray();
+            $relatedRecords = $obj->loadRelatedModels($data);
+
+            $model = array_merge($model, $relatedRecords);
+        } else {
+            $model = $data[0]->getData();
+        }
+
+        return $model;
+    }
+
+    /**
      * Returns an array that maps related models
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return array
