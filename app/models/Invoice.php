@@ -130,6 +130,14 @@ class Invoice extends EagerModel
                 'ref_model_name' => 'Company',
                 'foreign_key' => 'company_id',
                 'reference_key' => 'id'
+            ],
+            [
+                'field' => 'credit_note',
+                'model_name' => self::class,
+                'ref_model_name' => CreditNote::class,
+                'foreign_key' => 'invoice_number',
+                'reference_key' => 'invoice_number',
+                'join_type' => 'left'
             ]
         ];
     }
