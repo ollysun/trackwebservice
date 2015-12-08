@@ -20,6 +20,12 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess($reasons);
     }
 
+    /**
+     * Creates a new parcel
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
@@ -174,7 +180,14 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $filter_params = ['for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible', 'created_by', 'user_id', 'held_by_staff_id', 'held_by_id', 'to_branch_id', 'from_branch_id', 'parcel_type', 'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight', 'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type', 'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount', 'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date', 'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type'];
+        $filter_params = ['for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible',
+            'created_by', 'user_id', 'held_by_staff_id', 'held_by_id', 'to_branch_id', 'from_branch_id', 'parcel_type',
+            'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight',
+            'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type',
+            'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount',
+            'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
+            'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
+            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type', 'company_id'];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
@@ -188,6 +201,7 @@ class ParcelController extends ControllerBase
     }
 
     /**
+     * @author Adegoke Obasa <goke@cottacush.com>
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @author Rahman Shitu <rahman@cottacush.com>
      * @author Olawale Lawal <wale@cottacush.com>
@@ -211,6 +225,9 @@ class ParcelController extends ControllerBase
         $with_route = $this->request->getQuery('with_route');
         $with_delivery_receipt = $this->request->getQuery('with_delivery_receipt');
         $with_created_by = $this->request->getQuery('with_created_by');
+        $with_payment_type = $this->request->getQuery('with_payment_type');
+        $with_company = $this->request->getQuery('with_company');
+        $with_invoice_parcel = $this->request->getQuery('with_invoice_parcel');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -259,6 +276,15 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_delivery_receipt)) {
             $fetch_with['with_delivery_receipt'] = true;
+        }
+        if (!is_null($with_payment_type)) {
+            $fetch_with['with_payment_type'] = true;
+        }
+        if (!is_null($with_company)) {
+            $fetch_with['with_company'] = true;
+        }
+        if (!is_null($with_invoice_parcel)) {
+            $fetch_with['with_invoice_parcel'] = true;
         }
 
         $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
