@@ -4,14 +4,17 @@ CREATE TABLE IF NOT EXISTS credit_notes (
   invoice_number     VARCHAR(25)                                      NOT NULL,
   created_at         DATETIME                                         NOT NULL,
   updated_at         DATETIME                                         NOT NULL,
+  created_by         INT(11)                                          NOT NULL,
   `status`           TINYINT(4) DEFAULT 1                             NOT NULL,
   UNIQUE u_invoice_number(`invoice_number`),
   UNIQUE u_credit_note_number(`credit_note_number`),
   KEY k_created_at(`created_at`),
   KEY k_updated_at(`updated_at`),
+  KEY k_created_by(`created_by`),
   KEY k_status(`status`),
   CONSTRAINT f_cn_invoices_status_status FOREIGN KEY (`status`) REFERENCES `status` (`id`),
-  CONSTRAINT f_cn_invoices_invoice_number FOREIGN KEY (`invoice_number`) REFERENCES invoices (`invoice_number`)
+  CONSTRAINT f_cn_invoices_invoice_number FOREIGN KEY (`invoice_number`) REFERENCES invoices (`invoice_number`),
+  CONSTRAINT f_cn_admin_created_by FOREIGN KEY (`created_by`) REFERENCES admin (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS credit_note_parcels (
