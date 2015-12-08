@@ -23,6 +23,7 @@ class CreditnoteController extends ControllerBase
 
         // Generate credit notes
         $postData->credit_note_number = CreditNote::generateCreditNoteNumber();
+        $postData->created_by = $this->auth->getPersonId();
         $creditNote = CreditNote::add($postData);
 
         if($creditNote) {
