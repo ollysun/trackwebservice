@@ -120,6 +120,50 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
+     *  discard draft parcel sorts
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_numbers
+     * @return array
+     */
+    public static function discardSortings($sort_numbers)
+    {
+        $success = [];
+        $failed = [];
+        foreach ($sort_numbers as $sort_number) {
+            try {
+                if (self::discardSorting($sort_number)) {
+                    $success[] = $sort_number;
+                } else {
+                    $failed[$sort_number] = 'An error occurred while deleting draft sort';
+                }
+            } catch (Exception $ex) {
+                $failed[$sort_number] = $ex->getMessage();
+            }
+        }
+
+        return ['successful' => $success, 'failed' => $failed];
+    }
+
+    /**
+     * discard sorting
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_number
+     * @return bool
+     * @throws Exception
+     */
+    public static function discardSorting($sort_number)
+    {
+        /** @var self $draftSortParcel */
+        $draftSortParcel = self::findFirstBySortNumber($sort_number);
+
+        if (!$draftSortParcel) {
+            throw new Exception('Draft sorting does not exist');
+        }
+
+        return $draftSortParcel->delete();
+    }
+
+    /**
      * @inheritdoc
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */

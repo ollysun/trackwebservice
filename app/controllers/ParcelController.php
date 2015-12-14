@@ -1429,4 +1429,27 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess($result);
     }
+
+    /**
+     * discard draft sort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function discardSortAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_numbers'], ['cancelOnFail' => true]);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->sort_numbers)) {
+            return $this->response->sendError('sort_numbers must be an array');
+        }
+
+        $result = ParcelDraftSort::discardSortings($postData->sort_numbers);
+
+        return $this->response->sendSuccess($result);
+    }
 }
