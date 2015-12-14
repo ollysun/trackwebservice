@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Exception;
 
 /**
@@ -161,6 +162,59 @@ class ParcelDraftSort extends EagerModel
         }
 
         return $draftSortParcel->delete();
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_number
+     * @param Auth $auth
+     * @return bool
+     * @throws Exception
+     */
+    public static function confirmSorting($sort_number, $auth)
+    {
+        /** @var self $draftSortParcel */
+        $draftSortParcel = self::findFirstBySortNumber($sort_number);
+
+        if (!$draftSortParcel) {
+            throw new Exception('Draft sorting does not exist');
+        }
+
+        if ($draftSortParcel->to_branch == $auth->getData()['branch_id']) {
+            Parcel::assignToGroundsman($draftSortParcel->waybill_number, $auth);
+        } else {
+            Parcel::moveToSweeper($draftSortParcel->waybill_number, $auth, $draftSortParcel->to_branch);
+        }
+
+        $draftSortParcel->delete();
+
+        return true;
+    }
+
+    /**
+     * Confirm sortings
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_numbers
+     * @return array
+     */
+    public static function confirmSortings($sort_numbers)
+    {
+        $auth = Di::getDefault()->getAuth();
+        $success = [];
+        $failed = [];
+        foreach ($sort_numbers as $sort_number) {
+            try {
+                if (self::confirmSorting($sort_number, $auth)) {
+                    $success[] = $sort_number;
+                } else {
+                    $failed[$sort_number] = 'An error occurred while confirming draft sort';
+                }
+            } catch (Exception $ex) {
+                $failed[$sort_number] = $ex->getMessage();
+            }
+        }
+
+        return ['successful' => $success, 'failed' => $failed];
     }
 
     /**
