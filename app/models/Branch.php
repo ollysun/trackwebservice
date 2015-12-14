@@ -514,7 +514,7 @@ class Branch extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function fetchAllHub($state_id, $paginate, $offset, $count)
+    public static function fetchAllHub($state_id = null, $paginate = false, $offset = DEFAULT_OFFSET, $count = DEFAULT_COUNT)
     {
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
