@@ -47,7 +47,7 @@ class BranchController extends ControllerBase
         if ($branch->saveBranch($hub_id)) {
             return $this->response->sendSuccess(['id' => $branch->getId(), 'code' => $branch->getCode()]);
         }
-        return $this->response->sendError(var_export($branch->getMessages(), true));
+        return $this->response->sendError();
     }
 
     public function editDetailsAction()
