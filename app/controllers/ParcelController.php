@@ -1028,6 +1028,13 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 
+    /**
+     * Return the history of parcel
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return $this
+     */
     public function historyAction()
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -1060,9 +1067,12 @@ class ParcelController extends ControllerBase
                 $fetch_with[$param] = true;
             }
         }
-        //------------------------------------------
 
-        return $this->response->sendSuccess(ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with));
+        $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
+        if(!empty($parcelHistory)){
+            return $this->response->sendSuccess($parcelHistory);
+        }
+        return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
     }
 
     /**
