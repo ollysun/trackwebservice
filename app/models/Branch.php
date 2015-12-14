@@ -444,6 +444,7 @@ class Branch extends \Phalcon\Mvc\Model
     /**
      * Get total number of ecs
      * @author Babatunde Otaru <tunde@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
      * @param  int $hub_id
      * @return int
      */
@@ -455,7 +456,6 @@ class Branch extends \Phalcon\Mvc\Model
             ->from('Branch')
             ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
             ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
-        $builder->andWhere("BranchMap.parent_id = :hub_id:");
 
         $filters = ['branch_type' => BranchType::EC, 'status' => Status::ACTIVE];
 
@@ -472,10 +472,11 @@ class Branch extends \Phalcon\Mvc\Model
      * If hub_id is set, get all ecs belonging to the hub
      * @author Rahman Shitu <rahman@cottacush.com>
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @author Olawale Lawal <wale@cottacush.com>
      * @param $hub_id
      * @return array
      */
-    public static function fetchAllEC($hub_id)
+    public static function fetchAllEC($hub_id, $paginate = false, $offset = DEFAULT_OFFSET, $count = DEFAULT_COUNT, $with_parent =null)
     {
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -485,11 +486,15 @@ class Branch extends \Phalcon\Mvc\Model
             ->innerJoin('BranchMap', 'BranchMap.child_id = Branch.id')
             ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
 
+        if ($paginate) {
+            $builder->limit($count, $offset);
+        }
+
         $filters = ['branch_type' => BranchType::EC, 'status' => Status::ACTIVE];
 
         if(!is_null($hub_id)) {
-            $filters['hub_id'] = $hub_id;
             $builder->andWhere("BranchMap.parent_id = :hub_id:");
+            $filters['hub_id'] = $hub_id;
         }
 
         $builder = $builder->orderBy('Branch.name');
@@ -500,12 +505,16 @@ class Branch extends \Phalcon\Mvc\Model
         foreach ($data as $item) {
             $branch = $item->branch->getData();
             $branch['state'] = $item->state->getData();
+            $parent = Branch::getParentById($item->branch->getId());
+            if (isset($with_parent)) {
+                $branch['parent'] = ($parent == null) ? null : $parent->getData();
+            }
             $result[] = $branch;
         }
         return $result;
     }
 
-    public static function fetchAllHub()
+    public static function fetchAllHub($state_id, $paginate, $offset, $count)
     {
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -515,7 +524,17 @@ class Branch extends \Phalcon\Mvc\Model
             ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:')
             ->orderBy('Branch.name');
 
-        $data = $builder->getQuery()->execute(['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE]);
+        //paginate if paginate flag is true
+        if ($paginate) {
+            $builder->limit($count, $offset);
+        }
+        $filter = ['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE];
+        if(!is_null($state_id)) {
+            $builder->andWhere("Branch.state_id = :state_id:");
+            $filter['state_id'] = $state_id;
+        }
+
+        $data = $builder->getQuery()->execute($filter);
         $result = [];
         foreach ($data as $item) {
             $branch = $item->branch->getData();
@@ -523,6 +542,30 @@ class Branch extends \Phalcon\Mvc\Model
             $result[] = $branch;
         }
         return $result;
+    }
+
+    /**
+     * returns the number of hubs based on the stated_id
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param $state_id
+     * @return int
+     */
+    public static function getHubCount($state_id)
+    {
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) as count')
+            ->from('Branch')
+            ->where('Branch.branch_type = :branch_type: AND Branch.status = :status:');
+
+        $filters = ['branch_type' => BranchType::HUB, 'status' => Status::ACTIVE];
+
+        if(!is_null($state_id)) {
+            $filters['state_id'] = $state_id;
+            $builder->andWhere("Branch.state_id = :state_id:");
+        }
+        $count = $builder->getQuery()->execute($filters);
+        return intval($count[0]->count);
     }
 
     /**
@@ -550,17 +593,9 @@ class Branch extends \Phalcon\Mvc\Model
             $builder->limit($count, $offset);
         }
 
-        $where = [];
-        $bind = [];
-
-        if (isset($filter_by['state_id'])) {
-            $where[] = 'Branch.state_id = :state_id:';
-            $bind['state_id'] = $filter_by['state_id'];
-        }
-        if (isset($filter_by['branch_type'])) {
-            $where[] = 'Branch.branch_type = :branch_type:';
-            $bind['branch_type'] = $filter_by['branch_type'];
-        }
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
 
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);

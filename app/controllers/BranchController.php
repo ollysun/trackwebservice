@@ -141,16 +141,21 @@ class BranchController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
         $hub_id = $this->request->getQuery('hub_id');
-        $paginate = $this->request->getQuery('paginate', null, true);
-        $paginate = ($paginate == "0" || $paginate == "false") ? false : true;
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, false);
+        $paginate = ($paginate == 0 || $paginate == false) ? false : true;
+        $with_parent = $this->request->getQuery('with_parent');
 
+        $branch_data = Branch::fetchAllEC($hub_id, $paginate, $offset, $count, $with_parent);
 
         if ($paginate) {
-            $branch_data = Branch::fetchAllEC($hub_id);
             $total_count = Branch::getEcCount($hub_id);
-            $result = ['total_count' => $total_count, 'branch_data' => $branch_data];
-        } else {
-            $result = Branch::fetchAllEC($hub_id);
+            $result['branch_data'] = $branch_data;
+            $result['total_count'] = $total_count;
+        }
+        else {
+            $result = $branch_data;
         }
         return $this->response->sendSuccess($result);
     }
@@ -158,7 +163,23 @@ class BranchController extends ControllerBase
     public function getAllHubAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
-        return $this->response->sendSuccess(Branch::fetchAllHub());
+
+        $state_id = $this->request->getQuery('state_id', null, null);
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, false);
+
+        $hub_data = Branch::fetchAllHub($state_id, $paginate, $offset, $count);
+
+        if ($paginate) {
+            $total_count = Branch::getHubCount($state_id);
+            $result['hub_data'] = $hub_data;
+            $result['total_count'] = $total_count;
+        }
+        else {
+            $result = $hub_data;
+        }
+        return $this->response->sendSuccess($result);
     }
 
     /**
@@ -178,7 +199,6 @@ class BranchController extends ControllerBase
 
         $state_id = $this->request->getQuery('state_id');
         $branch_type = $this->request->getQuery('branch_type');
-
         $with_parent = $this->request->getQuery('with_parent');
 
         $filter_by = [];
