@@ -165,6 +165,7 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
+     * Confirm sorting
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $sort_number
      * @param Auth $auth
