@@ -161,7 +161,7 @@ class Invoice extends EagerModel
 
             $model = array_merge($model, $relatedRecords);
         } else {
-            $model = $data[0]->getData();
+            $model = $data[0]->toArray();
         }
 
         return $model;

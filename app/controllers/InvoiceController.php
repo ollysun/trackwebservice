@@ -69,7 +69,7 @@ class InvoiceController extends ControllerBase
     }
 
     /**
-     * Get Invoice API
+     * Get's the details of an Invoice
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return $this
      */
@@ -82,5 +82,20 @@ class InvoiceController extends ControllerBase
             return $this->response->sendSuccess($invoice);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    /**
+     * Get's the parcels attached to an invoice
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getInvoiceParcelsAction()
+    {
+        $filter_by = $this->request->getQuery();
+        $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
+        $invoice = Invoice::fetchOne($filter_by, $fetch_with);
+        if ($invoice) {
+            return $this->response->sendSuccess(InvoiceParcel::fetchAll(null, null, $fetch_with, $filter_by));
+        }
+        return $this->response->sendError(ResponseMessage::INVOICE_DOES_NOT_EXISTS);
     }
 }
