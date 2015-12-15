@@ -104,6 +104,10 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
         }
 
+        if(($parcel['payment_type'] != PaymentType::DEFERRED || !$parcel['cash_on_delivery']) && $parcel['is_freight_included']) {
+            return $this->response->sendError(ResponseMessage::INVALID_FREIGHT_INCLUSION);
+        }
+
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());

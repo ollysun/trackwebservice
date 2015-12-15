@@ -60,6 +60,7 @@ class ResponseMessage
     const INVALID_OFFICER = 'Invalid officer provided';
     const PARCEL_NOT_IN_OFFICER_BRANCH = 'Parcel not in officer\'s branch';
     const INVALID_BRANCH = 'Invalid Branch Provided';
+    const INVALID_FREIGHT_INCLUSION = 'Freight cost can only be added for shipment with Cash on Delivery with Deferred payment';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
