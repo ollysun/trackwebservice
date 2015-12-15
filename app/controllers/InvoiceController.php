@@ -78,7 +78,7 @@ class InvoiceController extends ControllerBase
         $filter_by = $this->request->getQuery();
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
         $invoice = Invoice::fetchOne($filter_by, $fetch_with);
-        if ($invoice != false) {
+        if ($invoice) {
             return $this->response->sendSuccess($invoice);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
@@ -91,10 +91,12 @@ class InvoiceController extends ControllerBase
     public function getInvoiceParcelsAction()
     {
         $filter_by = $this->request->getQuery();
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $fetch_with = Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery());
-        $invoice = Invoice::fetchOne($filter_by, $fetch_with);
+        $invoice = Invoice::fetchOne($filter_by, []);
         if ($invoice) {
-            return $this->response->sendSuccess(InvoiceParcel::fetchAll(null, null, $fetch_with, $filter_by));
+            return $this->response->sendSuccess(InvoiceParcel::fetchAll($offset, $count, $fetch_with, $filter_by));
         }
         return $this->response->sendError(ResponseMessage::INVOICE_DOES_NOT_EXISTS);
     }
