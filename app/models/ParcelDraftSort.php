@@ -1,6 +1,9 @@
 <?php
 use Phalcon\Di;
 use Phalcon\Exception;
+use Phalcon\Mvc\Model\Resultset;
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
+use Phalcon\Mvc\Model\Transaction\Failed as TransactionFailed;
 
 /**
  * Class ParcelDraftSort
@@ -8,6 +11,8 @@ use Phalcon\Exception;
  * @property  int to_branch
  * @property  int created_by
  * @property string sort_number
+ * @property int is_visible
+ * @method Resultset getParcelDrafts
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
 class ParcelDraftSort extends EagerModel
@@ -121,6 +126,64 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_numbers
+     * @param $to_branch
+     * @param $created_by
+     * @return bool
+     * @throws Exception
+     */
+    public static function createDraftBag($sort_numbers, $to_branch, $created_by)
+    {
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $transaction->begin();
+            $draftParcelSort = new ParcelDraftSort();
+            $draftParcelSort->waybill_number = null;
+            $draftParcelSort->to_branch = $to_branch;
+            $draftParcelSort->created_by = $created_by->getId();
+            $sort_number = 'DSB' . $created_by->getId() . $to_branch . date('u');
+            $draftParcelSort->sort_number = $sort_number;
+            if (!$draftParcelSort->save()) {
+                $err = 'Could not save draft bag';
+                $transaction->rollback($err);
+                throw new Exception($err);
+            }
+
+            foreach ($sort_numbers as $sort_number) {
+                /** @var self $draftSort */
+                $draftSort = self::findFirstBySortNumber($sort_number);
+                if (!$draftSort) {
+                    continue;
+                }
+                $draftBagParcel = new DraftBagParcel();
+                $draftBagParcel->bag_sort_number = $draftParcelSort->sort_number;
+                $draftBagParcel->parcel_sort_number = $draftSort->sort_number;
+                if (!$draftBagParcel->save()) {
+                    $err = 'Could not save draft bag parcel '. $draftSort->sort_number;
+                    $transaction->rollback($err);
+                    throw new Exception($err);
+                }
+                $draftSort->is_visible = 0;
+                if (!$draftSort->save()) {
+                    $err = 'Could not set draft parcel ' . $draftSort->sort_number . ' to invisible';
+                    $transaction->rollback($err);
+                    throw new Exception($err);
+                }
+            }
+            $transaction->commit();
+            return true;
+
+        } catch (TransactionFailed $tx) {
+            if ($transaction->isValid()) {
+                $transaction->rollback('Transaction failed');
+            }
+            return false;
+        }
+    }
+
+    /**
      *  discard draft parcel sorts
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $sort_numbers
@@ -161,7 +224,38 @@ class ParcelDraftSort extends EagerModel
             throw new Exception('Draft sorting does not exist');
         }
 
+        //if draft sort is a bag
+        if ($draftSortParcel->waybill_number == null) {
+            $draftSortParcel->getParcelDrafts()->delete();
+        }
+
         return $draftSortParcel->delete();
+    }
+
+    /**
+     * Confirm sortings
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $sort_numbers
+     * @return array
+     */
+    public static function confirmSortings($sort_numbers)
+    {
+        $auth = Di::getDefault()->getAuth();
+        $success = [];
+        $failed = [];
+        foreach ($sort_numbers as $sort_number) {
+            try {
+                if (self::confirmSorting($sort_number, $auth)) {
+                    $success[] = $sort_number;
+                } else {
+                    $failed[$sort_number] = 'An error occurred while confirming draft sort';
+                }
+            } catch (Exception $ex) {
+                $failed[$sort_number] = $ex->getMessage();
+            }
+        }
+
+        return ['successful' => $success, 'failed' => $failed];
     }
 
     /**
@@ -193,29 +287,67 @@ class ParcelDraftSort extends EagerModel
     }
 
     /**
-     * Confirm sortings
+     * Confirm bag sort
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $sort_numbers
-     * @return array
+     * @param $sort_number
+     * @param $seal_id
+     * @param null $to_branch
+     * @return bool
+     * @throws Exception
      */
-    public static function confirmSortings($sort_numbers)
+    public static function confirmBag($sort_number, $seal_id = null, $to_branch = null)
     {
+        /** @var Auth $auth */
         $auth = Di::getDefault()->getAuth();
-        $success = [];
-        $failed = [];
-        foreach ($sort_numbers as $sort_number) {
-            try {
-                if (self::confirmSorting($sort_number, $auth)) {
-                    $success[] = $sort_number;
-                } else {
-                    $failed[$sort_number] = 'An error occurred while confirming draft sort';
-                }
-            } catch (Exception $ex) {
-                $failed[$sort_number] = $ex->getMessage();
-            }
+
+        /** @var self $draftBag */
+        $draftBag = self::findFirst(['conditions' => 'sort_number=:sort_number AND waybill_number IS NULL', 'bind' => ['sort_number' => $sort_number]]);
+
+        if (!$draftBag) {
+            throw new Exception('Bag with sort number ' . $sort_number . ' does not exist');
         }
 
-        return ['successful' => $success, 'failed' => $failed];
+
+        $parcelDrafts = $draftBag->getParcelDrafts();
+        $waybill_numbers = array_values($parcelDrafts->toArray(['waybill_number']));
+        $sort_numbers = array_values($parcelDrafts->toArray('sort_number'));
+
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+        try {
+            $transaction->begin();
+            $confirmSortingResult = self::confirmSortings($sort_numbers);
+
+            if ($confirmSortingResult['failed']) {
+                $err = 'Could not confirm draft parcels';
+                $transaction->rollback($err);
+                throw new Exception($err);
+            }
+
+            $to_branch = (is_null($to_branch)) ? $draftBag->to_branch : $to_branch;
+            if (!Parcel::bagParcels($auth->getData()['branch_id'], $to_branch, $auth->getPersonId(), Status::ACTIVE, $waybill_numbers, $seal_id)) {
+                $err = 'Could not confirm draft parcels';
+                $transaction->rollback($err);
+                throw new Exception($err);
+            }
+
+            if (!$draftBag->delete()) {
+                $err = 'Could not confirm draft parcels';
+                $transaction->rollback($err);
+                throw new Exception($err);
+            }
+
+            $transaction->commit();
+            return true;
+
+        } catch (TransactionFailed $tx) {
+            $err = $tx->getMessage();
+            if ($transaction->isValid()) {
+                $transaction->rollback($err);
+            }
+            throw new Exception($err);
+        }
+
     }
 
     /**
@@ -225,6 +357,7 @@ class ParcelDraftSort extends EagerModel
     public function initialize()
     {
         $this->setSource('parcel_draft_sorts');
+        $this->hasMany('sort_number', DraftBagParcel::class, 'bag_sort_number', ['alias' => 'ParcelDrafts']);
     }
 
     /**
@@ -284,5 +417,14 @@ class ParcelDraftSort extends EagerModel
                 'reference_key' => 'id'
             ]
         ];
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function beforeValidationOnCreate()
+    {
+        parent::beforeValidationOnCreate();
+        $this->is_visible = 1;
     }
 }

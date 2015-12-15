@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Exception;
 use PhalconUtils\Validation\RequestValidation;
 use PhalconUtils\Validation\Validators\Model;
 
@@ -325,9 +326,9 @@ class ParcelController extends ControllerBase
         if (in_array(null, [$waybill_numbers, $to_branch_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-        
+
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
-        
+
         $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
 
         return $this->response->sendSuccess($result);
@@ -1415,5 +1416,62 @@ class ParcelController extends ControllerBase
         $result = ParcelDraftSort::confirmSortings($postData->sort_numbers);
 
         return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Create draft bag
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createDraftBag()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_numbers', 'to_branch'], ['cancelOnFail' => true]);
+        $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->sort_numbers)) {
+            return $this->response->sendError('sort_numbers must be an array');
+        }
+
+        try {
+            ParcelDraftSort::createDraftBag($postData->sort_numbers, $postData->to_branch, $this->auth->getPersonId());
+        } catch (Exception $ex) {
+            $this->response->sendError($ex->getMessage());
+        }
+
+        return $this->response->sendSuccess();
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function confirmDraftBag()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_number', 'seal_id'], ['cancelOnFail' => true]);
+
+        if (property_exists($postData, 'to_branch')) {
+            $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
+            $to_branch = $postData->to_branch;
+        } else {
+            $to_branch = null;
+        }
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        try {
+            ParcelDraftSort::confirmBag($postData->sort_number, $postData->seal_id, $to_branch);
+        } catch (Exception $ex) {
+            $this->response->sendError($ex->getMessage());
+        }
+
+        return $this->response->sendSuccess();
     }
 }
