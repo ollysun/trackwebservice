@@ -20,6 +20,9 @@ class Parcel extends \Phalcon\Mvc\Model
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
     const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
 
+    const QTY_METRICS_PIECES = 'pieces';
+    const QTY_METRICS_WEIGHT = 'weight';
+
     /**
      *
      * @var integer
@@ -247,6 +250,11 @@ class Parcel extends \Phalcon\Mvc\Model
      * @var integer
      */
     protected $is_freight_included;
+
+    /**
+     * @var string
+     */
+    protected $qty_metrics;
 
     /**
      * Method to set the value of field id
@@ -716,6 +724,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param $qty_metrics
+     */
+    public function setQtyMetrics($qty_metrics)
+    {
+        $this->qty_metrics = $qty_metrics;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -1115,6 +1132,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return string
+     */
+    public function getQtyMetrics()
+    {
+        return $this->qty_metrics;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -1199,7 +1225,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'billing_type' => 'billing_type',
             'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
             'weight_billing_plan_id' => 'weight_billing_plan_id',
-            'is_freight_included' => 'is_freight_included'
+            'is_freight_included' => 'is_freight_included',
+            'qty_metrics' => 'qty_metrics'
         );
     }
 
@@ -1243,7 +1270,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'request_type' => $this->getRequestType(),
             'for_return' => $this->getForReturn(),
             'billing_type' => $this->getBillingType(),
-            'is_freight_included' => $this->getIsFreightIncluded()
+            'is_freight_included' => $this->getIsFreightIncluded(),
+            'qty_metrics' => $this->getQtyMetrics()
         );
     }
 
@@ -1251,7 +1279,8 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null, $is_freight_included = 0
+                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
+                             $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT
     )
     {
         $this->setParcelType($parcel_type);
@@ -1294,6 +1323,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setWeightBillingPlanId($weight_billing_plan_id);
         $this->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
         $this->setIsFreightIncluded($is_freight_included);
+        $this->setQtyMetrics($qty_metrics);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1338,6 +1368,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setWeightBillingPlanId(null);
         $this->setOnforwardingBillingPlanId(null);
         $this->setIsFreightIncluded(0);
+        $this->setQtyMetrics(Parcel::QTY_METRICS_WEIGHT);
     }
 
     private function getEntityTypeLabel()
@@ -1623,6 +1654,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if(isset($filter_by['freight_included'])) {
             $where[] = 'Parcel.is_freight_included = :freight_included:';
             $bind['freight_included'] = $filter_by['freight_included'];
+        }
+
+        if(isset($filter_by['qty_metrics'])) {
+            $where[] = 'Parcel.qty_metrics = :qty_metrics:';
+            $bind['qty_metrics'] = $filter_by['qty_metrics'];
         }
 
         return ['where' => $where, 'bind' => $bind];
@@ -2019,8 +2055,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'],
-                    $parcel_data['billing_type'], $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included']);
+                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
+                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {

@@ -108,6 +108,10 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_FREIGHT_INCLUSION);
         }
 
+        if(!in_array($parcel['qty_metrics'], [Parcel::QTY_METRICS_PIECES, Parcel::QTY_METRICS_WEIGHT])) {
+            return $this->response->sendError(ResponseMessage::INVALID_QTY_METRICS);
+        }
+
         $parcel_obj = new Parcel();
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
