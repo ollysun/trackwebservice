@@ -1465,13 +1465,14 @@ class ParcelController extends ControllerBase
     }
 
     /**
+     * Confirm draft bags
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
     public function confirmDraftBagAction()
     {
         $postData = $this->request->getJsonRawBody();
         $validation = new RequestValidation($postData);
-        $validation->setRequiredFields(['sort_number', 'seal_id'], ['allowEmpty' => true, 'cancelOnFail' => true]);
+        $validation->setRequiredFields(['sort_number'], ['cancelOnFail' => true]);
 
         if (property_exists($postData, 'to_branch')) {
             $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
@@ -1482,6 +1483,10 @@ class ParcelController extends ControllerBase
 
         if (!$validation->validate()) {
             return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!property_exists($postData, 'seal_id')) {
+            return $this->response->sendError('seal_id is required');
         }
 
         try {
