@@ -1,5 +1,6 @@
 <?php
 
+use Phalcon\Validation\Validator\PresenceOf;
 use Phalcon\Validation\Validator\Regex;
 use PhalconUtils\Validation\BaseValidation;
 use PhalconUtils\Validation\Validators\Model;
@@ -23,7 +24,12 @@ class ShipmentRequestValidation extends BaseValidation
             'receiver_state_id', 'receiver_city_id',
             'estimated_weight', 'no_of_packages'];
 
-        $this->setRequiredFields($required_fields);
+        foreach($required_fields as $required_field){
+            $this->add($required_field, new PresenceOf([
+                'cancelOnFail' => true,
+                'message' => ucwords(str_replace('_', ' ', $required_field)). ' is required'
+            ]));
+        }
 
         $this->add('company_id', new Model([
             'model' => Company::class,
