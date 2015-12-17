@@ -27,7 +27,7 @@ class CreditNotesInstall extends AbstractMigration
      */
     public function up()
     {
-        if ($this->hasTable('invoices') && $this->hasTable('invoices_parcel')) {
+        if ($this->hasTable('invoices') && $this->hasTable('invoice_parcels')) {
             $sql = file_get_contents(dirname(__FILE__) . '/../data/credit_notes_and_invoices/credit_notes_install.sql');
             $this->execute($sql);
         }
