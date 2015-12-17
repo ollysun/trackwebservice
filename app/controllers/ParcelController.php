@@ -1364,22 +1364,27 @@ class ParcelController extends ControllerBase
             }
 
             $status = $parcel->getStatus();
-            if ($parcel->getForReturn()) {
-                if ($auth_data['branch']['branch_type'] == BranchType::EC) {
-                    $hub = Branch::getParentById($auth_data['branch']['id']);
-                    if (!$hub) {
-                        return $this->response->sendError(ResponseMessage::HUB_NOT_EXISTING);
-                    } else if ($hub->getBranchType() != BranchType::HUB) {
-                        return $this->response->sendError(ResponseMessage::INVALID_HUB_PROVIDED);
-                    }
-
-                    $parcel->setToBranchId($hub->getId());
-                    $status = Status::PARCEL_FOR_SWEEPER;
-                } elseif ($auth_data['branch']['branch_type'] == BranchType::HUB) {
-                    $status = Status::PARCEL_ARRIVAL;
+            if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                $hub = Branch::getParentById($auth_data['branch']['id']);
+                if (!$hub) {
+                    return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+                } else if ($hub->getBranchType() != BranchType::HUB) {
+                    return $this->response->sendError(ResponseMessage::INVALID_HUB_PROVIDED);
                 }
-            } else {
-                $status = Status::PARCEL_FOR_DELIVERY;
+
+                $parcel->setToBranchId($hub->getId());
+                $status = Status::PARCEL_FOR_SWEEPER;
+            } else if ($auth_data['branch']['branch_type'] == BranchType::HUB) {
+                if ($parcel->getForReturn()) {
+                    if ($parcel->getCreatedBranchId() == $auth_data['branch']['id']) {
+                        $status = Status::PARCEL_FOR_GROUNDSMAN;
+                    } else {
+                        $status = Status::PARCEL_ARRIVAL;
+                    }
+                    $parcel->setRouteId(null);
+                } else {
+                    $status = Status::PARCEL_FOR_DELIVERY;
+                }
             }
 
             $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId(), $status, ParcelHistory::MSG_RECEIVED_FROM_DISPATCHER);
