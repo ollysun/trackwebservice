@@ -2306,7 +2306,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id)
+    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id, $disable_branch_check = false)
     {
         $bag = new Parcel();
         $bag->initDataWithBasicInfo(
@@ -2344,34 +2344,26 @@ class Parcel extends \Phalcon\Mvc\Model
                         continue;
                     }
 
-                    if ($item->getFromBranchId() != $from_branch_id) {
+                    if ($item->getFromBranchId() != $from_branch_id && !$disable_branch_check) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 
-                    $transactionManager = new TransactionManager();
-                    $transaction = $transactionManager->get();
-                    try {
-                        $item->setTransaction($transaction);
-                        $item->setIsVisible(0);
-                        $item->setFromBranchId($from_branch_id);
-                        $item->setToBranchId($to_branch_id);
-                        $item->setStatus($status);
-                        $item->setModifiedDate(date('Y-m-d H:i:s'));
-                        if (!$item->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $linked_parcel = new LinkedParcel();
-                        $linked_parcel->setTransaction($transaction);
-                        $linked_parcel->initData($bag->getId(), $item->getId());
-                        if (!$linked_parcel->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $transactionManager->commit();
-                    } catch (Exception $e) {
-                        $transactionManager->rollback();
+
+                    $item->setIsVisible(0);
+                    $item->setFromBranchId($from_branch_id);
+                    $item->setToBranchId($to_branch_id);
+                    $item->setStatus($status);
+                    $item->setModifiedDate(date('Y-m-d H:i:s'));
+                    if (!$item->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
+                    }
+                    $linked_parcel = new LinkedParcel();
+                    $linked_parcel->initData($bag->getId(), $item->getId());
+                    if (!$linked_parcel->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
                     }
                 }
 

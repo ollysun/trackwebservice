@@ -7,7 +7,7 @@ use Phalcon\Mvc\Model;
  * @property string parcel_sort_number
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class DraftBagParcel extends Model
+class DraftBagParcel extends BaseModel
 {
 
     /**

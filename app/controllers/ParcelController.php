@@ -354,10 +354,19 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
+        try {
+            $this->db->begin();
+            $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
+        } catch (Exception $ex) {
+            $this->db->rollback();
+            return $this->response->sendError($ex->getMessage());
+        }
+
         if ($bag_info != false) {
+            $this->db->commit();
             return $this->response->sendSuccess($bag_info);
         }
+        $this->db->rollback();
         return $this->response->sendError();
     }
 
@@ -1337,11 +1346,17 @@ class ParcelController extends ControllerBase
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
         $paginate = $this->request->getQuery('paginate', null, 0);
+        $bag_number = $this->request->getQuery('bag_number', null, false);
+        $is_visible = $this->request->getQuery('is_visible', null, 1);
 
-        $draftSorts = ParcelDraftSort::getDraftSorts($created_by, $count, $offset, $paginate);
+        $filter_by = ['ParcelDraftSort.created_by' => $created_by, 'ParcelDraftSort.is_visible' => $is_visible];
+        if ($bag_number) {
+            $filter_by['DraftBagParcel.bag_sort_number'] = $bag_number;
+        }
+        $draftSorts = ParcelDraftSort::getDraftSorts($count, $offset, $paginate, $filter_by);
 
         if ($paginate) {
-            $total_count = ParcelDraftSort::getTotalCount(['ParcelDraftSort.created_by' => $created_by]);
+            $total_count = ParcelDraftSort::getTotalCount($filter_by);
             return $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
         } else {
             return $this->response->sendSuccess($draftSorts);
@@ -1422,7 +1437,7 @@ class ParcelController extends ControllerBase
      * Create draft bag
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function createDraftBag()
+    public function createDraftBagAction()
     {
         $postData = $this->request->getJsonRawBody();
         $validation = new RequestValidation($postData);
@@ -1438,22 +1453,25 @@ class ParcelController extends ControllerBase
         }
 
         try {
+            $this->db->begin();
             ParcelDraftSort::createDraftBag($postData->sort_numbers, $postData->to_branch, $this->auth->getPersonId());
         } catch (Exception $ex) {
+            $this->db->rollback();
             $this->response->sendError($ex->getMessage());
         }
 
+        $this->db->commit();
         return $this->response->sendSuccess();
     }
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function confirmDraftBag()
+    public function confirmDraftBagAction()
     {
         $postData = $this->request->getJsonRawBody();
         $validation = new RequestValidation($postData);
-        $validation->setRequiredFields(['sort_number', 'seal_id'], ['cancelOnFail' => true]);
+        $validation->setRequiredFields(['sort_number', 'seal_id'], ['allowEmpty' => true, 'cancelOnFail' => true]);
 
         if (property_exists($postData, 'to_branch')) {
             $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
@@ -1467,11 +1485,14 @@ class ParcelController extends ControllerBase
         }
 
         try {
+            $this->db->begin();
             ParcelDraftSort::confirmBag($postData->sort_number, $postData->seal_id, $to_branch);
         } catch (Exception $ex) {
-            $this->response->sendError($ex->getMessage());
+            $this->db->rollback();
+            return $this->response->sendError($ex->getMessage());
         }
 
+        $this->db->commit();
         return $this->response->sendSuccess();
     }
 }
