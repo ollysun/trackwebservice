@@ -19,7 +19,7 @@ class ZeroOnforwardingChargesTask extends BaseTask
         $companies = explode("\n", $companies);
 
         foreach ($companies as $company) {
-            $this->zeroiseOnforwarding($company);
+            $this->zeroiseOnforwarding(trim($company));
         }
         // Use company_id to find billing plans for company
 
