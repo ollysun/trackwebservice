@@ -14,12 +14,12 @@ class ZeroOnforwardingChargesTask extends BaseTask
     public function mainAction()
     {
         // Find company by name
-        $dataFileName = 'companies_zeroised_on_forwarding_charges_2.txt';
+        $dataFileName = 'companies_zeroised_on_forwarding_charges_3.txt';
         $companies = file_get_contents(dirname(__FILE__) . "/../../data/corporate/$dataFileName", "r");
         $companies = explode("\n", $companies);
 
         foreach ($companies as $company) {
-            $this->zeroiseOnforwarding($company);
+            $this->zeroiseOnforwarding(trim($company));
         }
         // Use company_id to find billing plans for company
 
