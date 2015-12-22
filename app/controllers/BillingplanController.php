@@ -189,8 +189,8 @@ class BillingplanController extends ControllerBase
     {
         $postData = $this->request->getJsonRawBody();
         $validation = new RequestValidation($postData);
-        $validation->setRequiredFields(['billing_id']);
-        $validation->add('billing_id', new Model([
+        $validation->setRequiredFields(['billing_plan_id']);
+        $validation->add('billing_plan_id', new Model([
             'model' => BillingPlan::class
         ]));
 
@@ -198,7 +198,7 @@ class BillingplanController extends ControllerBase
             return $this->response->sendError($validation->getMessages());
         }
 
-        $billingPlan = BillingPlan::findFirst($postData->billing_id);
+        $billingPlan = BillingPlan::findFirst($postData->billing_plan_id);
         $result = $billingPlan->resetOnforwardingChargesToZero();
 
         if ($result) {
