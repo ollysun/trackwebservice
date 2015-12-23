@@ -1,7 +1,11 @@
 <?php
 
 
-class BillingplanController extends ControllerBase {
+use PhalconUtils\Validation\RequestValidation;
+use PhalconUtils\Validation\Validators\Model;
+
+class BillingplanController extends ControllerBase
+{
     public function addAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
@@ -10,22 +14,22 @@ class BillingplanController extends ControllerBase {
         $type = $this->request->getPost('type');
         $company_id = $this->request->getPost('company_id'); //optional, null if the billing is a default plan
 
-        if (in_array(null, [$name, $type])){
+        if (in_array(null, [$name, $type])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if (!in_array($type, [BillingPlan::TYPE_WEIGHT, BillingPlan::TYPE_ON_FORWARDING, BillingPlan::TYPE_NUMBER, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING])){
+        if (!in_array($type, [BillingPlan::TYPE_WEIGHT, BillingPlan::TYPE_ON_FORWARDING, BillingPlan::TYPE_NUMBER, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING])) {
             return $this->response->sendError(ResponseMessage::INVALID_TYPE);
         }
 
         $plan = BillingPlan::fetchByName($name, $company_id);
-        if ($plan != false){
+        if ($plan != false) {
             return $this->response->sendError(ResponseMessage::ANOTHER_HAS_SAME_NAME);
         }
 
         $plan = new BillingPlan();
         $plan->initData($name, $type, $company_id);
-        if ($plan->save()){
+        if ($plan->save()) {
             //TODO Check status of cloning
             BillingPlan::cloneDefaultBilling($plan->getId());
             return $this->response->sendSuccess(['id' => $plan->getId()]);
@@ -41,19 +45,19 @@ class BillingplanController extends ControllerBase {
         $name = $this->request->getPost('name');
         $status = $this->request->getPost('status');
 
-        if (in_array(null, [$name, $status, $plan_id])){
+        if (in_array(null, [$name, $status, $plan_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $plan = BillingPlan::fetchById($plan_id);
-        if ($plan != false){
+        if ($plan != false) {
             $other_plan = BillingPlan::fetchByName($name, $plan->getCompanyId(), $plan_id);
-            if ($other_plan != false){
+            if ($other_plan != false) {
                 return $this->response->sendError(ResponseMessage::ANOTHER_HAS_SAME_NAME);
             }
 
             $plan->edit($name, $status);
-            if ($plan->save()){
+            if ($plan->save()) {
                 return $this->response->sendSuccess();
             }
             return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
@@ -66,12 +70,12 @@ class BillingplanController extends ControllerBase {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
         $plan_id = $this->request->getQuery('plan_id');
-        if (!isset($plan_id)){
+        if (!isset($plan_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $plan = BillingPlan::fetchOne($plan_id);
-        if ($plan != false){
+        if ($plan != false) {
             return $this->response->sendSuccess($plan);
         }
         return $this->response->sendError(ResponseMessage::BILLING_PLAN_DOES_NOT_EXIST);
@@ -88,7 +92,7 @@ class BillingplanController extends ControllerBase {
         foreach ($filter_params as $param) {
             $$param = $this->request->getQuery($param);
             if (!is_null($$param)) {
-                if ($param == 'company_id' and $$param == strtolower(trim('null'))){
+                if ($param == 'company_id' and $$param == strtolower(trim('null'))) {
                     $filter_by[$param] = null;
                 } else {
                     $filter_by[$param] = $$param;
@@ -137,7 +141,7 @@ class BillingplanController extends ControllerBase {
         $filter_by = $this->getFilterParams();
         $count = BillingPlan::fetchCount($filter_by);
 
-        if ($count === null){
+        if ($count === null) {
             return $this->response->sendError();
         }
         return $this->response->sendSuccess($count);
@@ -159,7 +163,7 @@ class BillingplanController extends ControllerBase {
 
         $fetch_with = array_merge(['with_onforwarding_charge'], Util::filterArrayKeysWithPattern('/\b^with_.+\b/', $this->request->getQuery()));
 
-        if(is_null($billing_plan_id)) {
+        if (is_null($billing_plan_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
@@ -175,6 +179,33 @@ class BillingplanController extends ControllerBase {
         }
 
         return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * reset onforwarding charges for billing to zero
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function resetOnforwardingChargesToZeroAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['billing_plan_id']);
+        $validation->add('billing_plan_id', new Model([
+            'model' => BillingPlan::class
+        ]));
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        $billingPlan = BillingPlan::findFirst($postData->billing_plan_id);
+        $result = $billingPlan->resetOnforwardingChargesToZero();
+
+        if ($result) {
+            return $this->response->sendSuccess();
+        }
+
+        return $this->response->sendError('Could not reset onforwarding charges');
     }
 
 } 
