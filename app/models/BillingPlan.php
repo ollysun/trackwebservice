@@ -241,12 +241,12 @@ class BillingPlan extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'company_id' => 'company_id', 
-            'type' => 'type', 
-            'name' => 'name', 
-            'created_date' => 'created_date', 
-            'modified_date' => 'modified_date', 
+            'id' => 'id',
+            'company_id' => 'company_id',
+            'type' => 'type',
+            'name' => 'name',
+            'created_date' => 'created_date',
+            'modified_date' => 'modified_date',
             'status' => 'status'
         );
     }
@@ -270,7 +270,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
      * @param $type
      * @param null $company_id - null if it is a default plan
      */
-    public function initData($name, $type, $company_id=null)
+    public function initData($name, $type, $company_id = null)
     {
         $this->setName($name);
         $this->setType($type);
@@ -315,11 +315,12 @@ class BillingPlan extends \Phalcon\Mvc\Model
         return $this->getName() == $name;
     }
 
-    public static function fetchByName($name, $company_id, $id=null){
+    public static function fetchByName($name, $company_id, $id = null)
+    {
         $name = Text::removeExtraSpaces(strtolower($name));
         $bind = ['name' => $name, 'company_id' => $company_id];
         $id_condition = ($id == null) ? '' : ' AND id != :id:';
-        if ($id != null){
+        if ($id != null) {
             $bind['id'] = $id;
         }
 
@@ -334,7 +335,8 @@ class BillingPlan extends \Phalcon\Mvc\Model
      * @param $id
      * @return BillingPlan
      */
-    public static function fetchById($id){
+    public static function fetchById($id)
+    {
         return BillingPlan::findFirst([
             'id = :id:',
             'bind' => ['id' => $id]
@@ -357,7 +359,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
 
         $data = $builder->getQuery()->getSingleResult();
 
-        if (empty($data)){
+        if (empty($data)) {
             return false;
         }
 
@@ -390,7 +392,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
             $where[] = 'BillingPlan.company_id IS NOT NULL';
         }
 
-        if( isset($filter_by['company_name'])) {
+        if (isset($filter_by['company_name'])) {
             $where[] = 'Company.name LIKE :name:';
             $bind['name'] = '%' . strtolower(trim($filter_by['company_name'])) . '%';
         }
@@ -450,7 +452,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $result = [];
         foreach ($data as $item) {
             $plan = [];
-            if (!isset($item->billingPlan)){
+            if (!isset($item->billingPlan)) {
                 $plan = $item->getData();
             } else {
                 $plan = $item->billingPlan->getData();
@@ -506,5 +508,16 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $obj = new BillingPlan();
         $obj->getWriteConnection()->execute("CALL PopulateWeight($newBillingPlanId)");
         $obj->getWriteConnection()->execute("CALL PopulateOnforwarding($newBillingPlanId)");
+    }
+
+    /**
+     * Update Onforwarding charges to zero
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function resetOnforwardingChargesToZero()
+    {
+        $connection = (new self())->getWriteConnection();
+        $status = $connection->update('onforwarding_charge', ['amount', 'percentage', 'modified_date'], [0, 0, Util::getCurrentDateTime()], "billing_plan_id = " . $this->getId());
+        return $status;
     }
 }
