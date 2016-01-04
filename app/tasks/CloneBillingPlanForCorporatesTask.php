@@ -16,7 +16,7 @@ class CloneBillingPlanForCorporatesTask extends BaseTask
      */
     public function mainAction()
     {
-        $dataFileName = 'clone_billing_plan.txt';
+        $dataFileName = 'clone_corporates_billing_plan.txt';
         $companies = file_get_contents(dirname(__FILE__) . "/../../data/corporate/$dataFileName", "r");
         $companies = explode("\n", $companies);
         $isBaseCompanySelected = false;
