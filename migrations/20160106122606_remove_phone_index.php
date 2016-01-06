@@ -16,5 +16,6 @@ class RemovePhoneIndex extends AbstractMigration
     public function down()
     {
         echo "This migration cannot be reversed";
+        return false;
     }
 }
