@@ -5,6 +5,9 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Parcel extends \Phalcon\Mvc\Model
 {
+
+    const NOT_APPLICABLE = 'N/A';
+
     const TYPE_NORMAL = 1;
     const TYPE_RETURN = 2;
     const TYPE_EXPRESS = 3;
@@ -20,7 +23,6 @@ class Parcel extends \Phalcon\Mvc\Model
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
     const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
 
-    const NOT_APPLICABLE = 'N/A';
 
     /**
      *
