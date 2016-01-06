@@ -417,7 +417,7 @@ class CompanyController extends ControllerBase
             $row->created_by = $this->auth->getPersonId();
             $rowValidator->setData($row);
             if (!$rowValidator->validate()) {
-                return $this->response->sendError($rowValidator->getMessages() . ' in shipment request ' . $count);
+                return $this->response->sendError($rowValidator->getMessages() . ' in shipment request on row '.($count + 1));
             }
         }
 
