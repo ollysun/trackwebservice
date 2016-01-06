@@ -26,7 +26,6 @@ class Parcel extends \Phalcon\Mvc\Model
     const QTY_METRICS_PIECES = 'pieces';
     const QTY_METRICS_WEIGHT = 'weight';
 
-
     /**
      *
      * @var integer
