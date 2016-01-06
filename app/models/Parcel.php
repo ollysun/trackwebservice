@@ -5,6 +5,9 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 class Parcel extends \Phalcon\Mvc\Model
 {
+
+    const NOT_APPLICABLE = 'N/A';
+
     const TYPE_NORMAL = 1;
     const TYPE_RETURN = 2;
     const TYPE_EXPRESS = 3;
@@ -19,6 +22,9 @@ class Parcel extends \Phalcon\Mvc\Model
     const SQL_DELETE_SOME_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id AND child_id IN (:child_id);';
     const SQL_DELETE_LINKAGE = 'DELETE FROM linked_parcel WHERE parent_id = :parent_id';
     const SQL_UPDATE_SUBS = 'UPDATE parcel SET from_branch_id = :from_branch_id, to_branch_id = :to_branch_id, `status` = :status, modified_date = :modified_date WHERE id IN (SELECT child_id FROM linked_parcel WHERE parent_id = :parent_id)';
+
+    const QTY_METRICS_PIECES = 'pieces';
+    const QTY_METRICS_WEIGHT = 'weight';
 
     /**
      *
@@ -1870,7 +1876,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $is_receiver_existing = false;
             if ($check) {
                 $receiver_obj = User::fetchByPhone($receiver['phone']);
-                $is_receiver_existing = $receiver_obj != false;
+                $is_receiver_existing = $receiver_obj != false && $receiver['phone'] != self::NOT_APPLICABLE;
                 if (!$is_receiver_existing) {
                     $receiver_obj = new User();
                 }
