@@ -2012,6 +2012,17 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($check) {
                 $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
+                if($parcel_data['amoount_due'] == 0){
+                    EmailMessage::send(
+                        EmailMessage::WEIGHT_NOT_IN_RANGE . 'kg',
+                        [
+                            'company_name' => $sender['firstname'] . ' ' .$sender['lastname'],
+                            'weight' => $this->weight,
+                            'waybill_number' => $this->waybill_number
+                        ],
+                        'Courier plus'
+                    );
+                }
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));

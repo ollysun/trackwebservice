@@ -11,6 +11,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
     const PARCEL_IN_TRANSIT = 'parcel_in_transit';
     const PARCEL_DELIVERED = 'parcel_delivered';
     const RESET_PASSWORD = 'reset_password';
+    const WEIGHT_NOT_IN_RANGE = 'weight_not_in_range';
 
     /**
      *
@@ -272,6 +273,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
                 'email_message_code = :email_message_code: AND status = :status:',
                 'bind' => ['email_message_code' => $email_message_code, 'status' => Status::ACTIVE]
             ]);
+
             if ($email_msg == false) {
                 return false;
             }
