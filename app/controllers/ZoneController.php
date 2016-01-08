@@ -360,8 +360,12 @@ class ZoneController extends ControllerBase
         }
 
         $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
+        $companyId = BillingPlan::findFirst(array("id = $weight_billing_plan_id" , "columns" => "company_id"))->toArray()['company_id'];
         if ($calc_weight_billing == false) {
-            return $this->response->sendSuccess('0');
+            if(!is_null($companyId)){
+                return $this->response->sendSuccess('0');
+            }
+            return $this->response->sendError(ResponseMessage::CALC_BILLLING_WEIGHT);
         }
 
         $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
@@ -372,5 +376,4 @@ class ZoneController extends ControllerBase
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
         return $this->response->sendSuccess($final_billing);
     }
-
 } 

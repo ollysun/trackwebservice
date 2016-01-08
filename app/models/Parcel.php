@@ -1589,12 +1589,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['for_return'] = $filter_by['for_return'];
         }
 
-        if(isset($filter_by['billing_type'])) {
+        if (isset($filter_by['billing_type'])) {
             $where[] = 'Parcel.billing_type = :billing_type:';
             $bind['billing_type'] = $filter_by['billing_type'];
         }
 
-        if(isset($filter_by['company_id'])) {
+        if (isset($filter_by['company_id'])) {
             $where[] = 'Company.id = :company_id:';
             $bind['company_id'] = $filter_by['company_id'];
         }
@@ -1711,7 +1711,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.waybill_number');
         }
 
-        if(isset($fetch_with['with_payment_type'])) {
+        if (isset($fetch_with['with_payment_type'])) {
             $columns[] = 'PaymentType.*';
             $builder->innerJoin('PaymentType', 'PaymentType.id = Parcel.payment_type', 'PaymentType');
         }
@@ -1785,13 +1785,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_delivery_receipt'])) {
                     $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
                 }
-                if(isset($fetch_with['with_payment_type'])) {
+                if (isset($fetch_with['with_payment_type'])) {
                     $parcel['payment_type'] = $item->paymentType->toArray();
                 }
-                if(isset($fetch_with['with_company']) ) {
+                if (isset($fetch_with['with_company'])) {
                     $parcel['company'] = $item->company->toArray();
                 }
-                if(isset($fetch_with['with_invoice_parcel']) ) {
+                if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
             }
@@ -2012,22 +2012,32 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($check) {
                 $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
-                if($parcel_data['amoount_due'] == 0){
+            } else {
+                Util::slackDebug("Parcel not created", "Unable to save parcel");
+                Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
+            }
+
+            //send mail if weight not in weight range of corporate
+            if ($this->amount_due == '0') {
+                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id" , "columns" => "company_id"))->toArray();
+                $company_id = $billingPlan['company_id'];
+                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
+                if (!is_null($company_id) && !$calc_weight_billing) {
+                    $companyName = Company::findFirst(array("id = $company_id" , "columns" => "name" ))->toArray()['name'];
                     EmailMessage::send(
-                        EmailMessage::WEIGHT_NOT_IN_RANGE . 'kg',
+                        EmailMessage::WEIGHT_NOT_IN_RANGE,
                         [
-                            'company_name' => $sender['firstname'] . ' ' .$sender['lastname'],
-                            'weight' => $this->weight,
+                            'company_name' => $companyName,
+                            'weight' => $this->weight . 'kg',
                             'waybill_number' => $this->waybill_number
                         ],
                         'Courier plus'
                     );
                 }
-            } else {
-                Util::slackDebug("Parcel not created", "Unable to save parcel");
-                Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
             }
+
             $waybill_number = [$this->getWaybillNumber()];
+
 
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
