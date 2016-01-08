@@ -36,8 +36,11 @@ abstract class BaseWorker
         }
         $this->onStart();
 
-        while ($serverJob = $this->server->watch($this->queue)->ignore('default')->reserve()) {
-
+        while (true) {
+            $serverJob = $this->server->watch($this->queue)->ignore('default')->reserve();
+            if (!$serverJob) {
+                continue;
+            }
             $this->currentJob = $serverJob;
 
             if ($serverJob->getData() == self::STOPPED_COMMAND) {
