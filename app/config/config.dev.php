@@ -20,6 +20,8 @@ return new \Phalcon\Config([
         'traitsDir' => __DIR__ . '/../../app/traits/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir' => __DIR__ . '/../../app/tasks/',
+        'workersDir'        => __DIR__ . '/../../app/workers/',
+        'jobsDir'        => __DIR__ . '/../../app/jobs/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
     ],
@@ -44,5 +46,10 @@ return new \Phalcon\Config([
             'namespace' => 'local',
             'region' => 'us-west-2'
         ]
+    ],
+
+    'beanstalkd' => [
+        'host' => '127.0.0.1',
+        'port' => '11300'
     ]
 ]);

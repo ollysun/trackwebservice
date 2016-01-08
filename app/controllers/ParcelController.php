@@ -10,14 +10,6 @@ use PhalconUtils\Validation\RequestValidation;
 class ParcelController extends ControllerBase
 {
     /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @author Rahman Shitu <rahman@cottacush.com>
-     * @author Olawale Lawal <wale@cottacush.com>
-     * @return $this
-     */
-
-
-    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * Returns Reasons for returning a parcel
      */
@@ -1077,7 +1069,7 @@ class ParcelController extends ControllerBase
         }
 
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
-        if(!empty($parcelHistory)){
+        if (!empty($parcelHistory)) {
             return $this->response->sendSuccess($parcelHistory);
         }
         return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
@@ -1397,5 +1389,23 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /**
+     * Create bulk shipment task
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createBulkShipmentTaskAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new BulkShipmentCreationValidation($postData);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        $worker = new ParcelCreationWorker();
+        $job_id = $worker->addJob(json_encode($postData));
+        return $this->response->sendSuccess($job_id);
     }
 }

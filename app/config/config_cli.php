@@ -19,6 +19,8 @@ return new \Phalcon\Config(array(
         'validationsDir' => __DIR__ . '/../../app/validations/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
+        'workersDir'        => __DIR__ . '/../../app/workers/',
+        'jobsDir'        => __DIR__ . '/../../app/jobs/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
     ),
@@ -35,6 +37,10 @@ return new \Phalcon\Config(array(
         ),
     ),
 
+    'fe_base_url' => 'http://prod-tnt.cottacush.com',
 
-    'fe_base_url' => 'http://prod-tnt.cottacush.com'
+    'beanstalkd' => [
+        'host' => '127.0.0.1',
+        'port' => '11300'
+    ]
 ));

@@ -8,6 +8,7 @@
 use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 use PhalconUtils\Mailer\MailerHandler;
+use Pheanstalk\Pheanstalk;
 
 
 /**
@@ -41,4 +42,8 @@ $di->set('mailer', function () use ($config) {
         $config->params->mailer->smtp_host,
         $config->params->mailer->smtp_port,
         $config->params->mailer->default_from);
+});
+
+$di->set('pheanStalkServer', function () use ($config) {
+    return new Pheanstalk($config->beanstalkd->host, $config->beanstalkd->port);
 });

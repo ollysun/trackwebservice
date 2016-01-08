@@ -28,6 +28,8 @@ $loader->registerDirs(
         APPLICATION_PATH . '/data',
         APPLICATION_PATH . '/models',
         APPLICATION_PATH . '/library',
+        APPLICATION_PATH . '/workers/',
+        APPLICATION_PATH . '/jobs/',
     )
 )->register();
 
@@ -50,6 +52,11 @@ foreach ($argv as $k => $arg) {
         $arguments['params'][] = $arg;
     }
 }
+
+/**
+ * import composer autoloader
+ */
+include __DIR__ . "/../vendor/autoload.php";
 
 
 // Load the configuration file (if any)
