@@ -6,6 +6,7 @@
  */
 
 use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
+use Phalcon\Logger;
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 use PhalconUtils\Mailer\MailerHandler;
 use Pheanstalk\Pheanstalk;
@@ -15,13 +16,26 @@ use Pheanstalk\Pheanstalk;
  * Database connection is created based in the parameters defined in the configuration file
  */
 $di->set('db', function () use ($config) {
-    return new DbAdapter(array(
+    $connection = new DbAdapter(array(
         'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
         'dbname' => $config->database->dbname,
-        "charset" => $config->database->charset
+        "charset" => $config->database->charset,
+        'persistent' => true
     ));
+
+    $eventsManager = new Phalcon\Events\Manager();
+    $logger = new Phalcon\Logger\Adapter\File(dirname(__FILE__) . "/../logs/sql_debug.log");
+    $eventsManager->attach('db', function ($event, $connection) use ($logger) {
+        if ($event->getType() == 'beforeQuery') {
+            /** @var DbAdapter $connection */
+            $logger->log($connection->getSQLStatement(), Logger::DEBUG);
+        }
+    });
+    $connection->setEventsManager($eventsManager);
+
+    return $connection;
 });
 
 /**
