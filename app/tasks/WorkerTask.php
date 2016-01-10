@@ -44,11 +44,11 @@ class WorkerTask extends BaseTask
     public function restartAction($args)
     {
         $workerName = $this->getWorkerName($args);
-        $this->printToConsole('Restarting ' . $workerName . '...');
         $workerInstance = $this->getWorkerInstance($workerName);
         $this->printToConsole('Stopping ' . $workerName . '...');
         $workerInstance->stop();
         $this->printToConsole($workerName . ' Stopped!');
+        $this->printToConsole('Starting ' . $workerName . '...');
         $this->printToConsole('Restarted ' . $workerName);
         $workerInstance->start();
     }
