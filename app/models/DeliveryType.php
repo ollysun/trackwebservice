@@ -3,6 +3,9 @@
 class DeliveryType extends \Phalcon\Mvc\Model
 {
 
+    const PICKUP = 1;
+    const DISPATCH = 2;
+
     /**
      *
      * @var integer
@@ -91,7 +94,7 @@ class DeliveryType extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'name' => 'name'
         );
     }

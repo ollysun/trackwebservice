@@ -3,6 +3,11 @@
 class ShippingType extends \Phalcon\Mvc\Model
 {
 
+    const EXPRESS = 1;
+    const SPECIAL_PROJECTS = 2;
+    const LOGISTICS = 3;
+    const BULK_MAIL = 4;
+
     /**
      *
      * @var integer
@@ -91,7 +96,7 @@ class ShippingType extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
+            'id' => 'id',
             'name' => 'name'
         );
     }
