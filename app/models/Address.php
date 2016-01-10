@@ -568,4 +568,30 @@ class Address extends \Phalcon\Mvc\Model
 
         return true;
     }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $data
+     * @return bool
+     */
+    public static function fetchByData($data)
+    {
+        $keys = array_flip(array_keys($data));
+        if (!isset($keys['owner_id'], $keys['street1'], $keys['street2'], $keys['city_id'], $keys['state_id'], $keys['country_id'])) {
+            return false;
+        }
+
+        return self::findFirst(['conditions' => 'owner_id=:owner_id:
+        AND street_address1=:street_address1:
+        AND street_address2=:street_address2:
+        AND city_id=:city_id: AND state_id=:state_id:
+        AND country_id=:country_id:',
+            'bind' => ['owner_id' => $data['owner_id'],
+                'street_address1' => $data['street1'],
+                'street_address2' => $data['street2'],
+                'city_id' => $data['city_id'],
+                'state_id' => $data['state_id'],
+                'country_id' => $data['country_id'],
+            ]]);
+    }
 }

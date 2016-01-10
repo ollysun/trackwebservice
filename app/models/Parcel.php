@@ -1589,12 +1589,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['for_return'] = $filter_by['for_return'];
         }
 
-        if(isset($filter_by['billing_type'])) {
+        if (isset($filter_by['billing_type'])) {
             $where[] = 'Parcel.billing_type = :billing_type:';
             $bind['billing_type'] = $filter_by['billing_type'];
         }
 
-        if(isset($filter_by['company_id'])) {
+        if (isset($filter_by['company_id'])) {
             $where[] = 'Company.id = :company_id:';
             $bind['company_id'] = $filter_by['company_id'];
         }
@@ -1711,7 +1711,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.waybill_number');
         }
 
-        if(isset($fetch_with['with_payment_type'])) {
+        if (isset($fetch_with['with_payment_type'])) {
             $columns[] = 'PaymentType.*';
             $builder->innerJoin('PaymentType', 'PaymentType.id = Parcel.payment_type', 'PaymentType');
         }
@@ -1785,13 +1785,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_delivery_receipt'])) {
                     $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
                 }
-                if(isset($fetch_with['with_payment_type'])) {
+                if (isset($fetch_with['with_payment_type'])) {
                     $parcel['payment_type'] = $item->paymentType->toArray();
                 }
-                if(isset($fetch_with['with_company']) ) {
+                if (isset($fetch_with['with_company'])) {
                     $parcel['company'] = $item->company->toArray();
                 }
-                if(isset($fetch_with['with_invoice_parcel']) ) {
+                if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
             }
@@ -1862,8 +1862,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
 
             //saving the sender's user info
-            $sender_obj = User::fetchByPhone($sender['phone']);
-            $is_sender_existing = $sender_obj != false;
+            $sender_obj = User::fetchByData($sender);
+            $is_sender_existing = ($sender_obj != false);
             if (!$is_sender_existing) {
                 $sender_obj = new User();
             }
@@ -1872,11 +1872,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = $sender_obj->save();
 
             //saving the receiver's user info
-            $receiver_obj = new User();
-            $is_receiver_existing = false;
             if ($check) {
-                $receiver_obj = User::fetchByPhone($receiver['phone']);
-                $is_receiver_existing = $receiver_obj != false && $receiver['phone'] != self::NOT_APPLICABLE;
+                $receiver_obj = User::fetchByData($receiver);
+                $is_receiver_existing = ($receiver_obj != false);
                 if (!$is_receiver_existing) {
                     $receiver_obj = new User();
                 }
@@ -1910,6 +1908,12 @@ class Parcel extends \Phalcon\Mvc\Model
                     $transactionManager->rollback();
                     return false;
                 }
+                $sender_address['owner_id'] = $sender_obj->getId();
+                if (!$is_existing && ($existing_sender_address = Address::fetchByData($sender_address))) {
+                    $is_existing = true;
+                    $is_sender_existing = true;
+                    $sender_addr_obj = $existing_sender_address;
+                }
                 $sender_addr_obj->setTransaction($transaction);
                 $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
@@ -1942,6 +1946,12 @@ class Parcel extends \Phalcon\Mvc\Model
                     Util::slackDebug("Parcel not created", "Receiver address id not for receiver");
                     $transactionManager->rollback();
                     return false;
+                }
+                $receiver_address['owner_id'] = $receiver_obj->getId();
+                if (!$is_existing && ($existing_receiver_address = Address::fetchByData($receiver_address))) {
+                    $is_existing = true;
+                    $is_receiver_existing = true;
+                    $receiver_addr_obj = $existing_receiver_address;
                 }
                 $receiver_addr_obj->setTransaction($transaction);
                 $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
@@ -2015,6 +2025,7 @@ class Parcel extends \Phalcon\Mvc\Model
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
+                return false;
             }
             $waybill_number = [$this->getWaybillNumber()];
 
