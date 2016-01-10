@@ -1404,6 +1404,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError($validation->getMessages());
         }
 
+        $postData->created_by = $this->auth->getPersonId();
         $worker = new ParcelCreationWorker();
         $job_id = $worker->addJob(json_encode($postData));
         return $this->response->sendSuccess($job_id);
