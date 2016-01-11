@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Exception;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
@@ -1616,12 +1617,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['for_return'] = $filter_by['for_return'];
         }
 
-        if(isset($filter_by['billing_type'])) {
+        if (isset($filter_by['billing_type'])) {
             $where[] = 'Parcel.billing_type = :billing_type:';
             $bind['billing_type'] = $filter_by['billing_type'];
         }
 
-        if(isset($filter_by['company_id'])) {
+        if (isset($filter_by['company_id'])) {
             $where[] = 'Company.id = :company_id:';
             $bind['company_id'] = $filter_by['company_id'];
         }
@@ -1743,7 +1744,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.waybill_number');
         }
 
-        if(isset($fetch_with['with_payment_type'])) {
+        if (isset($fetch_with['with_payment_type'])) {
             $columns[] = 'PaymentType.*';
             $builder->innerJoin('PaymentType', 'PaymentType.id = Parcel.payment_type', 'PaymentType');
         }
@@ -1817,13 +1818,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_delivery_receipt'])) {
                     $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
                 }
-                if(isset($fetch_with['with_payment_type'])) {
+                if (isset($fetch_with['with_payment_type'])) {
                     $parcel['payment_type'] = $item->paymentType->toArray();
                 }
-                if(isset($fetch_with['with_company']) ) {
+                if (isset($fetch_with['with_company'])) {
                     $parcel['company'] = $item->company->toArray();
                 }
-                if(isset($fetch_with['with_invoice_parcel']) ) {
+                if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
             }
@@ -2344,7 +2345,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id)
+    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id, $disable_branch_check = false)
     {
         $bag = new Parcel();
         $bag->initDataWithBasicInfo(
@@ -2382,34 +2383,26 @@ class Parcel extends \Phalcon\Mvc\Model
                         continue;
                     }
 
-                    if ($item->getFromBranchId() != $from_branch_id) {
+                    if ($item->getFromBranchId() != $from_branch_id && !$disable_branch_check) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 
-                    $transactionManager = new TransactionManager();
-                    $transaction = $transactionManager->get();
-                    try {
-                        $item->setTransaction($transaction);
-                        $item->setIsVisible(0);
-                        $item->setFromBranchId($from_branch_id);
-                        $item->setToBranchId($to_branch_id);
-                        $item->setStatus($status);
-                        $item->setModifiedDate(date('Y-m-d H:i:s'));
-                        if (!$item->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $linked_parcel = new LinkedParcel();
-                        $linked_parcel->setTransaction($transaction);
-                        $linked_parcel->initData($bag->getId(), $item->getId());
-                        if (!$linked_parcel->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $transactionManager->commit();
-                    } catch (Exception $e) {
-                        $transactionManager->rollback();
+
+                    $item->setIsVisible(0);
+                    $item->setFromBranchId($from_branch_id);
+                    $item->setToBranchId($to_branch_id);
+                    $item->setStatus($status);
+                    $item->setModifiedDate(date('Y-m-d H:i:s'));
+                    if (!$item->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
+                    }
+                    $linked_parcel = new LinkedParcel();
+                    $linked_parcel->initData($bag->getId(), $item->getId());
+                    if (!$linked_parcel->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
                     }
                 }
 
@@ -2615,4 +2608,134 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         return $delivery_receipt;
     }
+
+    /**
+     * Move Parcels to for sweeper
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number_arr
+     * @param $to_branch_id
+     * @return array
+     */
+    public static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id)
+    {
+        $bad_parcels = [];
+        $good_parcels = [];
+        /** @var Auth $auth */
+        $auth = Di::getDefault()->getAuth();
+        foreach ($waybill_number_arr as $waybill_number) {
+            try {
+                self::moveToSweeper($waybill_number, $auth, $to_branch_id);
+                $good_parcels[] = $waybill_number;
+            } catch (Exception $ex) {
+                $bad_parcels[$waybill_number] = $ex->getMessage();
+            }
+        }
+        return ['bad_parcels' => $bad_parcels, 'good_parcels' => $good_parcels];
+    }
+
+    /**
+     * Move a parcel to for sweeper status
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @param Auth $auth
+     * @param $to_branch_id
+     * @return bool
+     * @throws Exception
+     */
+    public static function moveToSweeper($waybill_number, $auth, $to_branch_id)
+    {
+        $parcel = self::getByWaybillNumber($waybill_number);
+
+        if ($parcel === false) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+
+        if ($parcel->getStatus() == Status::PARCEL_FOR_SWEEPER) {
+            throw new Exception(ResponseMessage::PARCEL_ALREADY_FOR_SWEEPER);
+        } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN])) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_FROM_ARRIVAL);
+        } else if ($parcel->getToBranchId() != $auth->getData()['branch']['id']) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_IN_OFFICE);
+        }
+
+        $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
+        if (!$check) {
+            throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);
+        } else {
+            return true;
+        }
+    }
+
+
+    /**
+     * Bulk assign to groundsman
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number_arr
+     * @return array
+     */
+    public static function bulkAssignToGroundsman($waybill_number_arr)
+    {
+        $auth = Di::getDefault()->getAuth();
+        $bad_parcel = [];
+        $good_parcels = [];
+
+        foreach ($waybill_number_arr as $waybill_number) {
+            try {
+                self::assignToGroundsman($waybill_number, $auth);
+                $good_parcels[] = $waybill_number;
+            } catch (Exception $ex) {
+                $bad_parcels[$waybill_number] = $ex->getMessage();
+            }
+        }
+        return ['bad_parcels' => $bad_parcel, 'good_parcels' => $good_parcels];
+    }
+
+    /**
+     * Assign a parcel to grounds man
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @param Auth $auth
+     * @return bool
+     * @throws Exception
+     */
+    public static function assignToGroundsman($waybill_number, $auth)
+    {
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if ($parcel === false) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+
+        if ($parcel->getStatus() != Status::PARCEL_ARRIVAL) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_FROM_ARRIVAL);
+
+        } else if ($parcel->getToBranchId() != $auth->getData()['branch_id']) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_IN_OFFICE);
+        }
+        $check = $parcel->changeDestination(Status::PARCEL_FOR_GROUNDSMAN, $auth->getData()['branch_id'], $auth->getPersonId(), ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
+        if (!$check) {
+            throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Get waybill array from comma seperated list of waybill numbers
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_numbers
+     * @return array
+     */
+    public static function sanitizeWaybillNumbers($waybill_numbers)
+    {
+        $waybill_number_arr = explode(',', $waybill_numbers);
+
+        $clean_arr = [];
+        foreach ($waybill_number_arr as $number) {
+            $clean_arr[trim(strtoupper($number))] = true;
+        }
+
+        return array_keys($clean_arr);
+    }
+
+
 }
