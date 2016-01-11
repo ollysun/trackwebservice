@@ -59,5 +59,5 @@ $di->set('mailer', function () use ($config) {
 });
 
 $di->set('pheanStalkServer', function () use ($config) {
-    return new Pheanstalk($config->beanstalkd->host, $config->beanstalkd->port);
+    return new Pheanstalk($config->beanstalkd->host, $config->beanstalkd->port, null, true);
 });

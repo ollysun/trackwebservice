@@ -1407,6 +1407,9 @@ class ParcelController extends ControllerBase
         $postData->created_by = $this->auth->getPersonId();
         $worker = new ParcelCreationWorker();
         $job_id = $worker->addJob(json_encode($postData));
+        if (!$job_id) {
+            return $this->response->sendError('Could not create bulk shipment creation job. Please try again');
+        }
         return $this->response->sendSuccess($job_id);
     }
 }

@@ -8,9 +8,9 @@ use Pheanstalk\Job;
 abstract class BaseJob
 {
     /** @var  $worker BaseWorker */
-    protected $worker;
-    protected $data;
-    protected $id;
+    public $worker;
+    public $data;
+    public $id;
 
     public function __construct(Job $serverJob)
     {

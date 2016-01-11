@@ -1,6 +1,7 @@
 <?php
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\PheanstalkInterface;
 
 /**
  * Class BaseWorker
@@ -70,7 +71,7 @@ abstract class BaseWorker
             }
 
             $workerJob->onComplete();
-            $this->server->delete($this->currentJob);
+            $this->server->delete($serverJob);
         }
     }
 
@@ -138,7 +139,7 @@ abstract class BaseWorker
      */
     public function addJob($jobData)
     {
-        return $this->server->useTube($this->queue)->put($jobData);
+        return $this->server->useTube($this->queue)->put($jobData, PheanstalkInterface::DEFAULT_PRIORITY, 5);
     }
 
     /**

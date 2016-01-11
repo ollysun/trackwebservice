@@ -14,13 +14,27 @@ class ParcelCreationWorker extends BaseWorker
     }
 
     /**
+     * Add job to queue
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $jobData
-     * @return mixed
+     * @return int job_id | false
      */
     public function addJob($jobData)
     {
-        return $this->server->useTube($this->queue)->put($jobData);
+        $jobId = parent::addJob($jobData);
+        if (!$jobId) {
+            return false;
+        }
+
+        $bulkShipmentJob = new Job();
+        $bulkShipmentJob->server_job_id = $jobId;
+        $bulkShipmentJob->queue = $this->queue;
+        $bulkShipmentJob->job_data = $jobData;
+        $jobData = json_decode($jobData);
+        $bulkShipmentJob->created_by = $jobData->created_by;
+        $bulkShipmentJob->status = Job::STATUS_QUEUED;
+        $bulkShipmentJob->created_at = Util::getCurrentDateTime();
+        return ($bulkShipmentJob->save()) ? $bulkShipmentJob->id : false;
     }
 
     /**

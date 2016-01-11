@@ -8,14 +8,23 @@ use Phalcon\Exception;
  */
 class BulkParcelCreationJob extends BaseJob
 {
+    /** @var Job $bulkShipmentJob */
+    private $bulkShipmentJob;
+
     /**
      * action to perform on start
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @return mixed
+     * @return bool
      */
     public function onStart()
     {
-
+        $this->bulkShipmentJob = Job::findFirstByServerJobId($this->id);
+        if (!$this->bulkShipmentJob) {
+            return false;
+        }
+        $this->bulkShipmentJob->started_at = Util::getCurrentDateTime();
+        $this->bulkShipmentJob->status = Job::STATUS_IN_PROGRESS;
+        return $this->bulkShipmentJob->save();
     }
 
     /**
@@ -30,9 +39,39 @@ class BulkParcelCreationJob extends BaseJob
 
         foreach ($shipmentData as $parcelData) {
             try {
-                $this->createParcel($parcelData, $jobData->billing_plan_id, $jobData->created_by);
+                $parcelData->billing_plan_id = $jobData->billing_plan_id;
+                $parcelData->created_by = $jobData->created_by;
+
+                if ($this->bulkShipmentJob) {
+                    $bulkShipmentJobDetail = new BulkShipmentJobDetail();
+                    $bulkShipmentJobDetail->job_id = $this->bulkShipmentJob->id;
+                    $bulkShipmentJobDetail->data = json_encode($parcelData);
+                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_IN_PROGRESS;
+                    $bulkShipmentJobDetail->started_at = Util::getCurrentDateTime();
+                    $bulkShipmentJobDetail->save();
+                }
+
+                $parcel = $this->createParcel($parcelData, $jobData->billing_plan_id, $jobData->created_by);
+                if (!$parcel) {
+                    if ($this->bulkShipmentJob) {
+                        $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
+                    }
+                } else {
+                    if ($this->bulkShipmentJob) {
+                        $bulkShipmentJobDetail->waybill_number = $parcel->getWaybillNumber();
+                        $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_SUCCESS;
+                    }
+                }
             } catch (Exception $ex) {
-                // log task failed or something
+                if ($this->bulkShipmentJob) {
+                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
+                    $bulkShipmentJobDetail->error_message = $ex->getMessage();
+                }
+            }
+
+            if ($this->bulkShipmentJob) {
+                $bulkShipmentJobDetail->completed_at = Util::getCurrentDateTime();
+                $bulkShipmentJobDetail->save();
             }
         }
 
@@ -118,29 +157,49 @@ class BulkParcelCreationJob extends BaseJob
         $receiver_address['id'] = null;
 
         print 'Processing:: ' . json_encode($parcelData) . "\n";
-        $waybill_numbers = $parcel_obj->saveForm($creatorBranch->getId(), $sender, $sender_address, $receiver, $receiver_address,
+        $status = $parcel_obj->saveForm($creatorBranch->getId(), $sender, $sender_address, $receiver, $receiver_address,
             '', $parcelData, $to_branch_id, $createdBy->getId());
-
-        var_dump($waybill_numbers);
-        if ($waybill_numbers) {
-            //return ['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers];
-        } else {
-            //return false;
-        }
+        return ($status) ? $parcel_obj : false;
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param null $error
+     * @return bool
+     */
     public function onFail($error = null)
     {
-        print 'Job Failed ';
-        if (!is_null($error)) {
-            print 'Reason: ' . $error;
-        } else {
-            print "\n";
+        if (!$this->bulkShipmentJob) {
+            return false;
         }
+        $this->bulkShipmentJob->status = Job::STATUS_FAILED;
+        $this->bulkShipmentJob->error_message = null;
+        return $this->bulkShipmentJob->save();
     }
 
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return bool
+     */
     public function onSuccess()
     {
-        print 'Parcels Successfully Created';
+        if (!$this->bulkShipmentJob) {
+            return false;
+        }
+        $this->bulkShipmentJob->status = Job::STATUS_SUCCESS;
+        return $this->bulkShipmentJob->save();
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return bool
+     */
+    public function onComplete()
+    {
+        if (!$this->bulkShipmentJob) {
+            return false;
+        }
+        $this->bulkShipmentJob->completed_at = Util::getCurrentDateTime();
+        return $this->bulkShipmentJob->save();
     }
 }
