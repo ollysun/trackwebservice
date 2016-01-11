@@ -1,5 +1,7 @@
 <?php
+use Phalcon\Exception;
 use PhalconUtils\Validation\RequestValidation;
+use PhalconUtils\Validation\Validators\Model;
 
 /**
  * Class ParcelController
@@ -9,14 +11,6 @@ use PhalconUtils\Validation\RequestValidation;
  */
 class ParcelController extends ControllerBase
 {
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @author Rahman Shitu <rahman@cottacush.com>
-     * @author Olawale Lawal <wale@cottacush.com>
-     * @return $this
-     */
-
-
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * Returns Reasons for returning a parcel
@@ -103,6 +97,10 @@ class ParcelController extends ControllerBase
                 break;
             default:
                 return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
+        }
+
+        if(($parcel['payment_type'] != PaymentType::DEFERRED || !$parcel['cash_on_delivery']) && $parcel['is_freight_included']) {
+            return $this->response->sendError(ResponseMessage::INVALID_FREIGHT_INCLUSION);
         }
 
         $parcel_obj = new Parcel();
@@ -323,18 +321,6 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess($count);
     }
 
-    private function sanitizeWaybillNumbers($waybill_numbers)
-    {
-        $waybill_number_arr = explode(',', $waybill_numbers);
-
-        $clean_arr = [];
-        foreach ($waybill_number_arr as $number) {
-            $clean_arr[trim(strtoupper($number))] = true;
-        }
-
-        return array_keys($clean_arr);
-    }
-
     public function moveToForSweeperAction()
     {
         $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
@@ -346,36 +332,11 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
-        $auth_data = $this->auth->getData();
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $bad_parcel = [];
-        foreach ($waybill_number_arr as $waybill_number) {
-            $parcel = Parcel::getByWaybillNumber($waybill_number);
-            if ($parcel === false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
-            }
+        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
 
-            if ($parcel->getStatus() == Status::PARCEL_FOR_SWEEPER) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_SWEEPER;
-                continue;
-            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
-                continue;
-            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
-                continue;
-            }
-
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $this->auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
-            if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
-                continue;
-            }
-        }
-
-        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        return $this->response->sendSuccess($result);
     }
 
     public function bagAction()
@@ -391,17 +352,26 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         if (count($waybill_number_arr) == 0) {
             return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_BAG);
         }
 
         $auth_data = $this->auth->getData();
 
-        $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
+        try {
+            $this->db->begin();
+            $bag_info = Parcel::bagParcels($auth_data['branch']['id'], $to_branch_id, $this->auth->getPersonId(), $status, $waybill_number_arr, $seal_id);
+        } catch (Exception $ex) {
+            $this->db->rollback();
+            return $this->response->sendError($ex->getMessage());
+        }
+
         if ($bag_info != false) {
+            $this->db->commit();
             return $this->response->sendSuccess($bag_info);
         }
+        $this->db->rollback();
         return $this->response->sendError();
     }
 
@@ -442,7 +412,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $parcel_waybill_number_arr = $this->sanitizeWaybillNumbers($parcel_waybill_number_arr);
+        $parcel_waybill_number_arr = Parcel::sanitizeWaybillNumbers($parcel_waybill_number_arr);
         if (empty($parcel_waybill_number_arr)) {
             return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_REMOVE_FROM_BAG);
         }
@@ -509,7 +479,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
@@ -594,7 +564,7 @@ class ParcelController extends ControllerBase
             }
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
         $user_branch_id = $auth_data['branch_id']; // logged on user's branch
 
@@ -696,7 +666,7 @@ class ParcelController extends ControllerBase
             }
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
@@ -775,7 +745,7 @@ class ParcelController extends ControllerBase
             }
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
         $user_branch_id = $auth_data['branch_id']; // logged on user's branch
 
@@ -871,7 +841,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
@@ -964,7 +934,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
@@ -1003,37 +973,15 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $admin_id = $this->auth->getPersonId();
 
-        if (!isset($waybill_numbers, $admin_id)) {
+        if (!isset($waybill_numbers)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
-        $auth_data = $this->auth->getData();
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $bad_parcel = [];
-        foreach ($waybill_number_arr as $waybill_number) {
-            $parcel = Parcel::getByWaybillNumber($waybill_number);
-            if ($parcel === false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
-            }
-
-            if ($parcel->getStatus() != Status::PARCEL_ARRIVAL) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
-                continue;
-            } else if ($parcel->getToBranchId() != $auth_data['branch_id']) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
-                continue;
-            }
-            $check = $parcel->changeDestination(Status::PARCEL_FOR_GROUNDSMAN, $auth_data['branch_id'], $admin_id, ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
-            if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
-                continue;
-            }
-        }
-        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        $result = Parcel::bulkAssignToGroundsman($waybill_number_arr);
+        return $this->response->sendSuccess($result);
     }
 
     /**
@@ -1077,7 +1025,7 @@ class ParcelController extends ControllerBase
         }
 
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
-        if(!empty($parcelHistory)){
+        if (!empty($parcelHistory)) {
             return $this->response->sendSuccess($parcelHistory);
         }
         return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
@@ -1178,7 +1126,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
@@ -1242,7 +1190,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
@@ -1318,7 +1266,6 @@ class ParcelController extends ControllerBase
     /**
      * Used to receive shipments from the dispatcher after an attempted delivery
      * @author Olawale Lawal <wale@cottacush.com>
-     *
      */
     public function receiveFromDispatcherAction()
     {
@@ -1338,7 +1285,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
         }
 
-        $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
@@ -1397,5 +1344,170 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    /***
+     * Get parcels that have been draft sorted by user
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getDraftSortsAction()
+    {
+        $created_by = $this->auth->getPersonId();
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, 0);
+        $bag_number = $this->request->getQuery('bag_number', null, false);
+        $is_visible = $this->request->getQuery('is_visible', null, 1);
+
+        $filter_by = ['ParcelDraftSort.created_by' => $created_by, 'ParcelDraftSort.is_visible' => $is_visible];
+        if ($bag_number) {
+            $filter_by['DraftBagParcel.bag_sort_number'] = $bag_number;
+        }
+        $draftSorts = ParcelDraftSort::getDraftSorts($count, $offset, $paginate, $filter_by);
+
+        if ($paginate) {
+            $total_count = ParcelDraftSort::getTotalCount($filter_by);
+            return $this->response->sendSuccess(['draft_sorts' => $draftSorts, 'total_count' => $total_count]);
+        } else {
+            return $this->response->sendSuccess($draftSorts);
+        }
+    }
+
+    /**
+     * Draft sort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function draftSortAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['waybill_numbers', 'to_branch'], ['cancelOnFail' => true]);
+        $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->waybill_numbers)) {
+            return $this->response->sendError('waybill_numbers must be an array');
+        }
+
+        $result = ParcelDraftSort::createDraftParcelSorts($postData->waybill_numbers, $postData->to_branch, $this->auth->getPersonId());
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * discard draft sort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function discardSortAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_numbers'], ['cancelOnFail' => true]);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->sort_numbers)) {
+            return $this->response->sendError('sort_numbers must be an array');
+        }
+
+        $result = ParcelDraftSort::discardSortings($postData->sort_numbers);
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * confirm draft sort parcels
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function confirmSortAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_numbers'], ['cancelOnFail' => true]);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->sort_numbers)) {
+            return $this->response->sendError('sort_numbers must be an array');
+        }
+
+        $result = ParcelDraftSort::confirmSortings($postData->sort_numbers);
+
+        return $this->response->sendSuccess($result);
+    }
+
+    /**
+     * Create draft bag
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createDraftBagAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_numbers', 'to_branch'], ['cancelOnFail' => true]);
+        $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!is_array($postData->sort_numbers)) {
+            return $this->response->sendError('sort_numbers must be an array');
+        }
+
+        try {
+            $this->db->begin();
+            ParcelDraftSort::createDraftBag($postData->sort_numbers, $postData->to_branch, $this->auth->getPersonId());
+        } catch (Exception $ex) {
+            $this->db->rollback();
+            $this->response->sendError($ex->getMessage());
+        }
+
+        $this->db->commit();
+        return $this->response->sendSuccess();
+    }
+
+    /**
+     * Confirm draft bags
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function confirmDraftBagAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new RequestValidation($postData);
+        $validation->setRequiredFields(['sort_number'], ['cancelOnFail' => true]);
+
+        if (property_exists($postData, 'to_branch')) {
+            $validation->add('to_branch', new Model(['model' => Branch::class, 'message' => 'Invalid branch supplied']));
+            $to_branch = $postData->to_branch;
+        } else {
+            $to_branch = null;
+        }
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if (!property_exists($postData, 'seal_id')) {
+            return $this->response->sendError('seal_id is required');
+        }
+
+        try {
+            $this->db->begin();
+            ParcelDraftSort::confirmBag($postData->sort_number, $postData->seal_id, $to_branch);
+        } catch (Exception $ex) {
+            $this->db->rollback();
+            return $this->response->sendError($ex->getMessage());
+        }
+
+        $this->db->commit();
+        return $this->response->sendSuccess();
     }
 }
