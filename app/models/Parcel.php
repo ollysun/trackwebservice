@@ -2024,15 +2024,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
                 if (!is_null($company_id) && !$calc_weight_billing) {
                     $companyName = Company::findFirst(array("id = $company_id" , "columns" => "name" ))->toArray()['name'];
-                    EmailMessage::send(
-                        EmailMessage::WEIGHT_NOT_IN_RANGE,
-                        [
-                            'company_name' => $companyName,
-                            'weight' => $this->weight . 'kg',
-                            'waybill_number' => $this->waybill_number
-                        ],
-                        'Courier plus'
-                    );
+                    $this->sendWeightNotInRangeMail($companyName);
                 }
             }
 
@@ -2602,5 +2594,22 @@ class Parcel extends \Phalcon\Mvc\Model
             $delivery_receipt['receipt_path'] = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt['receipt_path'];
         }
         return $delivery_receipt;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $companyName
+     */
+    public function sendWeightNotInRangeMail($companyName)
+    {
+        EmailMessage::send(
+            EmailMessage::WEIGHT_NOT_IN_RANGE,
+            [
+                'company_name' => $companyName,
+                'weight' => $this->weight . 'kg',
+                'waybill_number' => $this->waybill_number
+            ],
+            'Courier plus'
+        );
     }
 }
