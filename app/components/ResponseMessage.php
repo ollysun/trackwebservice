@@ -160,4 +160,9 @@ class ResponseMessage
     const UNABLE_TO_CREATE_INVOICE = 'Unable to create invoice';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST = 'One of the parcel(s) does not exists';
     const INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Invoice already exists for one of the parcels';
+    const CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Credit note already exists for one of the parcels';
+    const INVOICE_PARCEL_IS_REQUIRED_TO_CREATE_CREDIT_NOTE = 'At least one invoice parcel is needed to create a credit note';
+    const UNABLE_TO_CREATE_CREDIT_NOTE = 'Unable to create credit note';
+    const ONE_OF_THE_PARCEL_DOES_NOT_EXIST_OR_DOES_NOT_BELONG_TO_INVOICE = 'One of the parcel(s) does not exists or does not belong to the invoice';
+    const INVOICE_DOES_NOT_EXISTS = 'Invoice does not exists';
 }
