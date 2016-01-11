@@ -157,6 +157,45 @@ class InvoiceParcel extends EagerModel
                 'ref_model_name' => Parcel::class,
                 'foreign_key' => 'waybill_number',
                 'reference_key' => 'waybill_number'
+            ],
+            [
+                'field' => 'receiver_address',
+                'model_name' => Parcel::class,
+                'ref_model_name' => Address::class,
+                'foreign_key' => 'receiver_address_id',
+                'reference_key' => 'id',
+                'alias' => 'ReceiverAddress'
+            ],
+            [
+                'field' => 'receiver_city',
+                'model_name' => ReceiverAddress::class,
+                'ref_model_name' => City::class,
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id',
+                'alias' => 'ReceiverCity'
+            ],
+            [
+                'field' => 'sender_address',
+                'model_name' => Parcel::class,
+                'ref_model_name' => Address::class,
+                'foreign_key' => 'sender_address_id',
+                'reference_key' => 'id',
+                'alias' => 'SenderAddress'
+            ],
+            [
+                'field' => 'sender_city',
+                'model_name' => SenderAddress::class,
+                'ref_model_name' => City::class,
+                'foreign_key' => 'city_id',
+                'reference_key' => 'id',
+                'alias' => 'SenderCity'
+            ],
+            [
+                'field' => 'receiver',
+                'model_name' => Parcel::class,
+                'ref_model_name' => Receiver::class,
+                'foreign_key' => 'receiver_id',
+                'reference_key' => 'id',
             ]
         ];
     }
