@@ -27,7 +27,7 @@ class EmailMessageWeightNotInRange extends AbstractMigration
      */
     public function up()
     {
-        if ($this->hasTable('email_message')) {
+        if (!$this->hasTable('email_message')) {
             $sql = file_get_contents(dirname(__FILE__) . '/../data/email_message_weight_not_in_range.sql');
             $this->execute($sql);
         }
