@@ -1181,7 +1181,10 @@ class Parcel extends \Phalcon\Mvc\Model
             'for_return' => 'for_return',
             'billing_type' => 'billing_type',
             'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
-            'weight_billing_plan_id' => 'weight_billing_plan_id'
+            'weight_billing_plan_id' => 'weight_billing_plan_id',
+            'weight_billing_plan_id' => 'weight_billing_plan_id',
+            'is_freight_included' => 'is_freight_included',
+            'qty_metrics' => 'qty_metrics'
         );
     }
 
