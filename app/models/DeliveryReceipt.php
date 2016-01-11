@@ -6,7 +6,7 @@ use Phalcon\Mvc\Model;
  * Class DeliveryReceipt
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class DeliveryReceipt extends Phalcon\Mvc\Model
+class DeliveryReceipt extends Model
 {
     const RECEIPT_TYPE_SNAPSHOT = 'snapshot';
     const RECEIPT_TYPE_SIGNATURE = 'signature';

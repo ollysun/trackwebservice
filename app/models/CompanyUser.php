@@ -2,7 +2,7 @@
 
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
-class CompanyUser extends Phalcon\Mvc\Model
+class CompanyUser extends \Phalcon\Mvc\Model
 {
 
     /**

@@ -1,7 +1,7 @@
 <?php
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
-class Teller extends BaseModel
+class Teller extends \Phalcon\Mvc\Model
 {
 
     /**

@@ -4,7 +4,7 @@ use Phalcon\Exception;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
-class Parcel extends BaseModel implements AuditTrailLogInterface
+class Parcel extends \Phalcon\Mvc\Model
 {
 
     const NOT_APPLICABLE = 'N/A';
