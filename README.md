@@ -54,8 +54,8 @@ brew install redis
     DocumentRoot "<WebServer Directory>/tnt-service/public"
     ServerName local.courierplus.tntservice
     ServerAlias local.courierplus.tntservice.com
-    SetEnv AWS_KEY ************
-    SetEnv AWS_SECRET ***********
+    SetEnv AWS_KEY *************
+    SetEnv AWS_SECRET **********
     ErrorLog "/var/log/apache2/local.courierplus.tntservice.error"
     CustomLog "/var/log/apache2/local.courierplus.tntservice.access.log" common
     <Directory "<WebServer Directory>/tnt-service/public">
@@ -85,16 +85,11 @@ Create `tnt` database
 
 Contributors
 ------------
-- Adegoke Obasa <goke@cottacush.com>
-
-- Adeyemi Olaoye <yemi@cottacush.com>
-
-- Akintewe Rotimi <akintewe.rotimi@gmail.com>
-
-- Boyewa Akindolani <boye@cottacush.com>
-
-- Olawale Lawal <wale@cottacush.com>
-
-- Rahman Shitu <rahman@cottacush.com>
+Adegoke Obasa <goke@cottacush.com>
+Adeyemi Olaoye <yemi@cottacush.com>
+Akintewe Rotimi <akintewe.rotimi@gmail.com>
+Boyewa Akindolani <boye@cottacush.com>
+Olawale Lawal <wale@cottacush.com>
+Rahman Shitu <rahman@cottacush.com>
 
 

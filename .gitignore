@@ -4,4 +4,4 @@
 !/app/cache/empty
 .idea
 /vendor
-
+/app/logs/*

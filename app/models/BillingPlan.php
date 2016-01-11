@@ -381,7 +381,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
     {
         $bind = [];
         $where = [];
-        if (isset($filter_by['company_id']) || is_null($filter_by['company_id'])) {
+        if (isset($filter_by['company_id'])) {
             if (!is_null($filter_by['company_id'])) {
                 $where[] = 'BillingPlan.company_id = :company_id:';
                 $bind['company_id'] = $filter_by['company_id'];
@@ -519,5 +519,73 @@ class BillingPlan extends \Phalcon\Mvc\Model
         $connection = (new self())->getWriteConnection();
         $status = $connection->update('onforwarding_charge', ['amount', 'percentage', 'modified_date'], [0, 0, Util::getCurrentDateTime()], "billing_plan_id = " . $this->getId());
         return $status;
+    }
+
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $baseBillingPlanId
+     * @param $newBillingPlan
+     * @return bool
+     */
+    public function cloneBillingPlan($baseBillingPlanId, $newBillingPlan)
+    {
+        $result = true;
+        $this->clonePricingAndWeightRanges($baseBillingPlanId, $newBillingPlan->getId());
+        $onForwardingCharges = OnforwardingCharge::findByBillingPlanId($baseBillingPlanId);
+        foreach ($onForwardingCharges as $onForwardingCharge) {
+            /**
+             * @var OnforwardingCharge $onForwardingCharge
+             */
+            $newOnforwardingCharge = new OnforwardingCharge();
+            $newOnforwardingCharge->initData($onForwardingCharge->getName(), $onForwardingCharge->getCode(), $onForwardingCharge->getDescription(), $onForwardingCharge->getAmount(), $onForwardingCharge->getPercentage(), $newBillingPlan->getId());
+            $result = $newOnforwardingCharge->save();
+            if(!$result){
+                return $result;
+            }
+            $onforwardingChargeId = $newOnforwardingCharge->getId();
+            $onforwardingCities = OnforwardingCity::findByOnforwardingChargeId($onForwardingCharge->getId());
+            foreach ($onforwardingCities as $onforwardingCity) {
+                /**
+                 * @var OnforwardingCity $onforwardingCity
+                 */
+                $newOnforwardingCity = new OnforwardingCity();
+                $newOnforwardingCity->initData($onforwardingCity->getCityId(), $onforwardingChargeId);
+                $result = $newOnforwardingCity->save();
+                if(!$result){
+                    return $result;
+                }
+            }
+        }
+        return $result;
+    }
+
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $baseBillingPlanId
+     * @param $newBillingPlanId
+     */
+    public function clonePricingAndWeightRanges($baseBillingPlanId, $newBillingPlanId)
+    {
+        $weightRanges = WeightRange::findByBillingPlanId($baseBillingPlanId);
+        foreach ($weightRanges as $weightRange) {
+            $newWeightRange = new WeightRange();
+            /**
+             * @var WeightRange $weightRange
+             */
+            $newWeightRange->initData($weightRange->getMinWeight(), $weightRange->getMaxWeight(), $weightRange->getIncrementWeight(), $newBillingPlanId);
+            $newWeightRange->save();
+            $weightBilings = WeightBilling::findByWeightRangeId($weightRange->getId());
+            foreach ($weightBilings as $weightBilling) {
+                $newWeightBilling = new WeightBilling();
+                /**
+                 * @var WeightBilling $weightBilling
+                 */
+                $newWeightBilling->initData($weightBilling->getZoneId(), $newWeightRange->getId(), $weightBilling->getBaseCost(),
+                    $weightBilling->getBasePercentage(), $weightBilling->getIncrementCost(), $weightBilling->getBasePercentage());
+                $newWeightBilling->save();
+            }
+        }
     }
 }

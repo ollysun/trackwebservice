@@ -6,7 +6,7 @@ use Phalcon\Mvc\Model;
  * Class DeliveryReceipt
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
-class DeliveryReceipt extends Model
+class DeliveryReceipt extends BaseModel
 {
     const RECEIPT_TYPE_SNAPSHOT = 'snapshot';
     const RECEIPT_TYPE_SIGNATURE = 'signature';
@@ -17,6 +17,7 @@ class DeliveryReceipt extends Model
      */
     public function initialize()
     {
+        parent::initialize();
         $this->setSource('delivery_receipts');
     }
 

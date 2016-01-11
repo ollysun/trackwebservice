@@ -6,7 +6,7 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  * @author Rahman Shitu <rahman@cottacush.com>
  */
-class Branch extends \Phalcon\Mvc\Model
+class Branch extends BaseModel
 {
     const HUB_CODE_PREFIX = 'hub';
     const EC_CODE_PREFIX = 'ec';

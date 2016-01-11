@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Mvc\Model;
 
 /**
@@ -9,6 +10,17 @@ class BaseModel extends Model
 {
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     */
+    public function initialize()
+    {
+        if(!Di::getDefault()->getConfig()->isCli) {
+            $this->addBehavior(new AuditTrailBehavior());
+            $this->keepSnapshots(true);
+        }
+    }
+
+     /**
      * Set created_at before validation
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
