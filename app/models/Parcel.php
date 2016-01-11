@@ -2770,43 +2770,4 @@ class Parcel extends BaseModel implements AuditTrailLogInterface
         return array_keys($clean_arr);
     }
 
-
-
-
-    /**
-     * @author Babatunde Otaru <tunde@cottacush.com>
-     * @return array
-     */
-    public function getUpdateMessage($field)
-    {
-        $message = "No Message from the model";
-        if($field == 'for_return'){
-            $message = 'A parcel with ' . $this->waybill_number . ' was returned';
-        }
-        return $message;
-    }
-
-    /**
-     * @author Babatunde Otaru <tunde@cottacush.com>
-     * @return string
-     */
-    public function getCreateMessage()
-    {
-        $message = "A Parcel ". $this->waybill_number . " was created";
-        return $message;
-    }
-
-    /**
-     * @author Babatunde Otaru <tunde@cottacush.com>
-     * @param $changedFields
-     * @return string
-     */
-    public function getActionType($changedFields)
-    {
-        $action_type = " No Action from the model ";
-        if(in_array('for_return',$changedFields)) {
-            $action_type = AuditTrailActionTypeInterface::ACTION_TYPE_RETURN_PARCEL;
-        }
-        return $action_type;
-    }
 }
