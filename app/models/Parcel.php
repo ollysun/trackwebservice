@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Exception;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
@@ -248,6 +249,11 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $billing_type;
 
+
+    /**
+     * @var integer
+     */
+    protected $is_freight_included;
 
     /**
      * Method to set the value of field id
@@ -708,6 +714,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @param int $is_freight_included
+     */
+    public function setIsFreightIncluded($is_freight_included)
+    {
+        $this->is_freight_included = $is_freight_included;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -1098,6 +1113,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Olawale Lawal <wale@cottacush.com>
+     * @return int
+     */
+    public function getIsFreightIncluded()
+    {
+        return $this->is_freight_included;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -1181,7 +1205,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'for_return' => 'for_return',
             'billing_type' => 'billing_type',
             'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
-            'weight_billing_plan_id' => 'weight_billing_plan_id'
+            'weight_billing_plan_id' => 'weight_billing_plan_id',
+            'is_freight_included' => 'is_freight_included'
         );
     }
 
@@ -1224,7 +1249,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'route_id' => $this->getRouteId(),
             'request_type' => $this->getRequestType(),
             'for_return' => $this->getForReturn(),
-            'billing_type' => $this->getBillingType()
+            'billing_type' => $this->getBillingType(),
+            'is_freight_included' => $this->getIsFreightIncluded()
         );
     }
 
@@ -1232,7 +1258,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $weight, $amount_due, $cash_on_delivery, $delivery_amount, $delivery_type, $payment_type,
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
-                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null
+                             $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null, $is_freight_included = 0
     )
     {
         $this->setParcelType($parcel_type);
@@ -1274,6 +1300,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setBillingType($billing_type);
         $this->setWeightBillingPlanId($weight_billing_plan_id);
         $this->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
+        $this->setIsFreightIncluded($is_freight_included);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1317,6 +1344,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setBillingType(null);
         $this->setWeightBillingPlanId(null);
         $this->setOnforwardingBillingPlanId(null);
+        $this->setIsFreightIncluded(0);
     }
 
     private function getEntityTypeLabel()
@@ -1597,6 +1625,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['company_id'])) {
             $where[] = 'Company.id = :company_id:';
             $bind['company_id'] = $filter_by['company_id'];
+        }
+
+        if(isset($filter_by['freight_included'])) {
+            $where[] = 'Parcel.is_freight_included = :freight_included:';
+            $bind['freight_included'] = $filter_by['freight_included'];
         }
 
         return ['where' => $where, 'bind' => $bind];
@@ -2004,7 +2037,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'],
-                    $parcel_data['billing_type'], $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan']);
+                    $parcel_data['billing_type'], $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2297,7 +2330,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getRequestType(),
                 $this->getBillingType(),
                 $this->getWeightBillingPlanId(),
-                $this->getOnforwardingBillingPlanId()
+                $this->getOnforwardingBillingPlanId(),
+                $this->getIsFreightIncluded()
             );
 
             if (!$sub_parcel->save()) {
@@ -2322,7 +2356,7 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id)
+    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id, $disable_branch_check = false)
     {
         $bag = new Parcel();
         $bag->initDataWithBasicInfo(
@@ -2360,34 +2394,26 @@ class Parcel extends \Phalcon\Mvc\Model
                         continue;
                     }
 
-                    if ($item->getFromBranchId() != $from_branch_id) {
+                    if ($item->getFromBranchId() != $from_branch_id && !$disable_branch_check) {
                         $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
                         continue;
                     }
 
-                    $transactionManager = new TransactionManager();
-                    $transaction = $transactionManager->get();
-                    try {
-                        $item->setTransaction($transaction);
-                        $item->setIsVisible(0);
-                        $item->setFromBranchId($from_branch_id);
-                        $item->setToBranchId($to_branch_id);
-                        $item->setStatus($status);
-                        $item->setModifiedDate(date('Y-m-d H:i:s'));
-                        if (!$item->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $linked_parcel = new LinkedParcel();
-                        $linked_parcel->setTransaction($transaction);
-                        $linked_parcel->initData($bag->getId(), $item->getId());
-                        if (!$linked_parcel->save()) {
-                            $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
-                            continue;
-                        }
-                        $transactionManager->commit();
-                    } catch (Exception $e) {
-                        $transactionManager->rollback();
+
+                    $item->setIsVisible(0);
+                    $item->setFromBranchId($from_branch_id);
+                    $item->setToBranchId($to_branch_id);
+                    $item->setStatus($status);
+                    $item->setModifiedDate(date('Y-m-d H:i:s'));
+                    if (!$item->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
+                    }
+                    $linked_parcel = new LinkedParcel();
+                    $linked_parcel->initData($bag->getId(), $item->getId());
+                    if (!$linked_parcel->save()) {
+                        $bad_parcels[$item->getWaybillNumber()] = ResponseMessage::INTERNAL_ERROR;
+                        continue;
                     }
                 }
 
@@ -2593,4 +2619,134 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         return $delivery_receipt;
     }
+
+    /**
+     * Move Parcels to for sweeper
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number_arr
+     * @param $to_branch_id
+     * @return array
+     */
+    public static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id)
+    {
+        $bad_parcels = [];
+        $good_parcels = [];
+        /** @var Auth $auth */
+        $auth = Di::getDefault()->getAuth();
+        foreach ($waybill_number_arr as $waybill_number) {
+            try {
+                self::moveToSweeper($waybill_number, $auth, $to_branch_id);
+                $good_parcels[] = $waybill_number;
+            } catch (Exception $ex) {
+                $bad_parcels[$waybill_number] = $ex->getMessage();
+            }
+        }
+        return ['bad_parcels' => $bad_parcels, 'good_parcels' => $good_parcels];
+    }
+
+    /**
+     * Move a parcel to for sweeper status
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @param Auth $auth
+     * @param $to_branch_id
+     * @return bool
+     * @throws Exception
+     */
+    public static function moveToSweeper($waybill_number, $auth, $to_branch_id)
+    {
+        $parcel = self::getByWaybillNumber($waybill_number);
+
+        if ($parcel === false) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+
+        if ($parcel->getStatus() == Status::PARCEL_FOR_SWEEPER) {
+            throw new Exception(ResponseMessage::PARCEL_ALREADY_FOR_SWEEPER);
+        } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN])) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_FROM_ARRIVAL);
+        } else if ($parcel->getToBranchId() != $auth->getData()['branch']['id']) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_IN_OFFICE);
+        }
+
+        $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
+        if (!$check) {
+            throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);
+        } else {
+            return true;
+        }
+    }
+
+
+    /**
+     * Bulk assign to groundsman
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number_arr
+     * @return array
+     */
+    public static function bulkAssignToGroundsman($waybill_number_arr)
+    {
+        $auth = Di::getDefault()->getAuth();
+        $bad_parcel = [];
+        $good_parcels = [];
+
+        foreach ($waybill_number_arr as $waybill_number) {
+            try {
+                self::assignToGroundsman($waybill_number, $auth);
+                $good_parcels[] = $waybill_number;
+            } catch (Exception $ex) {
+                $bad_parcels[$waybill_number] = $ex->getMessage();
+            }
+        }
+        return ['bad_parcels' => $bad_parcel, 'good_parcels' => $good_parcels];
+    }
+
+    /**
+     * Assign a parcel to grounds man
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @param Auth $auth
+     * @return bool
+     * @throws Exception
+     */
+    public static function assignToGroundsman($waybill_number, $auth)
+    {
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if ($parcel === false) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+
+        if ($parcel->getStatus() != Status::PARCEL_ARRIVAL) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_FROM_ARRIVAL);
+
+        } else if ($parcel->getToBranchId() != $auth->getData()['branch_id']) {
+            throw new Exception(ResponseMessage::PARCEL_NOT_IN_OFFICE);
+        }
+        $check = $parcel->changeDestination(Status::PARCEL_FOR_GROUNDSMAN, $auth->getData()['branch_id'], $auth->getPersonId(), ParcelHistory::MSG_ASSIGNED_TO_GROUNDSMAN);
+        if (!$check) {
+            throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Get waybill array from comma seperated list of waybill numbers
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_numbers
+     * @return array
+     */
+    public static function sanitizeWaybillNumbers($waybill_numbers)
+    {
+        $waybill_number_arr = explode(',', $waybill_numbers);
+
+        $clean_arr = [];
+        foreach ($waybill_number_arr as $number) {
+            $clean_arr[trim(strtoupper($number))] = true;
+        }
+
+        return array_keys($clean_arr);
+    }
+
+
 }
