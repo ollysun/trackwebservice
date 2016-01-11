@@ -1251,7 +1251,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'request_type' => $this->getRequestType(),
             'for_return' => $this->getForReturn(),
             'billing_type' => $this->getBillingType(),
-            'is_freight_included' => $this->getIsFreightIncluded(),
+            'is_freight_included' => $this->getIsFreightIncluded()
         );
     }
 
