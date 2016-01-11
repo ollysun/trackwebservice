@@ -460,7 +460,6 @@ class Company extends EagerModel
         $this->belongsTo('status', 'Status', 'id', array('alias' => 'Status'));
         $this->hasMany('id', 'ShipmentRequest', 'company_id', ['alias' => 'ShipmentRequests']);
         $this->hasMany('id', 'PickupRequest', 'company_id', ['alias' => 'PickupRequests']);
-        parent::initialize();
     }
 
     /**
