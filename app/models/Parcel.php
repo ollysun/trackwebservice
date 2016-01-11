@@ -2769,5 +2769,4 @@ class Parcel extends BaseModel implements AuditTrailLogInterface
 
         return array_keys($clean_arr);
     }
-
 }
