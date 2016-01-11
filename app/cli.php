@@ -28,7 +28,6 @@ $loader->registerDirs(
         APPLICATION_PATH . '/data',
         APPLICATION_PATH . '/models',
         APPLICATION_PATH . '/library',
-        APPLICATION_PATH . '/behaviors'
     )
 )->register();
 

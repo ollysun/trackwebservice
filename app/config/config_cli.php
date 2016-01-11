@@ -19,7 +19,6 @@ return new \Phalcon\Config(array(
         'validationsDir' => __DIR__ . '/../../app/validations/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
-        'behaviorsDir' => __DIR__ . '/../../app/behaviors/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
     ),
