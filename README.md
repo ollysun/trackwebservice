@@ -33,6 +33,9 @@ sudo apt-get install redis-server
 brew install redis
 ```
 
+### Install Beanstalkd
+See how to install [here](http://kr.github.io/beanstalkd/download.html)
+
 ### Setup Virtual Host
 *Windows*
 [Link 1](http://foundationphp.com/tutorials/apache_vhosts.php)
@@ -56,6 +59,8 @@ brew install redis
     ServerAlias local.courierplus.tntservice.com
     SetEnv AWS_KEY *************
     SetEnv AWS_SECRET **********
+    SetEnv BEANSTALKD_HOST 127.0.0.1
+    SetEnv BEANSTALKD_PORT 11300
     ErrorLog "/var/log/apache2/local.courierplus.tntservice.error"
     CustomLog "/var/log/apache2/local.courierplus.tntservice.access.log" common
     <Directory "<WebServer Directory>/tnt-service/public">
