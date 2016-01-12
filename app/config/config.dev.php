@@ -51,7 +51,7 @@ return new \Phalcon\Config([
     'isCli' => false,
 
     'beanstalkd' => [
-        'host' => '127.0.0.1',
-        'port' => '11300'
+        'host' => getenv('BEANSTALKD_HOST'),
+        'port' => getenv('BEANSTALKD_PORT')
     ]
 ]);

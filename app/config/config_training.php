@@ -41,5 +41,10 @@ return new \Phalcon\Config(array(
 
     'fe_base_url' => 'http://training-courierplusng.cottacush.com',
 
-    'isCli' => false
+    'isCli' => false,
+
+    'beanstalkd' => [
+        'host' => getenv('BEANSTALKD_HOST'),
+        'port' => getenv('BEANSTALKD_PORT')
+    ]
 ));
