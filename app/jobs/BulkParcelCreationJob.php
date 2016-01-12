@@ -37,42 +37,35 @@ class BulkParcelCreationJob extends BaseJob
         $jobData = json_decode($this->data);
         $shipmentData = $jobData->data;
 
+        if (!$this->bulkShipmentJob) {
+            return false;
+        }
+
         foreach ($shipmentData as $parcelData) {
+            $bulkShipmentJobDetail = new BulkShipmentJobDetail();
+            $bulkShipmentJobDetail->job_id = $this->bulkShipmentJob->id;
+            $bulkShipmentJobDetail->data = json_encode($parcelData);
+            $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_IN_PROGRESS;
+            $bulkShipmentJobDetail->started_at = Util::getCurrentDateTime();
+            $bulkShipmentJobDetail->save();
             try {
                 $parcelData->billing_plan_id = $jobData->billing_plan_id;
                 $parcelData->created_by = $jobData->created_by;
-
-                if ($this->bulkShipmentJob) {
-                    $bulkShipmentJobDetail = new BulkShipmentJobDetail();
-                    $bulkShipmentJobDetail->job_id = $this->bulkShipmentJob->id;
-                    $bulkShipmentJobDetail->data = json_encode($parcelData);
-                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_IN_PROGRESS;
-                    $bulkShipmentJobDetail->started_at = Util::getCurrentDateTime();
-                    $bulkShipmentJobDetail->save();
-                }
-
                 $parcel = $this->createParcel($parcelData, $jobData->billing_plan_id, $jobData->created_by);
                 if (!$parcel) {
-                    if ($this->bulkShipmentJob) {
-                        $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
-                    }
+                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
                 } else {
-                    if ($this->bulkShipmentJob) {
-                        $bulkShipmentJobDetail->waybill_number = $parcel->getWaybillNumber();
-                        $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_SUCCESS;
-                    }
+                    $bulkShipmentJobDetail->waybill_number = $parcel->getWaybillNumber();
+                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_SUCCESS;
                 }
             } catch (Exception $ex) {
-                if ($this->bulkShipmentJob) {
-                    $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
-                    $bulkShipmentJobDetail->error_message = $ex->getMessage();
-                }
+                $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_FAILED;
+                $bulkShipmentJobDetail->error_message = $ex->getMessage();
             }
 
-            if ($this->bulkShipmentJob) {
-                $bulkShipmentJobDetail->completed_at = Util::getCurrentDateTime();
-                $bulkShipmentJobDetail->save();
-            }
+            $bulkShipmentJobDetail->completed_at = Util::getCurrentDateTime();
+            $bulkShipmentJobDetail->save();
+
         }
 
         return true;
@@ -139,6 +132,8 @@ class BulkParcelCreationJob extends BaseJob
         $parcelData['billing_type'] = 'auto';
         $parcelData['weight_billing_plan'] = $billingPlanId;
         $parcelData['onforwarding_billing_plan'] = $billingPlanId;
+        $parcelData['is_freight_included'] = 1;
+        $parcelData['qty_metrics'] = 'weight';
 
         $sender_address = [];
         $sender_address['street1'] = $parcelData['sender_address'];
@@ -173,7 +168,7 @@ class BulkParcelCreationJob extends BaseJob
             return false;
         }
         $this->bulkShipmentJob->status = Job::STATUS_FAILED;
-        $this->bulkShipmentJob->error_message = null;
+        $this->bulkShipmentJob->error_message = $error;
         return $this->bulkShipmentJob->save();
     }
 
