@@ -47,12 +47,13 @@ class RouteController extends ControllerBase
         $send_all = $this->request->getQuery('send_all');
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $filter = $this->request->getQuery('search');
 
-        $routes = Route::getAll($branchId, $offset, $count, $send_all);
+        $routes = Route::getAll($branchId, $offset, $count, $send_all,$filter);
 
         $result = [];
         if ($with_total_count != null) {
-            $count = Route::routeCount($branchId);
+            $count = Route::routeCount($branchId,$filter);
             $result = [
                 'total_count' => $count,
                 'routes' => $routes

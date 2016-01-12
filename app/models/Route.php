@@ -81,7 +81,7 @@ class Route extends \Phalcon\Mvc\Model
      * @author Olawale Lawal <wale@cottacush.com>
      * @return array
      */
-    public static function getAll($branchId, $offset, $count, $send_all)
+    public static function getAll($branchId, $offset, $count, $send_all,$filter)
     {
         $obj = new Route();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -96,6 +96,10 @@ class Route extends \Phalcon\Mvc\Model
         if (!is_null($branchId)) {
             $builder->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
         }
+
+        if(!is_null($filter)){
+            $builder->andWhere('Route.name like :filter:' , ['filter' => "%$filter%"]);
+        }
         $query = $builder->getQuery()->execute();
 
         return $query->toArray();
@@ -107,7 +111,7 @@ class Route extends \Phalcon\Mvc\Model
      * @return int
      * @param $branchId
      */
-    public static function routeCount($branchId)
+    public static function routeCount($branchId,$filter)
     {
         $builder = Route::query()
             ->columns('COUNT(*) AS count');
@@ -116,6 +120,11 @@ class Route extends \Phalcon\Mvc\Model
         if (!is_null($branchId)) {
             $builder->where('branch_id = :branch_id:', ['branch_id' => $branchId]);
         }
+
+        if(!is_null($filter)){
+            $builder->andWhere('name like :name:',['name' => "%$filter%"]);
+        }
+
         $data = $builder->execute();
 
         if (count($data) == 0) {
