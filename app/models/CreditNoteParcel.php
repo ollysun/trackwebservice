@@ -102,9 +102,10 @@ class CreditNoteParcel extends EagerModel
         $builder = $creditNoteParcel->getModelsManager()->createBuilder();
         $builder->from('CreditNoteParcel');
         $builder->columns('CreditNoteParcel.*,InvoiceParcel.*');
-        $builder->where("CreditNoteParcel.credit_note_number = '$creditNoteNo'");
+        $builder->where("CreditNoteParcel.credit_note_number = :credit_note_no:");
         $builder->innerJoin('InvoiceParcel', 'InvoiceParcel.id = CreditNoteParcel.invoice_parcel_id');
-        $creditNoteDetails = $builder->getQuery()->execute()->toArray();
+        $bind['credit_note_no'] = $creditNoteNo;
+        $creditNoteDetails = $builder->getQuery()->execute($bind)->toArray();
         if ($creditNoteDetails) {
             return $creditNoteDetails;
         } else {
