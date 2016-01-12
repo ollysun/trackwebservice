@@ -3,10 +3,10 @@
 return new \Phalcon\Config([
     'database' => [
         'adapter' => 'Mysql',
-        'host' => 'stagingdb.cottacush.com',
+        'host' => '127.0.0.1',
         'username' => 'root',
-        'password' => '0N13ArA',
-        'dbname' => 'staging_tnt',
+        'password' => '',
+        'dbname' => 'tnt',
         'charset' => 'utf8',
     ],
     'application' => [
