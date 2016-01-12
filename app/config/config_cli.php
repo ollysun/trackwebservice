@@ -37,7 +37,10 @@ return new \Phalcon\Config(array(
         ),
     ),
 
+
     'fe_base_url' => 'http://prod-tnt.cottacush.com',
+
+    'isCli' => true,
 
     'beanstalkd' => [
         'host' => '127.0.0.1',

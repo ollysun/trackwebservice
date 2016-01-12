@@ -39,5 +39,7 @@ return new \Phalcon\Config(array(
     ),
 
 
-    'fe_base_url' => 'http://training-courierplusng.cottacush.com'
+    'fe_base_url' => 'http://training-courierplusng.cottacush.com',
+
+    'isCli' => false
 ));

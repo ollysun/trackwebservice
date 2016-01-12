@@ -2780,6 +2780,4 @@ class Parcel extends \Phalcon\Mvc\Model
 
         return array_keys($clean_arr);
     }
-
-
 }

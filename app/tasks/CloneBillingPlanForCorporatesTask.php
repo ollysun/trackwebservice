@@ -79,7 +79,7 @@ class CloneBillingPlanForCorporatesTask extends BaseTask
              * @var Company $company
              */
             $companyId = $company->getId();
-            $this->clearCurrentBillingPlanForCorporate($companyId,$companyName);
+            $this->clearCurrentBillingPlanForCorporate($companyId, $companyName);
             $this->cloneBillingPlan($baseBillingPlanId, $companyName, $companyId);
         }
     }

@@ -45,8 +45,10 @@ return new \Phalcon\Config([
             'bucket' => 'tnt-delivery-receipts',
             'namespace' => 'local',
             'region' => 'us-west-2'
-        ]
+        ],
     ],
+
+    'isCli' => false,
 
     'beanstalkd' => [
         'host' => '127.0.0.1',
