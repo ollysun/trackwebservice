@@ -77,7 +77,10 @@ class CreditnoteController extends ControllerBase
         return $this->response->sendSuccess($data);
     }
 
-
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return $this
+     */
     public function getParcelsAction()
     {
         $creditNoteNo = $this->request->getQuery('credit_note_no');
