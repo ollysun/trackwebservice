@@ -107,7 +107,9 @@ class BulkParcelCreationJob extends BaseJob
         $sender['lastname'] = null;
         $sender['email'] = $parcelData['sender_email'];
 
-        $calc_weight_billing = WeightBilling::calcBilling($creatorBranch->getId(), $to_branch_id, $parcelData['weight'], $billingPlanId);
+        $billingFromBranch = City::findFirst($parcelData['sender_city']);
+        $billingToBranch = City::findFirst($parcelData['receiver_city']);
+        $calc_weight_billing = WeightBilling::calcBilling($billingFromBranch->getBranchId(), $billingToBranch->getBranchId(), $parcelData['weight'], $billingPlanId);
         if ($calc_weight_billing == false) {
             throw new Exception(ResponseMessage::CALC_BILLLING_WEIGHT);
         }
