@@ -47,5 +47,7 @@ return new \Phalcon\Config(array(
             'namespace' => 'staging',
             'region' => 'us-west-2'
         ]
-    ]
+    ],
+
+    'isCli' => false
 ));

@@ -23,12 +23,12 @@ class RouteController extends ControllerBase
 
         // Validate Branch
         $branch = Branch::findFirst($branchId);
-        if(!$branch) {
+        if (!$branch) {
             return $this->response->sendError(ResponseMessage::INVALID_BRANCH);
         }
 
         $route = Route::createRoute($name, $branchId);
-        if(!$route) {
+        if (!$route) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_ROUTE);
         }
         return $this->response->sendSuccess($route);
@@ -47,12 +47,13 @@ class RouteController extends ControllerBase
         $send_all = $this->request->getQuery('send_all');
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $filter = $this->request->getQuery('search');
 
-        $routes = Route::getAll($branchId, $offset, $count, $send_all);
+        $routes = Route::getAll($branchId, $offset, $count, $send_all, $filter);
 
         $result = [];
         if ($with_total_count != null) {
-            $count = Route::routeCount($branchId);
+            $count = Route::routeCount($branchId, $filter);
             $result = [
                 'total_count' => $count,
                 'routes' => $routes
@@ -82,17 +83,17 @@ class RouteController extends ControllerBase
 
         // Validate Branch
         $branch = Branch::findFirst($branch_id);
-        if(!$branch) {
+        if (!$branch) {
             return $this->response->sendError(ResponseMessage::INVALID_BRANCH);
         }
 
         $route = Route::findFirst($route_id);
-        if($route == false) {
+        if ($route == false) {
             return $this->response->sendError(ResponseMessage::INVALID_ROUTE);
         }
 
         $route->editDetails($name, $branch_id);
-        if($route->save()) {
+        if ($route->save()) {
             return $this->response->sendSuccess();
         }
         return $this->response->sendError(ResponseMessage::UNABLE_TO_EDIT_ROUTE);

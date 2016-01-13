@@ -60,6 +60,8 @@ class ResponseMessage
     const INVALID_OFFICER = 'Invalid officer provided';
     const PARCEL_NOT_IN_OFFICER_BRANCH = 'Parcel not in officer\'s branch';
     const INVALID_BRANCH = 'Invalid Branch Provided';
+    const INVALID_FREIGHT_INCLUSION = 'Freight cost can only be added for shipment with Cash on Delivery with Deferred payment';
+    const INVALID_QTY_METRICS = 'Invalid quantity metric specified';
 
     const ZONE_NAME_EXISTS = 'A zone with this name already exists';
     const ZONE_CODE_EXISTS = 'A zone with this code already exists';
@@ -149,6 +151,7 @@ class ResponseMessage
     const ANOTHER_HAS_SAME_NAME = 'Another has same name';
     const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
     const BILLING_PLAN_NOT_SAVED = 'Could not save billing plan';
+    const BILLING_PLAN_NOT_CLONED = 'Could not clone billing Plan';
 
     const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
     const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';
@@ -159,4 +162,9 @@ class ResponseMessage
     const UNABLE_TO_CREATE_INVOICE = 'Unable to create invoice';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST = 'One of the parcel(s) does not exists';
     const INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Invoice already exists for one of the parcels';
+    const CREDIT_NOTE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Credit note already exists for one of the parcels';
+    const INVOICE_PARCEL_IS_REQUIRED_TO_CREATE_CREDIT_NOTE = 'At least one invoice parcel is needed to create a credit note';
+    const UNABLE_TO_CREATE_CREDIT_NOTE = 'Unable to create credit note';
+    const ONE_OF_THE_PARCEL_DOES_NOT_EXIST_OR_DOES_NOT_BELONG_TO_INVOICE = 'One of the parcel(s) does not exists or does not belong to the invoice';
+    const INVOICE_DOES_NOT_EXISTS = 'Invoice does not exists';
 }
