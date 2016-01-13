@@ -151,6 +151,7 @@ class ResponseMessage
     const ANOTHER_HAS_SAME_NAME = 'Another has same name';
     const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
     const BILLING_PLAN_NOT_SAVED = 'Could not save billing plan';
+    const BILLING_PLAN_NOT_CLONED = 'Could not clone billing Plan';
 
     const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
     const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';

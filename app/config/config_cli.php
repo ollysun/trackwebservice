@@ -36,5 +36,7 @@ return new \Phalcon\Config(array(
     ),
 
 
-    'fe_base_url' => 'http://prod-tnt.cottacush.com'
+    'fe_base_url' => 'http://prod-tnt.cottacush.com',
+
+    'isCli' => true
 ));

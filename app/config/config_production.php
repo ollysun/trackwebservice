@@ -47,5 +47,8 @@ return new \Phalcon\Config(array(
             'namespace' => 'production',
             'region' => 'us-west-2'
         ]
-    ]
+    ],
+
+
+    'isCli' => false
 ));

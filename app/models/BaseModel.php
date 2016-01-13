@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 use Phalcon\Mvc\Model;
 
 /**
@@ -8,7 +9,7 @@ use Phalcon\Mvc\Model;
 class BaseModel extends Model
 {
 
-    /**
+     /**
      * Set created_at before validation
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */

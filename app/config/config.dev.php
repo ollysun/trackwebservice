@@ -43,6 +43,8 @@ return new \Phalcon\Config([
             'bucket' => 'tnt-delivery-receipts',
             'namespace' => 'local',
             'region' => 'us-west-2'
-        ]
-    ]
+        ],
+    ],
+
+    'isCli' => false
 ]);
