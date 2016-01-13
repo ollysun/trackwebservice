@@ -94,8 +94,6 @@ class BulkParcelCreationJob extends BaseJob
             throw new Exception(ResponseMessage::INVALID_PACKAGE_COUNT);
         }
 
-        $parcelData['payment_type'] = PaymentType::DEFERRED;
-
         $parcel_obj = new Parcel();
         $receiver = [];
         $receiver['phone'] = empty($parcelData['receiver_phone_number']) ? Parcel::NOT_APPLICABLE : $parcelData['receiver_phone_number'];
@@ -128,8 +126,8 @@ class BulkParcelCreationJob extends BaseJob
         $parcelData['is_billing_overridden'] = 0;
         $parcelData['pos_amount'] = 0;
         $parcelData['pos_trans_id'] = '';
-        $parcelData['request_type'] = RequestType::ECOMMERCE;
-        $parcelData['billing_type'] = 'auto';
+        $parcelData['request_type'] = RequestType::OTHERS;
+        $parcelData['billing_type'] = 'corporate';
         $parcelData['weight_billing_plan'] = $billingPlanId;
         $parcelData['onforwarding_billing_plan'] = $billingPlanId;
         $parcelData['is_freight_included'] = 1;
