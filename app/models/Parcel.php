@@ -1655,12 +1655,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['company_id'] = $filter_by['company_id'];
         }
 
-        if(isset($filter_by['freight_included'])) {
+        if (isset($filter_by['freight_included'])) {
             $where[] = 'Parcel.is_freight_included = :freight_included:';
             $bind['freight_included'] = $filter_by['freight_included'];
         }
 
-        if(isset($filter_by['qty_metrics'])) {
+        if (isset($filter_by['qty_metrics'])) {
             $where[] = 'Parcel.qty_metrics = :qty_metrics:';
             $bind['qty_metrics'] = $filter_by['qty_metrics'];
         }
@@ -2768,5 +2768,15 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         return array_keys($clean_arr);
+    }
+
+    /**
+     * Handle saving and updating errors
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function notSaved()
+    {
+        $e = new Exception;
+        Util::slackDebug('Parcel Exception Log', 'Could not update or save parcel. Parcel Data: ' . json_encode($this->toArray()) . 'Stack trace: ' . $e->getTraceAsString());
     }
 }
