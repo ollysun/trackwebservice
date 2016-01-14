@@ -94,4 +94,18 @@ class Util
     {
         return preg_match('/^-?(?=.*[0-9])\d+(\.\d+)?$/', $float);
     }
+
+    /**
+     * @param $message
+     * @param $params
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return mixed
+     */
+    public static function replaceTemplate($message, $params)
+    {
+        foreach ($params as $param => $value) {
+            $message = str_replace('{' . $param . '}', $value, $message);
+        }
+        return $message;
+    }
 }
