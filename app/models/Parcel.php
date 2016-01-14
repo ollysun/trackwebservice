@@ -2633,13 +2633,14 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     public function getProofOfDelivery()
     {
-        $delivery_receipt = $this->getDeliveryReceipts("receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_SIGNATURE .
-            "' OR receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL . "'");
-        $delivery_receipt = ($delivery_receipt->getFirst()) ? $delivery_receipt->getFirst()->toArray() : false;
-        if ($delivery_receipt && $delivery_receipt['receipt_type'] == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
-            $delivery_receipt['receipt_path'] = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt['receipt_path'];
+        /** @var DeliveryReceipt $delivery_receipt */
+        $delivery_receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number=:waybill_number: AND (receipt_type = :signature: OR receipt_type=:receiver_detail:)',
+            'bind' => ['waybill_number' => $this->getWaybillNumber(), 'signature' => DeliveryReceipt::RECEIPT_TYPE_SIGNATURE, 'receiver_detail' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL]]);
+
+        if ($delivery_receipt && $delivery_receipt->receipt_type == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
+            $delivery_receipt->receipt_path = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt->receipt_path;
         }
-        return $delivery_receipt;
+        return ($delivery_receipt) ? $delivery_receipt->toArray() : false;
     }
 
     /**
