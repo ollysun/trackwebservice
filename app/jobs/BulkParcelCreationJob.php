@@ -34,7 +34,7 @@ class BulkParcelCreationJob extends BaseJob
      */
     public function execute()
     {
-        $jobData = json_decode($this->data);
+        $jobData = $this->data;
         $shipmentData = $jobData->data;
 
         if (!$this->bulkShipmentJob) {

@@ -14,7 +14,7 @@ abstract class BaseJob
 
     public function __construct(Job $serverJob)
     {
-        $this->data = $serverJob->getData();
+        $this->data = json_decode($serverJob->getData());
         $this->id = $serverJob->getId();
     }
 

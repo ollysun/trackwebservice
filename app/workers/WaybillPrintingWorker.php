@@ -1,9 +1,8 @@
 <?php
 
 /**
- * Author: Adeyemi Olaoye <yemi@cottacush.com>
- * Date: 14/01/2016
- * Time: 12:28 PM
+ * Class WaybillPrintingWorker
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
 class WaybillPrintingWorker extends BaseWorker
 {
@@ -20,6 +19,6 @@ class WaybillPrintingWorker extends BaseWorker
      */
     public function initializeJob()
     {
-
+        return new BulkWaybillPrintingJob($this->getCurrentJob());
     }
 }
