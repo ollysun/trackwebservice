@@ -13,12 +13,11 @@ class CorporateUploadTask extends BaseTask
      */
     public function mainAction()
     {
-        $dataFileName = 'corporate_bulk_upload.csv';
+        $dataFileName = 'upload_corporates_and_clone_billing_plan.csv';
         $handle = fopen(dirname(__FILE__) . "/../../data/corporate/$dataFileName", "r");
 
         if (!$handle) {
             $this->printToConsole("Unable to read data file");
-            exit;
         }
 
         $count = 0;
@@ -29,7 +28,6 @@ class CorporateUploadTask extends BaseTask
             $count++;
         }
         fclose($handle);
-
     }
 
 
@@ -41,11 +39,12 @@ class CorporateUploadTask extends BaseTask
     private function uploadCorporate($line)
     {
         $data = $this->cleanData(str_getcsv($line));
-        if (count($data) < 10 && $data) {
+        if (count($data) < 9 && $data) {
             $this->printToConsole('ERROR: Invalid data: ');
             $this->printStringArray($data);
             return false;
         }
+
         $company_name = isset($data[0]) ? $data[0] : '';
         $account_number = isset($data[1]) ? $data[1] : '';
         $phone_number = isset($data[2]) ? $data[2] : '';
@@ -53,8 +52,9 @@ class CorporateUploadTask extends BaseTask
         $company_city = isset($data[4]) ? strtolower($data[4]) : '';
         $primary_contact_first_name = isset($data[6]) ? $data[6] : '';
         $primary_contact_last_name = isset($data[7]) ? $data[7] : '';
-        $primary_contact_phone_number = isset($data[8]) ? $data[8] : '';
-        $email_address = isset($data[9]) ? $data[9] : '';
+        $primary_contact_phone_number = isset($data[8]) && !empty($data[8]) ? $data[8] : '08000000000';
+        $email_address = (isset($data[9]) && !empty($data[9])) ? $data[9] : 'noemailaddress@thiscorporate.com';
+        $clone_billing_plan_name = isset($data[10]) ? strtolower($data[10]) : '';
 
         if (strlen($company_name) == 0) {
             return false;
@@ -97,6 +97,7 @@ class CorporateUploadTask extends BaseTask
                 $this->printStringArray($data);
                 return false;
             }
+            $this->printToConsole('created');
         }
 
         $company->setPrimaryContactId(new \Phalcon\Db\RawValue(null));
@@ -149,11 +150,24 @@ class CorporateUploadTask extends BaseTask
             return false;
         }
 
-
         $plan = new BillingPlan();
         $plan->initData($company->getName(), BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING, $company->getId());
         if ($plan->save()) {
-            BillingPlan::cloneDefaultBilling($plan->getId());
+            if ($clone_billing_plan_name != 'standard tariff') {
+                {
+                    $baseBillingPlan = BillingPlan::findFirstByName('jdhjd');
+                    if ($baseBillingPlan) {
+                        $baseBillingPlanId = $baseBillingPlan->toArray()['id'];
+                        $this->printToConsole($baseBillingPlanId);
+                        $plan->cloneBillingPlan($baseBillingPlanId, $plan);
+                    } else {
+                        $this->printToConsole('plan does not exists, creating the default billing plan...');
+                        BillingPlan::cloneDefaultBilling($plan->getId());
+                    }
+                }
+            } else {
+                BillingPlan::cloneDefaultBilling($plan->getId());
+            }
         } else {
             $this->printToConsole('FAILED: Could not save billing plan for company. REASON:' . $this->printStringArray($plan->getMessages(), true) . ' Data: ');
             $this->printStringArray($data);
@@ -161,7 +175,7 @@ class CorporateUploadTask extends BaseTask
         }
 
         $this->db->commit();
-        $this->printToConsole('SUCCESS: Uploaded '.$company_name);
+        $this->printToConsole('SUCCESS: Uploaded ' . $company_name);
         return true;
     }
 
