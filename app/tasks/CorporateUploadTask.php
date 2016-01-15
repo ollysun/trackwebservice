@@ -26,7 +26,7 @@ class CorporateUploadTask extends BaseTask
             $headerLength = count($data);
             $count = 0;
             while (($line = fgets($handle)) !== false) {
-                if ($count > 2) {
+                if ($count > 0) {
                     $this->uploadCorporate($line, $headerLength);
                 }
                 $count++;
