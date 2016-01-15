@@ -4,6 +4,8 @@ use Phalcon\Mvc\Model;
 
 /**
  * Class DeliveryReceipt
+ * @property string receipt_type
+ * @property string receipt_path
  * @author Adeyemi Olaoye <yemi@cottacush.com>
  */
 class DeliveryReceipt extends Model
