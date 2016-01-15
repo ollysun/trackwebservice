@@ -16,7 +16,7 @@
             </div>
             <div class="user__tel">{{sender_telephone}}</div>
             <div class="user__address">
-                {{sender_address}}
+                {{sender_address}}{{sender_city}}, {{sender_state}}
             </div>
             <div class="user__country">
                 {{sender_country}}
@@ -27,56 +27,56 @@
         <div class="user__inner">
             <div class="user__name">
                 {{receiver_name}}
-                <div class="user__tel">{{receiver_telephone}}</div>
-                <div class="user__address">{{receiver_address}}</div>
-                <div class="user__country">{{receiver_country}}</div>
             </div>
+            <div class="user__tel">{{receiver_telephone}}</div>
+            <div class="user__address">{{receiver_address}}{{receiver_city}}, {{receiver_state}}</div>
+            <div class="user__country">{{receiver_country}}</div>
         </div>
     </div>
 
-    <div class="shipped-date">
-        <div class="shipped-date__dd">{{shipping_day}}</div>
-        <div class="shipped-date__mm">{{shipping_month}}</div>
-        <div class="shipped-date__yy">{{shipping_year}}</div>
-    </div>
 
-    <div class="reference-no">
-        {{reference_number}}
-    </div>
+<div class="shipped-date">
+    <div class="shipped-date__dd">{{shipping_day}}</div>
+    <div class="shipped-date__mm">{{shipping_month}}</div>
+    <div class="shipped-date__yy">{{shipping_year}}</div>
+</div>
 
-    <div class="code">
-        <div class="code__origin">
-            {{sender_city_code}}
-        </div>
-        <div class="code__destination">
-            {{receiver_city_code}}
-        </div>
-    </div>
+<div class="reference-no">
+    {{reference_number}}
+</div>
 
-    <div class="shipment">
-        <div class="shipment__packages">{{no_of_package}}</div>
-        <div class="shipment__actual-weight">{{weight}}</div>
-        <div class="shipment__dimensional-weight">{{pieces}}</div>
+<div class="code">
+    <div class="code__origin">
+        {{sender_city_code}}
     </div>
+    <div class="code__destination">
+        {{receiver_city_code}}
+    </div>
+</div>
 
-    <div class="service-type">
-        {{service_types}}
-    </div>
+<div class="shipment">
+    <div class="shipment__packages">{{no_of_package}}</div>
+    <div class="shipment__actual-weight">{{weight}}</div>
+    <div class="shipment__dimensional-weight">{{pieces}}</div>
+</div>
 
-    <div class="parcel-type">
-        {{parcel_type}}
-    </div>
+<div class="service-type">
+    {{service_types}}
+</div>
 
-    <div class="cod">
-        <div class="cod__inner">
-            <div class="cod__yes {{cod_yes}}"></div>
-            <div class="cod__no {{cod_no}}"></div>
-        </div>
-    </div>
+<div class="parcel-type">
+    {{parcel_type}}
+</div>
 
-    <div class="other-info">
-        {{other_info}}
+<div class="cod">
+    <div class="cod__inner">
+        <div class="cod__yes {{cod_yes}}"></div>
+        <div class="cod__no {{cod_no}}"></div>
     </div>
+</div>
+
+<div class="other-info">
+    {{other_info}}
+</div>
 </div>
 <div class="waybill-divider"></div>
-</div>

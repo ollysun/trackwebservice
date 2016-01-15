@@ -17,7 +17,7 @@ class BulkWaybillPrintingJob extends BaseJob
         $waybill_numbers = $this->data->waybill_numbers;
         $waybills_html = '';
         foreach ($waybill_numbers as $waybill_number) {
-            print 'Printing '.$waybill_number.'...'."\n";
+            print 'Printing ' . $waybill_number . '...' . "\n";
             $waybills_html .= $this->getWaybillHtml($waybill_number);
         }
 
@@ -25,7 +25,8 @@ class BulkWaybillPrintingJob extends BaseJob
         $waybill_layout = file_get_contents(dirname(__DIR__) . '/html/bulk_waybill_layout.html');
         $pdf_content = Util::replaceTemplate($waybill_layout, ['content' => $waybills_html]);
         $pdf->addPage($pdf_content);
-        return $pdf->saveAs(dirname(__DIR__) . '/html/bulk_waybill_layout.pdf');
+        $pdf->saveAs(dirname(__DIR__) . '/html/bulk_waybill_layout.pdf');
+        exit;
     }
 
     /**
@@ -50,11 +51,15 @@ class BulkWaybillPrintingJob extends BaseJob
                 '<br/>' . $parcel['sender_address']['street_address2'] . '<br/>',
             'sender_country' => $parcel['sender_country']['name'],
             'sender_telephone' => $parcel['sender']['phone'],
+            'sender_state' => ucwords($parcel['sender_state']['name']),
+            'sender_city' => ucwords($parcel['sender_city']['name']),
             'receiver_name' => $parcel['receiver']['firstname'] . ' ' . $parcel['receiver']['lastname'],
             'receiver_address' => $parcel['receiver_address']['street_address1'] .
                 '<br/>' . $parcel['receiver_address']['street_address2'] . '<br/>',
             'receiver_country' => $parcel['receiver_country']['name'],
             'receiver_telephone' => $parcel['receiver']['phone'],
+            'receiver_state' => ucwords($parcel['receiver_state']['name']),
+            'receiver_city' => ucwords($parcel['receiver_city']['name']),
             'shipping_day' => date('d', strtotime($parcel['created_date'])),
             'shipping_month' => date('m', strtotime($parcel['created_date'])),
             'shipping_year' => date('y', strtotime($parcel['created_date'])),
