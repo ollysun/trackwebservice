@@ -182,6 +182,16 @@ class BillingplanController extends ControllerBase
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return $this
+     */
+    public function getAllBillingPlanNamesAction()
+    {
+        $billingPlan = BillingPlan::find(array("columns" => "id,name"))->toArray();
+        return $this->response->sendSuccess($billingPlan);
+    }
+
+    /**
      * reset onforwarding charges for billing to zero
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
@@ -208,4 +218,29 @@ class BillingplanController extends ControllerBase
         return $this->response->sendError('Could not reset onforwarding charges');
     }
 
-} 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return $this
+     */
+    public function cloneBillingPlanAction()
+    {
+        $companyId = $this->request->getPost('company_id');
+        $baseBillingPlanId = $this->request->getPost('base_billing_plan_id');
+        $billingPlanName = $this->request->getPost('billing_plan_name');
+        $billingPlan = BillingPlan::fetchByName($billingPlanName, $companyId);
+        if ($billingPlan != false) {
+            return $this->response->sendError(ResponseMessage::ANOTHER_HAS_SAME_NAME);
+        }
+        $newBillingPlan = new BillingPlan();
+        $newBillingPlan->initData($billingPlanName, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING, $companyId);
+        if (!$newBillingPlan->save()) {
+            return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
+        }
+
+        $result = (new BillingPlan())->cloneBillingPlan($baseBillingPlanId, $newBillingPlan);
+        if (!$result) {
+            return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_CLONED);
+        }
+        return $this->response->sendSuccess();
+    }
+}

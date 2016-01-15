@@ -1655,12 +1655,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['company_id'] = $filter_by['company_id'];
         }
 
-        if(isset($filter_by['freight_included'])) {
+        if (isset($filter_by['freight_included'])) {
             $where[] = 'Parcel.is_freight_included = :freight_included:';
             $bind['freight_included'] = $filter_by['freight_included'];
         }
 
-        if(isset($filter_by['qty_metrics'])) {
+        if (isset($filter_by['qty_metrics'])) {
             $where[] = 'Parcel.qty_metrics = :qty_metrics:';
             $bind['qty_metrics'] = $filter_by['qty_metrics'];
         }
@@ -2095,7 +2095,6 @@ class Parcel extends \Phalcon\Mvc\Model
             }
 
             $waybill_number = [$this->getWaybillNumber()];
-
 
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
@@ -2646,13 +2645,14 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     public function getProofOfDelivery()
     {
-        $delivery_receipt = $this->getDeliveryReceipts("receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_SIGNATURE .
-            "' OR receipt_type = '" . DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL . "'");
-        $delivery_receipt = ($delivery_receipt->getFirst()) ? $delivery_receipt->getFirst()->toArray() : false;
-        if ($delivery_receipt && $delivery_receipt['receipt_type'] == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
-            $delivery_receipt['receipt_path'] = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt['receipt_path'];
+        /** @var DeliveryReceipt $delivery_receipt */
+        $delivery_receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number=:waybill_number: AND (receipt_type = :signature: OR receipt_type=:receiver_detail:)',
+            'bind' => ['waybill_number' => $this->getWaybillNumber(), 'signature' => DeliveryReceipt::RECEIPT_TYPE_SIGNATURE, 'receiver_detail' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL]]);
+
+        if ($delivery_receipt && $delivery_receipt->receipt_type == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
+            $delivery_receipt->receipt_path = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt->receipt_path;
         }
-        return $delivery_receipt;
+        return ($delivery_receipt) ? $delivery_receipt->toArray() : false;
     }
 
     /**
@@ -2798,5 +2798,15 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         return array_keys($clean_arr);
+    }
+
+    /**
+     * Handle saving and updating errors
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function notSaved()
+    {
+        $e = new Exception;
+        Util::slackDebug('Parcel Exception Log', 'Could not update or save parcel. Parcel Data: ' . json_encode($this->toArray()) . 'Stack trace: ' . $e->getTraceAsString());
     }
 }
