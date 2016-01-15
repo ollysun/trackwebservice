@@ -39,7 +39,7 @@ class CorporateUploadTask extends BaseTask
     private function uploadCorporate($line)
     {
         $data = $this->cleanData(str_getcsv($line));
-        if (count($data) < 9 && $data) {
+        if (count($data) < 11 && $data) {
             $this->printToConsole('ERROR: Invalid data: ');
             $this->printStringArray($data);
             return false;
@@ -155,7 +155,7 @@ class CorporateUploadTask extends BaseTask
         if ($plan->save()) {
             if ($clone_billing_plan_name != 'standard tariff') {
                 {
-                    $baseBillingPlan = BillingPlan::findFirstByName('jdhjd');
+                    $baseBillingPlan = BillingPlan::findFirstByName($clone_billing_plan_name);
                     if ($baseBillingPlan) {
                         $baseBillingPlanId = $baseBillingPlan->toArray()['id'];
                         $this->printToConsole($baseBillingPlanId);
