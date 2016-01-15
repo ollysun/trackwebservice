@@ -10,36 +10,42 @@ class CorporateUploadTask extends BaseTask
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param array $params
      */
-    public function mainAction()
+    public function mainAction(array $params)
     {
-        $dataFileName = 'upload_corporates_and_clone_billing_plan.csv';
-        $handle = fopen(dirname(__FILE__) . "/../../data/corporate/$dataFileName", "r");
+        $noOfFiles = count($params);
+        for ($i = 0; $i < $noOfFiles; $i++) {
+            $handle = fopen(dirname(__FILE__) . "/../../data/corporate/$params[$i]", "r");
 
-        if (!$handle) {
-            $this->printToConsole("Unable to read data file");
-        }
-
-        $count = 0;
-        while (($line = fgets($handle)) !== false) {
-            if ($count > 2) {
-                $this->uploadCorporate($line);
+            if (!$handle) {
+                $this->printToConsole("Unable to read data file");
             }
-            $count++;
+            $line = fgets($handle);
+            $data = $this->cleanData(str_getcsv($line));
+            $headerLength = count($data);
+            $count = 0;
+            while (($line = fgets($handle)) !== false) {
+                if ($count > 2) {
+                    $this->uploadCorporate($line, $headerLength);
+                }
+                $count++;
+            }
+            fclose($handle);
         }
-        fclose($handle);
     }
-
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $line
+     * @param $headerLength
      * @return bool
      */
-    private function uploadCorporate($line)
+    private
+    function uploadCorporate($line, $headerLength)
     {
         $data = $this->cleanData(str_getcsv($line));
-        if (count($data) < 11 && $data) {
+        if (count($data) < $headerLength && $data) {
             $this->printToConsole('ERROR: Invalid data: ');
             $this->printStringArray($data);
             return false;
@@ -54,7 +60,7 @@ class CorporateUploadTask extends BaseTask
         $primary_contact_last_name = isset($data[7]) ? $data[7] : '';
         $primary_contact_phone_number = isset($data[8]) && !empty($data[8]) ? $data[8] : '08000000000';
         $email_address = (isset($data[9]) && !empty($data[9])) ? $data[9] : 'noemailaddress@thiscorporate.com';
-        $clone_billing_plan_name = isset($data[10]) ? strtolower($data[10]) : '';
+        $clone_billing_plan_name = isset($data[10]) ? strtolower($data[10]) : 'standard tariff';
 
         if (strlen($company_name) == 0) {
             return false;
@@ -158,7 +164,6 @@ class CorporateUploadTask extends BaseTask
                     $baseBillingPlan = BillingPlan::findFirstByName($clone_billing_plan_name);
                     if ($baseBillingPlan) {
                         $baseBillingPlanId = $baseBillingPlan->toArray()['id'];
-                        $this->printToConsole($baseBillingPlanId);
                         $plan->cloneBillingPlan($baseBillingPlanId, $plan);
                     } else {
                         $this->printToConsole('plan does not exists, creating the default billing plan...');
@@ -179,7 +184,8 @@ class CorporateUploadTask extends BaseTask
         return true;
     }
 
-    private function cleanData(array $data)
+    private
+    function cleanData(array $data)
     {
         foreach ($data as $key => &$value) {
             $value = trim($value, '\'\ \"');
