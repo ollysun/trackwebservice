@@ -2096,6 +2096,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
             $waybill_number = [$this->getWaybillNumber()];
 
+
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
                 $waybill_number = $this->createSub($transaction);
