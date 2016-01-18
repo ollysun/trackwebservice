@@ -37,8 +37,9 @@ brew install redis
 See how to install [here](http://kr.github.io/beanstalkd/download.html)
 
 ### Install WkHtmlToPdf 
-See installation [here](http://wkhtmltopdf.org/downloads.html)
-For ubuntu server see [here](http://askubuntu.com/questions/556667/how-to-install-wkhtmltopdf-0-12-1-on-ubuntu-server)
+See installation [here](http://wkhtmltopdf.org/downloads.html) 
+
+For ubuntu server (>= 14.04) run `<project_root>/scripts/wtkhtmltopdf.sh` to install
 
 ### Setup Virtual Host
 *Windows*
