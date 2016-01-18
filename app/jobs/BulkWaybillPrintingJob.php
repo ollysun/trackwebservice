@@ -1,6 +1,8 @@
 <?php
 use mikehaertl\wkhtmlto\Pdf;
+use Phalcon\Di;
 use Phalcon\Mvc\Model\Resultset;
+use PhalconUtils\S3\S3Client;
 use Picqer\Barcode\BarcodeGeneratorHTML;
 
 /**
@@ -11,6 +13,8 @@ class BulkWaybillPrintingJob extends BaseJob
 {
     private $parcelTypes;
     private $shippingTypes;
+
+    const S3_BUCKET_BULK_WAYBILLS = 'bulk-waybills';
 
     public function onStart()
     {
@@ -42,8 +46,24 @@ class BulkWaybillPrintingJob extends BaseJob
         $waybill_layout = file_get_contents(dirname(__DIR__) . '/html/bulk_waybill_layout.html');
         $html_content = Util::replaceTemplate($waybill_layout, ['content' => $waybills_html]);
         $pdf->addPage($html_content);
-        $pdf->saveAs(dirname(__DIR__) . '/html/bulk_waybill_layout.pdf');
-        exit;
+
+        if (!$this->savePdfToS3($pdf)) {
+            return false;
+        }
+
+        print 'Uploaded Bulk Waybill to S3' . "\n";
+
+        EmailMessage::send(EmailMessage::BULK_WAYBILL_PRINTING, [
+            'name' => ucwords($this->data->creator->fullname),
+            'task_number' => $this->data->bulk_shipment_task_id,
+            'link' => $this->getS3BaseUrl() . 'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf'],
+            'Courier Plus - Bulk Waybill Printing',
+            $this->data->creator->email
+        );
+
+        print 'Email sent to user' . "\n";
+
+        return true;
     }
 
     /**
@@ -151,5 +171,49 @@ class BulkWaybillPrintingJob extends BaseJob
             $serviceTypeHtml .= "<div class='{$class}'><span>" . ucwords($name) . "</span></div>";
         }
         return $serviceTypeHtml;
+    }
+
+    /**
+     * Save Pdf file to S3
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $pdf Pdf
+     * @return bool
+     */
+    private function savePdfToS3($pdf)
+    {
+        /** @var S3Client $s3Client */
+        $s3Client = Di::getDefault()->get('s3Client');
+        $temp_file_name = dirname(__DIR__) . '/html/' . uniqid('temp_pdf_', true);
+        if (!$pdf->saveAs($temp_file_name)) {
+            return false;
+        }
+        if (!$s3Client->doesBucketExist(self::S3_BUCKET_BULK_WAYBILLS)) {
+            if (!$s3Client->createBucket(self::S3_BUCKET_BULK_WAYBILLS)) {
+                print var_export($s3Client->getMessages(), true) . "\n";
+                return false;
+            }
+        }
+
+        $s3_file_name = 'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf';
+        if (!$s3Client->createObject($temp_file_name, $s3_file_name, self::S3_BUCKET_BULK_WAYBILLS)) {
+            print var_export($s3Client->getMessages(), true) . "\n";
+            print "Could not upload to S3";
+            return false;
+        }
+
+        unlink($temp_file_name);
+
+        return true;
+    }
+
+    /**
+     * Get S3 Base Url
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return string
+     */
+    private function getS3BaseUrl()
+    {
+        $s3Config = Di::getDefault()->getConfig()->aws->s3;
+        return 'https://s3-' . $s3Config->region . '.amazonaws.com/' . self::S3_BUCKET_BULK_WAYBILLS . '/' . $s3Config->namespace . '/';
     }
 }

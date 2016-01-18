@@ -1592,8 +1592,13 @@ class ParcelController extends ControllerBase
         }
 
         $waybill_numbers = BulkShipmentJobDetail::getWaybillNumberByJobId($postData->bulk_shipment_task_id);
+        if (!$waybill_numbers) {
+            return $this->response->sendError('Could not create bulk waybill printing task. There are no waybills to be printed in this task');
+        }
+
         $postData->waybill_numbers = array_column($waybill_numbers, 'waybill_number');
         $postData->created_by = $this->auth->getPersonId();
+        $postData->creator = $this->auth->getData();
 
         $worker = new WaybillPrintingWorker();
         $job_id = $worker->addJob(json_encode($postData));

@@ -11,6 +11,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
     const PARCEL_IN_TRANSIT = 'parcel_in_transit';
     const PARCEL_DELIVERED = 'parcel_delivered';
     const RESET_PASSWORD = 'reset_password';
+    const BULK_WAYBILL_PRINTING = 'bulk_email_printing';
 
     /**
      *

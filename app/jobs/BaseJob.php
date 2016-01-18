@@ -1,4 +1,5 @@
 <?php
+use Job as JobLog;
 use Pheanstalk\Job;
 
 /**
@@ -11,6 +12,8 @@ abstract class BaseJob
     public $worker;
     public $data;
     public $id;
+    /** @var $jobLog JobLog */
+    public $jobLog;
 
     public function __construct(Job $serverJob)
     {
@@ -28,8 +31,16 @@ abstract class BaseJob
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return mixed
      */
-    public function onStart(){
-
+    public function onStart()
+    {
+        $logs = JobLog::find(['conditions' => 'server_job_id=:id: AND queue=:queue:', 'bind' => ['id' => $this->id, 'queue' => $this->worker->queue]]);
+        if (!$logs) {
+            return false;
+        }
+        $this->jobLog = $logs->getLast();
+        $this->jobLog->started_at = Util::getCurrentDateTime();
+        $this->jobLog->status = JobLog::STATUS_IN_PROGRESS;
+        return $this->jobLog->save();
     }
 
     /**
@@ -38,8 +49,14 @@ abstract class BaseJob
      * @param null $error
      * @return mixed
      */
-    public  function onFail($error = null){
-
+    public function onFail($error = null)
+    {
+        if (!$this->jobLog) {
+            return false;
+        }
+        $this->jobLog->status = JobLog::STATUS_FAILED;
+        $this->jobLog->error_message = $error;
+        return $this->jobLog->save();
     }
 
     /**
@@ -47,8 +64,13 @@ abstract class BaseJob
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return mixed
      */
-    public function onSuccess(){
-
+    public function onSuccess()
+    {
+        if (!$this->jobLog) {
+            return false;
+        }
+        $this->jobLog->status = JobLog::STATUS_SUCCESS;
+        return $this->jobLog->save();
     }
 
     /**
@@ -56,8 +78,13 @@ abstract class BaseJob
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @return mixed
      */
-    public function onComplete(){
-
+    public function onComplete()
+    {
+        if (!$this->jobLog) {
+            return false;
+        }
+        $this->jobLog->completed_at = Util::getCurrentDateTime();
+        return $this->jobLog->save();
     }
 
     /**
