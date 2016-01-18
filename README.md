@@ -122,6 +122,8 @@ Adeyemi Olaoye <yemi@cottacush.com>
 
 Akintewe Rotimi <akintewe.rotimi@gmail.com> 
 
+Babatunde Otaru <tunde@cottacush.com>
+
 Boyewa Akindolani <boye@cottacush.com> 
 
 Olawale Lawal <wale@cottacush.com> 
