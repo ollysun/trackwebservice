@@ -38,7 +38,7 @@ class BulkWaybillPrintingJob extends BaseJob
         if (!$this->jobLog) {
             return false;
         }
-        
+
         $waybill_numbers = $this->data->waybill_numbers;
         $waybills_html = '';
         foreach ($waybill_numbers as $waybill_number) {
@@ -189,9 +189,11 @@ class BulkWaybillPrintingJob extends BaseJob
         $s3Client = Di::getDefault()->get('s3Client');
         $temp_file_name = dirname(__DIR__) . '/html/' . uniqid('temp_pdf_', true);
         if (!$pdf->saveAs($temp_file_name)) {
+            print $pdf->getError() . "\n";
             return false;
         }
         if (!$s3Client->doesBucketExist(self::S3_BUCKET_BULK_WAYBILLS)) {
+            print var_export($s3Client->getMessages(), true) . "\n";
             if (!$s3Client->createBucket(self::S3_BUCKET_BULK_WAYBILLS)) {
                 print var_export($s3Client->getMessages(), true) . "\n";
                 return false;
