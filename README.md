@@ -95,19 +95,23 @@ Create `tnt` database
 - Parcel Creation Worker
 This worker executes bulk parcel creation jobs.
 
-Start by running the following command from the project root:<br/>
+Start by running the following command from the project root:  
+
 `BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start ParcelCreationWorker &`
 
-Stop by running the following command from the project root:<br/>
+Stop by running the following command from the project root:  
+
 `BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> php app/cli.php worker stop ParcelCreationWorker`
 
 - Bulk Waybill Printing Worker 
 This worker executes bulk waybill printing jobs. The jobs generate pdf waybills for multiple shipments, uploads to S3 and then sends the link to the user's email.
 
-Start by running the following command from the project root:<br/>
+Start by running the following command from the project root:  
+
 `AWS_KEY=<aws_key> AWS_SECRET='<aws_secret>' BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start WaybillPrintingWorker &`
 
-Stop by running the following command from the project root:<br/>
+Stop by running the following command from the project root:  
+
 `BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> php app/cli.php worker stop WaybillPrintingWorker`
 
 Contributors
