@@ -1,0 +1,2 @@
+INSERT INTO `email_message` (`email_message_code`, `to_email`, `subject`, `message`, `created_date`, `status`)
+VALUES ('weight_not_in_range','morife@cottacush.com','Weight not in range ','Hello Billing/IT Manager<br/><br/>A shipment for {{company_name}} company with {{weight}} has been created with waybill number {{waybill_number}}<br/>Kindly note that the weight range is not in the billing plan, hence, the shipment was created WITHOUT a value.<br/>Kindly take necessary action.<br/>Regards,<br/>TrackPlus Team<br/>',NOW(),1);

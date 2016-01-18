@@ -2105,7 +2105,20 @@ class Parcel extends \Phalcon\Mvc\Model
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
                 return false;
             }
+
+            //send mail if weight not in weight range of corporate
+            if ($this->amount_due == '0') {
+                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id" , "columns" => "company_id"))->toArray();
+                $company_id = $billingPlan['company_id'];
+                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
+                if (!is_null($company_id) && !$calc_weight_billing) {
+                    $companyName = Company::findFirst(array("id = $company_id" , "columns" => "name" ))->toArray()['name'];
+                    $this->sendWeightNotInRangeMail($companyName);
+                }
+            }
+
             $waybill_number = [$this->getWaybillNumber()];
+
 
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
@@ -2664,6 +2677,23 @@ class Parcel extends \Phalcon\Mvc\Model
             $delivery_receipt->receipt_path = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt->receipt_path;
         }
         return ($delivery_receipt) ? $delivery_receipt->toArray() : false;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $companyName
+     */
+    public function sendWeightNotInRangeMail($companyName)
+    {
+        EmailMessage::send(
+            EmailMessage::WEIGHT_NOT_IN_RANGE,
+            [
+                'company_name' => $companyName,
+                'weight' => $this->weight . 'kg',
+                'waybill_number' => $this->waybill_number
+            ],
+            'Courier plus'
+        );
     }
 
     /**
