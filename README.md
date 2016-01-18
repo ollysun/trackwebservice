@@ -108,7 +108,7 @@ This worker executes bulk waybill printing jobs. The jobs generate pdf waybills 
 
 Start by running the following command from the project root:  
 
-`AWS_KEY=<aws_key> AWS_SECRET='<aws_secret>' BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start WaybillPrintingWorker &`
+`APPLICATION_ENV=<local|staging|production> AWS_KEY=<aws_key> AWS_SECRET='<aws_secret>' BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start WaybillPrintingWorker &`
 
 Stop by running the following command from the project root:  
 
