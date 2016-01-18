@@ -35,6 +35,10 @@ class BulkWaybillPrintingJob extends BaseJob
      */
     public function execute()
     {
+        if (!$this->jobLog) {
+            return false;
+        }
+        
         $waybill_numbers = $this->data->waybill_numbers;
         $waybills_html = '';
         foreach ($waybill_numbers as $waybill_number) {
