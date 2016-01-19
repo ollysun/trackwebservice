@@ -92,4 +92,16 @@ class CreditnoteController extends ControllerBase
             return $this->response->sendError();
         }
     }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return $this
+     */
+    public function getPrintOutDetailsAction()
+    {
+        $creditNoteNumber = $this->request->getQuery('credit_note_no');
+        $creditNote = new CreditNote();
+        $printOutDetails = $creditNote->getPrintoutFields($creditNoteNumber);
+        return $this->response->sendSuccess($printOutDetails);
+    }
 }

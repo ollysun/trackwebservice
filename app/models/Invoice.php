@@ -79,6 +79,7 @@ class Invoice extends EagerModel
      * Gets the total count
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $filter_by
+     * @return null
      */
     public static function getTotalCount($filter_by)
     {
