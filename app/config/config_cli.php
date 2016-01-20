@@ -29,8 +29,8 @@ return new \Phalcon\Config(array(
 
         //TODO change to production config
         'mailer' => array(
-            'mandrill_username' => 'yemi@cottacush.com',
-            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
+            'mandrill_username' => 'yemexx1@gmail.com',
+            'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
             'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
             'smtp_host' => 'smtp.mandrillapp.com',
             'smtp_port' => 587
@@ -45,5 +45,14 @@ return new \Phalcon\Config(array(
     'beanstalkd' => [
         'host' => getenv('BEANSTALKD_HOST'),
         'port' => getenv('BEANSTALKD_PORT')
-    ]
+    ],
+
+    'aws' => [
+        'aws_key' => getenv('AWS_KEY'),
+        'aws_secret' => getenv('AWS_SECRET'),
+        's3' => [
+            'namespace' => (getenv('APPLICATION_ENV')) ? getenv('APPLICATION_ENV') : 'local',
+            'region' => 'us-west-2'
+        ],
+    ],
 ));

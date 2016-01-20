@@ -1,4 +1,5 @@
 <?php
+use Job as JobLog;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
 use Pheanstalk\PheanstalkInterface;
@@ -139,7 +140,21 @@ abstract class BaseWorker
      */
     public function addJob($jobData)
     {
-        return $this->server->useTube($this->queue)->put($jobData, PheanstalkInterface::DEFAULT_PRIORITY, 5);
+        $jobId = $this->server->useTube($this->queue)->put($jobData, PheanstalkInterface::DEFAULT_PRIORITY, 5);
+
+        if (!$jobId) {
+            return false;
+        }
+
+        $jobLog = new JobLog();
+        $jobLog->server_job_id = $jobId;
+        $jobLog->queue = $this->queue;
+        $jobLog->job_data = $jobData;
+        $jobData = json_decode($jobData);
+        $jobLog->created_by = $jobData->created_by;
+        $jobLog->status = JobLog::STATUS_QUEUED;
+        $jobLog->created_at = Util::getCurrentDateTime();
+        return ($jobLog->save()) ? $jobLog->id : false;
     }
 
     /**

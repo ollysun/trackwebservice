@@ -1580,4 +1580,34 @@ class ParcelController extends ControllerBase
         $task['details'] = $taskDetails->toArray();
         return $this->response->sendSuccess($task);
     }
+
+    /**
+     * Create bulk waybill printing task
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createBulkWaybillPrintingTaskAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new BulkWaybillPrintingValidation($postData);
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        $waybill_numbers = BulkShipmentJobDetail::getWaybillNumberByJobId($postData->bulk_shipment_task_id);
+        if (!$waybill_numbers) {
+            return $this->response->sendError('Could not create bulk waybill printing task. There are no waybills to be printed in this task');
+        }
+
+        $postData->waybill_numbers = array_column($waybill_numbers, 'waybill_number');
+        $postData->created_by = $this->auth->getPersonId();
+        $postData->creator = $this->auth->getData();
+
+        $worker = new WaybillPrintingWorker();
+        $job_id = $worker->addJob(json_encode($postData));
+        if (!$job_id) {
+            return $this->response->sendError('Could not create bulk waybill printing task. Please try again');
+        }
+
+        return $this->response->sendSuccess($job_id);
+    }
 }

@@ -8,25 +8,6 @@ use Phalcon\Exception;
  */
 class BulkParcelCreationJob extends BaseJob
 {
-    /** @var Job $bulkShipmentJob */
-    private $bulkShipmentJob;
-
-    /**
-     * action to perform on start
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @return bool
-     */
-    public function onStart()
-    {
-        $this->bulkShipmentJob = Job::findFirstByServerJobId($this->id);
-        if (!$this->bulkShipmentJob) {
-            return false;
-        }
-        $this->bulkShipmentJob->started_at = Util::getCurrentDateTime();
-        $this->bulkShipmentJob->status = Job::STATUS_IN_PROGRESS;
-        return $this->bulkShipmentJob->save();
-    }
-
     /**
      * execute current job
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -34,16 +15,16 @@ class BulkParcelCreationJob extends BaseJob
      */
     public function execute()
     {
-        $jobData = json_decode($this->data);
+        $jobData = $this->data;
         $shipmentData = $jobData->data;
 
-        if (!$this->bulkShipmentJob) {
+        if (!$this->jobLog) {
             return false;
         }
 
         foreach ($shipmentData as $parcelData) {
             $bulkShipmentJobDetail = new BulkShipmentJobDetail();
-            $bulkShipmentJobDetail->job_id = $this->bulkShipmentJob->id;
+            $bulkShipmentJobDetail->job_id = $this->jobLog->id;
             $bulkShipmentJobDetail->data = json_encode($parcelData);
             $bulkShipmentJobDetail->status = BulkShipmentJobDetail::STATUS_IN_PROGRESS;
             $bulkShipmentJobDetail->started_at = Util::getCurrentDateTime();
@@ -155,46 +136,5 @@ class BulkParcelCreationJob extends BaseJob
         $status = $parcel_obj->saveForm($creatorBranch->getId(), $sender, $sender_address, $receiver, $receiver_address,
             '', $parcelData, $to_branch_id, $createdBy->getId());
         return ($status) ? $parcel_obj : false;
-    }
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param null $error
-     * @return bool
-     */
-    public function onFail($error = null)
-    {
-        if (!$this->bulkShipmentJob) {
-            return false;
-        }
-        $this->bulkShipmentJob->status = Job::STATUS_FAILED;
-        $this->bulkShipmentJob->error_message = $error;
-        return $this->bulkShipmentJob->save();
-    }
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @return bool
-     */
-    public function onSuccess()
-    {
-        if (!$this->bulkShipmentJob) {
-            return false;
-        }
-        $this->bulkShipmentJob->status = Job::STATUS_SUCCESS;
-        return $this->bulkShipmentJob->save();
-    }
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @return bool
-     */
-    public function onComplete()
-    {
-        if (!$this->bulkShipmentJob) {
-            return false;
-        }
-        $this->bulkShipmentJob->completed_at = Util::getCurrentDateTime();
-        return $this->bulkShipmentJob->save();
     }
 }

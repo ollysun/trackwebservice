@@ -94,4 +94,33 @@ class Util
     {
         return preg_match('/^-?(?=.*[0-9])\d+(\.\d+)?$/', $float);
     }
+
+    /**
+     * @param $message
+     * @param $params
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return mixed
+     */
+    public static function replaceTemplate($message, $params)
+    {
+        foreach ($params as $param => $value) {
+            $message = str_replace('{{' . $param . '}}', $value, $message);
+        }
+        return $message;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $value
+     * @return string
+     */
+    public static function formatWeight($value)
+    {
+        if (intval($value) <= 0) return $value;
+        $decimal_holder = explode('.', $value);
+        $value_arr = str_split($decimal_holder[0]);
+        if (count($value_arr) <= 3) return $value;
+        $final_value = number_format($value, 0, ".", ",");
+        return $final_value;
+    }
 }

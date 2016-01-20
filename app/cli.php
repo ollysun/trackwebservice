@@ -31,6 +31,7 @@ $loader->registerDirs(
         APPLICATION_PATH . '/workers/',
         APPLICATION_PATH . '/jobs/',
         APPLICATION_PATH . '/components/',
+        APPLICATION_PATH . '/html/'
     )
 )->register();
 
