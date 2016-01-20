@@ -12,6 +12,8 @@ $loader->registerDirs(
         $config->application->componentsDir,
         $config->application->libraryDir,
         $config->application->validationsDir,
-        $config->application->traitsDir
+        $config->application->traitsDir,
+        $config->application->workersDir,
+        $config->application->jobsDir
     )
 )->register();

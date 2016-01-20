@@ -1410,12 +1410,18 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*'])
+            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*', 'SenderCity.*', 'SenderState.*', 'SenderCountry.*', 'ReceiverCity.*', 'ReceiverState.*', 'ReceiverCountry.*'])
             ->from('Parcel')
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
             ->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
+            ->leftJoin('Country', 'SenderCountry.id = SenderAddress.country_id' , 'SenderCountry')
+            ->leftJoin('State', 'SenderState.id = SenderAddress.state_id' , 'SenderState')
+            ->leftJoin('City', 'SenderCity.id = SenderAddress.city_id' , 'SenderCity')
             ->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
+            ->leftJoin('State', 'ReceiverState.id = ReceiverAddress.state_id' , 'ReceiverState')
+            ->leftJoin('City', 'ReceiverCity.id = ReceiverAddress.city_id' , 'ReceiverCity')
+            ->leftJoin('Country', 'ReceiverCountry.id = ReceiverAddress.country_id' , 'ReceiverCountry')
             ->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch')
             ->leftJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch')
             ->leftJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
@@ -1428,8 +1434,14 @@ class Parcel extends \Phalcon\Mvc\Model
         $result = $data[0]->parcel->getData();
         $result['sender'] = $data[0]->sender->getData();
         $result['sender_address'] = $data[0]->senderAddress->getData();
+        $result['sender_city'] = $data[0]->SenderCity->getData();
+        $result['sender_state'] = $data[0]->SenderState->getData();
+        $result['sender_country'] = $data[0]->SenderCountry->getData();
         $result['receiver'] = $data[0]->receiver->getData();
         $result['receiver_address'] = $data[0]->receiverAddress->getData();
+        $result['receiver_city'] = $data[0]->ReceiverCity->getData();
+        $result['receiver_state'] = $data[0]->ReceiverState->getData();
+        $result['receiver_country'] = $data[0]->ReceiverCountry->getData();
         $result['created_branch'] = $data[0]->createdBranch->getData();
         $result['to_branch'] = $data[0]->toBranch->getData();
         $result['from_branch'] = $data[0]->fromBranch->getData();
@@ -1928,8 +1940,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $this->setTransaction($transaction);
 
             //saving the sender's user info
-            $sender_obj = User::fetchByPhone($sender['phone']);
-            $is_sender_existing = $sender_obj != false;
+            $sender_obj = User::fetchByData($sender);
+            $is_sender_existing = ($sender_obj != false);
             if (!$is_sender_existing) {
                 $sender_obj = new User();
             }
@@ -1938,11 +1950,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = $sender_obj->save();
 
             //saving the receiver's user info
-            $receiver_obj = new User();
-            $is_receiver_existing = false;
             if ($check) {
-                $receiver_obj = User::fetchByPhone($receiver['phone']);
-                $is_receiver_existing = $receiver_obj != false && $receiver['phone'] != self::NOT_APPLICABLE;
+                $receiver_obj = User::fetchByData($receiver);
+                $is_receiver_existing = ($receiver_obj != false);
                 if (!$is_receiver_existing) {
                     $receiver_obj = new User();
                 }
@@ -1976,6 +1986,12 @@ class Parcel extends \Phalcon\Mvc\Model
                     $transactionManager->rollback();
                     return false;
                 }
+                $sender_address['owner_id'] = $sender_obj->getId();
+                if (!$is_existing && ($existing_sender_address = Address::fetchByData($sender_address))) {
+                    $is_existing = true;
+                    $is_sender_existing = true;
+                    $sender_addr_obj = $existing_sender_address;
+                }
                 $sender_addr_obj->setTransaction($transaction);
                 $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
                     $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
@@ -2008,6 +2024,12 @@ class Parcel extends \Phalcon\Mvc\Model
                     Util::slackDebug("Parcel not created", "Receiver address id not for receiver");
                     $transactionManager->rollback();
                     return false;
+                }
+                $receiver_address['owner_id'] = $receiver_obj->getId();
+                if (!$is_existing && ($existing_receiver_address = Address::fetchByData($receiver_address))) {
+                    $is_existing = true;
+                    $is_receiver_existing = true;
+                    $receiver_addr_obj = $existing_receiver_address;
                 }
                 $receiver_addr_obj->setTransaction($transaction);
                 $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
@@ -2081,8 +2103,22 @@ class Parcel extends \Phalcon\Mvc\Model
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
+                return false;
             }
+
+            //send mail if weight not in weight range of corporate
+            if ($this->amount_due == '0') {
+                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id" , "columns" => "company_id"))->toArray();
+                $company_id = $billingPlan['company_id'];
+                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
+                if (!is_null($company_id) && !$calc_weight_billing) {
+                    $companyName = Company::findFirst(array("id = $company_id" , "columns" => "name" ))->toArray()['name'];
+                    $this->sendWeightNotInRangeMail($companyName);
+                }
+            }
+
             $waybill_number = [$this->getWaybillNumber()];
+
 
             //creating sub-parcel if the number of packages is more than 1
             if ($check and $this->getNoOfPackage() > 1) {
@@ -2641,6 +2677,23 @@ class Parcel extends \Phalcon\Mvc\Model
             $delivery_receipt->receipt_path = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt->receipt_path;
         }
         return ($delivery_receipt) ? $delivery_receipt->toArray() : false;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $companyName
+     */
+    public function sendWeightNotInRangeMail($companyName)
+    {
+        EmailMessage::send(
+            EmailMessage::WEIGHT_NOT_IN_RANGE,
+            [
+                'company_name' => $companyName,
+                'weight' => $this->weight . 'kg',
+                'waybill_number' => $this->waybill_number
+            ],
+            'Courier plus'
+        );
     }
 
     /**

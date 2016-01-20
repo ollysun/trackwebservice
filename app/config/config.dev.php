@@ -20,14 +20,16 @@ return new \Phalcon\Config([
         'traitsDir' => __DIR__ . '/../../app/traits/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir' => __DIR__ . '/../../app/tasks/',
+        'workersDir'        => __DIR__ . '/../../app/workers/',
+        'jobsDir'        => __DIR__ . '/../../app/jobs/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
     ],
 
     'params' => [
         'mailer' => [
-            'mandrill_username' => 'yemi@cottacush.com',
-            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
+            'mandrill_username' => 'yemexx1@gmail.com',
+            'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
             'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
             'smtp_host' => 'smtp.mandrillapp.com',
             'smtp_port' => 587
@@ -46,5 +48,10 @@ return new \Phalcon\Config([
         ],
     ],
 
-    'isCli' => false
+    'isCli' => false,
+
+    'beanstalkd' => [
+        'host' => getenv('BEANSTALKD_HOST'),
+        'port' => getenv('BEANSTALKD_PORT')
+    ]
 ]);
