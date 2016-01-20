@@ -900,17 +900,19 @@ class ParcelController extends ControllerBase
             }
 
             //create delivery receipt if receiver name and phone number was supplied
-            if (isset($receiver_name, $receiver_phonenumber)) {
+            if (isset($receiver_name)) {
                 if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
                     $data = ['waybill_number' => $waybill_number,
                         'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL,
                         'delivered_by' => $this->auth->getPersonId(),
                         'name' => $receiver_name,
-                        'phone_number' => $receiver_phonenumber,
                         'delivered_at' => $date_and_time_of_delivery];
                 }
                 if (isset($receiver_email)) {
                     $data['email'] = $receiver_email;
+                }
+                if(isset($receiver_phonenumber)){
+                    $data['phone_number'] = $receiver_phonenumber;
                 }
 
                 DeliveryReceipt::add($data);
