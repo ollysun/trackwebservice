@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Di;
 
 
 /**
@@ -18,14 +19,14 @@ class Util
     public static function slackDebug($tag, $text)
     {
         /** @var \Phalcon\Http\Request $request */
-        $request = \Phalcon\Di::getDefault()->getRequest();
+        $environment_name = Di::getDefault()->has('request') ? Di::getDefault()->getRequest()->getServer('SERVER_NAME') : 'CLI';
         $httpClient = new HttpClient();
         $data = ['username' => 'TNT Debug Bot', 'icon_emoji' => ':rat:',
             'attachments' => [
                 [
                     'fallback' => "$tag",
                     'color' => '#205081',
-                    'author_name' => 'TNT SERVICE - ' . $request->getServer('SERVER_NAME'),
+                    'author_name' => 'TNT SERVICE - ' . $environment_name,
                     'title' => "$tag",
                     'text' => $text
                 ]

@@ -6,21 +6,23 @@
  */
 
 use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
+use Phalcon\Logger;
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 use PhalconUtils\Mailer\MailerHandler;
-use Phalcon\Logger;
+use Pheanstalk\Pheanstalk;
 
 
 /**
  * Database connection is created based in the parameters defined in the configuration file
  */
 $di->set('db', function () use ($config) {
-        $connection =  new DbAdapter(array(
+    $connection = new DbAdapter(array(
         'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
         'dbname' => $config->database->dbname,
-        "charset" => $config->database->charset
+        "charset" => $config->database->charset,
+        'persistent' => true
     ));
 
     if(getenv('APPLICATION_ENV') == false) {
@@ -56,4 +58,8 @@ $di->set('mailer', function () use ($config) {
         $config->params->mailer->smtp_host,
         $config->params->mailer->smtp_port,
         $config->params->mailer->default_from);
+});
+
+$di->set('pheanStalkServer', function () use ($config) {
+    return new Pheanstalk($config->beanstalkd->host, $config->beanstalkd->port, null, true);
 });

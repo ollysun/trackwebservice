@@ -1,8 +1,9 @@
 {
   "name": "CourierPlus TNT Service",
   "require": {
-    "phalcon-utils": "^1.7.5",
-    "robmorgan/phinx": "^0.4.6"
+    "phalcon-utils": "^1.7",
+    "robmorgan/phinx": "^0.4.6",
+    "pda/pheanstalk": "^3.1"
   },
   "repositories": [
     {

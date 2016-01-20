@@ -12,6 +12,7 @@ use Phalcon\Mvc\Dispatcher as MvcDispatcher;
 use Phalcon\Events\Manager as EventsManager;
 use PhalconUtils\Mailer\MailerHandler;
 use PhalconUtils\S3\S3Client;
+use Pheanstalk\Pheanstalk;
 
 /**
  * The FactoryDefault Dependency Injector automatically register the right services providing a full stack framework
@@ -48,7 +49,7 @@ $di->set('view', function () use ($config) {
  * Database connection is created based in the parameters defined in the configuration file
  */
 $di->set('db', function () use ($config) {
-    $connection =  new DbAdapter(array(
+    $connection = new DbAdapter(array(
         'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
@@ -56,7 +57,7 @@ $di->set('db', function () use ($config) {
         "charset" => $config->database->charset
     ));
 
-    if(getenv('APPLICATION_ENV') == false) {
+    if (getenv('APPLICATION_ENV') == false) {
         $eventsManager = new Phalcon\Events\Manager();
         $logger = new Phalcon\Logger\Adapter\File(dirname(__FILE__) . "/../logs/sql_debug.log");
         $eventsManager->attach('db', function ($event, $connection) use ($logger) {
@@ -136,6 +137,10 @@ $di->set('s3Client', function () use ($config) {
         $config->aws->s3->namespace);
 });
 
+$di->set('pheanStalkServer', function () use ($config) {
+    return new Pheanstalk($config->beanstalkd->host, $config->beanstalkd->port);
+});
+
 
 /**
  * Added Dispatcher service with events handled
@@ -180,8 +185,8 @@ $di->set('dispatcher', function () {
          * Set Current Transaction in New Relic
          * @author Adegoke Obasa <goke@cottacush.com>
          */
-        if (extension_loaded ('newrelic')) {
-            newrelic_name_transaction ($dispatcher->getControllerName() . '/' . $dispatcher->getActionName());
+        if (extension_loaded('newrelic')) {
+            newrelic_name_transaction($dispatcher->getControllerName() . '/' . $dispatcher->getActionName());
         }
     });
 

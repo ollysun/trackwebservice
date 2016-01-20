@@ -1,5 +1,6 @@
 <?php
 use Phalcon\Exception;
+use Phalcon\Mvc\Model\Resultset;
 use PhalconUtils\Validation\RequestValidation;
 use PhalconUtils\Validation\Validators\Model;
 
@@ -99,11 +100,11 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::INVALID_PAYMENT_TYPE);
         }
 
-        if(($parcel['payment_type'] != PaymentType::DEFERRED || !$parcel['cash_on_delivery']) && $parcel['is_freight_included']) {
+        if (($parcel['payment_type'] != PaymentType::DEFERRED || !$parcel['cash_on_delivery']) && $parcel['is_freight_included']) {
             return $this->response->sendError(ResponseMessage::INVALID_FREIGHT_INCLUSION);
         }
 
-        if(!in_array($parcel['qty_metrics'], [Parcel::QTY_METRICS_PIECES, Parcel::QTY_METRICS_WEIGHT])) {
+        if (!in_array($parcel['qty_metrics'], [Parcel::QTY_METRICS_PIECES, Parcel::QTY_METRICS_WEIGHT])) {
             return $this->response->sendError(ResponseMessage::INVALID_QTY_METRICS);
         }
 
@@ -1513,5 +1514,68 @@ class ParcelController extends ControllerBase
 
         $this->db->commit();
         return $this->response->sendSuccess();
+    }
+
+    /**
+     * Create bulk shipment task
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createBulkShipmentTaskAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new BulkShipmentCreationValidation($postData);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        $company = Company::findFirst($postData->company_id);
+        $billing_plan = BillingPlan::findFirst($postData->billing_plan_id);
+        $postData->created_by = $this->auth->getPersonId();
+        $postData->company = $company->toArray();
+        $postData->billing_plan = $billing_plan->toArray();
+        $postData->creator = $this->auth->getData();
+
+        $worker = new ParcelCreationWorker();
+        $job_id = $worker->addJob(json_encode($postData));
+        if (!$job_id) {
+            return $this->response->sendError('Could not create bulk shipment creation job. Please try again');
+        }
+        return $this->response->sendSuccess($job_id);
+    }
+
+    /**
+     * Get bulk shipment tasks
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getBulkShipmentTasksAction()
+    {
+        /** @var Resultset $tasks */
+        $tasks = Job::findByQueue(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION);
+        return $this->response->sendSuccess($tasks->toArray());
+    }
+
+    /**
+     * Get Bulk Shipment Task
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getBulkShipmentTaskAction()
+    {
+        $task_id = $this->request->get('task_id', null, false);
+        if (!$task_id) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /** @var Job $task */
+        $task = Job::findFirst($task_id);
+        if (!$task) {
+            return $this->response->sendError('Task not found');
+        }
+
+        /** @var Resultset $taskDetails */
+        $taskDetails = BulkShipmentJobDetail::findByJobId($task->id);
+        $task = $task->toArray();
+        $task['details'] = $taskDetails->toArray();
+        return $this->response->sendSuccess($task);
     }
 }
