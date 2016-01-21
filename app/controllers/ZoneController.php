@@ -361,8 +361,8 @@ class ZoneController extends ControllerBase
 
         $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
         if ($calc_weight_billing == false) {
-            $companyId = BillingPlan::findFirst(array("id = $weight_billing_plan_id" , "columns" => "company_id"))->toArray()['company_id'];
-            if(!is_null($companyId)){
+            $weight_billing_plan = BillingPlan::findFirst($weight_billing_plan_id);
+            if($weight_billing_plan && !is_null($weight_billing_plan->getCompanyId())){
                 return $this->response->sendSuccess('0');
             }
             return $this->response->sendError(ResponseMessage::CALC_BILLLING_WEIGHT);
