@@ -123,4 +123,34 @@ class Util
         $final_value = number_format($value, 0, ".", ",");
         return $final_value;
     }
+
+    /**
+     * Show waybill number in a user friendly format
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @return mixed
+     */
+    public static function humanizeWaybillNumber($waybill_number)
+    {
+        if (!is_string($waybill_number) && strlen($waybill_number) > 0) {
+            return $waybill_number;
+        }
+
+        $splitPart = '';
+        if (($pos = strpos($waybill_number, '-')) !== false) {
+            $splitPart = substr($waybill_number, $pos, (strlen($waybill_number) - $pos));
+            $waybill_number = substr($waybill_number, 0, $pos);
+        }
+
+        $parts = str_split($waybill_number, 3);
+        $end = $parts[count($parts) - 1];
+        if (strlen($end) < 3) {
+            $parts[count($parts) - 2] = $parts[count($parts) - 2] . $parts[count($parts) - 1];
+            unset($parts[count($parts) - 1]);
+        }
+
+        $parts[count($parts) - 1] = $parts[count($parts) - 1] . $splitPart;
+
+        return implode(' ', $parts);
+    }
 }
