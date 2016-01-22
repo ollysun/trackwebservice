@@ -148,6 +148,9 @@ class CreditNote extends EagerModel
         $builder->innerJoin('Company','Invoice.company_id = Company.id');
         $bind['credit_note_no'] = $creditNoteNo;
         $printOutDetails = $builder->getQuery()->execute($bind);
+        if(empty($printOutDetails->toArray())){
+            return [];
+        }
         return $printOutDetails->toArray();
     }
 }
