@@ -101,7 +101,10 @@ class CreditnoteController extends ControllerBase
     {
         $creditNoteNumber = $this->request->getQuery('credit_note_no');
         $creditNote = new CreditNote();
-        $printOutDetails = $creditNote->getPrintoutFields($creditNoteNumber);
+        $printOutDetails['credit_note'] = $creditNote->getPrintoutFields($creditNoteNumber);
+        $creditNoteParcel = new CreditNoteParcel();
+        $parcelDetails = $creditNoteParcel->getDetails($creditNoteNumber);
+        $printOutDetails['credit_note_parcels'] = $parcelDetails;
         return $this->response->sendSuccess($printOutDetails);
     }
 }
