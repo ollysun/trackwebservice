@@ -102,7 +102,7 @@ class CreditnoteController extends ControllerBase
         $creditNoteNumber = $this->request->getQuery('credit_note_no');
         $creditNote = new CreditNote();
         $printOutDetails['credit_note'] = $creditNote->getPrintoutFields($creditNoteNumber);
-        if(empty($printOutDetails['credit_note'])){
+        if(is_null($printOutDetails['credit_note'])){
             return $this->response->sendError('Couldn\'t get details for the credit note number');
         }
         $creditNoteParcel = new CreditNoteParcel();
