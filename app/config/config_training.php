@@ -20,6 +20,8 @@ return new \Phalcon\Config(array(
         'traitsDir' => __DIR__ . '/../../app/traits/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
+        'workersDir'        => __DIR__ . '/../../app/workers/',
+        'jobsDir'        => __DIR__ . '/../../app/jobs/',
         'baseUri' => '/tnt/',
         'cacheLifeTime' => 259200, //3 days
     ),
@@ -37,5 +39,12 @@ return new \Phalcon\Config(array(
     ),
 
 
-    'fe_base_url' => 'http://training-courierplusng.cottacush.com'
+    'fe_base_url' => 'http://training-courierplusng.cottacush.com',
+
+    'isCli' => false,
+
+    'beanstalkd' => [
+        'host' => getenv('BEANSTALKD_HOST'),
+        'port' => getenv('BEANSTALKD_PORT')
+    ]
 ));

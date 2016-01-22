@@ -1,8 +1,12 @@
 <?php
 
-use Phalcon\Mvc\Model\Validator\Email as Email;
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
+/**
+ * Class Admin
+ * @author Adeyemi Olaoye <yemi@cottacush.com>
+ * @method Branch getBranch
+ */
 class Admin extends \Phalcon\Mvc\Model
 {
 

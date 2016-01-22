@@ -28,6 +28,10 @@ $loader->registerDirs(
         APPLICATION_PATH . '/data',
         APPLICATION_PATH . '/models',
         APPLICATION_PATH . '/library',
+        APPLICATION_PATH . '/workers/',
+        APPLICATION_PATH . '/jobs/',
+        APPLICATION_PATH . '/components/',
+        APPLICATION_PATH . '/html/'
     )
 )->register();
 
@@ -50,6 +54,16 @@ foreach ($argv as $k => $arg) {
         $arguments['params'][] = $arg;
     }
 }
+
+/**
+ * Inlcude global constants
+ */
+include __DIR__ . "/../app/config/global.php";
+
+/**
+ * import composer autoloader
+ */
+include __DIR__ . "/../vendor/autoload.php";
 
 
 // Load the configuration file (if any)

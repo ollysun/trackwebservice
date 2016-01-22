@@ -22,11 +22,9 @@ class ZeroOnforwardingChargesTask extends BaseTask
             $this->zeroiseOnforwarding(trim($company));
         }
         // Use company_id to find billing plans for company
-
     }
 
     /**
-     *
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $companyName
      */
@@ -60,6 +58,9 @@ class ZeroOnforwardingChargesTask extends BaseTask
                 $status = $connection->update('onforwarding_charge', ['amount', 'percentage', 'modified_date'], [0, 0, Util::getCurrentDateTime()], "billing_plan_id IN ($ids)");
                 if(!$status) {
                     $this->printToConsole("Unable to update onforwarding charge for *$companyName*");
+                }
+                else{
+                    $this->printToConsole("Updated *$companyName onforwarding charge");
                 }
             } else {
                 // Company does not have a billing plan

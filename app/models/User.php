@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Model\Validator\Email as Email;
+use PhalconUtils\Validation\RequestValidation;
 
 class User extends \Phalcon\Mvc\Model
 {
@@ -109,7 +110,7 @@ class User extends \Phalcon\Mvc\Model
 
         if ($email != null) {
             $this->email = strtolower(trim($email));
-        }else{
+        } else {
             $this->email = $email;
         }
 
@@ -182,7 +183,7 @@ class User extends \Phalcon\Mvc\Model
              */
             $security = $this->getDI()->getSecurity();
             $this->password = $security->hash($password);
-        }else{
+        } else {
             $this->password = $password;
         }
 
@@ -319,26 +320,27 @@ class User extends \Phalcon\Mvc\Model
     public function columnMap()
     {
         return array(
-            'id' => 'id', 
-            'firstname' => 'firstname', 
-            'lastname' => 'lastname', 
-            'email' => 'email', 
-            'phone' => 'phone', 
-            'created_date' => 'created_date', 
-            'status' => 'status', 
-            'modified_date' => 'modified_date', 
+            'id' => 'id',
+            'firstname' => 'firstname',
+            'lastname' => 'lastname',
+            'email' => 'email',
+            'phone' => 'phone',
+            'created_date' => 'created_date',
+            'status' => 'status',
+            'modified_date' => 'modified_date',
             'password' => 'password'
         );
     }
 
-    public function initData($firstname, $lastname, $phone, $email=null, $password=null, $is_existing=false){
+    public function initData($firstname, $lastname, $phone, $email = null, $password = null, $is_existing = false)
+    {
         $this->setFirstname($firstname);
         $this->setLastname($lastname);
         $this->setPhone($phone);
         $this->setEmail($email);
 
         $now = date('Y-m-d H:i:s');
-        if (!$is_existing){
+        if (!$is_existing) {
             $this->setCreatedDate($now);
             $this->setStatus(Status::INACTIVE);
             $this->setPassword($password);
@@ -346,25 +348,29 @@ class User extends \Phalcon\Mvc\Model
         $this->setModifiedDate($now);
     }
 
-    public function changePassword($password){
+    public function changePassword($password)
+    {
         $this->setPassword($password);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
         $this->setStatus(Status::ACTIVE);
     }
 
-    public function changeStatus($status){
+    public function changeStatus($status)
+    {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function editDetails($firstname, $lastname, $email){
+    public function editDetails($firstname, $lastname, $email)
+    {
         $this->setFirstname($firstname);
         $this->setLastname($lastname);
         $this->setEmail($email);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public function getData(){
+    public function getData()
+    {
         return array(
             'id' => $this->getId(),
             'firstname' => $this->getFirstname(),
@@ -377,24 +383,56 @@ class User extends \Phalcon\Mvc\Model
         );
     }
 
-    public static function fetchByPhone($phone){
+    public static function fetchByPhone($phone)
+    {
         return User::findFirst(array(
             'phone = :phone:',
             'bind' => ['phone' => trim($phone)]
         ));
     }
 
-    public static function fetchByEmail($email){
+    public static function fetchByEmail($email)
+    {
         return User::findFirst(array(
             'email = :email:',
             'bind' => ['email' => trim($email)]
         ));
     }
 
-    public static function fetchById($id){
+    public static function fetchById($id)
+    {
         return User::findFirst(array(
             'id = :id:',
             'bind' => ['id' => $id]
         ));
+    }
+
+    /**
+     * Check if a user exists
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $data
+     * @return bool|User
+     */
+    public static function fetchByData($data)
+    {
+        $keys = array_flip(array_keys($data));
+        if (!isset($keys['email'], $keys['phone'], $keys['lastname'], $keys['firstname'])) {
+            return false;
+        }
+
+        $bind = [];
+        $conditions = 'firstname=:firstname: AND lastname=:lastname: AND ';
+        $bind['firstname'] = $data['firstname'];
+        $bind['lastname'] = strtolower(Text::removeExtraSpaces($data['lastname']));
+        if (is_null($data['email'])) {
+            $conditions .= 'email IS NULL';
+        } else {
+            $conditions .= 'email=:email:';
+            $bind['email'] = $data['email'];
+        }
+        $conditions .= ' AND phone=:phone:';
+        $bind['phone'] = $data['phone'];
+
+        return self::findFirst(['conditions' => $conditions, 'bind' => $bind]);
     }
 }

@@ -33,6 +33,14 @@ sudo apt-get install redis-server
 brew install redis
 ```
 
+### Install Beanstalkd
+See how to install [here](http://kr.github.io/beanstalkd/download.html)
+
+### Install WkHtmlToPdf 
+See installation [here](http://wkhtmltopdf.org/downloads.html) 
+
+For ubuntu server (>= 14.04) run `<project_root>/scripts/wtkhtmltopdf.sh` to install
+
 ### Setup Virtual Host
 *Windows*
 [Link 1](http://foundationphp.com/tutorials/apache_vhosts.php)
@@ -54,8 +62,10 @@ brew install redis
     DocumentRoot "<WebServer Directory>/tnt-service/public"
     ServerName local.courierplus.tntservice
     ServerAlias local.courierplus.tntservice.com
-    SetEnv AWS_KEY ************
-    SetEnv AWS_SECRET ***********
+    SetEnv AWS_KEY *************
+    SetEnv AWS_SECRET **********
+    SetEnv BEANSTALKD_HOST 127.0.0.1
+    SetEnv BEANSTALKD_PORT 11300
     ErrorLog "/var/log/apache2/local.courierplus.tntservice.error"
     CustomLog "/var/log/apache2/local.courierplus.tntservice.access.log" common
     <Directory "<WebServer Directory>/tnt-service/public">
@@ -82,19 +92,43 @@ Create `tnt` database
 **Run Migration Commands**
 `php vendor/bin/phinx migrate`
 
+### Workers
+- Parcel Creation Worker
+This worker executes bulk parcel creation jobs.
+
+Start by running the following command from the project root:  
+
+`BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start ParcelCreationWorker &`
+
+Stop by running the following command from the project root:  
+
+`BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> php app/cli.php worker stop ParcelCreationWorker`
+
+- Bulk Waybill Printing Worker 
+This worker executes bulk waybill printing jobs. The jobs generate pdf waybills for multiple shipments, uploads to S3 and then sends the link to the user's email.
+
+Start by running the following command from the project root:  
+
+`APPLICATION_ENV=<local|staging|production> AWS_KEY=<aws_key> AWS_SECRET='<aws_secret>' BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> nohup php app/cli.php worker start WaybillPrintingWorker &`
+
+Stop by running the following command from the project root:  
+
+`BEANSTALKD_HOST=<host> BEANSTALKD_PORT=<port> TNT_DB_HOST=<db_host>TNT_DB_USERNAME=<db_user> TNT_DB_PASSWORD=<db_password> TNT_DBNAME=<db_name> php app/cli.php worker stop WaybillPrintingWorker`
 
 Contributors
 ------------
-- Adegoke Obasa <goke@cottacush.com>
+Adegoke Obasa <goke@cottacush.com> 
 
-- Adeyemi Olaoye <yemi@cottacush.com>
+Adeyemi Olaoye <yemi@cottacush.com> 
 
-- Akintewe Rotimi <akintewe.rotimi@gmail.com>
+Akintewe Rotimi <akintewe.rotimi@gmail.com> 
 
-- Boyewa Akindolani <boye@cottacush.com>
+Babatunde Otaru <tunde@cottacush.com>
 
-- Olawale Lawal <wale@cottacush.com>
+Boyewa Akindolani <boye@cottacush.com> 
 
-- Rahman Shitu <rahman@cottacush.com>
+Olawale Lawal <wale@cottacush.com> 
+
+Rahman Shitu <rahman@cottacush.com>
 
 
