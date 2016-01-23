@@ -1876,7 +1876,6 @@ class Parcel extends \Phalcon\Mvc\Model
             }
             $result[] = $parcel;
         }
-        $result1 = $result;
         return $result;
     }
 
