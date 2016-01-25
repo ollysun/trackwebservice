@@ -151,6 +151,6 @@ class CreditNote extends EagerModel
         if(is_null($printOutDetails) || empty($printOutDetails)){
             return null;
         }
-        return $printOutDetails->toArray();
+        return $printOutDetails;
     }
 }
