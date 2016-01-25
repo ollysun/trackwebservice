@@ -90,4 +90,27 @@ class CreditNoteParcel extends EagerModel
             []
         ];
     }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $creditNoteNo
+     * @return mixed|null
+     */
+    public static function getDetails($creditNoteNo)
+    {
+        $creditNoteParcel = new CreditNoteParcel();
+        $builder = $creditNoteParcel->getModelsManager()->createBuilder();
+        $builder->from('CreditNoteParcel');
+        $builder->columns('CreditNoteParcel.*,InvoiceParcel.*,Parcel.amount_due');
+        $builder->where("CreditNoteParcel.credit_note_number = :credit_note_no:");
+        $builder->innerJoin('InvoiceParcel', 'InvoiceParcel.id = CreditNoteParcel.invoice_parcel_id');
+        $builder->innerJoin('Parcel','InvoiceParcel.waybill_number = Parcel.waybill_number');
+        $bind['credit_note_no'] = $creditNoteNo;
+        $creditNoteDetails = $builder->getQuery()->execute($bind)->toArray();
+        if ($creditNoteDetails) {
+            return $creditNoteDetails;
+        } else {
+            return null;
+        }
+    }
 }

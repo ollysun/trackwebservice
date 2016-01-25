@@ -77,7 +77,7 @@ class CreditNote extends EagerModel
         }
 
         if (isset($filter_by['status'])) {
-            $builder->andWhere(self::class.'.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
+            $builder->andWhere(self::class . '.status=:status:', ['status' => $filter_by['status']], ['status' => PDO::PARAM_STR]);
         }
         if (isset($filter_by['company_id'])) {
             $builder->andWhere(Invoice::class . '.company_id=:company_id:', ['company_id' => $filter_by['company_id']], ['company_id' => PDO::PARAM_INT]);
@@ -90,6 +90,7 @@ class CreditNote extends EagerModel
      * Gets the total count
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param $filter_by
+     * @return integer
      */
     public static function getTotalCount($filter_by)
     {
@@ -100,7 +101,7 @@ class CreditNote extends EagerModel
         $builder = $obj->getModelsManager()->createBuilder()->from(self::class);
         $columns = ['COUNT(*) as count'];
         $builder = self::addFetchCriteria($builder, $filter_by);
-        if(isset($filter_by['company_id'])) {
+        if (isset($filter_by['company_id'])) {
             $builder->join('Invoice', 'Invoice.invoice_number = CreditNote.invoice_number');
         }
         $count = $builder->columns($columns)->getQuery()->getSingleResult();
@@ -130,5 +131,26 @@ class CreditNote extends EagerModel
                 'reference_key' => 'id'
             ]
         ];
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $creditNoteNo
+     * @return array
+     */
+    public function getPrintoutFields($creditNoteNo)
+    {
+        $builder = CreditNote::getModelsManager()->createBuilder();
+        $builder->from('CreditNote');
+        $builder->where('credit_note_number = :credit_note_no:');
+        $builder->columns('CreditNote.*,Invoice.*,Company.name');
+        $builder->innerJoin('Invoice','Invoice.invoice_number = CreditNote.invoice_number');
+        $builder->innerJoin('Company','Invoice.company_id = Company.id');
+        $bind['credit_note_no'] = $creditNoteNo;
+        $printOutDetails = $builder->getQuery()->execute($bind)->toArray();
+        if(is_null($printOutDetails) || empty($printOutDetails)){
+            return null;
+        }
+        return $printOutDetails;
     }
 }
