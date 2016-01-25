@@ -1415,13 +1415,13 @@ class Parcel extends \Phalcon\Mvc\Model
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
             ->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress')
-            ->leftJoin('Country', 'SenderCountry.id = SenderAddress.country_id' , 'SenderCountry')
-            ->leftJoin('State', 'SenderState.id = SenderAddress.state_id' , 'SenderState')
-            ->leftJoin('City', 'SenderCity.id = SenderAddress.city_id' , 'SenderCity')
+            ->leftJoin('Country', 'SenderCountry.id = SenderAddress.country_id', 'SenderCountry')
+            ->leftJoin('State', 'SenderState.id = SenderAddress.state_id', 'SenderState')
+            ->leftJoin('City', 'SenderCity.id = SenderAddress.city_id', 'SenderCity')
             ->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress')
-            ->leftJoin('State', 'ReceiverState.id = ReceiverAddress.state_id' , 'ReceiverState')
-            ->leftJoin('City', 'ReceiverCity.id = ReceiverAddress.city_id' , 'ReceiverCity')
-            ->leftJoin('Country', 'ReceiverCountry.id = ReceiverAddress.country_id' , 'ReceiverCountry')
+            ->leftJoin('State', 'ReceiverState.id = ReceiverAddress.state_id', 'ReceiverState')
+            ->leftJoin('City', 'ReceiverCity.id = ReceiverAddress.city_id', 'ReceiverCity')
+            ->leftJoin('Country', 'ReceiverCountry.id = ReceiverAddress.country_id', 'ReceiverCountry')
             ->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch')
             ->leftJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch')
             ->leftJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
@@ -1617,8 +1617,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['end_modified_date'] = $filter_by['end_modified_date'];
         }
         if (isset($filter_by['waybill_number'])) {
-            $where[] = 'Parcel.waybill_number LIKE :waybill_number:';
-            $bind['waybill_number'] = '%' . $filter_by['waybill_number'] . '%';
+            $where[] = 'Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :reference_number:';
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+            $bind['reference_number'] = $filter_by['waybill_number'];
         }
         if (isset($filter_by['route_id'])) {
             $where[] = 'Parcel.route_id = :route_id:';
@@ -2109,11 +2110,11 @@ class Parcel extends \Phalcon\Mvc\Model
 
             //send mail if weight not in weight range of corporate
             if ($this->amount_due == '0') {
-                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id" , "columns" => "company_id"))->toArray();
+                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id", "columns" => "company_id"))->toArray();
                 $company_id = $billingPlan['company_id'];
                 $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
                 if (!is_null($company_id) && !$calc_weight_billing) {
-                    $companyName = Company::findFirst(array("id = $company_id" , "columns" => "name" ))->toArray()['name'];
+                    $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
                     $this->sendWeightNotInRangeMail($companyName);
                 }
             }
