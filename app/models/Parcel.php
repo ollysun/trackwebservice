@@ -1803,7 +1803,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         if (isset($fetch_with['with_company'])) {
-            $columns[] = 'Company.*';
+            $columns[] = 'Company.*,BillingPlan.*';
             $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
             $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
         }
@@ -1868,6 +1868,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
                 if (isset($fetch_with['with_company'])) {
                     $parcel['company'] = $item->company->toArray();
+                    $parcel['billing_plan'] = $item->billingPlan->toArray();
                 }
                 if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
