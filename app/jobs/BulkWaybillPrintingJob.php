@@ -109,7 +109,7 @@ class BulkWaybillPrintingJob extends BaseJob
         $generator = new BarcodeGeneratorHTML();
         $barCodeData = $generator->getBarcode($parcel['waybill_number'], BarcodeGeneratorHTML::TYPE_CODE_128, 2, 78);
         return [
-            'waybill_number' => $parcel['waybill_number'],
+            'waybill_number' => Util::humanizeWaybillNumber($parcel['waybill_number']),
             'sender_name' => $parcel['sender']['firstname'] . ' ' . $parcel['sender']['lastname'],
             'sender_address' => $parcel['sender_address']['street_address1'] .
                 '<br/>' . $parcel['sender_address']['street_address2'] . '<br/>',
