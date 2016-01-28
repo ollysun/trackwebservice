@@ -331,7 +331,10 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $columns = ['Parcel.*', 'ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
 
         if (isset($filter_by['waybill_number'])) {
-            $where[] = 'Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :waybill_number:';
+            $waybill_number_array = explode(',',$filter_by['waybill_number']);
+            $comma_separated = implode("','", $waybill_number_array);
+            $comma_separated = "'$comma_separated'";
+            $where[] = "Parcel.waybill_number IN ($comma_separated)";
             $bind['waybill_number'] = $filter_by['waybill_number'];
         } else if (isset($filter_by['parcel_id'])) {
             $where[] = 'ParcelHistory.parcel_id = :parcel_id:';
