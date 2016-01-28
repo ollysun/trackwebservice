@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::OFFICER,Role::SWEEPER,Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -910,7 +910,7 @@ class ParcelController extends ControllerBase
                 if (isset($receiver_email)) {
                     $data['email'] = $receiver_email;
                 }
-                if(isset($receiver_phonenumber)){
+                if (isset($receiver_phonenumber)) {
                     $data['phone_number'] = $receiver_phonenumber;
                 }
 
