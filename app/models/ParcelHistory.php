@@ -328,10 +328,10 @@ class ParcelHistory extends \Phalcon\Mvc\Model
 
         $where = [];
         $bind = [];
-        $columns = ['Parcel.*', 'ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
+        $columns = ['Parcel.*', 'ParcelHistory.*', 'FromBranch.*', 'ToBranch.*', 'ParcelComment.*'];
 
         if (isset($filter_by['waybill_number'])) {
-            $waybill_number_array = explode(',',$filter_by['waybill_number']);
+            $waybill_number_array = explode(',', $filter_by['waybill_number']);
             $comma_separated = implode("','", $waybill_number_array);
             $comma_separated = "'$comma_separated'";
             $where[] = "Parcel.waybill_number IN ($comma_separated)";
@@ -355,6 +355,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
         $builder->leftJoin('FromBranch', 'FromBranch.id = ParcelHistory.from_branch_id', 'FromBranch');
         $builder->leftJoin('ToBranch', 'ToBranch.id = ParcelHistory.to_branch_id', 'ToBranch');
+        $builder->leftJoin('ParcelComment', 'Parcel.waybill_number = ParcelComment.waybill_number AND type = "' . ParcelComment::COMMENT_TYPE_RETURNED . '"');
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -368,6 +369,9 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                 $result[$item->parcel->waybill_number]['receiver'] = User::findFirst($item->parcel->receiver_id)->toArray();
                 if ($item->parcel->getStatus() == Status::PARCEL_DELIVERED) {
                     $result[$item->parcel->waybill_number]['delivery_receipt'] = $item->parcel->getProofOfDelivery();
+                }
+                if ($item->parcel->getStatus() == Status::PARCEL_RETURNED) {
+                    $result[$item->parcel->waybill_number]['parcel_return_comment'] = $item->parcelComment->toArray();
                 }
             }
             $history = $item->parcelHistory->getData();
