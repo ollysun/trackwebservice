@@ -2835,4 +2835,21 @@ class Parcel extends \Phalcon\Mvc\Model
         $e = new Exception;
         Util::slackDebug('Parcel Exception Log', 'Could not update or save parcel. Parcel Data: ' . json_encode($this->toArray()) . 'Stack trace: ' . $e->getTraceAsString());
     }
+
+    /**
+     * Get a bag
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $waybill_number
+     * @return bool
+     */
+    public static function getBag($waybill_number)
+    {
+        $bag = self::fetchOne($waybill_number, false, 'waybill_number');
+        if (!$bag) {
+            return false;
+        }
+        $parcels = self::fetchAll(null, null, ['send_all' => 1, 'parent_id' => $bag['id'], 'is_visible' => 0], ['with_to_branch' => 1]);
+        $bag['parcels'] = $parcels;
+        return $bag;
+    }
 }
