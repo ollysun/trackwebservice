@@ -2462,7 +2462,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
                     $item->setIsVisible(0);
                     $item->setFromBranchId($from_branch_id);
-                    $item->setToBranchId($to_branch_id);
                     $item->setStatus($status);
                     $item->setModifiedDate(date('Y-m-d H:i:s'));
                     if (!$item->save()) {
