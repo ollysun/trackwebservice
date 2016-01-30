@@ -2847,7 +2847,7 @@ class Parcel extends \Phalcon\Mvc\Model
         if (!$bag) {
             return false;
         }
-        $parcels = self::fetchAll(null, null, ['send_all' => 1, 'parent_id' => $bag['id'], 'is_visible' => 0], ['with_to_branch' => 1]);
+        $parcels = self::fetchAll(null, null, ['send_all' => 1, 'parent_id' => $bag['id'], 'is_visible' => 0], ['with_to_branch' => 1, 'with_receiver_address' => 1]);
         $bag['parcels'] = $parcels;
         return $bag;
     }
