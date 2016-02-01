@@ -156,7 +156,7 @@ class ParcelController extends ControllerBase
 
     public function getOneAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $id = $this->request->getQuery('id');
         $waybill_number = $this->request->getQuery('waybill_number');
@@ -1609,4 +1609,29 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess($job_id);
     }
+
+    /**
+     * Get details of bag
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return $this
+     */
+    public function getBagAction()
+    {
+        $waybill_number = $this->request->get('waybill_number', 'string', null);
+        if (is_null($waybill_number)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        if (!Parcel::isBagNumber($waybill_number)) {
+            return $this->response->sendError('Invalid bag number supplied');
+        }
+
+        $bag = Parcel::getBag($waybill_number);
+        if (!$bag) {
+            return $this->response->sendError('Could not fetch bag');
+        }
+        return $this->response->sendSuccess($bag);
+    }
 }
+
+
