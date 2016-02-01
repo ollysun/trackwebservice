@@ -370,9 +370,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                 if ($item->parcel->getStatus() == Status::PARCEL_DELIVERED) {
                     $result[$item->parcel->waybill_number]['delivery_receipt'] = $item->parcel->getProofOfDelivery();
                 }
-                if ($item->parcel->getStatus() == Status::PARCEL_RETURNED) {
-                    $result[$item->parcel->waybill_number]['parcel_return_comment'] = $item->parcelComment->toArray();
-                }
+                $result[$item->parcel->waybill_number]['parcel_return_comment'] = $item->parcelComment->toArray();
             }
             $history = $item->parcelHistory->getData();
             $history['from_branch'] = (is_null($item->fromBranch->id)) ? null : $item->fromBranch->getData();
