@@ -153,4 +153,25 @@ class Util
 
         return implode(' ', $parts);
     }
+
+    /**
+     * Add where in condition
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $where
+     * @param $bind
+     * @param $model
+     * @param $field
+     * @param $value
+     */
+    public static function addWhereInCondition(&$where, &$bind, $model, $field, $value)
+    {
+        if (strpos($value, ',') === false) {
+            $where[] = $model . '.' . $field . ' = :' . $field . ':';
+            $bind[$field] = $value;
+        } else {
+            $values = str_replace(',', "','", $value);
+            $values = "'" . $values . "'";
+            $where[] = "$model.$field IN ($values)";
+        }
+    }
 }
