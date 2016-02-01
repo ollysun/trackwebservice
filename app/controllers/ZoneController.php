@@ -346,7 +346,7 @@ class ZoneController extends ControllerBase
 
     public function calcBillingAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER,Role::SWEEPER,Role::DISPATCHER]);
 
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');
