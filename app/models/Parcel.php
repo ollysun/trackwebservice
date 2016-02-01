@@ -1517,8 +1517,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['to_branch_id'] = $filter_by['to_branch_id'];
         }
         if (isset($filter_by['from_branch_id'])) {
-            $where[] = 'Parcel.from_branch_id = :from_branch_id:';
-            $bind['from_branch_id'] = $filter_by['from_branch_id'];
+            Util::addWhereInCondition($where, $bind, 'Parcel', 'from_branch_id', $filter_by['from_branch_id']);
         }
         if (isset($filter_by['parcel_type'])) {
             $where[] = 'Parcel.parcel_type = :parcel_type:';
@@ -1646,8 +1645,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['history_to_branch_id'] = $filter_by['history_to_branch_id'];
         }
         if (isset($filter_by['created_branch_id'])) {
-            $where[] = 'Parcel.created_branch_id = :created_branch_id:';
-            $bind['created_branch_id'] = $filter_by['created_branch_id'];
+            Util::addWhereInCondition($where, $bind, 'Parcel', 'created_branch_id', $filter_by['created_branch_id']);
         }
         if (isset($filter_by['request_type'])) {
             $where[] = 'Parcel.request_type = :request_type:';
