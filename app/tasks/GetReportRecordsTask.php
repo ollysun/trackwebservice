@@ -72,6 +72,9 @@ class GetReportRecordsTask extends BaseTask
     const QTY_METRICS_WEIGHT = 'weight';
     const QTY_METRICS_PIECES = 'pieces';
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     */
     public function mainAction()
     {
         $line = '';
@@ -135,6 +138,11 @@ class GetReportRecordsTask extends BaseTask
         }
     }
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $method
+     * @return string
+     */
     public static function getPaymentMethod($method)
     {
         switch ($method) {
@@ -160,7 +168,11 @@ class GetReportRecordsTask extends BaseTask
         }
     }
 
-   
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $type
+     * @return bool|string
+     */
     public static function getParcelType($type)
     {
         switch ($type) {
@@ -180,7 +192,11 @@ class GetReportRecordsTask extends BaseTask
         }
     }
 
-   
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $type
+     * @return bool|string
+     */
     public static function getDeliveryType($type)
     {
         switch ($type) {
@@ -240,12 +256,21 @@ class GetReportRecordsTask extends BaseTask
         return date($format, $datetime);
     }
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $datetime
+     * @return bool|string
+     */
     public static function convertToTrackingDateFormat($datetime)
     {
         return self::formatDate('d M. Y', $datetime);
     }
-    
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $status
+     * @return string
+     */
     public static function getStatus($status)
     {
         switch ($status) {
@@ -306,6 +331,11 @@ class GetReportRecordsTask extends BaseTask
         }
     }
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $type
+     * @return bool|string
+     */
     public static function getRequestType($type)
     {
         switch ($type) {
