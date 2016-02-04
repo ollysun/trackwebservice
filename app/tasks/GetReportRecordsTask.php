@@ -84,7 +84,7 @@ class GetReportRecordsTask extends BaseTask
                 '"' . $parcel['sender_address']['street_address1'] .'"' . ' , ' .
                 $parcel['sender_address']['city']['name'] . ' , ' .
                 $parcel['sender_address']['state']['name'] . ' , ' .
-                $parcel['receiver']['firstname'] . $parcel['receiver']['lastname'] . ' , ' .
+                $parcel['receiver']['firstname'] . '  ' .$parcel['receiver']['lastname'] . ' , ' .
                 $parcel['receiver']['email'] . ' , ' .
                 $parcel['receiver']['phone'] . ' , ' .
                 '"' . $parcel['receiver_address']['street_address1'] . '"' .' , ' .
