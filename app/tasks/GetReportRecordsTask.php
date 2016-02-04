@@ -113,9 +113,6 @@ class GetReportRecordsTask extends BaseTask
                 $parcel['delivery_amount']];
             fputcsv($file, $lineData, ',', '"');
         }
-
-        var_dump($parcels);
-        exit;
     }
 
     /**
