@@ -56,7 +56,7 @@ class GetReportRecordsTask extends BaseTask
      */
     public function mainAction(array $dates)
     {
-        $headers = array('SN', 'Waybill Number', 'Sender', 'Sender Email', 'Sender Phone', 'Sender Address', 'Sender City', 'Sender State', 'Receiver', 'Receiver Email', 'Receiver Phone', 'Receiver Address', 'Receiver City', 'Receiver State', 'Weight/Piece', 'Payment Method', 'Amount Due', 'Cash Amount', 'POS Amount', 'POS Transaction ID', 'Parcel Type', 'Cash on Delivery', 'Delivery Type', 'Package Value', '# of Package', 'Shipping Type', 'Created Date', 'Last Modified Date', 'Status', 'Reference Number', 'Originating Branch', 'Route', 'Request Type', 'For Return', 'Other Info', 'Company Reg No', 'Billing Plan Name');
+        $headers = array('SN', 'Waybill Number', 'Sender', 'Sender Email', 'Sender Phone', 'Sender Address', 'Sender City', 'Sender State', 'Receiver', 'Receiver Email', 'Receiver Phone', 'Receiver Address', 'Receiver City', 'Receiver State', 'Weight/Piece', 'Payment Method', 'Amount Due', 'Cash Amount', 'POS Amount', 'POS Transaction ID', 'Parcel Type', 'Cash on Delivery', 'Delivery Type', 'Package Value', '# of Package', 'Shipping Type', 'Created Date', 'Last Modified Date', 'Status', 'Reference Number', 'Originating Branch', 'Route', 'Request Type', 'For Return', 'Other Info', 'Company Reg No', 'Billing Plan Name','Amount due to merchant');
         $fetch_with = [];
         $filter_by = [];
         $extra_details = ['with_to_branch', 'with_from_branch', 'with_sender', 'with_sender_address', 'with_receiver', 'with_receiver_address', 'with_bank_account', 'with_created_branch', 'with_route', 'with_created_by', 'with_company'];
@@ -68,7 +68,6 @@ class GetReportRecordsTask extends BaseTask
         $filter_by['end_created_date'] = $dates[1];
 
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
-
         $file = fopen('public/all_parcels_report.csv', 'a');
         fputcsv($file, $headers);
 
@@ -110,7 +109,8 @@ class GetReportRecordsTask extends BaseTask
                 ($parcel['for_return'] ? 'Yes' : 'No'),
                 $parcel['other_info'],
                 $parcel['company']['reg_no'],
-                $parcel['billing_plan']['name']];
+                $parcel['billing_plan']['name'],
+                $parcel['delivery_amount']];
             fputcsv($file, $lineData, ',', '"');
         }
     }
