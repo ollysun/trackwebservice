@@ -5,10 +5,6 @@
  */
 class GetReportRecordsTask extends BaseTask
 {
-    const ENTITY_TYPE_NORMAL = 1;
-    const ENTITY_TYPE_BAG = 2;
-    const ENTITY_TYPE_SUB = 3;
-    const ENTITY_TYPE_PARENT = 4;
 
     const ACTIVE = 1;
     const INACTIVE = 2;
@@ -31,21 +27,12 @@ class GetReportRecordsTask extends BaseTask
     const MANIFEST_HAS_ISSUE = 22;
     const RETURNED = 23;
 
-    const BRANCH_TYPE_EC = 4;
-    const BRANCH_TYPE_HUB = 2;
-    const BRANCH_TYPE_HQ = 1;
-
     const DATE_TIME_FORMAT = 'd M Y H:i';
-    const DATE_FORMAT = 'd M Y';
-    const TIME_FORMAT = 'g:i A';
 
     const REF_PAYMENT_METHOD_CASH = 1;
     const REF_PAYMENT_METHOD_POS = 2;
     const REF_PAYMENT_METHOD_CASH_POS = 3;
     const REF_PAYMENT_METHOD_DEFERRED = 4;
-
-    const REF_MANIFEST_TYPE_SWEEP = 1;
-    const REF_MANIFEST_TYPE_DELIVERY = 2;
 
     const DELIVERY_DISPATCH = 2;
     const DELIVERY_PICKUP = 1;
@@ -63,14 +50,6 @@ class GetReportRecordsTask extends BaseTask
     const PARCEL_NON_DOCUMENTS = 2;
     const PARCEL_HIGH_VALUE = 3;
 
-    const RETURN_REQUEST_SENT = 1;
-
-    const TRUE = 1;
-    const FALSE = 0;
-    const DEFAULT_VAT_RATE = 5;
-
-    const QTY_METRICS_WEIGHT = 'weight';
-    const QTY_METRICS_PIECES = 'pieces';
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
@@ -79,11 +58,10 @@ class GetReportRecordsTask extends BaseTask
     {
         $line = '';
         $headers = array('SN', 'Waybill Number', 'Sender', 'Sender Email', 'Sender Phone', 'Sender Address', 'Sender City', 'Sender State', 'Receiver', 'Receiver Email', 'Receiver Phone', 'Receiver Address', 'Receiver City', 'Receiver State', 'Weight/Piece', 'Payment Method', 'Amount Due', 'Cash Amount', 'POS Amount', 'POS Transaction ID', 'Parcel Type', 'Cash on Delivery', 'Delivery Type', 'Package Value', '# of Package', 'Shipping Type', 'Created Date', 'Last Modified Date', 'Status', 'Reference Number', 'Originating Branch', 'Route', 'Request Type', 'For Return', 'Other Info', 'Company Reg No', 'Billing Plan Name');
-        foreach($headers as $header){
+        foreach ($headers as $header) {
             $line .= $header . ' , ';
         }
-        $this->printToConsole($line);
-
+        file_put_contents('public/reports.csv', $line . "\r\n", FILE_APPEND);
         $fetch_with = [];
         $filter_by = [];
         $extra_details = ['with_to_branch', 'with_from_branch', 'with_sender', 'with_sender_address', 'with_receiver', 'with_receiver_address', 'with_bank_account', 'with_created_branch', 'with_route', 'with_created_by', 'with_company'];
@@ -91,50 +69,51 @@ class GetReportRecordsTask extends BaseTask
             $fetch_with[$extra] = true;
         }
         $filter_by['send_all'] = true;
+        $filter_by['start_created_date'] = '2016/01/01 00:00:00';
+        $filter_by['end_created_date'] = '2016/02/04 23:59:59';
+
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
 
         $i = 1;
-        foreach($parcels as $parcel){
-            $this->printToConsole($i++ . ' , ' .
-            $parcel['waybill_number'] . ' , ' .
-            $parcel['sender']['firstname'] . '  '. $parcel['sender']['lastname'] . ' , ' .
-            $parcel['sender']['email'] . ' , ' .
-            $parcel['sender']['phone'] . ' , ' .
-            $parcel['sender_address']['street_address1'] . ' , ' .
-            $parcel['sender_address']['city']['name'] . ' , ' .
-            $parcel['sender_address']['state']['name'] . ' , ' .
-            $parcel['receiver']['firstname'] . $parcel['receiver']['lastname'] . ' , ' .
-            $parcel['receiver']['email'] . ' , ' .
-            $parcel['receiver']['phone'] . ' , ' .
-            $parcel['receiver_address']['street_address1'] . ' , ' .
-            $parcel['receiver_address']['city']['name'] . ' , ' .
-            $parcel['receiver_address']['state']['name'] . ' , ' .
-            $parcel['weight'] . ' , ' .
+        foreach ($parcels as $parcel) {
+            file_put_contents('public/reports.csv', $i++ . ' , ' .
+                $parcel['waybill_number'] . ' , ' .
+                $parcel['sender']['firstname'] . '  ' . $parcel['sender']['lastname'] . ' , ' .
+                $parcel['sender']['email'] . ' , ' .
+                $parcel['sender']['phone'] . ' , ' .
+                $parcel['sender_address']['street_address1'] . ' , ' .
+                $parcel['sender_address']['city']['name'] . ' , ' .
+                $parcel['sender_address']['state']['name'] . ' , ' .
+                $parcel['receiver']['firstname'] . $parcel['receiver']['lastname'] . ' , ' .
+                $parcel['receiver']['email'] . ' , ' .
+                $parcel['receiver']['phone'] . ' , ' .
+                $parcel['receiver_address']['street_address1'] . ' , ' .
+                $parcel['receiver_address']['city']['name'] . ' , ' .
+                $parcel['receiver_address']['state']['name'] . ' , ' .
+                $parcel['weight'] . ' , ' .
                 self::getPaymentMethod($parcel['payment_type']) . ' , ' .
-            $parcel['amount_due'] . ' , ' .
-            $parcel['cash_amount'] . ' , ' .
-            $parcel['pos_amount'] . ' , ' .
-            $parcel['pos_trans_id'] . ' , ' .
-                self::getParcelType($parcel['parcel_type']),
-            $parcel['parcel_type'] . ' , ' .
-                (isset($parcel['cash_on_delivery']) ? "Yes" : "No"). ' , ' .
-            self::getDeliveryType($parcel['delivery_type']) . ', ' .
-            $parcel['package_value'] . ' , ' .
-            $parcel['no_of_package'] . ' , ' .
-            self::getShippingType($parcel['shipping_type']) . ' , ' .
+                $parcel['amount_due'] . ' , ' .
+                $parcel['cash_amount'] . ' , ' .
+                $parcel['pos_amount'] . ' , ' .
+                $parcel['pos_trans_id'] . ' , ' .
+                self::getParcelType($parcel['parcel_type']) . ' , ' .
+                $parcel['parcel_type'] . ' , ' .
+                (isset($parcel['cash_on_delivery']) ? "Yes" : "No") . ' , ' .
+                self::getDeliveryType($parcel['delivery_type']) . ', ' .
+                $parcel['package_value'] . ' , ' .
+                $parcel['no_of_package'] . ' , ' .
+                self::getShippingType($parcel['shipping_type']) . ' , ' .
                 self::convertToTrackingDateFormat($parcel['created_date']) . ' , ' .
                 self::formatDate(self::DATE_TIME_FORMAT, $parcel['modified_date']) . ' , ' .
-                strip_tags(self::getStatus($parcel['status'])),
+                strip_tags(self::getStatus($parcel['status'])) . ' , ' .
                 $parcel['reference_number'] . '  ' .
-                 (isset($parcel['created_branch']) ? $parcel['created_branch']['name'] : '') . ' , ' .
-                 (isset($parcel['route']) ? $parcel['route']['name'] : '') . ' , ' .
-                 self::getRequestType($parcel['request_type']) . ' , ' .
-                 ($parcel['for_return'] ? 'Yes' : 'No' ) . ' , ' .
-            $parcel['other_info'] . ' , ' .
-            $parcel['company']['reg_no'] . ' , ' .
-            $parcel['billing_plan']['name']);
-            $this->printToConsole(' ----------------------');
-
+                (isset($parcel['created_branch']) ? $parcel['created_branch']['name'] : '') . ' , ' .
+                (isset($parcel['route']) ? $parcel['route']['name'] : '') . ' , ' .
+                self::getRequestType($parcel['request_type']) . ' , ' .
+                ($parcel['for_return'] ? 'Yes' : 'No') . ' , ' .
+                $parcel['other_info'] . ' , ' .
+                $parcel['company']['reg_no'] . ' , ' .
+                $parcel['billing_plan']['name'] . "\r\n", FILE_APPEND);
         }
     }
 
