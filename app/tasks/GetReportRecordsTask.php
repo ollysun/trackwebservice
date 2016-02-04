@@ -54,7 +54,7 @@ class GetReportRecordsTask extends BaseTask
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      */
-    public function mainAction()
+    public function mainAction(array $dates)
     {
         $line = '';
         $headers = array('SN', 'Waybill Number', 'Sender', 'Sender Email', 'Sender Phone', 'Sender Address', 'Sender City', 'Sender State', 'Receiver', 'Receiver Email', 'Receiver Phone', 'Receiver Address', 'Receiver City', 'Receiver State', 'Weight/Piece', 'Payment Method', 'Amount Due', 'Cash Amount', 'POS Amount', 'POS Transaction ID', 'Parcel Type', 'Cash on Delivery', 'Delivery Type', 'Package Value', '# of Package', 'Shipping Type', 'Created Date', 'Last Modified Date', 'Status', 'Reference Number', 'Originating Branch', 'Route', 'Request Type', 'For Return', 'Other Info', 'Company Reg No', 'Billing Plan Name');
@@ -69,8 +69,8 @@ class GetReportRecordsTask extends BaseTask
             $fetch_with[$extra] = true;
         }
         $filter_by['send_all'] = true;
-        $filter_by['start_created_date'] = '2016/01/01 00:00:00';
-        $filter_by['end_created_date'] = '2016/02/04 23:59:59';
+        $filter_by['start_created_date'] = $dates[0];
+        $filter_by['end_created_date'] = $dates[1];
 
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
 
