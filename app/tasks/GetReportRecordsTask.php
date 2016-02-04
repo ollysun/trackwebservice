@@ -56,12 +56,7 @@ class GetReportRecordsTask extends BaseTask
      */
     public function mainAction(array $dates)
     {
-        $line = '';
         $headers = array('SN', 'Waybill Number', 'Sender', 'Sender Email', 'Sender Phone', 'Sender Address', 'Sender City', 'Sender State', 'Receiver', 'Receiver Email', 'Receiver Phone', 'Receiver Address', 'Receiver City', 'Receiver State', 'Weight/Piece', 'Payment Method', 'Amount Due', 'Cash Amount', 'POS Amount', 'POS Transaction ID', 'Parcel Type', 'Cash on Delivery', 'Delivery Type', 'Package Value', '# of Package', 'Shipping Type', 'Created Date', 'Last Modified Date', 'Status', 'Reference Number', 'Originating Branch', 'Route', 'Request Type', 'For Return', 'Other Info', 'Company Reg No', 'Billing Plan Name');
-        foreach ($headers as $header) {
-            $line .= $header . ' , ';
-        }
-        file_put_contents('public/reports.csv', $line . "\r\n", FILE_APPEND);
         $fetch_with = [];
         $filter_by = [];
         $extra_details = ['with_to_branch', 'with_from_branch', 'with_sender', 'with_sender_address', 'with_receiver', 'with_receiver_address', 'with_bank_account', 'with_created_branch', 'with_route', 'with_created_by', 'with_company'];
@@ -74,46 +69,49 @@ class GetReportRecordsTask extends BaseTask
 
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
 
+        $file = fopen('public/all_parcels_report.csv', 'a');
+        fputcsv($file, $headers);
+
         $i = 1;
         foreach ($parcels as $parcel) {
-            file_put_contents('public/reports.csv', $i++ . ' , ' .
-                $parcel['waybill_number'] . ' , ' .
-                $parcel['sender']['firstname'] . '  ' . $parcel['sender']['lastname'] . ' , ' .
-                $parcel['sender']['email'] . ' , ' .
-                $parcel['sender']['phone'] . ' , ' .
-                '"' . $parcel['sender_address']['street_address1'] .'"' . ' , ' .
-                $parcel['sender_address']['city']['name'] . ' , ' .
-                $parcel['sender_address']['state']['name'] . ' , ' .
-                $parcel['receiver']['firstname'] . '  ' .$parcel['receiver']['lastname'] . ' , ' .
-                $parcel['receiver']['email'] . ' , ' .
-                $parcel['receiver']['phone'] . ' , ' .
-                '"' . $parcel['receiver_address']['street_address1'] . '"' .' , ' .
-                $parcel['receiver_address']['city']['name'] . ' , ' .
-                $parcel['receiver_address']['state']['name'] . ' , ' .
-                $parcel['weight'] . ' , ' .
-                self::getPaymentMethod($parcel['payment_type']) . ' , ' .
-                $parcel['amount_due'] . ' , ' .
-                $parcel['cash_amount'] . ' , ' .
-                $parcel['pos_amount'] . ' , ' .
-                $parcel['pos_trans_id'] . ' , ' .
-                self::getParcelType($parcel['parcel_type']) . ' , ' .
-                $parcel['parcel_type'] . ' , ' .
-                (isset($parcel['cash_on_delivery']) ? "Yes" : "No") . ' , ' .
-                self::getDeliveryType($parcel['delivery_type']) . ', ' .
-                $parcel['package_value'] . ' , ' .
-                $parcel['no_of_package'] . ' , ' .
-                self::getShippingType($parcel['shipping_type']) . ' , ' .
-                self::convertToTrackingDateFormat($parcel['created_date']) . ' , ' .
-                self::formatDate(self::DATE_TIME_FORMAT, $parcel['modified_date']) . ' , ' .
-                strip_tags(self::getStatus($parcel['status'])) . ' , ' .
-                $parcel['reference_number'] . '  ' .
-                (isset($parcel['created_branch']) ? $parcel['created_branch']['name'] : '') . ' , ' .
-                (isset($parcel['route']) ? $parcel['route']['name'] : '') . ' , ' .
-                self::getRequestType($parcel['request_type']) . ' , ' .
-                ($parcel['for_return'] ? 'Yes' : 'No') . ' , ' .
-                $parcel['other_info'] . ' , ' .
-                $parcel['company']['reg_no'] . ' , ' .
-                $parcel['billing_plan']['name'] . "\r\n", FILE_APPEND);
+            $lineData = [$i++,
+                $parcel['waybill_number'],
+                $parcel['sender']['firstname'] . '  ' . $parcel['sender']['lastname'],
+                $parcel['sender']['email'],
+                $parcel['sender']['phone'],
+                $parcel['sender_address']['street_address1'],
+                $parcel['sender_address']['city']['name'],
+                $parcel['sender_address']['state']['name'],
+                $parcel['receiver']['firstname'] . $parcel['receiver']['lastname'],
+                $parcel['receiver']['email'],
+                $parcel['receiver']['phone'],
+                $parcel['receiver_address']['street_address1'],
+                $parcel['receiver_address']['city']['name'],
+                $parcel['receiver_address']['state']['name'],
+                $parcel['weight'],
+                self::getPaymentMethod($parcel['payment_type']),
+                $parcel['amount_due'],
+                $parcel['cash_amount'],
+                $parcel['pos_amount'],
+                $parcel['pos_trans_id'],
+                self::getParcelType($parcel['parcel_type']),
+                (isset($parcel['cash_on_delivery']) ? "Yes" : "No"),
+                self::getDeliveryType($parcel['delivery_type']),
+                $parcel['package_value'],
+                $parcel['no_of_package'],
+                self::getShippingType($parcel['shipping_type']),
+                self::convertToTrackingDateFormat($parcel['created_date']),
+                self::formatDate(self::DATE_TIME_FORMAT, $parcel['modified_date']),
+                strip_tags(self::getStatus($parcel['status'])),
+                $parcel['reference_number'],
+                (isset($parcel['created_branch']) ? $parcel['created_branch']['name'] : ''),
+                (isset($parcel['route']) ? $parcel['route']['name'] : ''),
+                self::getRequestType($parcel['request_type']),
+                ($parcel['for_return'] ? 'Yes' : 'No'),
+                $parcel['other_info'],
+                $parcel['company']['reg_no'],
+                $parcel['billing_plan']['name']];
+            fputcsv($file, $lineData, ',', '"');
         }
     }
 
