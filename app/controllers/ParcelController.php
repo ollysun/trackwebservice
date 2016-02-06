@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -49,26 +49,31 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        //Ensuring the officer is an EC or HUB officer
-        if (!in_array($auth_data['branch']['branch_type'], [BranchType::EC, BranchType::HUB])) {
-            return $this->response->sendAccessDenied();
+        //Ensuring the officer is an EC or HUB officer and its not an edit function
+        if (!isset($parcel['id'])) {
+            if (!in_array($auth_data['branch']['branch_type'], [BranchType::EC, BranchType::HUB])) {
+                return $this->response->sendAccessDenied();
+            }
         }
 
         //determining destination branch
+        if (!isset($parcel['id'])) {
+            if ($to_hub > 0) {
+                if ($auth_data['branch']['branch_type'] == BranchType::EC) {
+                    $to_branch = Branch::getParentById($auth_data['branch']['id']);
+                    if ($to_branch == null) {
+                        return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+                    }
 
-        if ($to_hub > 0) {
-            if ($auth_data['branch']['branch_type'] == BranchType::EC) {
-                $to_branch = Branch::getParentById($auth_data['branch']['id']);
-                if ($to_branch == null) {
-                    return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+                    $to_branch_id = $to_branch->getId();
+                } else if ($to_branch_id == null) {
+                    return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS . ': Destination branch');
                 }
-
-                $to_branch_id = $to_branch->getId();
-            } else if ($to_branch_id == null) {
-                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS . ': Destination branch');
+            } else {
+                $to_branch_id = $auth_data['branch']['id'];
             }
         } else {
-            $to_branch_id = $auth_data['branch']['id'];
+            $to_branch_id = Parcel::findFirstById($parcel['id'])->toArray()['to_branch_id'];
         }
 
         //parcel no_of_package validation
@@ -107,7 +112,11 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_QTY_METRICS);
         }
 
-        $parcel_obj = new Parcel();
+        if (isset($parcel['id'])) {
+            $parcel_obj = Parcel::findFirstById($parcel['id']);
+        } else {
+            $parcel_obj = new Parcel();
+        }
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if ($waybill_numbers) {
