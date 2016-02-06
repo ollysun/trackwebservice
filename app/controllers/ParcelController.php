@@ -112,14 +112,24 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_QTY_METRICS);
         }
 
+        $parcel_edit_history = new ParcelEditHistory();
         if (isset($parcel['id'])) {
             $parcel_obj = Parcel::findFirstById($parcel['id']);
+            $parcel_edit_history->before_data = json_encode($parcel_obj->toArray());
         } else {
             $parcel_obj = new Parcel();
         }
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
-        if ($waybill_numbers) {
+        if (isset($parcel['id'])) {
+            $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
+            $parcel_edit_history->changed_by = $auth_data['fullname'];
+            $check = $parcel_edit_history->save();
+            if(!$check){
+                return $this->response->sendError('Could not save edit details');
+            }
+        }
+            if ($waybill_numbers) {
 
             /**
              * @author Adegoke Obasa <goke@cottacush.com>
