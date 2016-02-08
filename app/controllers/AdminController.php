@@ -36,7 +36,7 @@ class AdminController extends ControllerBase
         }
 
         if ($role_id == Role::SWEEPER) {
-            if (!($branch->getBranchType() == BranchType::HUB  OR  $branch->getBranchType() == BranchType::EC)) {
+            if (!($branch->getBranchType() == BranchType::HUB OR $branch->getBranchType() == BranchType::EC)) {
                 return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB_OR_EC);
             }
         }
@@ -102,8 +102,8 @@ class AdminController extends ControllerBase
         }
 
         if ($role_id == Role::SWEEPER) {
-            if ($branch->getBranchType() != BranchType::HUB) {
-                return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB);
+            if (!($branch->getBranchType() == BranchType::HUB OR $branch->getBranchType() == BranchType::EC)) {
+                return $this->response->sendError(ResponseMessage::SWEEPER_ONLY_TO_HUB_OR_EC);
             }
         }
 
