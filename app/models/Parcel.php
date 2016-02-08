@@ -2071,8 +2071,14 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
             //finally saving the parcel
-            $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
-            $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+            if ($this->waybill_number == null) {
+                $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
+//                $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+                $is_visible = 1;
+            } else {
+                $parcel_status = $this->getStatus();
+                $is_visible = $this->getIsVisible();
+            }
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
             if ($check) {
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
