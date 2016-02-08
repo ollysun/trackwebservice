@@ -49,12 +49,10 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        //Ensuring the officer is an EC or HUB officer and its not an edit function
-        if (!isset($parcel['id'])) {
-            if (!in_array($auth_data['branch']['branch_type'], [BranchType::EC, BranchType::HUB])) {
+        //Ensuring the officer is an EC or HUB officer or an Admin
+            if (!in_array($auth_data['branch']['branch_type'], [BranchType::HQ,BranchType::EC, BranchType::HUB])) {
                 return $this->response->sendAccessDenied();
             }
-        }
 
         //determining destination branch
         if (!isset($parcel['id'])) {
