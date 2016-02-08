@@ -50,12 +50,12 @@ class ParcelController extends ControllerBase
         $auth_data = $this->auth->getData();
 
         //Ensuring the officer is an EC or HUB officer or an Admin
-            if (!in_array($auth_data['branch']['branch_type'], [BranchType::HQ,BranchType::EC, BranchType::HUB])) {
-                return $this->response->sendAccessDenied();
-            }
+        if (!in_array($auth_data['branch']['branch_type'], [BranchType::HQ, BranchType::EC, BranchType::HUB])) {
+            return $this->response->sendAccessDenied();
+        }
 
         //determining destination branch
-        if (!isset($parcel['id'])) {
+        if ($auth_data['branch']['branch_type'] == BranchType::HQ AND isset($parcel['id'])) {
             if ($to_hub > 0) {
                 if ($auth_data['branch']['branch_type'] == BranchType::EC) {
                     $to_branch = Branch::getParentById($auth_data['branch']['id']);
@@ -123,12 +123,12 @@ class ParcelController extends ControllerBase
             $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
             $parcel_edit_history->changed_by = $auth_data['fullname'];
             $parcel_edit_history->modified_at = Util::getCurrentDateTime();
-            $check = $parcel_edit_history->save();
-            if(!$check){
+            $is_successful = $parcel_edit_history->save();
+            if (!$is_successful) {
                 return $this->response->sendError('Could not save edit details');
             }
         }
-            if ($waybill_numbers) {
+        if ($waybill_numbers) {
 
             /**
              * @author Adegoke Obasa <goke@cottacush.com>
