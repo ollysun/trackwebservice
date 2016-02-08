@@ -122,6 +122,7 @@ class ParcelController extends ControllerBase
         if (isset($parcel['id'])) {
             $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
             $parcel_edit_history->changed_by = $auth_data['fullname'];
+            $parcel_edit_history->modified_at = Util::getCurrentDateTime();
             $check = $parcel_edit_history->save();
             if(!$check){
                 return $this->response->sendError('Could not save edit details');
