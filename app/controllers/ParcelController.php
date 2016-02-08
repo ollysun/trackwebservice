@@ -55,7 +55,7 @@ class ParcelController extends ControllerBase
         }
 
         //determining destination branch
-        if (!(isset($parcel['id']) AND $to_branch_id != null)) {
+        if (!(isset($parcel['id']) AND $to_branch_id == null)) {
             if ($to_hub > 0) {
                 if ($auth_data['branch']['branch_type'] == BranchType::EC) {
                     $to_branch = Branch::getParentById($auth_data['branch']['id']);
