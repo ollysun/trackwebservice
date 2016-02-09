@@ -2098,8 +2098,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
             //setting waybill number
             if ($check) {
-                $this->generateWaybillNumber($from_branch_id);
-                $check = $this->save();
+                if (!$this->isWaybillNumber($this->waybill_number)) {
+                    $this->generateWaybillNumber($from_branch_id);
+                    $check = $this->save();
+                }
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
@@ -2110,7 +2112,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->amount_due == '0') {
                 $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id", "columns" => "company_id"))->toArray();
                 $company_id = $billingPlan['company_id'];
-                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
+                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->to_branch_id, $this->weight, $this->weight_billing_plan_id);
                 if (!is_null($company_id) && !$calc_weight_billing) {
                     $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
                     $this->sendWeightNotInRangeMail($companyName);
