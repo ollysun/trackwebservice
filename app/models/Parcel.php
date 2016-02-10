@@ -2071,8 +2071,14 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
             //finally saving the parcel
-            $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
-            $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+            if ($this->waybill_number == null) {
+                $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
+//                $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
+                $is_visible = 1;
+            } else {
+                $parcel_status = $this->getStatus();
+                $is_visible = $this->getIsVisible();
+            }
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
             if ($check) {
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
@@ -2080,7 +2086,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
                     $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, null, $bank_account_obj->getId(),
+                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, $this->waybill_number, $bank_account_obj->getId(),
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
                     $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics']);
                 $check = $this->save();
@@ -2098,8 +2104,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
             //setting waybill number
             if ($check) {
-                $this->generateWaybillNumber($from_branch_id);
-                $check = $this->save();
+                if (!$this->isWaybillNumber($this->waybill_number)) {
+                    $this->generateWaybillNumber($from_branch_id);
+                    $check = $this->save();
+                }
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
@@ -2110,7 +2118,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if ($this->amount_due == '0') {
                 $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id", "columns" => "company_id"))->toArray();
                 $company_id = $billingPlan['company_id'];
-                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->thto_branch_id, $this->weight, $this->weight_billing_plan_id);
+                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->to_branch_id, $this->weight, $this->weight_billing_plan_id);
                 if (!is_null($company_id) && !$calc_weight_billing) {
                     $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
                     $this->sendWeightNotInRangeMail($companyName);
@@ -2121,7 +2129,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
             //creating sub-parcel if the number of packages is more than 1
-            if ($check and $this->getNoOfPackage() > 1) {
+            if ($check and $this->getNoOfPackage() > 1 and !isset($parcel_data['id'])) {
                 $waybill_number = $this->createSub($transaction);
                 $check = $waybill_number != false;
             }
