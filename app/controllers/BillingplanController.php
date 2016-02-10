@@ -105,7 +105,7 @@ class BillingplanController extends ControllerBase
 
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::SWEEPER,Role::DISPATCHER,Role::ADMIN, Role::OFFICER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
