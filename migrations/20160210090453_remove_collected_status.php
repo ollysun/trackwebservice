@@ -25,10 +25,19 @@ class RemoveCollectedStatus extends AbstractMigration
      * Remember to call "create()" or "update()" and NOT "save()" when working
      * with the Table class.
      */
-    public function change()
+    public function up()
     {
         if($this->hasTable('status')){
-            $sql = "Delete from status where status.name = 'parcel_collected'";
+            $sql = "delete from status where status.name = 'parcel_collected'";
+            $this->execute($sql);
+        }
+    }
+
+    public function down()
+    {
+        $statusTable = $this->table('status');
+        if($statusTable->exists()){
+            $sql = "insert into status VALUES (4,'parcel_collected')";
             $this->execute($sql);
         }
     }
