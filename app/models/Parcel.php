@@ -2098,8 +2098,10 @@ class Parcel extends \Phalcon\Mvc\Model
 
             //setting waybill number
             if ($check) {
-                $this->generateWaybillNumber($from_branch_id);
-                $check = $this->save();
+                if (!$this->isWaybillNumber($this->waybill_number)) {
+                    $this->generateWaybillNumber($from_branch_id);
+                    $check = $this->save();
+                }
             } else {
                 Util::slackDebug("Parcel not created", "Unable to save parcel");
                 Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
