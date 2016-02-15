@@ -37,8 +37,8 @@ class RemoveCollectedStatus extends AbstractMigration
     {
         $statusTable = $this->table('status');
         if($statusTable->exists()){
-            $sql = "insert into status VALUES (4,'parcel_collected')";
-            $this->execute($sql);
+            $statusTable->insert(['id','name'],[[4,'parcel_collected']]);
+            $statusTable->save();
         }
     }
 }
