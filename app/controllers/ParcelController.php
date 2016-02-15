@@ -215,7 +215,7 @@ class ParcelController extends ControllerBase
             'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount',
             'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
             'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
-            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type', 'company_id'];
+            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type', 'company_id', 'report'];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
@@ -261,6 +261,8 @@ class ParcelController extends ControllerBase
         $send_all = $this->request->getQuery('send_all');
 
         $order_by = $this->request->getQuery('order_by'); //'Parcel.created_date DESC'
+
+        $report = $this->request->getQuery('report');
 
         $filter_by = $this->getFilterParams();
 
@@ -315,7 +317,11 @@ class ParcelController extends ControllerBase
             $fetch_with['with_invoice_parcel'] = true;
         }
 
-        $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
+        if (!is_null($report) && $report == 1) {
+            $parcels = Parcel::getReportData($offset, $count, $filter_by, $fetch_with, $order_by);
+        } else {
+            $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
+        }
         $result = [];
         if ($with_total_count != null) {
             $count = Parcel::parcelCount($filter_by);
