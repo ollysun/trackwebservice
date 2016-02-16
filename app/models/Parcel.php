@@ -2895,8 +2895,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $sql = str_ireplace('`'.$column['column'] . '`.*', $columnsStatement, $sql);
         }
 
-            $sql = str_replace(':APL0', $count, $sql);
-            $sql = str_replace(':APL1', $offset, $sql);
+        $sql = str_replace(':APL0', $count, $sql);
+        $sql = str_replace(':APL1', $offset, $sql);
 
         $data = $readConnection->fetchAll($sql, PDO::FETCH_ASSOC, $bind);
         return $data;
