@@ -1027,7 +1027,7 @@ class ParcelController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = [
-            'waybill_number', 'parcel_id', 'paginate', 'status'
+            'waybill_number', 'parcel_id', 'paginate', 'status','reference_number'
         ];
 
         $fetch_params = ['with_admin'];
