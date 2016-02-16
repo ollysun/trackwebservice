@@ -1676,7 +1676,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['qty_metrics'] = $filter_by['qty_metrics'];
         }
 
-        if(isset($filter_by['report']) && $filter_by['report'] == 1){
+        if (isset($filter_by['report']) && $filter_by['report'] == 1) {
             $where[] = 'Parcel.entity_type != :entity_type:';
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
@@ -2767,12 +2767,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 $columnsStatementArr[] = $column['column'] . '.' . $attribute . ' AS ' . Util::convertPascalToSnakeCasing($modelStr) . '_' . $attribute;
             }
             $columnsStatement = implode(', ', $columnsStatementArr);
-            $sql = str_ireplace('`'.$column['column'] . '`.*', $columnsStatement, $sql);
+            $sql = str_ireplace('`' . $column['column'] . '`.*', $columnsStatement, $sql);
         }
 
-            $sql = str_replace(':APL0', $count, $sql);
-            $sql = str_replace(':APL1', $offset, $sql);
-
+        $sql = str_replace(':APL0', $count, $sql);
+        $sql = str_replace(':APL1', $offset, $sql);
 
         $data = $readConnection->fetchAll($sql, PDO::FETCH_ASSOC, $bind);
         return $data;
