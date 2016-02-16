@@ -1410,7 +1410,7 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Parcel.*','Admin.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*', 'SenderCity.*', 'SenderState.*', 'SenderCountry.*', 'ReceiverCity.*', 'ReceiverState.*', 'ReceiverCountry.*'])
+            ->columns(['Parcel.*', 'Admin.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*', 'SenderCity.*', 'SenderState.*', 'SenderCountry.*', 'ReceiverCity.*', 'ReceiverState.*', 'ReceiverCountry.*'])
             ->from('Parcel')
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
@@ -2892,7 +2892,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $columnsStatementArr[] = $column['column'] . '.' . $attribute . ' AS ' . Util::convertPascalToSnakeCasing($modelStr) . '_' . $attribute;
             }
             $columnsStatement = implode(', ', $columnsStatementArr);
-            $sql = str_ireplace('`'.$column['column'] . '`.*', $columnsStatement, $sql);
+            $sql = str_ireplace('`' . $column['column'] . '`.*', $columnsStatement, $sql);
         }
 
         $sql = str_replace(':APL0', $count, $sql);
