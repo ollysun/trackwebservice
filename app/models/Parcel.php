@@ -1410,7 +1410,7 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Parcel.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*', 'SenderCity.*', 'SenderState.*', 'SenderCountry.*', 'ReceiverCity.*', 'ReceiverState.*', 'ReceiverCountry.*'])
+            ->columns(['Parcel.*','Admin.*', 'Sender.*', 'Receiver.*', 'SenderAddress.*', 'ReceiverAddress.*', 'CreatedBranch.*', 'FromBranch.*', 'ToBranch.*', 'SenderCity.*', 'SenderState.*', 'SenderCountry.*', 'ReceiverCity.*', 'ReceiverState.*', 'ReceiverCountry.*'])
             ->from('Parcel')
             ->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender')
             ->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver')
@@ -1424,7 +1424,8 @@ class Parcel extends \Phalcon\Mvc\Model
             ->leftJoin('Country', 'ReceiverCountry.id = ReceiverAddress.country_id', 'ReceiverCountry')
             ->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch')
             ->leftJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch')
-            ->leftJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
+            ->leftJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch')
+            ->leftJoin('Admin', 'Admin.id = Parcel.created_by', 'Admin');
         $builder = $builder->where("Parcel.$fetch_by = :$fetch_by:", [$fetch_by => $fetch_value]);
 
 
@@ -1445,6 +1446,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $result['created_branch'] = $data[0]->createdBranch->getData();
         $result['to_branch'] = $data[0]->toBranch->getData();
         $result['from_branch'] = $data[0]->fromBranch->getData();
+        $result['created_by'] = $data[0]->admin->getData();
 
         if (!$in_recursion) {
             $linkage = LinkedParcel::getByChildId($result['id']);
