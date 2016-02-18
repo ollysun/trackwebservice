@@ -1314,7 +1314,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setBankAccountId($bank_account_id);
 
         $now = date('Y-m-d H:i:s');
-        $this->setCreatedDate($now);
+        if ($this->id == null) {
+            $this->setCreatedDate($now);
+        }
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
