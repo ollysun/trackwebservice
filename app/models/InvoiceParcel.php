@@ -196,6 +196,14 @@ class InvoiceParcel extends EagerModel
                 'ref_model_name' => Receiver::class,
                 'foreign_key' => 'receiver_id',
                 'reference_key' => 'id',
+            ],
+            [
+                'field' => 'delivery_receipt',
+                'model_name' => Parcel::class,
+                'ref_model_name' => DeliveryReceipt::class,
+                'foreign_key' => 'waybill_number',
+                'reference_key' => 'waybill_number',
+                'join_type' => 'left'
             ]
         ];
     }

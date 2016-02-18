@@ -1314,7 +1314,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setBankAccountId($bank_account_id);
 
         $now = date('Y-m-d H:i:s');
-        $this->setCreatedDate($now);
+        if ($this->id == null) {
+            $this->setCreatedDate($now);
+        }
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
@@ -1540,6 +1542,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['receiver_address_id'])) {
             $where[] = 'Parcel.receiver_address_id = :receiver_address_id:';
             $bind['receiver_address_id'] = $filter_by['receiver_address_id'];
+        }
+        if (isset($filter_by['remove_cancelled_shipments'])) {
+            $where[] = 'Parcel.status != :status_cancelled:';
+            $bind['status_cancelled'] = Status::PARCEL_CANCELLED;
         }
         if (isset($filter_by['status'])) {
             $where[] = 'Parcel.status = :status:';
