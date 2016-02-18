@@ -27,8 +27,6 @@ class Parcel extends \Phalcon\Mvc\Model
     const QTY_METRICS_PIECES = 'pieces';
     const QTY_METRICS_WEIGHT = 'weight';
 
-    const STATUS_CANCELLED = 7;
-
     /**
      *
      * @var integer
@@ -1543,9 +1541,9 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Parcel.receiver_address_id = :receiver_address_id:';
             $bind['receiver_address_id'] = $filter_by['receiver_address_id'];
         }
-        if (isset($filter_by['is_corporate_shipment'])) {
+        if (isset($filter_by['remove_cancelled_shipments'])) {
             $where[] = 'Parcel.status != :status_cancelled:';
-            $bind['status_cancelled'] = self::STATUS_CANCELLED;
+            $bind['status_cancelled'] = Status::PARCEL_CANCELLED;
         }
         if (isset($filter_by['status'])) {
             $where[] = 'Parcel.status = :status:';
