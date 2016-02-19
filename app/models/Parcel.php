@@ -261,6 +261,145 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $qty_metrics;
 
     /**
+     * @var string
+     */
+    protected $insurance;
+
+    /**
+     * @var double
+     */
+    protected $storage_demurrage;
+
+    /**
+     * @var double
+     */
+    protected $handling_charge;
+
+    /**
+     * @var double
+     */
+    protected $duty_charge;
+
+    /**
+     * @var double
+     */
+    protected $cost_of_crating;
+
+    /**
+     * @var double
+     */
+    protected $others;
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getHandlingCharge()
+    {
+        return $this->handling_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $handling_charge
+     */
+    public function setHandlingCharge($handling_charge)
+    {
+        $this->handling_charge = $handling_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return string
+     */
+    public function getInsurance()
+    {
+        return $this->insurance;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param string $insurance
+     */
+    public function setInsurance($insurance)
+    {
+        $this->insurance = $insurance;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getStorageDemurrage()
+    {
+        return $this->storage_demurrage;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $storage_demurrage
+     */
+    public function setStorageDemurrage($storage_demurrage)
+    {
+        $this->storage_demurrage = $storage_demurrage;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getDutyCharge()
+    {
+        return $this->duty_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $duty_charge
+     */
+    public function setDutyCharge($duty_charge)
+    {
+        $this->duty_charge = $duty_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getCostOfCrating()
+    {
+        return $this->cost_of_crating;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $cost_of_crating
+     */
+    public function setCostOfCrating($cost_of_crating)
+    {
+        $this->cost_of_crating = $cost_of_crating;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getOthers()
+    {
+        return $this->others;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $others
+     */
+    public function setOthers($others)
+    {
+        $this->others = $others;
+    }
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -1230,7 +1369,13 @@ class Parcel extends \Phalcon\Mvc\Model
             'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
             'weight_billing_plan_id' => 'weight_billing_plan_id',
             'is_freight_included' => 'is_freight_included',
-            'qty_metrics' => 'qty_metrics'
+            'qty_metrics' => 'qty_metrics',
+            'insurance' => 'insurance',
+            'cost_of_crating' => 'cost_of_crating',
+            'duty_charge' => 'duty_charge',
+            'handling_charge' => 'handling_charge',
+            'storage_demurrage' => 'storage_demurrage',
+            'others' => 'others',
         );
     }
 
@@ -1284,8 +1429,10 @@ class Parcel extends \Phalcon\Mvc\Model
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
-                             $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT
+                             $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null
     )
+
     {
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -1317,6 +1464,7 @@ class Parcel extends \Phalcon\Mvc\Model
         if ($this->id == null) {
             $this->setCreatedDate($now);
         }
+
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
@@ -1330,9 +1478,16 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
         $this->setIsFreightIncluded($is_freight_included);
         $this->setQtyMetrics($qty_metrics);
+        $this->setInsurance($insurance);
+        $this->setDutyCharge($duty_charge);
+        $this->setHandlingCharge($handling_charge);
+        $this->setCostOfCrating($cost_of_crating);
+        $this->setStorageDemurrage($storage_demurrage);
+        $this->setOthers($others);
     }
 
-    public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
+    public
+    function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
     {
         $this->setParcelType(null);
         $this->setSenderId(null);
@@ -1377,7 +1532,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setQtyMetrics(Parcel::QTY_METRICS_WEIGHT);
     }
 
-    private function getEntityTypeLabel()
+    private
+    function getEntityTypeLabel()
     {
         $entity_type_label = "X";
         switch ($this->getEntityType()) {
@@ -1396,7 +1552,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $entity_type_label;
     }
 
-    public function generateWaybillNumber($initial_branch_id)
+    public
+    function generateWaybillNumber($initial_branch_id)
     {
         $entity_type_label = $this->getEntityTypeLabel();
         $waybill_number = $this->getDeliveryType()
@@ -1408,7 +1565,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public static function fetchOne($fetch_value, $in_recursion = false, $fetch_by = 'id')
+    public
+    static function fetchOne($fetch_value, $in_recursion = false, $fetch_by = 'id')
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -1473,7 +1631,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $filter_by
      * @return array
      */
-    private static function filterConditions($filter_by)
+    private
+    static function filterConditions($filter_by)
     {
         $bind = [];
         $where = [];
@@ -1692,7 +1851,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return ['where' => $where, 'bind' => $bind];
     }
 
-    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
+    public
+    static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
     {
         //filters
         $filter_cond = self::filterConditions($filter_by);
@@ -1764,7 +1924,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $result;
     }
 
-    public static function parcelCount($filter_by)
+    public
+    static function parcelCount($filter_by)
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -1817,7 +1978,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param array $parcel_data
      * @return bool
      */
-    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id)
+    public
+    function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -1974,7 +2136,9 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, $this->waybill_number, $bank_account_obj->getId(),
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
-                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics']);
+                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
+                    $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
+                    $parcel_data['storage_demurrage'], $parcel_data['others']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2052,7 +2216,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
+    public
+    function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2087,7 +2252,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function changeDestination($status, $to_branch_id, $admin_id, $history_desc)
+    public
+    function changeDestination($status, $to_branch_id, $admin_id, $history_desc)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2124,7 +2290,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id)
+    public
+    function checkout($status, $held_by_id, $admin_id, $history_desc, $manifest_id)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2170,7 +2337,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param int $status
      * @return bool
      */
-    public function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL, $message = ParcelHistory::MSG_FOR_ARRIVAL)
+    public
+    function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL, $message = ParcelHistory::MSG_FOR_ARRIVAL)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2211,7 +2379,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function getByWaybillNumber($waybill_number)
+    public
+    static function getByWaybillNumber($waybill_number)
     {
         return Parcel::findFirst([
             'waybill_number = :waybill_number:',
@@ -2219,7 +2388,8 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc = false)
+    public
+    static function getByWaybillNumberList($waybill_number_arr, $make_assoc = false)
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
@@ -2240,7 +2410,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return $data;
     }
 
-    public function createSub(&$transaction)
+    public
+    function createSub(&$transaction)
     {
         $check = true;
         $waybill_number_arr = [];
@@ -2283,7 +2454,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getBillingType(),
                 $this->getWeightBillingPlanId(),
                 $this->getOnforwardingBillingPlanId(),
-                $this->getIsFreightIncluded()
+                $this->getIsFreightIncluded(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
             );
 
             if (!$sub_parcel->save()) {
@@ -2308,7 +2485,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id, $disable_branch_check = false)
+    public
+    static function bagParcels($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number_arr, $seal_id, $disable_branch_check = false)
     {
         $bag = new Parcel();
         $bag->initDataWithBasicInfo(
@@ -2388,7 +2566,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public static function unbagParcels($bag_waybill_number)
+    public
+    static function unbagParcels($bag_waybill_number)
     {
         $bag = Parcel::findFirst([
             'waybill_number = :waybill_number: AND entity_type = :entity_type:',
@@ -2420,7 +2599,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param int[] $parcel_id_arr - An array of parcels id
      * @return bool
      */
-    public static function removeFromBag($bag_id, $parcel_id_arr)
+    public
+    static function removeFromBag($bag_id, $parcel_id_arr)
     {
         if (empty($parcel_id_arr)) {
             return true;
@@ -2454,7 +2634,8 @@ class Parcel extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function alterSubs()
+    public
+    function alterSubs()
     {
         $connection = $this->getWriteConnection();
         $sql = Parcel::SQL_UPDATE_SUBS;
@@ -2473,7 +2654,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_numbers
      * @return array
      */
-    public static function unsortParcels($waybill_numbers)
+    public
+    static function unsortParcels($waybill_numbers)
     {
         $successful = [];
         $failed = [];
@@ -2494,7 +2676,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @return bool
      * @throws Exception
      */
-    public static function unsortParcel($waybill_number)
+    public
+    static function unsortParcel($waybill_number)
     {
         if (!is_string($waybill_number) || !(self::isWaybillNumber($waybill_number) || self::isBagNumber($waybill_number))) {
             throw new Exception('Invalid waybill number');
@@ -2540,7 +2723,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_number
      * @return int
      */
-    public static function isWaybillNumber($waybill_number)
+    public
+    static function isWaybillNumber($waybill_number)
     {
         return preg_match('/^\d[A-Z](\d|\-)+[\d]$/i', $waybill_number);
     }
@@ -2550,7 +2734,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $bag_number
      * @return int
      */
-    public static function isBagNumber($bag_number)
+    public
+    static function isBagNumber($bag_number)
     {
         return preg_match('/^[B][\d]{11,}$/i', $bag_number);
     }
@@ -2559,7 +2744,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * Get proof of delivery - receiver detail or signature delivery receipt
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function getProofOfDelivery()
+    public
+    function getProofOfDelivery()
     {
         /** @var DeliveryReceipt $delivery_receipt */
         $delivery_receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number=:waybill_number: AND (receipt_type = :signature: OR receipt_type=:receiver_detail:)',
@@ -2575,7 +2761,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @param $companyName
      */
-    public function sendWeightNotInRangeMail($companyName)
+    public
+    function sendWeightNotInRangeMail($companyName)
     {
         EmailMessage::send(
             EmailMessage::WEIGHT_NOT_IN_RANGE,
@@ -2595,7 +2782,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $to_branch_id
      * @return array
      */
-    public static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id)
+    public
+    static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id)
     {
         $bad_parcels = [];
         $good_parcels = [];
@@ -2621,7 +2809,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @return bool
      * @throws Exception
      */
-    public static function moveToSweeper($waybill_number, $auth, $to_branch_id)
+    public
+    static function moveToSweeper($waybill_number, $auth, $to_branch_id)
     {
         $parcel = self::getByWaybillNumber($waybill_number);
 
@@ -2652,7 +2841,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_number_arr
      * @return array
      */
-    public static function bulkAssignToGroundsman($waybill_number_arr)
+    public
+    static function bulkAssignToGroundsman($waybill_number_arr)
     {
         $auth = Di::getDefault()->getAuth();
         $bad_parcel = [];
@@ -2677,7 +2867,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @return bool
      * @throws Exception
      */
-    public static function assignToGroundsman($waybill_number, $auth)
+    public
+    static function assignToGroundsman($waybill_number, $auth)
     {
         $parcel = Parcel::getByWaybillNumber($waybill_number);
         if ($parcel === false) {
@@ -2704,7 +2895,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_numbers
      * @return array
      */
-    public static function sanitizeWaybillNumbers($waybill_numbers)
+    public
+    static function sanitizeWaybillNumbers($waybill_numbers)
     {
         $waybill_number_arr = explode(',', $waybill_numbers);
 
@@ -2720,7 +2912,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * Handle saving and updating errors
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function notSaved()
+    public
+    function notSaved()
     {
         $e = new Exception;
         Util::slackDebug('Parcel Exception Log', 'Could not update or save parcel. Parcel Data: ' . json_encode($this->toArray()) . 'Stack trace: ' . $e->getTraceAsString());
@@ -2732,7 +2925,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_number
      * @return bool
      */
-    public static function getBag($waybill_number)
+    public
+    static function getBag($waybill_number)
     {
         $bag = self::fetchOne($waybill_number, false, 'waybill_number');
         if (!$bag) {
@@ -2753,7 +2947,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param null $order_by_clause
      * @return array
      */
-    public static function getReportData($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
+    public
+    static function getReportData($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
     {
 
         $filter_cond = self::filterConditions($filter_by);
@@ -2796,7 +2991,8 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $filter_by
      * @return \Phalcon\Mvc\Model\Query\BuilderInterface
      */
-    private static function getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by)
+    private
+    static function getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by)
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
