@@ -1420,7 +1420,13 @@ class Parcel extends \Phalcon\Mvc\Model
             'for_return' => $this->getForReturn(),
             'billing_type' => $this->getBillingType(),
             'is_freight_included' => $this->getIsFreightIncluded(),
-            'qty_metrics' => $this->getQtyMetrics()
+            'qty_metrics' => $this->getQtyMetrics(),
+            'insurance' => $this->getInsurance(),
+            'duty_charge' => $this->getDutyCharge(),
+            'handling_charge' => $this->getDutyCharge(),
+            'cost_of_crating' => $this->getCostOfCrating(),
+            'storage_demurrage' => $this->getStorageDemurrage(),
+            'others' => $this->getOthers()
         );
     }
 
