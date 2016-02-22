@@ -261,8 +261,7 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $qty_metrics;
 
     /**
-<<<<<<< Updated upstream
-=======
+
      * @var string
      */
     protected $insurance;
@@ -288,6 +287,16 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $cost_of_crating;
 
     /**
+     * @var double
+     */
+    protected $others;
+
+    /**
+     * @var double
+     */
+    protected $base_price;
+
+    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @return float
      */
@@ -304,16 +313,6 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $this->base_price = $base_price;
     }
-
-    /**
-     * @var double
-     */
-    protected $others;
-
-    /**
-     * @var double
-     */
-    protected $base_price;
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
@@ -1466,6 +1465,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
                              $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price
     )
+
     {
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -1497,6 +1497,7 @@ class Parcel extends \Phalcon\Mvc\Model
         if ($this->id == null) {
             $this->setCreatedDate($now);
         }
+
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
@@ -2152,16 +2153,6 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_status = $this->getStatus();
                 $is_visible = $this->getIsVisible();
             }
-            $extra_charges = 0;
-            $extra_charges += $parcel_data['insurance'];
-            $extra_charges += $parcel_data['duty_charge'];
-            $extra_charges += $parcel_data['handling_charge'];
-            $extra_charges += $parcel_data['cost_of_crating'];
-            $extra_charges += $parcel_data['storage_demurrage'];
-            $extra_charges += $parcel_data['others'];
-
-            $total_charge = $extra_charges + $parcel_data['amount_due'];
-
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
             if ($check) {
                 $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
@@ -2482,7 +2473,14 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getBillingType(),
                 $this->getWeightBillingPlanId(),
                 $this->getOnforwardingBillingPlanId(),
-                $this->getIsFreightIncluded()
+                $this->getIsFreightIncluded(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
             );
 
             if (!$sub_parcel->save()) {
