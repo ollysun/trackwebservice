@@ -261,6 +261,145 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $qty_metrics;
 
     /**
+     * @var string
+     */
+    protected $insurance;
+
+    /**
+     * @var double
+     */
+    protected $storage_demurrage;
+
+    /**
+     * @var double
+     */
+    protected $handling_charge;
+
+    /**
+     * @var double
+     */
+    protected $duty_charge;
+
+    /**
+     * @var double
+     */
+    protected $cost_of_crating;
+
+    /**
+     * @var double
+     */
+    protected $others;
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getHandlingCharge()
+    {
+        return $this->handling_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $handling_charge
+     */
+    public function setHandlingCharge($handling_charge)
+    {
+        $this->handling_charge = $handling_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return string
+     */
+    public function getInsurance()
+    {
+        return $this->insurance;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param string $insurance
+     */
+    public function setInsurance($insurance)
+    {
+        $this->insurance = $insurance;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getStorageDemurrage()
+    {
+        return $this->storage_demurrage;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $storage_demurrage
+     */
+    public function setStorageDemurrage($storage_demurrage)
+    {
+        $this->storage_demurrage = $storage_demurrage;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getDutyCharge()
+    {
+        return $this->duty_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $duty_charge
+     */
+    public function setDutyCharge($duty_charge)
+    {
+        $this->duty_charge = $duty_charge;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getCostOfCrating()
+    {
+        return $this->cost_of_crating;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $cost_of_crating
+     */
+    public function setCostOfCrating($cost_of_crating)
+    {
+        $this->cost_of_crating = $cost_of_crating;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return float
+     */
+    public function getOthers()
+    {
+        return $this->others;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param float $others
+     */
+    public function setOthers($others)
+    {
+        $this->others = $others;
+    }
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -1230,7 +1369,13 @@ class Parcel extends \Phalcon\Mvc\Model
             'onforwarding_billing_plan_id' => 'onforwarding_billing_plan_id',
             'weight_billing_plan_id' => 'weight_billing_plan_id',
             'is_freight_included' => 'is_freight_included',
-            'qty_metrics' => 'qty_metrics'
+            'qty_metrics' => 'qty_metrics',
+            'insurance' => 'insurance',
+            'cost_of_crating' => 'cost_of_crating',
+            'duty_charge' => 'duty_charge',
+            'handling_charge' => 'handling_charge',
+            'storage_demurrage' => 'storage_demurrage',
+            'others' => 'others',
         );
     }
 
@@ -1275,7 +1420,13 @@ class Parcel extends \Phalcon\Mvc\Model
             'for_return' => $this->getForReturn(),
             'billing_type' => $this->getBillingType(),
             'is_freight_included' => $this->getIsFreightIncluded(),
-            'qty_metrics' => $this->getQtyMetrics()
+            'qty_metrics' => $this->getQtyMetrics(),
+            'insurance' => $this->getInsurance(),
+            'duty_charge' => $this->getDutyCharge(),
+            'handling_charge' => $this->getDutyCharge(),
+            'cost_of_crating' => $this->getCostOfCrating(),
+            'storage_demurrage' => $this->getStorageDemurrage(),
+            'others' => $this->getOthers()
         );
     }
 
@@ -1284,8 +1435,10 @@ class Parcel extends \Phalcon\Mvc\Model
                              $shipping_type, $from_branch_id, $to_branch_id, $status, $package_value, $no_of_package, $other_info, $cash_amount,
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
-                             $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT
+                             $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null
     )
+
     {
         $this->setParcelType($parcel_type);
         $this->setSenderId($sender_id);
@@ -1317,6 +1470,7 @@ class Parcel extends \Phalcon\Mvc\Model
         if ($this->id == null) {
             $this->setCreatedDate($now);
         }
+
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
@@ -1330,6 +1484,12 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
         $this->setIsFreightIncluded($is_freight_included);
         $this->setQtyMetrics($qty_metrics);
+        $this->setInsurance($insurance);
+        $this->setDutyCharge($duty_charge);
+        $this->setHandlingCharge($handling_charge);
+        $this->setCostOfCrating($cost_of_crating);
+        $this->setStorageDemurrage($storage_demurrage);
+        $this->setOthers($others);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1974,7 +2134,9 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
                     $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, $this->waybill_number, $bank_account_obj->getId(),
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
-                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics']);
+                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
+                    $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
+                    $parcel_data['storage_demurrage'], $parcel_data['others']);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
@@ -2283,7 +2445,13 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getBillingType(),
                 $this->getWeightBillingPlanId(),
                 $this->getOnforwardingBillingPlanId(),
-                $this->getIsFreightIncluded()
+                $this->getIsFreightIncluded(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
             );
 
             if (!$sub_parcel->save()) {
