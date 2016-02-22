@@ -1,0 +1,1 @@
+update parcel set base_price = amount_due where base_price is null;
