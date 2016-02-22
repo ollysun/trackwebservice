@@ -2479,6 +2479,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 null,
                 null,
                 null,
+                null,
                 null
             );
 
