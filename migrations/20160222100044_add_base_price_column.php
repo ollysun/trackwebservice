@@ -27,6 +27,6 @@ class AddBasePriceColumn extends AbstractMigration
      */
     public function change()
     {
-        $this->table('parcel')->addColumn('base_price', 'decimal', ['null' => true]);
+        $this->table('parcel')->addColumn('base_price', 'decimal', ['null' => true])->update();
     }
 }
