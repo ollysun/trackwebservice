@@ -1966,7 +1966,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $is_visible = $this->getIsVisible();
             }
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
-            $total_charge =  0;
+            $total_charge =  $parcel_data['amount_due'];
             $total_charge += $parcel_data['insurance'];
             $total_charge += $parcel_data['duty_charge'];
             $total_charge += $parcel_data['handling_charge'];
