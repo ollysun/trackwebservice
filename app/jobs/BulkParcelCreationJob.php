@@ -115,6 +115,12 @@ class BulkParcelCreationJob extends BaseJob
         $parcelData['onforwarding_billing_plan'] = $billingPlanId;
         $parcelData['is_freight_included'] = 1;
         $parcelData['qty_metrics'] = 'weight';
+        $parcelData['insurance'] = 0;
+        $parcelData['duty_charge'] = 0;
+        $parcelData['handling_charge'] = 0;
+        $parcelData['cost_of_crating'] = 0;
+        $parcelData['storage_demurrage'] = 0;
+        $parcelData['others'] = 0;
 
         $sender_address = [];
         $sender_address['street1'] = $parcelData['sender_address'];
