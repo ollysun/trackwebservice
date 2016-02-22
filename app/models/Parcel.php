@@ -424,7 +424,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
     /**
->>>>>>> Stashed changes
      * Method to set the value of field id
      *
      * @param integer $id
