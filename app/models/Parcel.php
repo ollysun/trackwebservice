@@ -261,7 +261,6 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $qty_metrics;
 
     /**
-
      * @var string
      */
     protected $insurance;
@@ -1682,6 +1681,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
 
         $initial_cond = 'Parcel.is_visible = :is_visible:';
+        if (isset($filter_by['show_both_parent_and_splits'])) {
+            $initial_cond = 'Parcel.is_visible = :is_visible: OR Parcel.is_visible = :is_not_visible:';
+            $bind['is_visible'] = 1;
+            $bind['is_not_visible'] = 0;
+        }
         if (isset($filter_by['show_parents'])) {
             $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != ' . self::ENTITY_TYPE_SUB;
         }
@@ -2153,7 +2157,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $is_visible = $this->getIsVisible();
             }
             $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
-            $total_charge =  $parcel_data['amount_due'];
+            $total_charge = $parcel_data['amount_due'];
             $total_charge += $parcel_data['insurance'];
             $total_charge += $parcel_data['duty_charge'];
             $total_charge += $parcel_data['handling_charge'];
