@@ -1448,7 +1448,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'qty_metrics' => $this->getQtyMetrics(),
             'insurance' => $this->getInsurance(),
             'duty_charge' => $this->getDutyCharge(),
-            'handling_charge' => $this->getDutyCharge(),
+            'handling_charge' => $this->getHandlingCharge(),
             'cost_of_crating' => $this->getCostOfCrating(),
             'storage_demurrage' => $this->getStorageDemurrage(),
             'others' => $this->getOthers(),
@@ -2481,7 +2481,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getWeightBillingPlanId(),
                 $this->getOnforwardingBillingPlanId(),
                 $this->getIsFreightIncluded(),
-                null,
+                $this->qty_metrics,
                 null,
                 null,
                 null,
@@ -2489,6 +2489,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 null,
                 null,
                 null
+
             );
 
             if (!$sub_parcel->save()) {
