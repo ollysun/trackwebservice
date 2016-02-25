@@ -33,11 +33,20 @@ abstract class BaseJob
      */
     public function onStart()
     {
+        $connection = (new JobLog())->getReadConnection();
+        $connection->close();
+        $connection->connect();
+
         $logs = JobLog::find(['conditions' => 'server_job_id=:id: AND queue=:queue:', 'bind' => ['id' => $this->id, 'queue' => $this->worker->queue]]);
         if (!$logs) {
             return false;
         }
-        $this->jobLog = $logs->getLast();
+
+        $jobLog = $logs->getLast();
+        if (!$jobLog) {
+            return false;
+        }
+        $this->jobLog = $jobLog;
         $this->jobLog->started_at = Util::getCurrentDateTime();
         $this->jobLog->status = JobLog::STATUS_IN_PROGRESS;
         return $this->jobLog->save();
