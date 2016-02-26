@@ -1945,6 +1945,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
+                if(isset($fetch_with['with_parcel_comment'])){
+                    $parcel['return_reason'] = $item->parcelComment->toArray();
+                }
             }
             $result[] = $parcel;
         }
@@ -3128,6 +3131,11 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_invoice_parcel'])) {
             $columns[] = 'InvoiceParcel.*';
             $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
+        }
+
+        if(isset($fetch_with['with_parcel_comment'])){
+            $columns[] = 'ParcelComment.*';
+            $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
 
         $builder->columns($columns);
