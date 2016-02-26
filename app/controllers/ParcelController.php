@@ -215,7 +215,9 @@ class ParcelController extends ControllerBase
             'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount',
             'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
             'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
-            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type', 'company_id', 'report','remove_cancelled_shipments'];
+            'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits'
+        ];
 
         $filter_by = [];
         foreach ($filter_params as $param) {
@@ -256,6 +258,7 @@ class ParcelController extends ControllerBase
         $with_payment_type = $this->request->getQuery('with_payment_type');
         $with_company = $this->request->getQuery('with_company');
         $with_invoice_parcel = $this->request->getQuery('with_invoice_parcel');
+        $with_parcel_comment = $this->request->getQuery('with_parcel_comment');
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -315,6 +318,9 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_invoice_parcel)) {
             $fetch_with['with_invoice_parcel'] = true;
+        }
+        if(!is_null($with_parcel_comment)){
+            $fetch_with['with_parcel_comment'] = true;
         }
 
         if (!is_null($report) && $report == 1) {
@@ -1027,7 +1033,7 @@ class ParcelController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = [
-            'waybill_number', 'parcel_id', 'paginate', 'status','reference_number'
+            'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number'
         ];
 
         $fetch_params = ['with_admin'];
