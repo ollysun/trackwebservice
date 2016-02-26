@@ -1682,9 +1682,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $initial_cond = 'Parcel.is_visible = :is_visible:';
         if (isset($filter_by['show_both_parent_and_splits'])) {
-            $initial_cond = 'Parcel.is_visible = :is_visible: OR Parcel.is_visible = :is_not_visible:';
-            $bind['is_visible'] = 1;
-            $bind['is_not_visible'] = 0;
+            $initial_cond = 'Parcel.is_visible != :any: OR Parcel.is_visible = :is_visible:';
+            $bind['any'] = -1;
         }
         if (isset($filter_by['show_parents'])) {
             $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != ' . self::ENTITY_TYPE_SUB;
