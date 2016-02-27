@@ -117,8 +117,22 @@ class ParcelController extends ControllerBase
         } else {
             $parcel_obj = new Parcel();
         }
+
+        $created_by = $this->auth->getPersonId();
+
+        // Checked if parcel is linked to created hub
+        if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
+            $created_by = $parcel_obj->created_by;
+            $related_branches = Parcel::getBranchesRelatedToCreatedBranch($created_by);
+            if (!empty($related_branches) && is_array($related_branches)) {
+                $branch_id = $auth_data['branch_id'];
+                if (!in_array($branch_id, $related_branches)) {
+                    return $this->response->sendError('Can only be edited by a branch related to the created branch');
+                }
+            }
+        }
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-            $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
+            $bank_account, $parcel, $to_branch_id, $created_by);
         if (isset($parcel['id'])) {
             $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
             $parcel_edit_history->changed_by = $auth_data['fullname'];
@@ -319,7 +333,7 @@ class ParcelController extends ControllerBase
         if (!is_null($with_invoice_parcel)) {
             $fetch_with['with_invoice_parcel'] = true;
         }
-        if(!is_null($with_parcel_comment)){
+        if (!is_null($with_parcel_comment)) {
             $fetch_with['with_parcel_comment'] = true;
         }
 

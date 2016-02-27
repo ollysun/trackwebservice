@@ -1948,7 +1948,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
-                if(isset($fetch_with['with_parcel_comment'])){
+                if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
             }
@@ -3136,7 +3136,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
         }
 
-        if(isset($fetch_with['with_parcel_comment'])){
+        if (isset($fetch_with['with_parcel_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
@@ -3144,5 +3144,29 @@ class Parcel extends \Phalcon\Mvc\Model
         $builder->columns($columns);
         $builder->where(join(' AND ', $where), $bind);
         return $builder;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $created_by
+     * @return array
+     */
+    static function getBranchesRelatedToCreatedBranch($created_by)
+    {
+        $branch_map = [];
+        $parent_hub_id = null;
+        $staff_details = Admin::findById($created_by)->toArray();
+        $staff_branch_details = Branch::findById($staff_details[0]['branch_id'])->toArray();
+        if ($staff_branch_details[0]['branch_type'] == BranchType::EC) {
+            $parent_hub_id = BranchMap::findByChildId($staff_branch_details[0]['id'])->toArray()[0]['parent_id'];
+        } elseif ($staff_branch_details[0]['branch_type'] == BranchType::HUB) {
+            $parent_hub_id = $staff_branch_details[0]['id'];
+        }
+        $branches_related_to_hub = BranchMap::findByParentId($parent_hub_id)->toArray();
+        foreach ($branches_related_to_hub as $branch) {
+            $branch_map[] = $branch['child_id'];
+        }
+        $branch_map[] = $parent_hub_id;
+        return $branch_map;
     }
 }
