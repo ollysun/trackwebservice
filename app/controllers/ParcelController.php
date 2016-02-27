@@ -120,7 +120,7 @@ class ParcelController extends ControllerBase
 
         $created_by = $this->auth->getPersonId();
 
-        // Checked if parcel is linked to created hub
+        // Check if edit branch is related to created branch
         if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
             $created_by = $parcel_obj->created_by;
             $related_branches = Parcel::getBranchesRelatedToCreatedBranch($created_by);
