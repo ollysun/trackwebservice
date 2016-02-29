@@ -1,32 +1,34 @@
 <?php
 
 
-class ManifestController extends ControllerBase {
+class ManifestController extends ControllerBase
+{
     /**
      * This action is used to acknowledge the receipt of the manifest at the destination and can set the status of the
      * manifest to resolved (if all is well) or has_issue(if there is an issue maybe the parcels are not completely
      * cleared).
      * @return $this
      */
-    public function receiveAction(){
+    public function receiveAction()
+    {
         $this->auth->allowOnly([Role::OFFICER, Role::GROUNDSMAN]);
 
         $manifest_id = $this->request->getPost('manifest_id');
         $status = $this->request->getPost('status');
 
-        if (in_array(null, [$manifest_id, $status])){
+        if (in_array(null, [$manifest_id, $status])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if (!in_array($status, [Status::MANIFEST_RESOLVED, Status::MANIFEST_HAS_ISSUE])){
+        if (!in_array($status, [Status::MANIFEST_RESOLVED, Status::MANIFEST_HAS_ISSUE])) {
             return $this->response->sendError(ResponseMessage::INVALID_STATUS);
         }
 
         $manifest = Manifest::getById($manifest_id);
-        if ($manifest != false){
+        if ($manifest != false) {
             $auth_data = $this->auth->getData();
 
-            if ($manifest->getToBranchId() != $auth_data['branch_id']){
+            if ($manifest->getToBranchId() != $auth_data['branch_id']) {
                 return $this->response->sendError(ResponseMessage::MANIFEST_NOT_RECEIVABLE);
             }
 
@@ -42,27 +44,30 @@ class ManifestController extends ControllerBase {
      * Fetches the details of a manifest. More info can be hydrated using certain params starting with 'with'.
      * @return $this
      */
-    public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
+    public function getOneAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::GROUNDSMAN]);
 
         $fetch_params = ['with_from_branch', 'with_to_branch', 'with_sender_admin', 'with_receiver_admin', 'with_holder', 'with_parcels'];
 
-        foreach ($fetch_params as $param){
+        foreach ($fetch_params as $param) {
             $$param = $this->request->getQuery($param);
         }
 
         $manifest_id = $this->request->getQuery('manifest_id');
-        if (is_null($manifest_id)){
+        if (is_null($manifest_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $fetch_with = [];
-        foreach ($fetch_params as $param){
-            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
         }
 
         $manifest = Manifest::fetchOne($manifest_id, $fetch_with);
-        if ($manifest != false){
+        if ($manifest != false) {
             return $this->response->sendSuccess($manifest);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
@@ -72,7 +77,8 @@ class ManifestController extends ControllerBase {
      * This fetches a paginated list of manifest using filter params. More info can be hydrated using certain params starting with 'with'.
      * @return $this
      */
-    public function getAllAction(){
+    public function getAllAction()
+    {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -87,18 +93,22 @@ class ManifestController extends ControllerBase {
 
         $possible_params = array_merge($filter_params, $fetch_params);
 
-        foreach ($possible_params as $param){
+        foreach ($possible_params as $param) {
             $$param = $this->request->getQuery($param);
         }
 
         $filter_by = [];
-        foreach ($filter_params as $param){
-            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+        foreach ($filter_params as $param) {
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
         }
 
         $fetch_with = [];
-        foreach ($fetch_params as $param){
-            if (!is_null($$param)){ $fetch_with[$param] = true; }
+        foreach ($fetch_params as $param) {
+            if (!is_null($$param)) {
+                $fetch_with[$param] = true;
+            }
         }
 
         $manifests = Manifest::fetchAll($offset, $count, $filter_by, $fetch_with);
@@ -131,9 +141,11 @@ class ManifestController extends ControllerBase {
         ];
 
         $filter_by = [];
-        foreach ($filter_params as $param){
+        foreach ($filter_params as $param) {
             $$param = $this->request->getQuery($param);
-            if (!is_null($$param)){ $filter_by[$param] = $$param; }
+            if (!is_null($$param)) {
+                $filter_by[$param] = $$param;
+            }
         }
 
         $count = Manifest::getTotalCount($filter_by);
