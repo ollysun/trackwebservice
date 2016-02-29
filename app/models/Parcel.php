@@ -3151,7 +3151,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $created_by
      * @return array
      */
-    static function getBranchesRelatedToCreatedBranch($created_by)
+    public static function getBranchesRelatedToCreatedBranch($created_by)
     {
         $branch_map = [];
         $parent_hub_id = null;
