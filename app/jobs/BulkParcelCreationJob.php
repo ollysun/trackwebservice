@@ -47,7 +47,8 @@ class BulkParcelCreationJob extends BaseJob
             }
 
             $bulkShipmentJobDetail->completed_at = Util::getCurrentDateTime();
-            $jobStatus = $bulkShipmentJobDetail->save() || $jobStatus;
+            $bulkShipmentJobDetail->save();
+            $jobStatus = ($bulkShipmentJobDetail->status == BulkShipmentJobDetail::STATUS_SUCCESS) || $jobStatus;
         }
 
         return $jobStatus;
