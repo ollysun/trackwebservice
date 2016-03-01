@@ -22,6 +22,8 @@ class BulkParcelCreationJob extends BaseJob
             return false;
         }
 
+        $jobStatus = false;
+
         foreach ($shipmentData as $parcelData) {
             $bulkShipmentJobDetail = new BulkShipmentJobDetail();
             $bulkShipmentJobDetail->job_id = $this->jobLog->id;
@@ -45,11 +47,10 @@ class BulkParcelCreationJob extends BaseJob
             }
 
             $bulkShipmentJobDetail->completed_at = Util::getCurrentDateTime();
-            $bulkShipmentJobDetail->save();
-
+            $jobStatus = $bulkShipmentJobDetail->save() || $jobStatus;
         }
 
-        return true;
+        return $jobStatus;
     }
 
     private function createParcel($parcelData, $billingPlanId, $createdBy)
