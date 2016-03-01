@@ -1754,7 +1754,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['min_amount_due'] = $filter_by['min_amount_due'];
         }
         if (isset($filter_by['max_amount_due'])) {
-            $where[] = 'Parcel.amount_due <= :min_amount_due:';
+            $where[] = 'Parcel.amount_due <= :max_amount_due:';
             $bind['max_amount_due'] = $filter_by['max_amount_due'];
         }
         if (isset($filter_by['cash_on_delivery'])) {
