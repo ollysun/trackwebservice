@@ -1682,8 +1682,8 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $initial_cond = 'Parcel.is_visible = :is_visible:';
         if (isset($filter_by['show_both_parent_and_splits'])) {
-            $initial_cond = 'Parcel.is_visible != :any: OR Parcel.is_visible = :is_visible:';
-            $bind['any'] = -1;
+            $initial_cond = 'Parcel.is_visible != :is_visible: AND Parcel.entity_type != ' . self::ENTITY_TYPE_BAG;
+            $bind['is_visible'] = -1;
         }
         if (isset($filter_by['show_parents'])) {
             $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != ' . self::ENTITY_TYPE_SUB;
@@ -1750,11 +1750,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['max_weight'] = $filter_by['max_weight'];
         }
         if (isset($filter_by['min_amount_due'])) {
-            $where[] = 'Parcel.amount_due >= :min_weight:';
+            $where[] = 'Parcel.amount_due >= :min_amount_due:';
             $bind['min_amount_due'] = $filter_by['min_amount_due'];
         }
         if (isset($filter_by['max_amount_due'])) {
-            $where[] = 'Parcel.amount_due <= :max_weight:';
+            $where[] = 'Parcel.amount_due <= :max_amount_due:';
             $bind['max_amount_due'] = $filter_by['max_amount_due'];
         }
         if (isset($filter_by['cash_on_delivery'])) {
