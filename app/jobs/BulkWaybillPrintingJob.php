@@ -46,7 +46,13 @@ class BulkWaybillPrintingJob extends BaseJob
             $waybills_html .= $this->getWaybillHtml($waybill_number);
         }
 
-        $pdf = new Pdf();
+        $pdf = new Pdf([
+            'ignoreWarnings' => true,
+            'commandOptions' => [
+                'useExec' => true
+            ]
+        ]);
+
         $waybill_layout = file_get_contents(dirname(__DIR__) . '/html/bulk_waybill_layout.html');
         $html_content = Util::replaceTemplate($waybill_layout, ['content' => $waybills_html]);
         $pdf->addPage($html_content);
