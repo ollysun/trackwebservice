@@ -187,11 +187,9 @@ class BulkWaybillPrintingJob extends BaseJob
     {
         /** @var S3Client $s3Client */
         $s3Client = Di::getDefault()->get('s3Client');
-        $temp_file_name = dirname(__DIR__) . '/html/' . uniqid('temp_pdf_', true);
-        if (!$pdf->saveAs($temp_file_name)) {
-            print $pdf->getError() . "\n";
-            return false;
-        }
+        $config = Di::getDefault()->getConfig();
+        $namespace = $config->aws->s3->namespace;
+
         if (!$s3Client->doesBucketExist(self::S3_BUCKET_BULK_WAYBILLS)) {
             print var_export($s3Client->getMessages(), true) . "\n";
             if (!$s3Client->createBucket(self::S3_BUCKET_BULK_WAYBILLS)) {
@@ -200,14 +198,10 @@ class BulkWaybillPrintingJob extends BaseJob
             }
         }
 
-        $s3_file_name = 'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf';
-        if (!$s3Client->createObject($temp_file_name, $s3_file_name, self::S3_BUCKET_BULK_WAYBILLS)) {
-            print var_export($s3Client->getMessages(), true) . "\n";
-            print "Could not upload to S3";
+        if (!$pdf->saveAs('s3://' . self::S3_BUCKET_BULK_WAYBILLS . '/' . $namespace . '/waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf')) {
+            print $pdf->getError() . "\n";
             return false;
         }
-
-        unlink($temp_file_name);
 
         return true;
     }
