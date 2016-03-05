@@ -37,7 +37,7 @@ abstract class BaseJob
         $connection->close();
         $connection->connect();
 
-        $logs = JobLog::find(['conditions' => 'server_job_id=:id: AND queue=:queue:', 'bind' => ['id' => $this->id, 'queue' => $this->worker->queue]]);
+        $logs = JobLog::find(['conditions' => 'server_job_id=:id: AND queue=:queue: AND status=:status:', 'bind' => ['id' => $this->id, 'queue' => $this->worker->queue, 'status' => JobLog::STATUS_QUEUED]]);
         if (!$logs) {
             return false;
         }
