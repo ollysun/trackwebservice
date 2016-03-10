@@ -120,8 +120,9 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
             $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
         if (isset($parcel['id'])) {
-            $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
-            $parcel_edit_history->changed_by = $auth_data['fullname'];
+            $parcel_edit_history->parcel_id = $parcel['id'];
+             $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
+            $parcel_edit_history->changed_by = $auth_data['id'];
             $parcel_edit_history->modified_at = Util::getCurrentDateTime();
             $is_successful = $parcel_edit_history->save();
             if (!$is_successful) {
