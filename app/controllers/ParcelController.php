@@ -566,7 +566,7 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
         $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
-        $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
 
         if (!isset($waybill_numbers, $to_branch_id, $held_by_id, $admin_id)) {
@@ -578,7 +578,7 @@ class ParcelController extends ControllerBase
 
         if ($other != false) {
             //check if officer is valid
-            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER]) && !in_array($other->getRoleId(), [Role::OFFICER, Role::GROUNDSMAN])) {
+            if (in_array($this->auth->getUserType(), [Role::DISPATCHER]) && !in_array($other->getRoleId(), [Role::SWEEPER, Role::OFFICER, Role::GROUNDSMAN])) {
                 return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
             }
 
