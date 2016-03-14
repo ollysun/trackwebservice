@@ -1951,6 +1951,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
+                if(isset($fetch_with['with_related_branches'])){
+                    $parcel['related_branches_ids'] = Parcel::getBranchesRelatedToCreatedBranch($parcel['created_by']);
+                }
             }
             $result[] = $parcel;
         }

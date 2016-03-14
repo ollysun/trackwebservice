@@ -273,6 +273,7 @@ class ParcelController extends ControllerBase
         $with_company = $this->request->getQuery('with_company');
         $with_invoice_parcel = $this->request->getQuery('with_invoice_parcel');
         $with_parcel_comment = $this->request->getQuery('with_parcel_comment');
+        $with_related_branches = 1;
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -335,6 +336,10 @@ class ParcelController extends ControllerBase
         }
         if (!is_null($with_parcel_comment)) {
             $fetch_with['with_parcel_comment'] = true;
+        }
+
+        if(!is_null($with_related_branches)){
+            $fetch_with['with_related_branches'] = true;
         }
 
         if (!is_null($report) && $report == 1) {
