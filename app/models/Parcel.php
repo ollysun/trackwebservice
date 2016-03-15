@@ -1486,21 +1486,23 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
         $this->setNoOfPackage($no_of_package);
-        $this->setCreatedBy($created_by);
+        if ($this->id == null) {
+            $this->setCreatedBy($created_by);
+        }
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
         $this->setBankAccountId($bank_account_id);
-
         $now = date('Y-m-d H:i:s');
         if ($this->id == null) {
             $this->setCreatedDate($now);
         }
-
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
         $this->setReferenceNumber($reference_number);
-        $this->setCreatedBranchId($from_branch_id);
+        if ($this->id == null) {
+            $this->setCreatedBranchId($from_branch_id);
+        }
         $this->setRouteId($route_id);
         $this->setRequestType($request_type);
         $this->setForReturn(0);
@@ -1951,8 +1953,12 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
-                if (isset($fetch_with['with_related_branches'])) {
-                    $parcel['related_branches_ids'] = Parcel::getRelatedBranches($parcel['created_branch_id']);
+                if (isset($fetch_with['with_is_related_to_this_branch'])) {
+                    $related_branches = Parcel::getRelatedBranches($parcel['created_branch_id']);
+                    if(in_array($parcel['created_branch_id'],$related_branches)){
+                        $parcel['is_related_to_this_branch'] = 1;
+                    }
+                    $parcel['is_related_to_this_branch'] = 0;
                 }
             }
             $result[] = $parcel;
