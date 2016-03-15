@@ -3170,7 +3170,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $sql = "SELECT bm.* from branch_map bm where parent_id = $this_branch_id";
         $new_connection = (new BaseModel())->getWriteConnection();
         $this_branch_children = $new_connection->fetchAll($sql);
-        if(count($this_branch_children) > 0){ // check if this branch is a hub
+        if(count($this_branch_children) > 0){
             if($created_branch_id == $this_branch_children['child_id']){
                 return 1;
             }
