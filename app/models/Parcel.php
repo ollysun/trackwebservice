@@ -1953,12 +1953,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
-                if (isset($fetch_with['with_is_related_to_this_branch'])) {
-                    $related_branches = Parcel::getRelatedBranches($parcel['created_branch_id']);
-                    if(in_array($parcel['created_branch_id'],$related_branches)){
-                        $parcel['is_related_to_this_branch'] = 1;
-                    }
-                    $parcel['is_related_to_this_branch'] = 0;
+                if (isset($fetch_with['with_is_created_branch_child_to_this_branch'])) {
+                    $parcel['is_created_branch_child_to_this_branch'] = Parcel::isBranchChildToThisBranch($parcel['created_branch_id']);
                 }
             }
             $result[] = $parcel;
@@ -3159,24 +3155,28 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @param $created_branch_id
-     * @return array
+     * @return int
      */
-    public static function getRelatedBranches($created_branch_id)
+    public static function isBranchChildToThisBranch($created_branch_id)
     {
-        $sql = "SELECT branch.id, bm.parent_id FROM branch_map bm
-                INNER JOIN branch ON (branch.id = bm.child_id)
-                WHERE bm.parent_id =
-                (SELECT bp.parent_id FROM branch_map bp WHERE bp.parent_id = $created_branch_id OR bp.child_id = $created_branch_id LIMIT 1) ";
+        $sql = "SELECT bm.* from branch_map bm where bm.parent_id = $created_branch_id";
         $new_connection = (new BaseModel())->getReadConnection();
-        $related_branches_array = $new_connection->fetchAll($sql);
-        $related_branches_ids = [];
-        foreach ($related_branches_array as $related_branch) {
-            $related_branches_ids[] = $related_branch['id'];
-        }
-        if (count($related_branches_array) > 0) {
-            $related_branches_ids[] = $related_branches_array[0]['parent_id'];
-        }
-        return $related_branches_ids;
+        $branch_children = $new_connection->fetchAll($sql);
 
+        // Check if it is a hub or EC
+        if (count($branch_children) > 0) {
+            $auth = Di::getDefault()->getAuth();
+            /**
+             * @var Auth $auth
+             */
+            $this_branch_id = $auth->getData()['branch']['id'];
+            foreach ($branch_children as $branch_child) {
+                if ($this_branch_id == $branch_child['child_id']) {
+                    return 1;
+                }
+            }
+        }
+
+        return 0;
     }
 }
