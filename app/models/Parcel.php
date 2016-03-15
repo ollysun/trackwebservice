@@ -1953,8 +1953,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
-                if (isset($fetch_with['with_is_created_branch_child_to_this_branch'])) {
-                    $parcel['is_created_branch_child_to_this_branch'] = Parcel::isBranchChildToThisBranch($parcel['created_branch_id']);
+                if (isset($fetch_with['with_edit_access'])) {
+                    $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id']);
                 }
             }
             $result[] = $parcel;
@@ -3157,26 +3157,24 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $created_branch_id
      * @return int
      */
-    public static function isBranchChildToThisBranch($created_branch_id)
+    public static function isEditAccessGranted($created_branch_id)
     {
-        $sql = "SELECT bm.* from branch_map bm where bm.parent_id = $created_branch_id";
-        $new_connection = (new BaseModel())->getReadConnection();
-        $branch_children = $new_connection->fetchAll($sql);
-
-        // Check if it is a hub or EC
-        if (count($branch_children) > 0) {
-            $auth = Di::getDefault()->getAuth();
-            /**
-             * @var Auth $auth
-             */
-            $this_branch_id = $auth->getData()['branch']['id'];
-            foreach ($branch_children as $branch_child) {
-                if ($this_branch_id == $branch_child['child_id']) {
-                    return 1;
-                }
+       $auth = Di::getDefault()->getAuth();
+        /**
+         * @var Auth $auth
+         */
+        $this_branch_id = $auth->getData()['branch']['id'];
+        if($this_branch_id == $created_branch_id){
+            return 1;
+        }
+        $sql = "SELECT bm.* from branch_map bm where parent_id = $this_branch_id";
+        $new_connection = (new BaseModel())->getWriteConnection();
+        $this_branch_children = $new_connection->fetchAll($sql);
+        if(count($this_branch_children) > 0){ // check if this branch is a hub
+            if($created_branch_id == $this_branch_children['child_id']){
+                return 1;
             }
         }
-
         return 0;
     }
 }
