@@ -1892,7 +1892,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
         $data = $builder->getQuery()->execute();
-
+        $auth = Di::getDefault()->getAuth();
+        /**
+         * @var Auth $auth
+         */
+        $this_branch_id = $auth->getData()['branch']['id'];
         $result = [];
         foreach ($data as $item) {
             $parcel = [];
@@ -1954,7 +1958,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
                 if (isset($fetch_with['with_edit_access'])) {
-                    $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id']);
+                    $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id'], $this_branch_id);
                 }
             }
             $result[] = $parcel;
@@ -3155,15 +3159,11 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @param $created_branch_id
+     * @param $this_branch_id
      * @return int
      */
-    public static function isEditAccessGranted($created_branch_id)
+    public static function isEditAccessGranted($created_branch_id, $this_branch_id)
     {
-        $auth = Di::getDefault()->getAuth();
-        /**
-         * @var Auth $auth
-         */
-        $this_branch_id = $auth->getData()['branch']['id'];
         if ($this_branch_id == $created_branch_id) {
             return 1;
         }
