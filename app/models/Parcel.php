@@ -1951,8 +1951,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
-                if(isset($fetch_with['with_related_branches'])){
-                    $parcel['related_branches_ids'] = Parcel::getBranchesRelatedToCreatedBranch($parcel['created_by']);
+                if (isset($fetch_with['with_related_branches'])) {
+                    $parcel['related_branches_ids'] = Parcel::getRelatedBranches($parcel['created_branch_id']);
                 }
             }
             $result[] = $parcel;
@@ -3144,6 +3144,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
 
+
         $builder->columns($columns);
         $builder->where(join(' AND ', $where), $bind);
         return $builder;
@@ -3151,25 +3152,25 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
-     * @param $created_by
+     * @param $created_branch_id
      * @return array
      */
-    public static function getBranchesRelatedToCreatedBranch($created_by)
+    public static function getRelatedBranches($created_branch_id)
     {
-        $branch_map = [];
-        $parent_hub_id = null;
-        $staff_details = Admin::findById($created_by)->toArray();
-        $staff_branch_details = Branch::findById($staff_details[0]['branch_id'])->toArray();
-        if ($staff_branch_details[0]['branch_type'] == BranchType::EC) {
-            $parent_hub_id = BranchMap::findByChildId($staff_branch_details[0]['id'])->toArray()[0]['parent_id'];
-        } elseif ($staff_branch_details[0]['branch_type'] == BranchType::HUB) {
-            $parent_hub_id = $staff_branch_details[0]['id'];
+        $sql = "SELECT branch.id, bm.parent_id FROM branch_map bm
+                INNER JOIN branch ON (branch.id = bm.child_id)
+                WHERE bm.parent_id =
+                (SELECT bp.parent_id FROM branch_map bp WHERE bp.parent_id = $created_branch_id OR bp.child_id = $created_branch_id LIMIT 1) ";
+        $new_connection = (new BaseModel())->getReadConnection();
+        $related_branches_array = $new_connection->fetchAll($sql);
+        $related_branches_ids = [];
+        foreach ($related_branches_array as $related_branch) {
+            $related_branches_ids[] = $related_branch['id'];
         }
-        $branches_related_to_hub = BranchMap::findByParentId($parent_hub_id)->toArray();
-        foreach ($branches_related_to_hub as $branch) {
-            $branch_map[] = $branch['child_id'];
+        if (count($related_branches_array) > 0) {
+            $related_branches_ids[] = $related_branches_array[0]['parent_id'];
         }
-        $branch_map[] = $parent_hub_id;
-        return $branch_map;
+        return $related_branches_ids;
+
     }
 }
