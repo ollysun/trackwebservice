@@ -3169,8 +3169,8 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         $sql = "SELECT bm.* FROM branch_map bm WHERE parent_id = $this_branch_id AND child_id = $created_branch_id";
         $new_connection = (new BaseModel())->getWriteConnection();
-        $this_branch_children = $new_connection->fetchAll($sql);
-        if (count($this_branch_children) > 0) {
+        $is_created_branch_child_to_this_branch = $new_connection->fetchAll($sql);
+        if (count($is_created_branch_child_to_this_branch) > 0) {
             return 1;
         }
         return 0;
