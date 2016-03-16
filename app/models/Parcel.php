@@ -1665,6 +1665,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = [];
 
         //filters
+        if (isset($filter_by['return_reason_comment'])) {
+            $where[] = 'ParcelComment.comment = :return_status_comment:';
+            $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+        }
+
         if (isset($filter_by['held_by_id'])) {
             $where[] = 'HeldParcel.held_by_id = :held_by_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_id'] = $filter_by['held_by_id'];
@@ -1877,11 +1882,6 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['report']) && $filter_by['report'] == 1) {
             $where[] = 'Parcel.entity_type != :entity_type:';
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
-        }
-
-        if (isset($filter_by['return_reason_comment'])) {
-            $where[] = 'ParcelComment.comment = :return_status_comment:';
-            $bind['return_status_comment'] = $filter_by['return_reason_comment'];
         }
 
         if (!isset($filter_by['show_removed'])) {
