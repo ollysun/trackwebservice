@@ -1879,7 +1879,6 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
 
-
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
