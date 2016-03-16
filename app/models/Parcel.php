@@ -1757,11 +1757,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['max_weight'] = $filter_by['max_weight'];
         }
         if (isset($filter_by['min_amount_due'])) {
-            $where[] = 'Parcel.amount_due >= :min_weight:';
+            $where[] = 'Parcel.amount_due >= :min_amount_due:';
             $bind['min_amount_due'] = $filter_by['min_amount_due'];
         }
         if (isset($filter_by['max_amount_due'])) {
-            $where[] = 'Parcel.amount_due <= :max_weight:';
+            $where[] = 'Parcel.amount_due <= :max_amount_due:';
             $bind['max_amount_due'] = $filter_by['max_amount_due'];
         }
         if (isset($filter_by['cash_on_delivery'])) {
@@ -3153,18 +3153,17 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id', 'Company');
         }
 
+        if (isset($fetch_with['with_invoice_parcel'])) {
+            $columns[] = 'InvoiceParcel.*';
+            $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
+        }
+
         if (isset($filter_by['return_reason_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->innerJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         } elseif (isset($fetch_with['with_parcel_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
-        }
-
-
-        if (isset($fetch_with['with_invoice_parcel'])) {
-            $columns[] = 'InvoiceParcel.*';
-            $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
         }
 
         $builder->columns($columns);
