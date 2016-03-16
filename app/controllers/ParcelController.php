@@ -122,13 +122,11 @@ class ParcelController extends ControllerBase
 
         // Check if edit branch is related to created branch
         if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
-            $created_by = $parcel_obj->created_by;
-            $related_branches = Parcel::getBranchesRelatedToCreatedBranch($created_by);
-            if (!empty($related_branches) && is_array($related_branches)) {
-                $branch_id = $auth_data['branch_id'];
-                if (!in_array($branch_id, $related_branches)) {
-                    return $this->response->sendError('Can only be edited by a branch related to the created branch');
-                }
+            $created_branch_id = $parcel_obj->created_branch_id;
+            $branch_id = $auth_data['branch_id'];
+            $can_edit_parcel = Parcel::isEditAccessGranted($created_branch_id,$branch_id);
+            if (!$can_edit_parcel) {
+                    return $this->response->sendError('Can only be edited by the parent hub or created branch');
             }
         }
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
