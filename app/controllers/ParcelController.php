@@ -221,7 +221,7 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $filter_params = ['for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible',
+        $filter_params = ['return_reason_comment', 'for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible',
             'created_by', 'user_id', 'held_by_staff_id', 'held_by_id', 'to_branch_id', 'from_branch_id', 'parcel_type',
             'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight',
             'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type',
@@ -229,7 +229,7 @@ class ParcelController extends ControllerBase
             'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
             'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
-            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits'
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed'
         ];
 
         $filter_by = [];

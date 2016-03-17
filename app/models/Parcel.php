@@ -1667,6 +1667,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = [];
 
         //filters
+        if (isset($filter_by['return_reason_comment'])) {
+            $where[] = 'ParcelComment.comment = :return_status_comment:';
+            $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+        }
+
         if (isset($filter_by['held_by_id'])) {
             $where[] = 'HeldParcel.held_by_id = :held_by_id: AND HeldParcel.status = :held_status:';
             $bind['held_by_id'] = $filter_by['held_by_id'];
@@ -1881,6 +1886,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
 
+        if(!isset($filter_by['show_removed'])){
+            $where[] = 'Parcel.status !=' . Status::REMOVED;
+        }
+
         return ['where' => $where, 'bind' => $bind];
     }
 
@@ -1996,6 +2005,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['company_id'])) {
             $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
             $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
+        }
+
+        if (isset($filter_by['return_reason_comment'])) {
+            $builder->innerJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
 
         $builder->where(join(' AND ', $where));
@@ -3145,11 +3158,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
         }
 
-        if (isset($fetch_with['with_parcel_comment'])) {
+        if (isset($filter_by['return_reason_comment'])) {
+            $columns[] = 'ParcelComment.*';
+            $builder->innerJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
+        } elseif (isset($fetch_with['with_parcel_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
-
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where), $bind);
