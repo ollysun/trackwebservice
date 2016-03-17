@@ -117,8 +117,20 @@ class ParcelController extends ControllerBase
         } else {
             $parcel_obj = new Parcel();
         }
+
+        $created_by = $this->auth->getPersonId();
+
+        // Check if edit branch is related to created branch
+        if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
+            $created_branch_id = $parcel_obj->created_branch_id;
+            $branch_id = $auth_data['branch_id'];
+            $can_edit_parcel = Parcel::isEditAccessGranted($created_branch_id,$branch_id);
+            if (!$can_edit_parcel) {
+                    return $this->response->sendError('Can only be edited by the parent hub or created branch');
+            }
+        }
         $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-            $bank_account, $parcel, $to_branch_id, $this->auth->getPersonId());
+            $bank_account, $parcel, $to_branch_id, $created_by);
         if (isset($parcel['id'])) {
             $parcel_edit_history->parcel_id = $parcel['id'];
             $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
@@ -209,7 +221,7 @@ class ParcelController extends ControllerBase
      */
     private function getFilterParams()
     {
-        $filter_params = ['for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible',
+        $filter_params = ['return_reason_comment', 'for_return', 'manifest_id', 'show_parents', 'parent_id', 'entity_type', 'is_visible',
             'created_by', 'user_id', 'held_by_staff_id', 'held_by_id', 'to_branch_id', 'from_branch_id', 'parcel_type',
             'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight',
             'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type',
@@ -217,7 +229,7 @@ class ParcelController extends ControllerBase
             'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
             'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
-            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits'
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed'
         ];
 
         $filter_by = [];
@@ -260,6 +272,7 @@ class ParcelController extends ControllerBase
         $with_company = $this->request->getQuery('with_company');
         $with_invoice_parcel = $this->request->getQuery('with_invoice_parcel');
         $with_parcel_comment = $this->request->getQuery('with_parcel_comment');
+        $with_edit_access = 1;
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -320,8 +333,12 @@ class ParcelController extends ControllerBase
         if (!is_null($with_invoice_parcel)) {
             $fetch_with['with_invoice_parcel'] = true;
         }
-        if(!is_null($with_parcel_comment)){
+        if (!is_null($with_parcel_comment)) {
             $fetch_with['with_parcel_comment'] = true;
+        }
+
+        if(!is_null($with_edit_access)){
+            $fetch_with['with_edit_access'] = true;
         }
 
         if (!is_null($report) && $report == 1) {
