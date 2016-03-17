@@ -1486,21 +1486,23 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOtherInfo($other_info);
         $this->setPackageValue($package_value);
         $this->setNoOfPackage($no_of_package);
-        $this->setCreatedBy($created_by);
+        if ($this->id == null) {
+            $this->setCreatedBy($created_by);
+        }
         $this->setEntityType($entity_type);
         $this->setIsVisible($is_visible);
         $this->setBankAccountId($bank_account_id);
-
         $now = date('Y-m-d H:i:s');
         if ($this->id == null) {
             $this->setCreatedDate($now);
         }
-
         $this->setModifiedDate($this->getCreatedDate());
         $this->setStatus($status);
         $this->setIsBillingOverridden($is_billing_overridden);
         $this->setReferenceNumber($reference_number);
-        $this->setCreatedBranchId($from_branch_id);
+        if ($this->id == null) {
+            $this->setCreatedBranchId($from_branch_id);
+        }
         $this->setRouteId($route_id);
         $this->setRequestType($request_type);
         $this->setForReturn(0);
@@ -1890,7 +1892,11 @@ class Parcel extends \Phalcon\Mvc\Model
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
         $data = $builder->getQuery()->execute();
-
+        $auth = Di::getDefault()->getAuth();
+        /**
+         * @var Auth $auth
+         */
+        $this_branch_id = $auth->getData()['branch']['id'];
         $result = [];
         foreach ($data as $item) {
             $parcel = [];
@@ -1948,8 +1954,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_invoice_parcel'])) {
                     $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                 }
-                if(isset($fetch_with['with_parcel_comment'])){
+                if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
+                }
+                if (isset($fetch_with['with_edit_access'])) {
+                    $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id'], $this_branch_id);
                 }
             }
             $result[] = $parcel;
@@ -3136,13 +3145,34 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('InvoiceParcel', 'InvoiceParcel.waybill_number= Parcel.waybill_number');
         }
 
-        if(isset($fetch_with['with_parcel_comment'])){
+        if (isset($fetch_with['with_parcel_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
         }
 
+
         $builder->columns($columns);
         $builder->where(join(' AND ', $where), $bind);
         return $builder;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $created_branch_id
+     * @param $this_branch_id
+     * @return int
+     */
+    public static function isEditAccessGranted($created_branch_id, $this_branch_id)
+    {
+        if ($this_branch_id == $created_branch_id) {
+            return 1;
+        }
+        $sql = "SELECT bm.* FROM branch_map bm WHERE parent_id = $this_branch_id AND child_id = $created_branch_id";
+        $new_connection = (new BaseModel())->getWriteConnection();
+        $is_created_branch_child_to_this_branch = $new_connection->fetchAll($sql);
+        if (count($is_created_branch_child_to_this_branch) > 0) {
+            return 1;
+        }
+        return 0;
     }
 }
