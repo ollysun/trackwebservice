@@ -4,7 +4,6 @@ use Phinx\Migration\AbstractMigration;
 
 class InsertCustomerAccountTypes extends AbstractMigration
 {
-
     public function change()
     {
 
