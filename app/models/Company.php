@@ -103,7 +103,7 @@ class Company extends EagerModel
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
-     * @var
+     * @var integer
      */
     protected $account_type_id;
 
