@@ -10,6 +10,10 @@ class CorporateAccountType extends \Phalcon\Mvc\Model
     protected $acronym;
     protected $name;
 
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return array
+     */
     public static function getAll()
     {
         return CorporateAccountType::find()->toArray();
