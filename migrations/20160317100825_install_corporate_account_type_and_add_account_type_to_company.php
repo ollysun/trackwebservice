@@ -16,5 +16,6 @@ class InstallCorporateAccountTypeAndAddAccountTypeToCompany extends AbstractMigr
         $company = $this->table('company');
         $company->addColumn('account_type_id', 'integer',['default' => null]);
         $company->update();
+
     }
 }

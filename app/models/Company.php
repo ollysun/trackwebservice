@@ -102,6 +102,12 @@ class Company extends EagerModel
     protected $status;
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @var
+     */
+    protected $account_type_id;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -447,6 +453,25 @@ class Company extends EagerModel
     }
 
     /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return mixed
+     */
+    public function getAccountTypeId()
+    {
+        return $this->account_type_id;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param mixed $account_type_id
+     */
+    public function setAccountTypeId($account_type_id)
+    {
+        $this->account_type_id = $account_type_id;
+    }
+
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -498,7 +523,8 @@ class Company extends EagerModel
             'relations_officer_id' => 'relations_officer_id',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'status' => 'status'
+            'status' => 'status',
+            'account_type_id' => 'account_type_id'
         );
     }
 
@@ -543,7 +569,8 @@ class Company extends EagerModel
             $company_data['city_id'],
             $company_data['credit_limit'],
             $company_data['discount'],
-            $company_data['relations_officer_id']);
+            $company_data['relations_officer_id'],
+            $company_data['account_type']);
         if ($company->save()) {
             return $company;
         } else {
@@ -573,7 +600,8 @@ class Company extends EagerModel
                 $company_data['city_id'],
                 $company_data['credit_limit'],
                 $company_data['discount'],
-                $company_data['relations_officer_id']);
+                $company_data['relations_officer_id'],
+                $company_data['account_type']);
             if ($company->save()) {
                 return $company;
             }
@@ -608,8 +636,9 @@ class Company extends EagerModel
      * @param $credit_limit
      * @param $discount
      * @param $relations_officer_id
+     * @param $account_type_id
      */
-    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -625,9 +654,10 @@ class Company extends EagerModel
         $this->setModifiedDate($now);
 
         $this->setStatus(Status::ACTIVE);
+        $this->setAccountTypeId($account_type_id);
     }
 
-    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -646,6 +676,7 @@ class Company extends EagerModel
         $this->setModifiedDate($now);
 
         $this->setStatus(Status::ACTIVE);
+        $this->setAccountTypeId($account_type_id);
     }
 
     public function changeDetails($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $primary_contact_id, $sec_contact_id, $relations_officer_id, $status_id)
@@ -733,7 +764,7 @@ class Company extends EagerModel
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder();
         $builder->from('Company')
-        ->orderBy('Company.name');
+            ->orderBy('Company.name');
 
         if (!isset($fetch_with['no_paginate'])) {
             $builder->limit($count, $offset);
