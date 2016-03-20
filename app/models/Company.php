@@ -2,6 +2,7 @@
 
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Resultset;
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 
 /**
  * Class Company
@@ -671,6 +672,69 @@ class Company extends EagerModel
     {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
+    }
+
+    /**
+     * Change the status of the company with that of its users
+     * @author Abdul-rahman Shitu <rahman@cottacush.com>
+     * @param int $status
+     * @return bool
+     */
+    public function changeStatusWithUsers($status)
+    {
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
+
+        try {
+            $this->setTransaction($transaction);
+
+            $this->changeStatus($status);
+
+            if ($this->save()) {
+                $userAuthList = $this->getUserAuth();
+                foreach ($userAuthList as $userAuth) {
+                    if (empty($userAuth)){
+                        continue;
+                    }
+                    $userAuth->setTransaction($transaction);
+                    $userAuth->changeStatus($status);
+                    if (!$userAuth->save()){
+                        $transaction->rollback();
+                        return false;
+                    }
+                }
+
+                $transaction->commit();
+                return true;
+            }
+        } catch(Exception $e) {
+
+        }
+        $transaction->rollback();
+        return false;
+    }
+
+    /**
+     * Fetches the user auth related to the company
+     * @return UserAuth[]
+     */
+    public function getUserAuth()
+    {
+        $obj = new CompanyUser();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['UserAuth.*'])
+            ->from('CompanyUser')
+            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id')
+            ->inWhere('CompanyUser.company_id', [$this->getId()]);
+
+        $data = $builder->getQuery()->execute();
+
+        $userAuth = [];
+        foreach ($data as $item){
+            $userAuth[] = $item;
+        }
+
+        return $userAuth;
     }
 
     /**
