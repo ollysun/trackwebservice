@@ -103,6 +103,12 @@ class Company extends EagerModel
     protected $status;
 
     /**
+     *
+     * @var integer
+     */
+    protected $account_type_id;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -298,6 +304,19 @@ class Company extends EagerModel
     }
 
     /**
+     * Method to set the value of field account_type_id
+     *
+     * @param $account_type_id
+     * @return $this
+     */
+    public function setAccountTypeId($account_type_id)
+    {
+        $this->account_type_id = $account_type_id;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -448,6 +467,16 @@ class Company extends EagerModel
     }
 
     /**
+     * Returns the value of field account_type_id
+     *
+     * @return int
+     */
+    public function getAccountTypeId()
+    {
+        return $this->account_type_id;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -499,7 +528,8 @@ class Company extends EagerModel
             'relations_officer_id' => 'relations_officer_id',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'status' => 'status'
+            'status' => 'status',
+            'account_type_id' => 'account_type_id'
         );
     }
 
@@ -520,7 +550,8 @@ class Company extends EagerModel
             'relations_officer_id' => $this->getRelationsOfficerId(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
-            'status' => $this->getStatus()
+            'status' => $this->getStatus(),
+            'account_type_id' => $this->getAccountTypeId()
         );
     }
 
@@ -720,12 +751,12 @@ class Company extends EagerModel
      */
     public function getUserAuth()
     {
-        $obj = new CompanyUser();
+        $obj = new UserAuth();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns(['UserAuth.*'])
-            ->from('CompanyUser')
-            ->innerJoin('UserAuth', 'UserAuth.id = CompanyUser.user_auth_id')
-            ->inWhere('CompanyUser.company_id', [$this->getId()]);
+            ->from('UserAuth')
+            ->innerJoin('CompanyUser', 'UserAuth.id = CompanyUser.user_auth_id')
+            ->where('CompanyUser.company_id = :company_id:', ['company_id' => $this->getId()]);
 
         $data = $builder->getQuery()->execute();
 

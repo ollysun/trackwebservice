@@ -110,7 +110,7 @@ class CompanyController extends ControllerBase
     public function changeStatusAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
-        $postData = $this->request->getJsonRawBody();
+        $postData = $this->request->getJsonRawBody(true);
 
         $requiredFields = ['company_id','status'];
 
@@ -120,8 +120,9 @@ class CompanyController extends ControllerBase
             return $this->response->sendError($requestValidator->getMessages());
         }
 
-        $company = Company::findFirst($postData['company_id']);
-        if (!$company) {
+        $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $postData['company_id']]]);
+
+        if (empty($company)) {
             return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
         }
 
