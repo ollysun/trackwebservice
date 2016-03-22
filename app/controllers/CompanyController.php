@@ -754,6 +754,16 @@ class CompanyController extends ControllerBase
         }
         return $this->response->sendSuccess($result);
     }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return $this
+     */
+    public function getAllAccountTypesAction()
+    {
+        $result = CorporateAccountType::getAll();
+        return $this->response->sendSuccess($result);
+    }
 }
 
 
