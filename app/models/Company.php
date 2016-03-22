@@ -966,6 +966,13 @@ class Company extends EagerModel
                 'ref_model_name' => 'UserAuth',
                 'foreign_key' => 'user_auth_id',
                 'reference_key' => 'id'
+            ],
+            [
+                'field' => 'account_type',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CorporateAccountType',
+                'foreign_key' => 'account_type_id',
+                'reference_key' => 'id'
             ]
         ];
     }

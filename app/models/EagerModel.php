@@ -54,6 +54,8 @@ abstract class EagerModel extends BaseModel implements EagerLoaderInterface
                     $columns[] = "{$fetch_with_field['ref_model_name']}.*";
                 }
             }
+
+
         }
     }
 
