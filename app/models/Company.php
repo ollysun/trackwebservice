@@ -103,7 +103,7 @@ class Company extends EagerModel
     protected $status;
 
     /**
-     *
+     * @author Babatunde Otaru <tunde@cottacush.com>
      * @var integer
      */
     protected $account_type_id;
@@ -304,19 +304,6 @@ class Company extends EagerModel
     }
 
     /**
-     * Method to set the value of field account_type_id
-     *
-     * @param $account_type_id
-     * @return $this
-     */
-    public function setAccountTypeId($account_type_id)
-    {
-        $this->account_type_id = $account_type_id;
-
-        return $this;
-    }
-
-    /**
      * Returns the value of field id
      *
      * @return integer
@@ -467,14 +454,23 @@ class Company extends EagerModel
     }
 
     /**
-     * Returns the value of field account_type_id
-     *
-     * @return int
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return mixed
      */
     public function getAccountTypeId()
     {
         return $this->account_type_id;
     }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param mixed $account_type_id
+     */
+    public function setAccountTypeId($account_type_id)
+    {
+        $this->account_type_id = $account_type_id;
+    }
+
 
     /**
      * Initialize method for model.
@@ -575,7 +571,8 @@ class Company extends EagerModel
             $company_data['city_id'],
             $company_data['credit_limit'],
             $company_data['discount'],
-            $company_data['relations_officer_id']);
+            $company_data['relations_officer_id'],
+            $company_data['account_type']);
         if ($company->save()) {
             return $company;
         } else {
@@ -605,7 +602,8 @@ class Company extends EagerModel
                 $company_data['city_id'],
                 $company_data['credit_limit'],
                 $company_data['discount'],
-                $company_data['relations_officer_id']);
+                $company_data['relations_officer_id'],
+                $company_data['account_type']);
             if ($company->save()) {
                 return $company;
             }
@@ -640,8 +638,9 @@ class Company extends EagerModel
      * @param $credit_limit
      * @param $discount
      * @param $relations_officer_id
+     * @param $account_type_id
      */
-    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -657,9 +656,10 @@ class Company extends EagerModel
         $this->setModifiedDate($now);
 
         $this->setStatus(Status::ACTIVE);
+        $this->setAccountTypeId($account_type_id);
     }
 
-    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -678,6 +678,7 @@ class Company extends EagerModel
         $this->setModifiedDate($now);
 
         $this->setStatus(Status::ACTIVE);
+        $this->setAccountTypeId($account_type_id);
     }
 
     public function changeDetails($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $primary_contact_id, $sec_contact_id, $relations_officer_id, $status_id)
@@ -828,7 +829,7 @@ class Company extends EagerModel
         $obj = new Company();
         $builder = $obj->getModelsManager()->createBuilder();
         $builder->from('Company')
-        ->orderBy('Company.name');
+            ->orderBy('Company.name');
 
         if (!isset($fetch_with['no_paginate'])) {
             $builder->limit($count, $offset);
@@ -1029,6 +1030,13 @@ class Company extends EagerModel
                 'model_name' => 'RelationsOfficer',
                 'ref_model_name' => 'UserAuth',
                 'foreign_key' => 'user_auth_id',
+                'reference_key' => 'id'
+            ],
+            [
+                'field' => 'account_type',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CorporateAccountType',
+                'foreign_key' => 'account_type_id',
                 'reference_key' => 'id'
             ]
         ];
