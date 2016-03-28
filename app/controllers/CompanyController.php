@@ -129,7 +129,7 @@ class CompanyController extends ControllerBase
         if ($company->changeStatusWithUsers($postData['status'])){
             return $this->response->sendSuccess();
         }
-        return $this->response->sendError(ResponseMessage::UNABLE_TO_CHANGE_COMPANT_STATUS);
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CHANGE_COMPANY_STATUS);
     }
 
     /**

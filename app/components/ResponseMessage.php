@@ -125,7 +125,7 @@ class ResponseMessage
     const PRIMARY_CONTACT_EXISTS = 'Primary contact already exists';
     const SECONDARY_CONTACT_EXISTS = 'Secondary contact already exists';
     const INVALID_COMPANY_ID_SUPPLIED = 'Invalid company id supplied';
-    const UNABLE_TO_CHANGE_COMPANT_STATUS = 'Could not update the company\'s status';
+    const UNABLE_TO_CHANGE_COMPANY_STATUS = 'Could not update the company\'s status';
     const INVALID_RECEIVER_CITY_SUPPLIED = 'Invalid receiver city supplied';
     const INVALID_RECEIVER_STATE_SUPPLIED = 'Invalid receiver state supplied';
     const COULD_NOT_CREATE_REQUEST = 'Could not create request';
