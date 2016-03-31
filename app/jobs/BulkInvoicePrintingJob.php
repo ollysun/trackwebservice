@@ -36,7 +36,6 @@ class BulkInvoicePrintingJob extends BaseJob
                 if (!$invoice) {
                     $bulkInvoiceJobDetail->status = BulkInvoiceJobDetails::STATUS_FAILED;
                 } else {
-                    var_dump($invoice);
                     $bulkInvoiceJobDetail->company_id = $invoiceData->company_id;
                     $bulkInvoiceJobDetail->status = BulkInvoiceJobDetails::STATUS_SUCCESS;
                 }
