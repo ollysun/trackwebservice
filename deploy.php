@@ -10,13 +10,13 @@ require 'recipe/common.php';
 
 serverList('deploy/servers.yml');
 
-set('writable_dirs', ['app/logs']);
+set('writable_dirs', ['app/logs', 'app/cache']);
 set('shared_dirs', ['app/logs']);
 
 env('composer_options', 'install --verbose --prefer-dist --optimize-autoloader --no-progress --no-interaction');
 
 task('deploy:run_migrations', function () {
-    run('PHINX_DBHOST={{PHINX_DBHOST}} PHINX_DBUSER={{PHINX_DBUSER}} PHINX_DBPASS={{PHINX_DBPASS}} PHINX_DBNAME={{PHINX_DBNAME}} php {{release_path}}/vendor/bin/phinx migrate -e {{APPLICATION_ENV}}
+    run('cd {{release_path}} PHINX_DBHOST={{PHINX_DBHOST}} PHINX_DBUSER={{PHINX_DBUSER}} PHINX_DBPASS={{PHINX_DBPASS}} PHINX_DBNAME={{PHINX_DBNAME}} php vendor/bin/phinx migrate -e {{APPLICATION_ENV}}
 ');
 })->desc('Run migrations');
 
