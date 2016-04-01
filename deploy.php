@@ -40,18 +40,18 @@ task('deploy', [
 set('repository', 'git@bitbucket.org:cottacush/tnt-service.git');
 
 //slack tasks
-//task('slack:before_deploy', function () {
-//    postToSlack('Starting deploy on ' . env('server.name') . '...');
-//});
-//
-//task('slack:after_deploy', function () {
-//    postToSlack('Deploy to ' . env('server.name') . ' done');
-//});
-//
-//function postToSlack($message)
-//{
-//    runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus_dev\", \"username\": \"T+ testing Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
-//}
-//
-//before('deploy', 'slack:before_deploy');
-//after('deploy', 'slack:after_deploy');
+task('slack:before_deploy', function () {
+    postToSlack('Starting deploy on ' . env('server.name') . '...');
+});
+
+task('slack:after_deploy', function () {
+    postToSlack('Deploy to ' . env('server.name') . ' done');
+});
+
+function postToSlack($message)
+{
+    runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus\", \"username\": \"Tnt-Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
+}
+
+before('deploy', 'slack:before_deploy');
+after('deploy', 'slack:after_deploy');
