@@ -1,0 +1,18 @@
+# app/config/servers.yml
+staging:
+    host:   ******
+    user:   ******
+    stage:  staging
+    identity_file:
+        public_key:  "~/.ssh/id_rsa.pub"
+        private_key: "~/.ssh/id_rsa"
+        password: "key-password"
+    deploy_path:   "/var/www/html/tnt-service"
+    vendor_path: "/var/www/html/tnt-service"
+    branch: develop
+    local_path: '/var/www/html/tnt-service'
+    PHINX_DBHOST: "*****"
+    PHINX_DBNAME: "*****"
+    PHINX_DBUSER: "****"
+    PHINX_DBPASS: "*****"
+    APPLICATION_ENV: "staging"
