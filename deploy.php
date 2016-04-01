@@ -91,6 +91,8 @@ task('slack:after_deploy', function () {
     postToSlack('Deploy to ' . env('server.name') . ' done');
 });
 
+
+
 task('slack:before_workers_stop', function () {
     postToSlack('Stopping Workers on ' . env('server.name') . '...');
 });
@@ -108,6 +110,15 @@ task('slack:after_workers_start', function () {
 });
 
 
+task('slack:before_run_migrations',  function () {
+    postToSlack('Running Migrations on ' . env('server.name') . '...');
+});
+
+task('slack:after_run_migrations',  function () {
+    postToSlack('Migrations successfully done');
+});
+
+
 function postToSlack($message)
 {
     runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus\", \"username\": \"Tnt-Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
@@ -122,4 +133,7 @@ before('workers:stop', 'slack:before_workers_stop');
 after('deploy', 'workers:restart');
 before('deploy', 'slack:before_deploy');
 after('deploy', 'slack:after_deploy');
+
+after('deploy:run_migrations', 'slack:after_run_migrations');
+before('deploy:run_migrations', 'slack:before_run_migrations');
 
