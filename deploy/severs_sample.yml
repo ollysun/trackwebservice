@@ -15,3 +15,5 @@ staging:
     PHINX_DBUSER: "****"
     PHINX_DBPASS: "*****"
     APPLICATION_ENV: "staging"
+    AWS_KEY: "******"
+    AWS_SECRET: "******"
