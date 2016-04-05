@@ -743,7 +743,11 @@ class ParcelController extends ControllerBase
                 $parcel->setRouteId($route_id);
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
+            if($parcel->getForReturn() == '1'){
+                  $check = $parcel->changeStatus(Status::PARCEL_BEING_DELIVERED, $admin_id, ParcelHistory::MSG_READY_FOR_PICKUP, $auth_data['branch_id']);
+            }else{
+                  $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
+            }
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -1237,6 +1241,9 @@ class ParcelController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
+        $receiver_name = $this->request->getPost('receiver_name');
+        $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
+        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getPersonId();
 
@@ -1275,7 +1282,27 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
+
+            //create delivery receipt if receiver name and phone number was supplied
+            if (isset($receiver_name)) {
+                if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RETURNED)) {
+                    $data = ['waybill_number' => $waybill_number,
+                        'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RETURNED,
+                        'delivered_by' => $this->auth->getPersonId(),
+                        'name' => $receiver_name,
+                        'delivered_at' => $date_and_time_of_delivery];
+                }
+                if (isset($receiver_email)) {
+                    $data['email'] = $receiver_email;
+                }
+                if (isset($receiver_phonenumber)) {
+                    $data['phone_number'] = $receiver_phonenumber;
+                }
+
+                DeliveryReceipt::add($data);
+            }
         }
+
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }

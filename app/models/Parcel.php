@@ -1886,7 +1886,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
 
-        if(!isset($filter_by['show_removed'])){
+        if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
 
@@ -2796,8 +2796,8 @@ class Parcel extends \Phalcon\Mvc\Model
     public function getProofOfDelivery()
     {
         /** @var DeliveryReceipt $delivery_receipt */
-        $delivery_receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number=:waybill_number: AND (receipt_type = :signature: OR receipt_type=:receiver_detail:)',
-            'bind' => ['waybill_number' => $this->getWaybillNumber(), 'signature' => DeliveryReceipt::RECEIPT_TYPE_SIGNATURE, 'receiver_detail' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL]]);
+        $delivery_receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number=:waybill_number: AND (receipt_type = :signature: OR receipt_type=:receiver_detail: OR receipt_type = :returned:)',
+            'bind' => ['waybill_number' => $this->getWaybillNumber(), 'signature' => DeliveryReceipt::RECEIPT_TYPE_SIGNATURE, 'receiver_detail' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL, 'returned' => DeliveryReceipt::RECEIPT_TYPE_RETURNED]]);
 
         if ($delivery_receipt && $delivery_receipt->receipt_type == DeliveryReceipt::RECEIPT_TYPE_SIGNATURE) {
             $delivery_receipt->receipt_path = DeliveryReceipt::getS3BaseUrl() . $delivery_receipt->receipt_path;
