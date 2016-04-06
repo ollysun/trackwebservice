@@ -106,6 +106,7 @@ class CompanyController extends ControllerBase
     /**
      * Changes the status of the company as well as the users in that company
      * @author Abdul-rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
      */
     public function changeStatusAction()
     {
@@ -136,6 +137,7 @@ class CompanyController extends ControllerBase
     /**
      * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
      * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
      * @return $this
      */
     public function getAllCompanyAction()
