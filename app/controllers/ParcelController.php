@@ -1265,7 +1265,8 @@ class ParcelController extends ControllerBase
             } else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
                 continue;
-            } else if ($parcel->getToBranchId() != $parcel->getCreatedBranchId() || (in_array($admin->getRoleId(), [Role::OFFICER]) && ($admin->getBranchId() != $parcel->getToBranchId() || $admin->getBranchId() != $parcel->getFromBranchId()))) {
+            } else if ($parcel->getToBranchId() != $parcel->getCreatedBranchId() ||
+                (in_array($admin->getRoleId(), [Role::OFFICER]) && ($admin->getBranchId() != $parcel->getToBranchId() || Parcel::areBranchesRelated($parcel->getCreatedBranchId(), $admin->getBranchId())))) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             }
