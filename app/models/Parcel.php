@@ -3194,20 +3194,20 @@ class Parcel extends \Phalcon\Mvc\Model
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @param $branch_one
-     * @param $branch_two
+     * @param $branchTwo
      * @return bool
      */
-    public static function isBranchesRelated($branch_one, $branch_two){
+    public static function isBranchesRelated($branch_one, $branchTwo){
         $sql = "SELECT bm.child_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branch_one OR parent_id = $branch_one LIMIT 1)
                 UNION
                 SELECT bm.parent_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branch_one OR parent_id = $branch_one LIMIT 1)";
-        $new_connection = (new BaseModel())->getWriteConnection();
-        $associated_branches_to_branch_one = $new_connection->fetchAll($sql);
-        $related_branches_array = [];
-        foreach ($associated_branches_to_branch_one as $ids){
-            $related_branches_array[] = $ids['child_id'];
+        $newConnection = (new BaseModel())->getWriteConnection();
+        $associatedBranchesToBranchOne = $newConnection->fetchAl($sql);
+        $relatedBranchesArray = [];
+        foreach ($associatedBranchesToBranchOne as $associatedBranch){
+            $relatedBranchesArray[] = $associatedBranch['child_id'];
         }
-        if(in_array($branch_two, $related_branches_array)){
+        if(in_array($branchTwo, $relatedBranchesArray)){
             return true;
         }
         return false;
