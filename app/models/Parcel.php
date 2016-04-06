@@ -299,6 +299,32 @@ class Parcel extends \Phalcon\Mvc\Model
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @return float
      */
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @var
+     */
+    protected $return_status;
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @return mixed
+     */
+    public function getReturnStatus()
+    {
+        return $this->return_status;
+    }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param mixed $return_status
+     */
+    public function setReturnStatus($return_status)
+    {
+        $this->return_status = $return_status;
+    }
+
+
     public function getBasePrice()
     {
         return $this->base_price;
@@ -1400,6 +1426,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'storage_demurrage' => 'storage_demurrage',
             'others' => 'others',
             'base_price' => 'base_price',
+            'return_status' => 'return_status',
         );
     }
 
@@ -1451,7 +1478,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'cost_of_crating' => $this->getCostOfCrating(),
             'storage_demurrage' => $this->getStorageDemurrage(),
             'others' => $this->getOthers(),
-            'base_price' => $this->getBasePrice()
+            'base_price' => $this->getBasePrice(),
+            'return_status' => $this->getReturnStatus()
         );
     }
 
@@ -1461,7 +1489,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
-                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0
     )
 
     {
@@ -1518,6 +1546,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setStorageDemurrage($storage_demurrage);
         $this->setOthers($others);
         $this->setBasePrice($base_price);
+        $this->setReturnStatus($return_status);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -2827,9 +2856,10 @@ class Parcel extends \Phalcon\Mvc\Model
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $waybill_number_arr
      * @param $to_branch_id
+     * @param $return_to_origin
      * @return array
      */
-    public static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id)
+    public static function bulkMoveToForSweeper($waybill_number_arr, $to_branch_id, $return_to_origin = null)
     {
         $bad_parcels = [];
         $good_parcels = [];
@@ -2837,7 +2867,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $auth = Di::getDefault()->getAuth();
         foreach ($waybill_number_arr as $waybill_number) {
             try {
-                self::moveToSweeper($waybill_number, $auth, $to_branch_id);
+                self::moveToSweeper($waybill_number, $auth, $to_branch_id, $return_to_origin);
                 $good_parcels[] = $waybill_number;
             } catch (Exception $ex) {
                 $bad_parcels[$waybill_number] = $ex->getMessage();
@@ -2852,10 +2882,11 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $waybill_number
      * @param Auth $auth
      * @param $to_branch_id
+     * @param $return_to_origin
      * @return bool
      * @throws Exception
      */
-    public static function moveToSweeper($waybill_number, $auth, $to_branch_id)
+    public static function moveToSweeper($waybill_number, $auth, $to_branch_id, $return_to_origin = null)
     {
         $parcel = self::getByWaybillNumber($waybill_number);
 
@@ -2871,6 +2902,9 @@ class Parcel extends \Phalcon\Mvc\Model
             throw new Exception(ResponseMessage::PARCEL_NOT_IN_OFFICE);
         }
 
+        if($return_to_origin && $parcel->return_status == Status::DELIVERY_ATTEMPTED){
+            $parcel->return_status = Status::RETURNING_TO_ORIGIN;
+        }
         $check = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $to_branch_id, $auth->getPersonId(), ParcelHistory::MSG_FOR_SWEEPER);
         if (!$check) {
             throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);

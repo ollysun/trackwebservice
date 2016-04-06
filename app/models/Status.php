@@ -26,6 +26,10 @@ class Status extends \Phalcon\Mvc\Model
     const MANIFEST_HAS_ISSUE = 22;
     const PARCEL_RETURNED = 23;
 
+    const DELIVERY_ATTEMPTED = 1;
+    const RETURNING_TO_ORIGIN = 2;
+    const RETURN_READY_FOR_PICKUP = 3;
+
     /**
      *
      * @var integer
