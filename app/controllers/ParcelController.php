@@ -743,11 +743,8 @@ class ParcelController extends ControllerBase
                 $parcel->setRouteId($route_id);
             }
 
-            if($parcel->getForReturn() == '1'){
-                  $check = $parcel->changeStatus(Status::PARCEL_BEING_DELIVERED, $admin_id, ParcelHistory::MSG_READY_FOR_PICKUP, $auth_data['branch_id']);
-            }else{
-                  $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
-            }
+            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
+
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -1241,7 +1238,12 @@ class ParcelController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
-        $receiver_name = $this->request->getPost('receiver_name');
+        $receiver_name = $this->request->getPost('receiver_name', null);
+
+        if(empty($receiver_name)){
+            return $this->response->sendError("Receiver's Name Missing");
+        }
+
         $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
         $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $waybill_numbers = $this->request->getPost('waybill_numbers');
