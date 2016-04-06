@@ -37,6 +37,7 @@ class BulkInvoicePrintingJob extends BaseJob
                     $bulkInvoiceJobDetail->status = BulkInvoiceJobDetails::STATUS_FAILED;
                 } else {
                     $bulkInvoiceJobDetail->company_id = $invoiceData->company_id;
+                    $bulkInvoiceJobDetail->invoice_number = $invoice;
                     $bulkInvoiceJobDetail->status = BulkInvoiceJobDetails::STATUS_SUCCESS;
                 }
             } catch (Exception $ex) {
@@ -72,7 +73,7 @@ class BulkInvoicePrintingJob extends BaseJob
             InvoiceParcel::addParcels($invoiceData->invoice_number, $invoiceData->parcels);
 
             print 'Invoice ' . $invoiceData->invoice_number . ' successfully created' . "\n";
-            return $invoice;
+            return $invoiceData->invoice_number;
         } else {
             throw new Exception(Invoice::getLastErrorMessage());
         }
