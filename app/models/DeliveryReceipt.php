@@ -13,6 +13,7 @@ class DeliveryReceipt extends Model
     const RECEIPT_TYPE_SNAPSHOT = 'snapshot';
     const RECEIPT_TYPE_SIGNATURE = 'signature';
     const RECEIPT_TYPE_RECEIVER_DETAIL = 'receiver_detail';
+    const RECEIPT_TYPE_RETURNED = 'returned';
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>

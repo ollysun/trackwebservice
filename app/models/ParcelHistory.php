@@ -12,6 +12,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
     const MSG_ASSIGNED_TO_GROUNDSMAN = 'Parcel assigned to the groundsman';
     const MSG_RETURNED = 'Parcel returned to the shipper';
     const MSG_RECEIVED_FROM_DISPATCHER = 'Parcel received from dispatcher';
+    const MSG_READY_FOR_PICKUP = 'Parcel Ready for Pickup';
 
 
     /**
@@ -366,7 +367,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                 $result[$item->parcel->waybill_number]['parcel'] = $item->parcel->getData();
                 $result[$item->parcel->waybill_number]['sender'] = User::findFirst($item->parcel->sender_id)->toArray();
                 $result[$item->parcel->waybill_number]['receiver'] = User::findFirst($item->parcel->receiver_id)->toArray();
-                if ($item->parcel->getStatus() == Status::PARCEL_DELIVERED) {
+                if (in_array($item->parcel->getStatus(), [Status::PARCEL_DELIVERED, Status::PARCEL_RETURNED])) {
                     $result[$item->parcel->waybill_number]['delivery_receipt'] = $item->parcel->getProofOfDelivery();
                 }
                 $result[$item->parcel->waybill_number]['parcel_return_comment'] = $item->parcelComment->toArray();
