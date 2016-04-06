@@ -3203,7 +3203,11 @@ class Parcel extends \Phalcon\Mvc\Model
                 SELECT bm.parent_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branch_one OR parent_id = $branch_one LIMIT 1)";
         $new_connection = (new BaseModel())->getWriteConnection();
         $associated_branches_to_branch_one = $new_connection->fetchAll($sql);
-        if(in_array($branch_two, $associated_branches_to_branch_one)){
+        $related_branches_array = [];
+        foreach ($associated_branches_to_branch_one as $ids){
+            $related_branches_array[] = $ids['child_id'];
+        }
+        if(in_array($branch_two, $related_branches_array)){
             return true;
         }
         return false;
