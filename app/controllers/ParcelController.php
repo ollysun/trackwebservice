@@ -1286,6 +1286,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
+            $parcel->setReturnStatus(0);
             $check = $parcel->changeStatus(Status::PARCEL_RETURNED, $admin_id, ParcelHistory::MSG_RETURNED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
