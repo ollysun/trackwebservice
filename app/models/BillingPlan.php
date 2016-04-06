@@ -305,6 +305,22 @@ class BillingPlan extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Changes the status of billing plan belonging to company with companyId
+     * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $companyId
+     * @param $status
+     * @return
+     */
+    public static function changeMultipleStatus($companyId, $status)
+    {
+        $model = new self();
+        $connection = $model->getWriteConnection();
+        $status = $connection->update($model->getSource(), ['status'], [$status], "company_id = $companyId");
+        return $status;
+    }
+
+
+    /**
      * @author Abdul-Rahman Shitu <rahman@cottacush.com>
      * @param $name
      * @return bool

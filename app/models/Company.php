@@ -772,6 +772,7 @@ class Company extends EagerModel
     /**
      * Used to set up the where clause with its bind parameters
      * @author Rahman Shitu <rahman@cottacush.com>
+     * @author Adegoke Obasa <goke@cottacush.com>
      * @param $filter_by
      * @return array
      */
@@ -781,7 +782,7 @@ class Company extends EagerModel
         $where = [];
 
         if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
+            $where[] = 'Company.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
