@@ -3197,10 +3197,10 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param $branch_two
      * @return bool
      */
-    public static function areBranchesRelated($branch_one, $branch_two){
-        $sql = "select bm.child_id from branch_map bm where parent_id = (select b.parent_id from branch_map b where child_id = $branch_one OR parent_id = $branch_one limit 1)
+    public static function isBranchesRelated($branch_one, $branch_two){
+        $sql = "SELECT bm.child_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branch_one OR parent_id = $branch_one LIMIT 1)
                 UNION
-                select bm.parent_id from branch_map bm where parent_id = (select b.parent_id from branch_map b where child_id = $branch_one OR parent_id = $branch_one limit 1)";
+                SELECT bm.parent_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branch_one OR parent_id = $branch_one LIMIT 1)";
         $new_connection = (new BaseModel())->getWriteConnection();
         $associated_branches_to_branch_one = $new_connection->fetchAll($sql);
         if(in_array($branch_two, $associated_branches_to_branch_one)){
