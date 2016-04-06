@@ -104,6 +104,35 @@ class CompanyController extends ControllerBase
     }
 
     /**
+     * Changes the status of the company as well as the users in that company
+     * @author Abdul-rahman Shitu <rahman@cottacush.com>
+     */
+    public function changeStatusAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+        $postData = $this->request->getJsonRawBody(true);
+
+        $requiredFields = ['company_id','status'];
+
+        $requestValidator = new RequestValidation($postData);
+        $requestValidator->setRequiredFields($requiredFields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
+        }
+
+        $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $postData['company_id']]]);
+
+        if (empty($company)) {
+            return $this->response->sendError(ResponseMessage::INVALID_COMPANY_ID_SUPPLIED);
+        }
+
+        if ($company->changeStatusWithUsers($postData['status'])){
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_CHANGE_COMPANY_STATUS);
+    }
+
+    /**
      * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
      * @author Rahman Shitu <rahman@cottacush.com>
      * @return $this
