@@ -100,4 +100,28 @@ class InvoiceController extends ControllerBase
         }
         return $this->response->sendError(ResponseMessage::INVOICE_DOES_NOT_EXISTS);
     }
+
+    /**
+     * bulk Invoice printing task
+     * @author Oluwarotimi Akintewe <akintewe.rotimi@gmail.com>
+     */
+    public function createBulkInvoiceAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+        $validation = new BulkInvoiceCreationValidation($postData);
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        $postData->created_by = $this->auth->getPersonId();
+        $postData->creator = $this->auth->getData();
+
+        $worker = new InvoicePrintingWorker();
+        $job_id = $worker->addJob(json_encode($postData));
+        if (!$job_id) {
+            return $this->response->sendError('Could not generate bulk invoice job. Please try again');
+        }
+        return $this->response->sendSuccess($job_id);
+    }
 }
