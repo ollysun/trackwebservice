@@ -3224,4 +3224,23 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         return 0;
     }
+
+    /**
+     * @author Babatunde Otaru <tunde@cottacush.com>
+     * @param $branchOne
+     * @param $branchTwo
+     * @return bool
+     */
+    public static function isBranchesRelated($branchOne, $branchTwo){
+        $sql = "SELECT bm.child_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branchOne OR parent_id = $branchOne LIMIT 1)
+                UNION
+                SELECT bm.parent_id FROM branch_map bm WHERE parent_id = (SELECT b.parent_id FROM branch_map b WHERE child_id = $branchOne OR parent_id = $branchOne LIMIT 1)";
+        $newConnection = (new BaseModel())->getWriteConnection();
+        $associatedBranchesToBranchOne = $newConnection->fetchAll($sql);
+        $relatedBranchesArray = array_column($associatedBranchesToBranchOne, 'child_id');
+        if(in_array($branchTwo, $relatedBranchesArray)){
+            return true;
+        }
+        return false;
+    }
 }
