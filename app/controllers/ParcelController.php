@@ -387,7 +387,7 @@ class ParcelController extends ControllerBase
 
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id,$return_to_origin);
+        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id, $return_to_origin);
 
         return $this->response->sendSuccess($result);
     }
