@@ -42,6 +42,7 @@ class BulkInvoicePrintingJob extends BaseJob
             } catch (Exception $ex) {
                 $bulkInvoiceJobDetail->status = BulkInvoiceJobDetails::STATUS_FAILED;
                 $bulkInvoiceJobDetail->error_message = $ex->getMessage();
+                print $ex->getMessage() . "\n";
             }
 
             $bulkInvoiceJobDetail->completed_at = Util::getCurrentDateTime();
@@ -52,12 +53,11 @@ class BulkInvoicePrintingJob extends BaseJob
         return $jobStatus;
     }
 
-    public function createInvoice($invoiceData) {
-
-
+    public function createInvoice($invoiceData)
+    {
         // Generate Invoice Number
         $invoiceData->invoice_number = Invoice::generateInvoiceNumber();
-        $invoice = Invoice::generate((array) $invoiceData);
+        $invoice = Invoice::generate((array)$invoiceData);
 
         if ($invoice) {
             // Add Invoice Parcels
@@ -71,9 +71,10 @@ class BulkInvoicePrintingJob extends BaseJob
 
             InvoiceParcel::addParcels($invoiceData->invoice_number, $invoiceData->parcels);
 
+            print 'Invoice ' . $invoiceData->invoice_number . ' successfully created' . "\n";
             return $invoice;
+        } else {
+            throw new Exception(Invoice::getLastErrorMessage());
         }
-
-        return false;
     }
 }
