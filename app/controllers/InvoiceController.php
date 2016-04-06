@@ -1,4 +1,5 @@
 <?php
+use Phalcon\Mvc\Model\Resultset;
 
 /**
  * @author Adegoke Obasa <goke@cottacush.com>
@@ -123,5 +124,41 @@ class InvoiceController extends ControllerBase
             return $this->response->sendError('Could not generate bulk invoice job. Please try again');
         }
         return $this->response->sendSuccess($job_id);
+    }
+
+
+    /**
+     * Get Bulk Invoice Tasks
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getBulkInvoiceTasksAction()
+    {
+        /** @var Resultset $tasks */
+        $tasks = Job::findByQueue(InvoicePrintingWorker::QUEUE_BULK_INVOICE_PRINTING);
+        return $this->response->sendSuccess($tasks->toArray());
+    }
+
+    /**
+     * Get Bulk Invoice Task
+     * @author Adegoke Obasa <goke@cottacush.com>
+     */
+    public function getBulkInvoiceTaskAction()
+    {
+        $task_id = $this->request->get('task_id', null, false);
+        if (!$task_id) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        /** @var Job $task */
+        $task = Job::findFirst($task_id);
+        if (!$task) {
+            return $this->response->sendError('Task not found');
+        }
+
+        /** @var Resultset $taskDetails */
+        $taskDetails = BulkInvoiceJobDetails::findByJobId($task->id);
+        $task = $task->toArray();
+        $task['details'] = $taskDetails->toArray();
+        return $this->response->sendSuccess($task);
     }
 }
