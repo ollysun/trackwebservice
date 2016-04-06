@@ -127,6 +127,7 @@ class CompanyController extends ControllerBase
         }
 
         if ($company->changeStatusWithUsers($postData['status'])){
+            BillingPlan::changeMultipleStatus($postData['company_id'], $postData['status']);
             return $this->response->sendSuccess();
         }
         return $this->response->sendError(ResponseMessage::UNABLE_TO_CHANGE_COMPANY_STATUS);

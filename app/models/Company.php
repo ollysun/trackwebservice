@@ -781,7 +781,7 @@ class Company extends EagerModel
         $where = [];
 
         if (isset($filter_by['status'])) {
-            $where[] = 'status = :status:';
+            $where[] = 'Company.status = :status:';
             $bind['status'] = $filter_by['status'];
         }
 
