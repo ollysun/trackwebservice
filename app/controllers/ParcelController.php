@@ -379,6 +379,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
+        $return_to_origin = $this->request->getPost('return_to_origin');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -386,7 +387,7 @@ class ParcelController extends ControllerBase
 
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
+        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id,$return_to_origin);
 
         return $this->response->sendSuccess($result);
     }
@@ -743,7 +744,12 @@ class ParcelController extends ControllerBase
                 $parcel->setRouteId($route_id);
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
+            $status = Status::PARCEL_FOR_DELIVERY;
+            if($parcel->getReturnStatus() == Status::RETURNING_TO_ORIGIN){
+                $parcel->setReturnStatus(Status::RETURN_READY_FOR_PICKUP);
+                $status = Status::PARCEL_BEING_DELIVERED;
+            }
+            $check = $parcel->changeStatus($status, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -1170,6 +1176,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $comment = $this->request->getPost('comment');
+        $attempted_delivery = $this->request->getPost('attempted_delivery');
         $return_flag = $this->request->getPost('return_flag', null, 1);
 
         if (!in_array($return_flag, [0, 1])) {
@@ -1215,6 +1222,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
+            $parcel->setReturnStatus($attempted_delivery);
             $parcel->setForReturn($return_flag);
             if (!$parcel->save()) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
