@@ -9,6 +9,9 @@ use Phalcon\Mvc\Model;
 class BaseModel extends Model
 {
 
+
+    private static $last_error_message = null;
+
      /**
      * Set created_at before validation
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -87,6 +90,43 @@ class BaseModel extends Model
             }
         }
         return ['where' => $where, 'bind' => $bind];
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @return mixed
+     */
+    public static function getLastErrorMessage()
+    {
+        return self::$last_error_message;
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $model mixed
+     */
+    public static function setLastErrorMessage($model)
+    {
+        if ($model instanceof Model) {
+            $messages = [];
+            foreach ($model->getMessages() as $message) {
+                $messages[] = $message;
+            }
+
+            self::$last_error_message = implode(',', $messages);
+        } elseif (is_string($model)) {
+            self::$last_error_message = $model;
+        }
+
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function notSaved()
+    {
+        self::setLastErrorMessage($this);
+
     }
 
 }

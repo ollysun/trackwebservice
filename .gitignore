@@ -1,7 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Phalcon template
-/app/cache/*
+app/cache/*
 !/app/cache/empty
 .idea
-/vendor
-/app/logs/*
+vendor
+app/logs/*
+deploy/servers.yml
+composer.lock

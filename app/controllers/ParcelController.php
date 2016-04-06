@@ -379,6 +379,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $to_branch_id = $this->request->getPost('to_branch_id');
+        $return_to_origin = $this->request->getPost('return_to_origin');
 
         if (in_array(null, [$waybill_numbers, $to_branch_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -386,7 +387,7 @@ class ParcelController extends ControllerBase
 
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
+        $result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id, $return_to_origin);
 
         return $this->response->sendSuccess($result);
     }
@@ -743,7 +744,12 @@ class ParcelController extends ControllerBase
                 $parcel->setRouteId($route_id);
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_FOR_DELIVERY, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
+            $status = Status::PARCEL_FOR_DELIVERY;
+            if($parcel->getReturnStatus() == Status::RETURNING_TO_ORIGIN){
+                $parcel->setReturnStatus(Status::RETURN_READY_FOR_PICKUP);
+                $status = Status::PARCEL_BEING_DELIVERED;
+            }
+            $check = $parcel->changeStatus($status, $admin_id, ParcelHistory::MSG_FOR_DELIVERY, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
@@ -1170,6 +1176,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $comment = $this->request->getPost('comment');
+        $attempted_delivery = $this->request->getPost('attempted_delivery');
         $return_flag = $this->request->getPost('return_flag', null, 1);
 
         if (!in_array($return_flag, [0, 1])) {
@@ -1215,6 +1222,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
+            $parcel->setReturnStatus($attempted_delivery);
             $parcel->setForReturn($return_flag);
             if (!$parcel->save()) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
@@ -1237,6 +1245,14 @@ class ParcelController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
+        $receiver_name = $this->request->getPost('receiver_name', null);
+
+        if(empty($receiver_name)){
+            return $this->response->sendError("Receiver's Name Missing");
+        }
+
+        $receiver_phonenumber = $this->request->getPost('receiver_phone_number');
+        $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getPersonId();
 
@@ -1265,17 +1281,38 @@ class ParcelController extends ControllerBase
             } else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
                 continue;
-            } else if ($parcel->getToBranchId() != $parcel->getCreatedBranchId() || (in_array($admin->getRoleId(), [Role::OFFICER]) && $admin->getBranchId() != $parcel->getToBranchId())) {
+            } else if (!Parcel::isBranchesRelated($parcel->getCreatedBranchId(), $admin->getBranchId())) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             }
 
+            $parcel->setReturnStatus(0);
             $check = $parcel->changeStatus(Status::PARCEL_RETURNED, $admin_id, ParcelHistory::MSG_RETURNED, $auth_data['branch_id']);
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 continue;
             }
+
+            //create delivery receipt if receiver name and phone number was supplied
+            if (isset($receiver_name)) {
+                if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RETURNED)) {
+                    $data = ['waybill_number' => $waybill_number,
+                        'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RETURNED,
+                        'delivered_by' => $this->auth->getPersonId(),
+                        'name' => $receiver_name,
+                        'delivered_at' => $date_and_time_of_delivery];
+                }
+                if (isset($receiver_email)) {
+                    $data['email'] = $receiver_email;
+                }
+                if (isset($receiver_phonenumber)) {
+                    $data['phone_number'] = $receiver_phonenumber;
+                }
+
+                DeliveryReceipt::add($data);
+            }
         }
+
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
