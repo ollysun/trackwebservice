@@ -1592,6 +1592,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOnforwardingBillingPlanId(null);
         $this->setIsFreightIncluded(0);
         $this->setQtyMetrics(Parcel::QTY_METRICS_WEIGHT);
+        $this->setReturnStatus(0);
     }
 
     private function getEntityTypeLabel()
