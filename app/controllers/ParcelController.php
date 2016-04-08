@@ -1176,7 +1176,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $comment = $this->request->getPost('comment');
-        $attempted_delivery = $this->request->getPost('attempted_delivery');
+        $attempted_delivery = $this->request->getPost('attempted_delivery', null, 0);
         $return_flag = $this->request->getPost('return_flag', null, 1);
 
         if (!in_array($return_flag, [0, 1])) {

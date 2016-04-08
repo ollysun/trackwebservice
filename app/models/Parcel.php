@@ -2229,7 +2229,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
                     $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
                     $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
-                    $parcel_data['storage_demurrage'], $parcel_data['others'], $parcel_data['amount_due']);
+                    $parcel_data['storage_demurrage'], $parcel_data['others'], $parcel_data['amount_due'], $this->return_status);
                 $check = $this->save();
             } else {
                 if ($bank_account != null) {
