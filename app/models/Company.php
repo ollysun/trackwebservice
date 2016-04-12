@@ -591,6 +591,7 @@ class Company extends EagerModel
         $company_data['credit_limit'] = (isset($company_data['credit_limit'])) ? $company_data['credit_limit'] : null;
         $company_data['discount'] = (isset($company_data['discount'])) ? $company_data['discount'] : null;
         $company_data['reg_no'] = (isset($company_data['reg_no'])) ? $company_data['reg_no'] : new Phalcon\Db\RawValue(null);
+        $company_data['account_type_id'] = (isset($company_data['account_type_id'])) ? $company_data['account_type_id'] : new Phalcon\Db\RawValue(null);
         $company = Company::findFirst($company_data['id']);
 
         if ($company) {
@@ -602,8 +603,7 @@ class Company extends EagerModel
                 $company_data['city_id'],
                 $company_data['credit_limit'],
                 $company_data['discount'],
-                $company_data['relations_officer_id'],
-                $company_data['account_type']);
+                $company_data['relations_officer_id']);
             if ($company->save()) {
                 return $company;
             }
@@ -638,9 +638,8 @@ class Company extends EagerModel
      * @param $credit_limit
      * @param $discount
      * @param $relations_officer_id
-     * @param $account_type_id
      */
-    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -656,7 +655,6 @@ class Company extends EagerModel
         $this->setModifiedDate($now);
 
         $this->setStatus(Status::ACTIVE);
-        $this->setAccountTypeId($account_type_id);
     }
 
     public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
