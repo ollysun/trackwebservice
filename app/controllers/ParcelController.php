@@ -1636,9 +1636,12 @@ class ParcelController extends ControllerBase
      */
     public function getBulkShipmentTasksAction()
     {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        
         /** @var Resultset $tasks */
-        $tasks = Job::findByQueue(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION);
-        return $this->response->sendSuccess($tasks->toArray());
+        $tasks = Job::fetchAll(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION, $offset, $count);
+        return $this->response->sendSuccess(['tasks' => $tasks->toArray(), 'total_count' => Job::getTotalCount(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION)]);
     }
 
     /**
