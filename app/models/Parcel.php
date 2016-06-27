@@ -2067,253 +2067,249 @@ class Parcel extends \Phalcon\Mvc\Model
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
 
-            $check = true;
-            $this->setTransaction($transaction);
+        $this->setTransaction($transaction);
 
-            //saving the sender's user info
-            $sender_obj = User::fetchByData($sender);
-            $is_sender_existing = ($sender_obj != false);
-            if (!$is_sender_existing) {
-                $sender_obj = new User();
+        //saving the sender's user info
+        $sender_obj = User::fetchByData($sender);
+        $is_sender_existing = ($sender_obj != false);
+        if (!$is_sender_existing) {
+            $sender_obj = new User();
+        }
+        $sender_obj->setTransaction($transaction);
+        $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_sender_existing);
+        $check = $sender_obj->save();
+
+        //saving the receiver's user info
+        if ($check) {
+            $receiver_obj = User::fetchByData($receiver);
+            $is_receiver_existing = ($receiver_obj != false);
+            if (!$is_receiver_existing) {
+                $receiver_obj = new User();
             }
-            $sender_obj->setTransaction($transaction);
-            $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_sender_existing);
-            $check = $sender_obj->save();
+            $receiver_obj->setTransaction($transaction);
+            $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_receiver_existing);
+            $check = $receiver_obj->save();
+        } else {
+            Util::slackDebug("Parcel not created", "Unable to save sender's info");
+            Util::slackDebug("Parcel not created", $sender_obj->getMessages());
+            return false;
+        }
 
-            //saving the receiver's user info
-            if ($check) {
-                $receiver_obj = User::fetchByData($receiver);
-                $is_receiver_existing = ($receiver_obj != false);
-                if (!$is_receiver_existing) {
-                    $receiver_obj = new User();
-                }
-                $receiver_obj->setTransaction($transaction);
-                $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_receiver_existing);
-                $check = $receiver_obj->save();
-            } else {
-                Util::slackDebug("Parcel not created", "Unable to save sender's info");
-                Util::slackDebug("Parcel not created", $sender_obj->getMessages());
-                return false;
-            }
-
-            //saving the sender's address
-            $sender_addr_obj = new Address();
-            $is_existing = false;
-            if ($check) {
-                if ($sender_address['id'] != null) {
-                    $sender_addr_obj = Address::fetchById($sender_address['id']);
-                    $is_existing = ($sender_addr_obj != false);
-                    if (!$is_existing) {
+        //saving the sender's address
+        $sender_addr_obj = new Address();
+        $is_existing = false;
+        if ($check) {
+            if ($sender_address['id'] != null) {
+                $sender_addr_obj = Address::fetchById($sender_address['id']);
+                $is_existing = ($sender_addr_obj != false);
+                if (!$is_existing) {
+                    $sender_addr_obj = new Address();
+                } else {
+                    if (!Address::isSame($sender_addr_obj, $sender_address)) {
                         $sender_addr_obj = new Address();
-                    } else {
-                        if (!Address::isSame($sender_addr_obj, $sender_address)) {
-                            $sender_addr_obj = new Address();
-                            $is_existing = false;
-                        }
+                        $is_existing = false;
                     }
                 }
-                if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
-                    Util::slackDebug("Parcel not created", "Sender address id not for sender");
-                    $transactionManager->rollback();
-                    return false;
-                }
-                $sender_address['owner_id'] = $sender_obj->getId();
-                if (!$is_existing && ($existing_sender_address = Address::fetchByData($sender_address))) {
-                    $is_existing = true;
-                    $is_sender_existing = true;
-                    $sender_addr_obj = $existing_sender_address;
-                }
-                $sender_addr_obj->setTransaction($transaction);
-                $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
-                    $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
-                    intval($sender_address['country_id']), $sender_address['city_id'], $is_existing, $is_sender_existing);
-
-                $check = $sender_addr_obj->save();
-            } else {
-                Util::slackDebug("Parcel not created", "Unable to save receiver's info");
-                Util::slackDebug("Parcel not created", $receiver_obj->getMessages());
+            }
+            if ($is_existing and ($sender_addr_obj->getOwnerId() != $sender_obj->getId() OR $sender_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
+                Util::slackDebug("Parcel not created", "Sender address id not for sender");
+                $transactionManager->rollback();
                 return false;
             }
+            $sender_address['owner_id'] = $sender_obj->getId();
+            if (!$is_existing && ($existing_sender_address = Address::fetchByData($sender_address))) {
+                $is_existing = true;
+                $is_sender_existing = true;
+                $sender_addr_obj = $existing_sender_address;
+            }
+            $sender_addr_obj->setTransaction($transaction);
+            $sender_addr_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER,
+                $sender_address['street1'], $sender_address['street2'], intval($sender_address['state_id']),
+                intval($sender_address['country_id']), $sender_address['city_id'], $is_existing, $is_sender_existing);
 
-            //saving the receiver's address
-            $receiver_addr_obj = new Address();
-            $is_existing = false;
-            if ($check) {
-                if ($receiver_address['id'] != null) {
-                    $receiver_addr_obj = Address::fetchById($receiver_address['id']);
-                    $is_existing = ($receiver_addr_obj != false);
-                    if (!$is_existing) {
+            $check = $sender_addr_obj->save();
+        } else {
+            Util::slackDebug("Parcel not created", "Unable to save receiver's info");
+            Util::slackDebug("Parcel not created", $receiver_obj->getMessages());
+            return false;
+        }
+
+        //saving the receiver's address
+        $receiver_addr_obj = new Address();
+        $is_existing = false;
+        if ($check) {
+            if ($receiver_address['id'] != null) {
+                $receiver_addr_obj = Address::fetchById($receiver_address['id']);
+                $is_existing = ($receiver_addr_obj != false);
+                if (!$is_existing) {
+                    $receiver_addr_obj = new Address();
+                } else {
+                    if (!Address::isSame($receiver_addr_obj, $receiver_address)) {
                         $receiver_addr_obj = new Address();
-                    } else {
-                        if (!Address::isSame($receiver_addr_obj, $receiver_address)) {
-                            $receiver_addr_obj = new Address();
-                            $is_existing = false;
-                        }
+                        $is_existing = false;
                     }
                 }
-                if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
-                    Util::slackDebug("Parcel not created", "Receiver address id not for receiver");
+            }
+            if ($is_existing and ($receiver_addr_obj->getOwnerId() != $receiver_obj->getId() OR $receiver_addr_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
+                Util::slackDebug("Parcel not created", "Receiver address id not for receiver");
+                $transactionManager->rollback();
+                return false;
+            }
+            $receiver_address['owner_id'] = $receiver_obj->getId();
+            if (!$is_existing && ($existing_receiver_address = Address::fetchByData($receiver_address))) {
+                $is_existing = true;
+                $is_receiver_existing = true;
+                $receiver_addr_obj = $existing_receiver_address;
+            }
+            $receiver_addr_obj->setTransaction($transaction);
+            $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
+                $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
+                $receiver_address['country_id'], $receiver_address['city_id'], $is_existing, $is_receiver_existing);
+            $check = $receiver_addr_obj->save();
+        } else {
+            Util::slackDebug("Parcel not created", "Unable to save sender's address");
+            Util::slackDebug("Parcel not created", $sender_addr_obj->getMessages());
+            return false;
+        }
+
+        //saving a bank account if any was provided
+        $bank_account_obj = new BankAccount();
+        $is_existing = false;
+        if ($bank_account != null) {
+            if ($check) {
+                if ($bank_account['id'] != null) {
+                    $bank_account_obj = BankAccount::fetchById($bank_account['id']);
+                    $is_existing = ($bank_account_obj != false);
+                    if ($is_existing) {
+                        $bank_account_obj = new BankAccount();
+                    }
+                }
+                if ($is_existing and ($bank_account_obj->getOwnerId() != $sender_obj->getId() OR $bank_account_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
                     $transactionManager->rollback();
                     return false;
                 }
-                $receiver_address['owner_id'] = $receiver_obj->getId();
-                if (!$is_existing && ($existing_receiver_address = Address::fetchByData($receiver_address))) {
-                    $is_existing = true;
-                    $is_receiver_existing = true;
-                    $receiver_addr_obj = $existing_receiver_address;
-                }
-                $receiver_addr_obj->setTransaction($transaction);
-                $receiver_addr_obj->initData($receiver_obj->getId(), OWNER_TYPE_CUSTOMER,
-                    $receiver_address['street1'], $receiver_address['street2'], $receiver_address['state_id'],
-                    $receiver_address['country_id'], $receiver_address['city_id'], $is_existing, $is_receiver_existing);
-                $check = $receiver_addr_obj->save();
+                $bank_account_obj->setTransaction($transaction);
+                $bank_account_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER, $bank_account['bank_id'],
+                    $bank_account['account_name'], $bank_account['account_no'], $bank_account['sort_code'], $is_existing);
+                $check = $bank_account_obj->save();
             } else {
-                Util::slackDebug("Parcel not created", "Unable to save sender's address");
-                Util::slackDebug("Parcel not created", $sender_addr_obj->getMessages());
+                Util::slackDebug("Parcel not created", "Unable to save receiver's address");
+                Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
                 return false;
             }
+        }
 
-            //saving a bank account if any was provided
-            $bank_account_obj = new BankAccount();
-            $is_existing = false;
+        //finally saving the parcel
+        if ($this->waybill_number == null) {
+            $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
+            $is_visible = 1;
+        } else {
+            $parcel_status = $this->getStatus();
+            $is_visible = $this->getIsVisible();
+        }
+        $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
+
+        /** @var ReceiverAddressCity $receiverAddress */
+        $receiverCity = ReceiverAddressCity::findFirst($receiver_addr_obj->getCityId());
+        /** @var SenderAddressCity $receiverAddress */
+        $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
+
+        $amountDue = Zone::calculateBilling(
+            $receiverCity->getBranchId(),
+            $senderCity->getBranchId(),
+            $this->getWeight(),
+            $this->getWeightBillingPlanId(),
+            $receiverCity->getId(),
+            $this->getOnforwardingBillingPlanId()
+        );
+
+        $total_charge = $amountDue;
+        $total_charge += $parcel_data['insurance'];
+        $total_charge += $parcel_data['duty_charge'];
+        $total_charge += $parcel_data['handling_charge'];
+        $total_charge += $parcel_data['cost_of_crating'];
+        $total_charge += $parcel_data['storage_demurrage'];
+        $total_charge += $parcel_data['others'];
+
+        if ($check) {
+            $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
+                $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $total_charge,
+                $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
+                $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
+                $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
+                $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, $this->waybill_number, $bank_account_obj->getId(),
+                $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
+                $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
+                $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
+                $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
+            $check = $this->save();
+        } else {
             if ($bank_account != null) {
-                if ($check) {
-                    if ($bank_account['id'] != null) {
-                        $bank_account_obj = BankAccount::fetchById($bank_account['id']);
-                        $is_existing = ($bank_account_obj != false);
-                        if ($is_existing) {
-                            $bank_account_obj = new BankAccount();
-                        }
-                    }
-                    if ($is_existing and ($bank_account_obj->getOwnerId() != $sender_obj->getId() OR $bank_account_obj->getOwnerType() != OWNER_TYPE_CUSTOMER)) {
-                        $transactionManager->rollback();
-                        return false;
-                    }
-                    $bank_account_obj->setTransaction($transaction);
-                    $bank_account_obj->initData($sender_obj->getId(), OWNER_TYPE_CUSTOMER, $bank_account['bank_id'],
-                        $bank_account['account_name'], $bank_account['account_no'], $bank_account['sort_code'], $is_existing);
-                    $check = $bank_account_obj->save();
-                } else {
-                    Util::slackDebug("Parcel not created", "Unable to save receiver's address");
-                    Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
-                    return false;
-                }
-            }
-
-
-            //finally saving the parcel
-            if ($this->waybill_number == null) {
-                $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
-//                $is_visible = ($parcel_data['no_of_package'] > 1) ? 0 : 1; //hide parcel from view if it is a parent to split parcels.
-                $is_visible = 1;
+                Util::slackDebug("Parcel not created", "Unable to save bank account");
+                Util::slackDebug("Parcel not created", $bank_account_obj->getMessages());
+                return false;
             } else {
-                $parcel_status = $this->getStatus();
-                $is_visible = $this->getIsVisible();
+                Util::slackDebug("Parcel not created", "Unable to save receiver's address");
+                Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
+                return false;
             }
-            $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
-            $total_charge = $parcel_data['amount_due'];
-            $total_charge += $parcel_data['insurance'];
-            $total_charge += $parcel_data['duty_charge'];
-            $total_charge += $parcel_data['handling_charge'];
-            $total_charge += $parcel_data['cost_of_crating'];
-            $total_charge += $parcel_data['storage_demurrage'];
-            $total_charge += $parcel_data['others'];
+        }
 
-            if ($check) {
-                $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
-                    $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $total_charge,
-                    $parcel_data['cash_on_delivery'], $parcel_data['cash_on_delivery_amount'], $parcel_data['delivery_type'],
-                    $parcel_data['payment_type'], $parcel_data['shipping_type'], $from_branch_id, $to_branch_id, $parcel_status,
-                    $parcel_data['package_value'], $parcel_data['no_of_package'], $parcel_data['other_info'], $parcel_data['cash_amount'],
-                    $parcel_data['pos_amount'], $parcel_data['pos_trans_id'], $admin_id, $is_visible, $entity_type, $this->waybill_number, $bank_account_obj->getId(),
-                    $parcel_data['is_billing_overridden'], $parcel_data['reference_number'], null, $parcel_data['request_type'], $parcel_data['billing_type'],
-                    $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
-                    $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
-                    $parcel_data['storage_demurrage'], $parcel_data['others'], $parcel_data['amount_due']);
+        //setting waybill number
+        if ($check) {
+            if (!$this->isWaybillNumber($this->waybill_number)) {
+                $this->generateWaybillNumber($from_branch_id);
                 $check = $this->save();
-            } else {
-                if ($bank_account != null) {
-                    Util::slackDebug("Parcel not created", "Unable to save bank account");
-                    Util::slackDebug("Parcel not created", $bank_account_obj->getMessages());
+            }
+        } else {
+            Util::slackDebug("Parcel not created", "Unable to save parcel");
+            Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
+            return false;
+        }
+
+        //send mail if weight not in weight range of corporate
+        if ($this->getAmountDue() == 0) {
+            $billingPlan = BillingPlan::findFirst(["id = $this->weight_billing_plan_id", "columns" => "company_id"])->toArray();
+            $company_id = $billingPlan['company_id'];
+            if (!is_null($company_id)) {
+                $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
+                $this->sendWeightNotInRangeMail($companyName);
+            }
+        }
+
+        $waybill_number = [$this->getWaybillNumber()];
+
+
+        //creating sub-parcel if the number of packages is more than 1
+        if ($check and $this->getNoOfPackage() > 1 and !isset($parcel_data['id'])) {
+            $waybill_number = $this->createSub($transaction);
+            $check = $waybill_number != false;
+        }
+
+        //saving the parcel history
+        if ($check) {
+            $parcel_history = new ParcelHistory();
+            $parcel_history->setTransaction($transaction);
+            $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
+            $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status, $to_branch_id);
+            $check = $parcel_history->save();
+        }
+
+        if ($check) {
+            if (is_null($this->getReferenceNumber())) {
+                $this->setReferenceNumber($this->getWaybillNumber());
+                if (!$this->save()) {
+                    $transactionManager->rollback();
                     return false;
-                } else {
-                    Util::slackDebug("Parcel not created", "Unable to save receiver's address");
-                    Util::slackDebug("Parcel not created", $receiver_addr_obj->getMessages());
-                    return false;
                 }
             }
-
-            //setting waybill number
-            if ($check) {
-                if (!$this->isWaybillNumber($this->waybill_number)) {
-                    $this->generateWaybillNumber($from_branch_id);
-                    $check = $this->save();
-                }
-            } else {
-                Util::slackDebug("Parcel not created", "Unable to save parcel");
-                Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
-                return false;
-            }
-
-            /** @var ReceiverAddressCity $receiverAddress */
-            $receiverCity = ReceiverAddressCity::findFirst($receiver_addr_obj->getCityId());
-            /** @var SenderAddressCity $receiverAddress */
-            $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
-            
-            $amountDue = Zone::calculateBilling(
-                $receiverCity->getBranchId(),
-                $senderCity->getBranchId(),
-                $this->getWeight(),
-                $this->getWeightBillingPlanId(),
-                $receiverCity->getId(),
-                $this->getOnforwardingBillingPlanId()
-            );
-
-            $this->amount_due = $amountDue;
-            
-            //send mail if weight not in weight range of corporate
-            if ($this->amount_due == 0) {
-                $billingPlan = BillingPlan::findFirst(["id = $this->weight_billing_plan_id", "columns" => "company_id"])->toArray();
-                $company_id = $billingPlan['company_id'];
-                if (!is_null($company_id)) {
-                    $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
-                    $this->sendWeightNotInRangeMail($companyName);
-                }
-            }
-
-            $waybill_number = [$this->getWaybillNumber()];
-
-
-            //creating sub-parcel if the number of packages is more than 1
-            if ($check and $this->getNoOfPackage() > 1 and !isset($parcel_data['id'])) {
-                $waybill_number = $this->createSub($transaction);
-                $check = $waybill_number != false;
-            }
-
-            //saving the parcel history
-            if ($check) {
-                $parcel_history = new ParcelHistory();
-                $parcel_history->setTransaction($transaction);
-                $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
-                $parcel_history->initData($this->getId(), $from_branch_id, $history_desc, $admin_id, $parcel_status, $to_branch_id);
-                $check = $parcel_history->save();
-            }
-
-            if ($check) {
-                if (is_null($this->getReferenceNumber())) {
-                    $this->setReferenceNumber($this->getWaybillNumber());
-                    if (!$this->save()) {
-                        $transactionManager->rollback();
-                        return false;
-                    }
-                }
-                $transactionManager->commit();
-                return $waybill_number;
-            } else {
-                Util::slackDebug("Parcel not created", "Unable to save parcel history");
-                Util::slackDebug("Parcel not created", $parcel_history->getMessages());
-                return false;
-            }
+            $transactionManager->commit();
+            return $waybill_number;
+        } else {
+            Util::slackDebug("Parcel not created", "Unable to save parcel history");
+            Util::slackDebug("Parcel not created", $parcel_history->getMessages());
+            return false;
+        }
     }
 
     public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
