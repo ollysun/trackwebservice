@@ -2066,7 +2066,7 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
-        try {
+
             $check = true;
             $this->setTransaction($transaction);
 
@@ -2255,12 +2255,27 @@ class Parcel extends \Phalcon\Mvc\Model
                 return false;
             }
 
+            /** @var ReceiverAddressCity $receiverAddress */
+            $receiverCity = ReceiverAddressCity::findFirst($receiver_addr_obj->getCityId());
+            /** @var SenderAddressCity $receiverAddress */
+            $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
+            
+            $amountDue = Zone::calculateBilling(
+                $receiverCity->getBranchId(),
+                $senderCity->getBranchId(),
+                $this->getWeight(),
+                $this->getWeightBillingPlanId(),
+                $receiverCity->getId(),
+                $this->getOnforwardingBillingPlanId()
+            );
+
+            $this->amount_due = $amountDue;
+            
             //send mail if weight not in weight range of corporate
-            if ($this->amount_due == '0') {
-                $billingPlan = BillingPlan::findFirst(array("id = $this->weight_billing_plan_id", "columns" => "company_id"))->toArray();
+            if ($this->amount_due == 0) {
+                $billingPlan = BillingPlan::findFirst(["id = $this->weight_billing_plan_id", "columns" => "company_id"])->toArray();
                 $company_id = $billingPlan['company_id'];
-                $calc_weight_billing = WeightBilling::calcBilling($this->from_branch_id, $this->to_branch_id, $this->weight, $this->weight_billing_plan_id);
-                if (!is_null($company_id) && !$calc_weight_billing) {
+                if (!is_null($company_id)) {
                     $companyName = Company::findFirst(array("id = $company_id", "columns" => "name"))->toArray()['name'];
                     $this->sendWeightNotInRangeMail($companyName);
                 }
@@ -2299,12 +2314,6 @@ class Parcel extends \Phalcon\Mvc\Model
                 Util::slackDebug("Parcel not created", $parcel_history->getMessages());
                 return false;
             }
-        } catch (Exception $e) {
-            Util::slackDebug("EXCEPTION LOG", $e->getMessage());
-        }
-
-        $transactionManager->rollback();
-        return false;
     }
 
     public function changeStatus($status, $admin_id, $history_desc, $admin_branch_id, $alter_children = false)
