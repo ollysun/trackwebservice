@@ -1,6 +1,8 @@
 <?php
 
 
+use Phalcon\Exception;
+
 class ZoneController extends ControllerBase
 {
     public function addAction()
@@ -359,21 +361,11 @@ class ZoneController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
-        if ($calc_weight_billing == false) {
-            $weight_billing_plan = BillingPlan::findFirst($weight_billing_plan_id);
-            if($weight_billing_plan && !is_null($weight_billing_plan->getCompanyId())){
-                return $this->response->sendSuccess('0');
-            }
-            return $this->response->sendError(ResponseMessage::CALC_BILLLING_WEIGHT);
+        try {
+            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id);
+            return $this->response->sendSuccess($amountDue);
+        } catch (Exception $ex) {
+            return $this->response->sendError($ex->getMessage());
         }
-
-        $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
-        if ($onforwarding_charge == false) {
-            return $this->response->sendError(ResponseMessage::CALC_BILLLING_ONFORWARDING);
-        }
-
-        $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
-        return $this->response->sendSuccess($final_billing);
     }
 } 

@@ -168,4 +168,5 @@ class ResponseMessage
     const UNABLE_TO_CREATE_CREDIT_NOTE = 'Unable to create credit note';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST_OR_DOES_NOT_BELONG_TO_INVOICE = 'One of the parcel(s) does not exists or does not belong to the invoice';
     const INVOICE_DOES_NOT_EXISTS = 'Invoice does not exists';
+    const ZONE_MAPPING_ORIGIN_DESTINATION_NOT_EXIST = 'Zone mapping between origin and destination does not exist. Please contact administrator';
 }

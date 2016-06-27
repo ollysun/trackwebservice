@@ -490,6 +490,46 @@ class WeightBilling extends \Phalcon\Mvc\Model
         return $info;
     }
 
+    public static function weightExceedsRange($from_branch_id, $to_branch_id, $weight, $billing_plan_id)
+    {
+        $obj = new WeightBilling();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['WeightRange.id'])
+            ->from('WeightRange')
+            ->innerJoin('WeightBilling', 'WeightRange.id = WeightBilling.weight_range_id')
+            ->innerJoin('Zone', 'Zone.id = WeightBilling.zone_id')
+            ->innerJoin('ZoneMatrix', 'ZoneMatrix.zone_id = Zone.id');
+
+        $builder->where(
+            '
+            ((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
+            OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))
+            AND (WeightRange.max_weight >= :weight:)
+            AND WeightRange.billing_plan_id = :billing_plan_id:
+            ',
+            ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight, 'billing_plan_id' => $billing_plan_id]
+        );
+
+        $data = $builder->getQuery()->execute();
+        return (count($data) == 0);
+    }
+
+    public static function zoneMappingExists($from_branch_id, $to_branch_id)
+    {
+        $obj = new WeightBilling();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('ZoneMatrix')
+            ->columns(['ZoneMatrix.id'])
+            ->where(
+                '((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
+            OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))',
+                ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id]
+            );
+
+        $data = $builder->getQuery()->execute();
+        return (count($data) > 0);
+    }
+
     /**
      * Calculate billing base on destinations, weight and billing plan
      * @author Rahman Shitu <rahman@cottacush.com>
