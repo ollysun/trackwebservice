@@ -2217,10 +2217,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $amountDue = Zone::calculateBilling(
             $receiverCity->getBranchId(),
             $senderCity->getBranchId(),
-            $this->getWeight(),
-            $this->getWeightBillingPlanId(),
+            $parcel_data['weight'],
+            $parcel_data['weight_billing_plan'],
             $receiverCity->getId(),
-            $this->getOnforwardingBillingPlanId()
+            $parcel_data['onforwarding_billing_plan']
         );
 
         $total_charge = $amountDue;
