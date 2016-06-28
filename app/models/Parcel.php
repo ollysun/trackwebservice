@@ -2214,14 +2214,18 @@ class Parcel extends \Phalcon\Mvc\Model
         /** @var SenderAddressCity $receiverAddress */
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
-        $amountDue = Zone::calculateBilling(
-            $receiverCity->getBranchId(),
-            $senderCity->getBranchId(),
-            $parcel_data['weight'],
-            $parcel_data['weight_billing_plan'],
-            $receiverCity->getId(),
-            $parcel_data['onforwarding_billing_plan']
-        );
+        if($parcel_data['billing_type'] != 'manual') {
+            $amountDue = Zone::calculateBilling(
+                $receiverCity->getBranchId(),
+                $senderCity->getBranchId(),
+                $parcel_data['weight'],
+                $parcel_data['weight_billing_plan'],
+                $receiverCity->getId(),
+                $parcel_data['onforwarding_billing_plan']
+            );
+        }else{
+            $amountDue = $parcel_data['amount_due'];
+        }
 
         $total_charge = $amountDue;
         $total_charge += $parcel_data['insurance'];
@@ -2268,7 +2272,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //send mail if weight not in weight range of corporate
-        if ($this->getAmountDue() == 0) {
+        if ($this->getAmountDue() == 0 && $parcel_data['billing_type'] == 'corporate') {
             $billingPlan = BillingPlan::findFirst(["id = $this->weight_billing_plan_id", "columns" => "company_id"])->toArray();
             $company_id = $billingPlan['company_id'];
             if (!is_null($company_id)) {
