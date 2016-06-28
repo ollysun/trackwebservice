@@ -158,8 +158,8 @@ class ResponseMessage
     const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';
     const ONFORWARDING_CITY_NOT_SAVED = 'City could not linked to onforwarding charge';
 
-    const CALC_BILLLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
-    const CALC_BILLLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
+    const CALC_BILLING_WEIGHT = 'Could not calculate the weight billing for the parcel';
+    const CALC_BILLING_ONFORWARDING = 'Could not calculate the onforwarding billing for the parcel';
     const UNABLE_TO_CREATE_INVOICE = 'Unable to create invoice';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST = 'One of the parcel(s) does not exists';
     const INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS = 'Invoice already exists for one of the parcels';
@@ -168,4 +168,9 @@ class ResponseMessage
     const UNABLE_TO_CREATE_CREDIT_NOTE = 'Unable to create credit note';
     const ONE_OF_THE_PARCEL_DOES_NOT_EXIST_OR_DOES_NOT_BELONG_TO_INVOICE = 'One of the parcel(s) does not exists or does not belong to the invoice';
     const INVOICE_DOES_NOT_EXISTS = 'Invoice does not exists';
+    const ZONE_MAPPING_ORIGIN_DESTINATION_NOT_EXIST = 'Zone mapping between origin and destination does not exist. Please contact administrator';
+    const WEIGHT_BILLING_DOES_NOT_EXIST_FOR_ZONE = 'Billing not set for weight range in selected zone. Please contact administrator';
+    const INVALID_WEIGHT_BILLING_PLAN = 'Invalid weight billing plan supplied';
+    const INVALID_ONFORWARDING_BILLING_PLAN = 'Invalid onforwarding billing plan supplied';
+    const WEIGHT_EXCEEDS_SET_LIMIT = 'Parcel weight exceeds set limit. Please contact administrator';
 }

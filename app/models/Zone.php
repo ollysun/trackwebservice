@@ -1,5 +1,7 @@
 <?php
 
+use Phalcon\Exception;
+
 class Zone extends \Phalcon\Mvc\Model
 {
 
@@ -342,5 +344,42 @@ class Zone extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
         return $data->toArray();
+    }
+
+    public static function calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id)
+    {
+        if (!WeightBilling::zoneMappingExists($from_branch_id, $to_branch_id)) {
+            throw new Exception(ResponseMessage::ZONE_MAPPING_ORIGIN_DESTINATION_NOT_EXIST);
+        }
+
+        $weight_billing_plan = BillingPlan::findFirst($weight_billing_plan_id);
+
+        if (!$weight_billing_plan) {
+            throw new Exception(ResponseMessage::INVALID_WEIGHT_BILLING_PLAN);
+        }
+        
+        if(!WeightBilling::weightBillingExists($weight_billing_plan_id)){
+            throw new Exception(ResponseMessage::WEIGHT_BILLING_DOES_NOT_EXIST_FOR_ZONE);
+        }
+
+        if (WeightBilling::weightExceedsRange($weight, $weight_billing_plan_id)) {
+            if (!is_null($weight_billing_plan->getCompanyId())) {
+                return 0;
+            }
+            throw new Exception(ResponseMessage::WEIGHT_EXCEEDS_SET_LIMIT);
+        }
+
+        $calc_weight_billing = WeightBilling::calcBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id);
+        if ($calc_weight_billing == false) {
+            throw new Exception(ResponseMessage::CALC_BILLING_WEIGHT);
+        }
+
+        $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
+        if ($onforwarding_charge == false) {
+            throw new Exception(ResponseMessage::CALC_BILLING_ONFORWARDING);
+        }
+
+        $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
+        return $final_billing;
     }
 }

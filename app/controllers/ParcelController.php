@@ -129,60 +129,65 @@ class ParcelController extends ControllerBase
                     return $this->response->sendError('Can only be edited by the parent hub or created branch');
             }
         }
-        $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-            $bank_account, $parcel, $to_branch_id, $created_by);
-        if (isset($parcel['id'])) {
-            $parcel_edit_history->parcel_id = $parcel['id'];
-            $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
-            $parcel_edit_history->changed_by = $auth_data['id'];
-            $parcel_edit_history->modified_at = Util::getCurrentDateTime();
-            $is_successful = $parcel_edit_history->save();
-            if (!$is_successful) {
-                return $this->response->sendError('Could not save edit details');
-            }
-        }
-        if ($waybill_numbers) {
 
-            /**
-             * @author Adegoke Obasa <goke@cottacush.com>
-             * Link Parcel to Pickup Request
-             */
-            if (isset($payload['pickup_request_id'])) {
-                PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getWaybillNumber());
-            }
-
-            /**
-             * Link Parcel to Shipment Request
-             * @author Adegoke Obasa <goke@cottacush.com>
-             **/
-            if (isset($payload['shipment_request_id'])) {
-                ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getWaybillNumber());
-            }
-
-            if ($is_corporate_lead == 1) {
-                $city = City::fetchOne($sender_address['city_id'], ['with_state' => 1, 'with_country' => 1]);
-                if ($city != false) {
-                    EmailMessage::send(
-                        EmailMessage::CORPORATE_LEAD,
-                        [
-                            'firstname' => (isset($sender['firstname'])) ? ucfirst(strtolower($sender['firstname'])) : '',
-                            'lastname' => (isset($sender['lastname'])) ? ucfirst(strtolower($sender['lastname'])) : '',
-                            'street1' => (isset($sender_address['street1'])) ? $sender_address['street1'] : '',
-                            'street2' => (isset($sender_address['street2'])) ? $sender_address['street2'] : '',
-                            'city' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['name'])) : '',
-                            'state' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['state']['name'])) : '',
-                            'country' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['country']['name'])) : '',
-                            'email' => (isset($sender['email'])) ? $sender['email'] : '',
-                            'phone' => (isset($sender['phone'])) ? $sender['phone'] : '',
-                            'year' => date('Y')
-                        ],
-                        'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']');
+        try {
+            $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+                $bank_account, $parcel, $to_branch_id, $created_by);
+            if (isset($parcel['id'])) {
+                $parcel_edit_history->parcel_id = $parcel['id'];
+                $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
+                $parcel_edit_history->changed_by = $auth_data['id'];
+                $parcel_edit_history->modified_at = Util::getCurrentDateTime();
+                $is_successful = $parcel_edit_history->save();
+                if (!$is_successful) {
+                    return $this->response->sendError('Could not save edit details');
                 }
             }
-            return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
-        }
+            if ($waybill_numbers) {
 
-        return $this->response->sendError();
+                /**
+                 * @author Adegoke Obasa <goke@cottacush.com>
+                 * Link Parcel to Pickup Request
+                 */
+                if (isset($payload['pickup_request_id'])) {
+                    PickupRequest::linkParcelAndChangeStatus($payload['pickup_request_id'], $parcel_obj->getWaybillNumber());
+                }
+
+                /**
+                 * Link Parcel to Shipment Request
+                 * @author Adegoke Obasa <goke@cottacush.com>
+                 **/
+                if (isset($payload['shipment_request_id'])) {
+                    ShipmentRequest::linkParcelAndChangeStatus($payload['shipment_request_id'], $parcel_obj->getWaybillNumber());
+                }
+
+                if ($is_corporate_lead == 1) {
+                    $city = City::fetchOne($sender_address['city_id'], ['with_state' => 1, 'with_country' => 1]);
+                    if ($city != false) {
+                        EmailMessage::send(
+                            EmailMessage::CORPORATE_LEAD,
+                            [
+                                'firstname' => (isset($sender['firstname'])) ? ucfirst(strtolower($sender['firstname'])) : '',
+                                'lastname' => (isset($sender['lastname'])) ? ucfirst(strtolower($sender['lastname'])) : '',
+                                'street1' => (isset($sender_address['street1'])) ? $sender_address['street1'] : '',
+                                'street2' => (isset($sender_address['street2'])) ? $sender_address['street2'] : '',
+                                'city' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['name'])) : '',
+                                'state' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['state']['name'])) : '',
+                                'country' => (isset($sender_address['city_id'])) ? ucwords(strtolower($city['country']['name'])) : '',
+                                'email' => (isset($sender['email'])) ? $sender['email'] : '',
+                                'phone' => (isset($sender['phone'])) ? $sender['phone'] : '',
+                                'year' => date('Y')
+                            ],
+                            'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']');
+                    }
+                }
+                return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
+            } else {
+                return $this->response->sendError();
+            }
+        } catch (\Exception $ex) {
+            return $this->response->sendError($ex->getMessage());
+        }
     }
 
     public function getOneAction()

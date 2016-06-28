@@ -94,12 +94,12 @@ class BulkParcelCreationJob extends BaseJob
         $billingToBranch = City::findFirst($parcelData['receiver_city']);
         $calc_weight_billing = WeightBilling::calcBilling($billingFromBranch->getBranchId(), $billingToBranch->getBranchId(), $parcelData['weight'], $billingPlanId);
         if ($calc_weight_billing == false) {
-            throw new Exception(ResponseMessage::CALC_BILLLING_WEIGHT);
+            throw new Exception(ResponseMessage::CALC_BILLING_WEIGHT);
         }
 
         $onforwarding_charge = OnforwardingCharge::fetchByCity($parcelData['receiver_city'], $billingPlanId);
         if ($onforwarding_charge == false) {
-            throw new Exception(ResponseMessage::CALC_BILLLING_ONFORWARDING);
+            throw new Exception(ResponseMessage::CALC_BILLING_ONFORWARDING);
         }
         $parcelData['amount_due'] = $calc_weight_billing + $onforwarding_charge->getAmount();
         $parcelData['cash_on_delivery'] = 0;
