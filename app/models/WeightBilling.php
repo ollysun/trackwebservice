@@ -492,26 +492,6 @@ class WeightBilling extends \Phalcon\Mvc\Model
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @param $billing_plan_id
-     * @return bool
-     */
-    public static function weightBillingExists($billing_plan_id)
-    {
-        $obj = new WeightBilling();
-        $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['WeightBilling.id'])
-            ->from('WeightBilling')
-            ->innerJoin('Zone', 'Zone.id = WeightBilling.zone_id')
-            ->innerJoin('WeightRange', 'WeightRange.id = WeightBilling.weight_range_id')
-            ->where('WeightRange.billing_plan_id = :billing_plan_id:', ['billing_plan_id' => $billing_plan_id]);
-
-        $data = $builder->getQuery()->execute();
-
-        return (count($data) > 0);
-    }
-
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $weight
      * @param $billing_plan_id
      * @return bool
@@ -520,17 +500,18 @@ class WeightBilling extends \Phalcon\Mvc\Model
     {
         $obj = new WeightBilling();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['WeightRange.id'])
+            ->columns('COUNT(WeightRange.id) AS range_count')
             ->from('WeightRange')
             ->where(
-            '(WeightRange.max_weight >= :weight:)
-            AND WeightRange.billing_plan_id = :billing_plan_id:
-            ',
-            ['weight' => $weight, 'billing_plan_id' => $billing_plan_id]
-        );
+                '(WeightRange.max_weight > :weight:)
+                AND WeightRange.billing_plan_id = :billing_plan_id:
+                ',
+                ['weight' => $weight, 'billing_plan_id' => $billing_plan_id]
+            );
 
-        $data = $builder->getQuery()->execute();
-        return (count($data) == 0);
+        $data = $builder->getQuery()->getSingleResult();
+
+        return $data['range_count'] == 0;
     }
 
     /**
@@ -544,15 +525,15 @@ class WeightBilling extends \Phalcon\Mvc\Model
         $obj = new WeightBilling();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('ZoneMatrix')
-            ->columns(['ZoneMatrix.id'])
+            ->columns('COUNT(ZoneMatrix.id) AS zone_matrix_count')
             ->where(
                 '((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
             OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))',
                 ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id]
             );
 
-        $data = $builder->getQuery()->execute();
-        return (count($data) > 0);
+        $data = $builder->getQuery()->getSingleResult();
+        return $data['zone_matrix_count'] > 0;
     }
 
     /**
