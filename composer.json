@@ -2,15 +2,10 @@
   "name": "CourierPlus TNT Service",
   "require": {
     "phalcon-utils": "^1.7",
-    "robmorgan/phinx": "^0.4.6",
+    "robmorgan/phinx": "^0.5.0",
     "pda/pheanstalk": "^3.1",
     "mikehaertl/phpwkhtmltopdf": "^2.1",
-    "picqer/php-barcode-generator": "^0.1.0"
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url":  "git@bitbucket.org:cottacush/phalcon-utils.git"
-    }
-  ]
+    "picqer/php-barcode-generator": "^0.1.0",
+    "cottacush/phalcon-user-auth": "^1.5"
+  }
 }
