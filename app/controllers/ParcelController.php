@@ -533,37 +533,101 @@ class ParcelController extends ControllerBase
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $held_by_id = $this->request->getPost('held_by_id');
 
+
+        $force_receive = $this->request->getPost('force_receive');
+        $previous_branch = $this->request->getPost('previous_branch');
+
         if (in_array(null, [$waybill_numbers, $held_by_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
+        $current_branch_id = $auth_data['branch']['id'];
 
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
+
             if ($parcel === false) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;
             }
 
-            if ($parcel->getStatus() == Status::PARCEL_ARRIVAL) {
+            //if the parcel have arrived and its currently in this branch
+            if ($parcel->getStatus() == Status::PARCEL_ARRIVAL && $parcel->getToBranchId() == $current_branch_id) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
                 continue;
-            } else if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_TRANSIT;
-                continue;
-            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+            }
+
+            //do not check if force receiving
+            if($force_receive == false){
+                if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT) {
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_TRANSIT;
+                    continue;
+                } else if ($parcel->getToBranchId() != $current_branch_id) {
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                    continue;
+                }
+            }else if ($parcel->getToBranchId() == $current_branch_id && $parcel->getStatus() != Status::MANIFEST_IN_TRANSIT) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
                 continue;
             }
 
             //checking if the parcel is held by the correct person
             $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
             if ($held_parcel_record == false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
-                continue;
+                if(!$force_receive){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                    continue;
+                }
+
+                //get last manifest for this parcel
+                $lastHistory = ParcelHistory::getLastHistoryForParcel($parcel->getId());
+                $lastHistoryToBranchId = $lastHistory['to_branch_id'];
+                if(empty($previous_branch)){
+                    $previous_branch = $lastHistoryToBranchId;
+                }
+
+                //move the parcel to the hand on the current held by
+                $parcel->setToBranchId($previous_branch); // -- we can check here to see if the previous branch is the only defaulter
+                $changed = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $current_branch_id, $auth_data['id'], ParcelHistory::MSG_FOR_SWEEPER);
+
+                if($changed){
+                    //-- create a manifest for the parcel
+                    $manifested = Manifest::createOne([$parcel], '', $previous_branch, $current_branch_id, $auth_data['id'], $held_by_id, Manifest::TYPE_SWEEP);
+
+                    if($manifested){
+                        $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+                        //record defaulter
+                        if($lastHistoryToBranchId != $previous_branch){
+                            $shipmentExceptionDate =  array(
+                                'defaulter_branch_id' => $lastHistoryToBranchId,
+                                'detector_branch_id' => $current_branch_id,
+                                'action_description' => ShipmentException::ACTION_DESCRIPTION_NOT_SENT,
+                                'held_by_id' => $held_by_id,
+                                'admin_id' => $auth_data['id'],
+                                'creation_date' => date('Y-m-d H:i:s'),
+                                'modification_date' => date('Y-m-d H:i:s'),
+                                'parcel_id' => $parcel->getId()
+                            );
+                            ShipmentException::createOne($shipmentExceptionDate);
+                        }
+                        $shipmentExceptionDate =  array(
+                            'defaulter_branch_id' => $previous_branch,
+                            'detector_branch_id' => $current_branch_id,
+                            'action_description' => ShipmentException::ACTION_DESCRIPTION_NOT_SENT,
+                            'held_by_id' => $held_by_id,
+                            'admin_id' => $auth_data['id'],
+                            'creation_date' => date('Y-m-d H:i:s'),
+                            'modification_date' => date('Y-m-d H:i:s'),
+                            'parcel_id' => $parcel->getId()
+                        );
+
+                        ShipmentException::createOne($shipmentExceptionDate);
+                    }
+                }
+
             }
 
             $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId());
@@ -575,7 +639,6 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
-
     /**
      * Move package to in transit
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -1062,7 +1125,7 @@ class ParcelController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_params = [
-            'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number'
+            'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number', 'order_number'
         ];
 
         $fetch_params = ['with_admin'];
@@ -1724,6 +1787,79 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Could not fetch bag');
         }
         return $this->response->sendSuccess($bag);
+    }
+
+
+    /** Get Shipment Exceptions */
+    public function getShipmentExceptionsAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+        $auth_data = $this->auth->getData();
+
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        $paginate = $this->request->getQuery('paginate', null, false);
+
+        //if hub officer, limit result to his hub
+        $user = Admin::getById($auth_data['id']);
+        if($user->getRoleId() == Role::OFFICER){
+            $defaulter_branch_id = $auth_data['branch']['id'];
+        }else{
+
+            $defaulter_branch_id = $this->request->getQuery('defaulter_branch_id');
+            $detector_branch_id = $this->request->getQuery('detector_branch_id');
+        }
+
+
+        $start_date = $this->request->getQuery('start_date');
+        $end_date = $this->request->getQuery('end_date');
+        $held_by_id = $this->request->getQuery('held_by_id');
+
+        $filter_by = [];
+        if (!empty($defaulter_branch_id)) {
+            $filter_by['defaulter_branch_id'] = $defaulter_branch_id;
+        }
+        if (!empty($detector_branch_id)) {
+            $filter_by['detector_branch_id'] = $detector_branch_id;
+        }
+        if (!empty($start_date)) {
+            $filter_by['start_date'] = $start_date;
+        }
+        if (!empty($end_date)) {
+            $filter_by['end_date'] = $end_date;
+        }
+        if (!empty($held_by_id)) {
+            $filter_by['held_by_id'] = $held_by_id;
+        }
+
+        //var_dump($_GET); die();
+
+        return $this->response->sendSuccess(ShipmentException::fetchAll($offset, $count, $filter_by,
+            ['defaulter_branch' => true, 'detector_branch' => true, 'held_by' => true,
+                'parcel' => true, 'admin' => true],
+            $paginate));
+    }
+
+    public function countShipmentExceptionAction(){
+
+    }
+
+    public function getHistoriesAction(){
+        $waybill_number = $this->request->getQuery('waybill_number');
+
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if(!$parcel){
+            return $this->response->sendError('Parcel found for the supplied waybill number');
+        }
+
+        $histories = ParcelHistory::fetchAll(0, 0, array('parcel_id' => $parcel->getId()),
+            array('with_admin' => true));
+
+
+        if(!$histories){
+            return $this->response->sendError('Could not load history for parcel');
+        }
+
+        return $this->response->sendSuccess($histories[$waybill_number]);
     }
 }
 

@@ -1,0 +1,1 @@
+ALTER TABLE `audit` ADD `parameters` TEXT NOT NULL AFTER `browser`;

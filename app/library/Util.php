@@ -18,21 +18,22 @@ class Util
      */
     public static function slackDebug($tag, $text)
     {
+        //xoxb-55390846452-E4AmK4St8uQBvR21WDqtMhx9
         /** @var \Phalcon\Http\Request $request */
         $environment_name = Di::getDefault()->has('request') ? Di::getDefault()->getRequest()->getServer('SERVER_NAME') : 'CLI';
         $httpClient = new HttpClient();
-        $data = ['username' => 'TNT Debug Bot', 'icon_emoji' => ':rat:',
+        $data = ['username' => 'La Verita Bot', 'icon_emoji' => ':rat:',
             'attachments' => [
                 [
                     'fallback' => "$tag",
                     'color' => '#205081',
-                    'author_name' => 'TNT SERVICE - ' . $environment_name,
+                    'author_name' => 'La Veritas - ' . $environment_name,
                     'title' => "$tag",
                     'text' => $text
                 ]
             ]];
-
-        $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+        //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+        $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
     }
 
     /**

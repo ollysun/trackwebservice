@@ -8,7 +8,7 @@ environments:
     development:
         adapter: mysql
         host: localhost
-        name: tnt
+        name: trackplus
         user: root
         pass: ''
         port: 3306

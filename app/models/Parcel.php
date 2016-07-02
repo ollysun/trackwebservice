@@ -307,6 +307,11 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $return_status;
 
     /**
+     * @var
+     */
+    protected $order_number;
+
+    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @return mixed
      */
@@ -1333,6 +1338,22 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param $order_number
+     * @return $this
+     */
+    public function setOrderNumber($order_number){
+        $this->order_number = $order_number;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getOrderNumber(){
+        return $this->order_number;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -1427,6 +1448,7 @@ class Parcel extends \Phalcon\Mvc\Model
             'others' => 'others',
             'base_price' => 'base_price',
             'return_status' => 'return_status',
+            'order_number' => 'order_number'
         );
     }
 
@@ -1479,7 +1501,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'storage_demurrage' => $this->getStorageDemurrage(),
             'others' => $this->getOthers(),
             'base_price' => $this->getBasePrice(),
-            'return_status' => $this->getReturnStatus()
+            'return_status' => $this->getReturnStatus(),
+            'order_number' => $this->getOrderNumber()
         );
     }
 
@@ -1489,7 +1512,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
-                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null
     )
 
     {
@@ -1547,6 +1570,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setOthers($others);
         $this->setBasePrice($base_price);
         $this->setReturnStatus($return_status);
+        $this->setOrderNumber($order_number);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1593,6 +1617,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setIsFreightIncluded(0);
         $this->setQtyMetrics(Parcel::QTY_METRICS_WEIGHT);
         $this->setReturnStatus(0);
+        $this->setOrderNumber(null);
     }
 
     private function getEntityTypeLabel()

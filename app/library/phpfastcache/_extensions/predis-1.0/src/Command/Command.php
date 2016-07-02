@@ -1,5 +1,6 @@
 <?php
 
+
 /*
  * This file is part of the Predis package.
  *
@@ -10,6 +11,8 @@
  */
 
 namespace Predis\Command;
+
+require_once('CommandInterface.php');
 
 /**
  * Base class for Redis commands.

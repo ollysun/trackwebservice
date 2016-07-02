@@ -335,7 +335,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
             $waybill_number_array = explode(',', $filter_by['waybill_number']);
             $comma_separated = implode("','", $waybill_number_array);
             $comma_separated = "'$comma_separated'";
-            $where[] = "Parcel.waybill_number IN ($comma_separated)  OR Parcel.reference_number IN ($comma_separated)";
+            $where[] = "Parcel.waybill_number IN ($comma_separated)  OR Parcel.reference_number IN ($comma_separated)  OR Parcel.order_number IN ($comma_separated)";
         } else if (isset($filter_by['parcel_id'])) {
             $where[] = 'ParcelHistory.parcel_id = :parcel_id:';
             $bind['parcel_id'] = $filter_by['parcel_id'];
@@ -381,5 +381,33 @@ class ParcelHistory extends \Phalcon\Mvc\Model
             $result[$item->parcel->waybill_number]['history'][] = $history;
         }
         return $result;
+    }
+
+
+    public static function getLastHistoryForParcel($parcelId){
+        $obj = new ParcelHistory();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->where('ParcelHistory.parcel_id = :id: AND ParcelHistory.status = :status:',
+                ['id' => $parcelId, 'status' => Status::PARCEL_IN_TRANSIT])
+            ->from('ParcelHistory');
+
+        $columns = ['ParcelHistory.*'];
+        $builder->orderBy('ParcelHistory.id DESC');
+
+        $builder->columns($columns);
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0) {
+            return false;
+        }
+
+        $history = [];
+        if (!isset($data[0]->parcelHistory)) {
+            $history = $data[0]->getData();
+        } else {
+            $history = $data[0]->parcelHistory->getData();
+        }
+
+        return $history;
     }
 }

@@ -11,6 +11,8 @@
 
 namespace Predis\Command;
 
+require_once('Command.php');
+
 /**
  * @link http://redis.io/commands/config-set
  * @link http://redis.io/commands/config-get
