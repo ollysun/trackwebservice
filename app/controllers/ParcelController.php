@@ -131,6 +131,15 @@ class ParcelController extends ControllerBase
         }
 
         try {
+            //check that the waybill number is valid if any it is sent
+            if(!empty($parcel['waybill_number'])){
+                if(!Parcel::isWaybillNumber($parcel['waybill_number'])){
+                    return $this->response->sendError('Invalid waybill number format');
+                }
+                if(Parcel::getByWaybillNumber($parcel['waybill_number'])){
+                    return $this->response->sendError('The waybill number you entered is already in use');
+                }
+            }
             $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
                 $bank_account, $parcel, $to_branch_id, $created_by);
             if (isset($parcel['id'])) {
@@ -534,7 +543,7 @@ class ParcelController extends ControllerBase
         $held_by_id = $this->request->getPost('held_by_id');
 
 
-        $force_receive = $this->request->getPost('force_receive');
+        $force_receive = $this->request->getPost('force_receive') === "true"?true:false;
         $previous_branch = $this->request->getPost('previous_branch');
 
         if (in_array(null, [$waybill_numbers, $held_by_id])) {
@@ -548,6 +557,7 @@ class ParcelController extends ControllerBase
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
+            $will_receive_to_first_hub = false;
 
             if ($parcel === false) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
@@ -576,18 +586,32 @@ class ParcelController extends ControllerBase
 
             //checking if the parcel is held by the correct person
             $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+
             if ($held_parcel_record == false) {
                 if(!$force_receive){
                     $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
                     continue;
                 }
 
+
                 //get last manifest for this parcel
                 $lastHistory = ParcelHistory::getLastHistoryForParcel($parcel->getId());
+                //if parcel is in transit then it was not received into the first defaulter's hub. Receive it
+                if($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
+                    //get the manifest for the parcel
+
+                }
+
+                $will_receive_to_first_hub = $parcel->getStatus() == Status::PARCEL_IN_TRANSIT;
+
                 $lastHistoryToBranchId = $lastHistory['to_branch_id'];
                 if(empty($previous_branch)){
                     $previous_branch = $lastHistoryToBranchId;
                 }
+
+                /**
+                 *
+                 */
 
                 //move the parcel to the hand on the current held by
                 $parcel->setToBranchId($previous_branch); // -- we can check here to see if the previous branch is the only defaulter
@@ -634,6 +658,10 @@ class ParcelController extends ControllerBase
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
                 continue;
+            }
+
+            if($will_receive_to_first_hub){
+                $this->moveToArrivalAction();
             }
         }
 
@@ -1832,11 +1860,11 @@ class ParcelController extends ControllerBase
         }
 
         //var_dump($_GET); die();
-
-        return $this->response->sendSuccess(ShipmentException::fetchAll($offset, $count, $filter_by,
+        $exceptions = ShipmentException::fetchAll($offset, $count, $filter_by,
             ['defaulter_branch' => true, 'detector_branch' => true, 'held_by' => true,
-                'parcel' => true, 'admin' => true],
-            $paginate));
+                'parcel' => true, 'admin' => true], $paginate);
+
+        return $this->response->sendSuccess($exceptions->toArray());
     }
 
     public function countShipmentExceptionAction(){

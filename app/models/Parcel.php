@@ -312,6 +312,11 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $order_number;
 
     /**
+     * @var
+     */
+    protected $pickup_date;
+
+    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @return mixed
      */
@@ -1354,6 +1359,21 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param $pickup_date
+     * @return $this
+     */
+    public function setPickupDate($pickup_date){
+        $this->pickup_date = $pickup_date;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPickupDate(){
+        return $this->pickup_date;
+    }
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -1448,7 +1468,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'others' => 'others',
             'base_price' => 'base_price',
             'return_status' => 'return_status',
-            'order_number' => 'order_number'
+            'order_number' => 'order_number',
+            'pickup_date' => 'pickup_date'
         );
     }
 
@@ -1502,7 +1523,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'others' => $this->getOthers(),
             'base_price' => $this->getBasePrice(),
             'return_status' => $this->getReturnStatus(),
-            'order_number' => $this->getOrderNumber()
+            'order_number' => $this->getOrderNumber(),
+            'pickup_date' => $this->getPickupDate()
         );
     }
 
@@ -1512,7 +1534,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
-                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null, $pickup_date = null
     )
 
     {
@@ -1571,6 +1593,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setBasePrice($base_price);
         $this->setReturnStatus($return_status);
         $this->setOrderNumber($order_number);
+        $this->setPickupDate($pickup_date);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1618,6 +1641,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setQtyMetrics(Parcel::QTY_METRICS_WEIGHT);
         $this->setReturnStatus(0);
         $this->setOrderNumber(null);
+        $this->setPickupDate(null);
     }
 
     private function getEntityTypeLabel()
@@ -2271,6 +2295,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
                 $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
                 $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
+
+            $this->setOrderNumber($parcel_data['order_number']);
             $check = $this->save();
         } else {
             if ($bank_account != null) {
@@ -2286,8 +2312,13 @@ class Parcel extends \Phalcon\Mvc\Model
 
         //setting waybill number
         if ($check) {
+            //if the user entered a waybill number, user it. else get new one
             if (!$this->isWaybillNumber($this->waybill_number)) {
-                $this->generateWaybillNumber($from_branch_id);
+                if(!empty($parcel_data['waybill_number'])){
+                    $this->setWaybillNumber($parcel_data['waybill_number']);
+                }else{
+                    $this->generateWaybillNumber($from_branch_id);
+                }
                 $check = $this->save();
             }
         } else {
@@ -2535,7 +2566,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $waybill_number_arr = [];
 
         for ($i = 1; $i <= $this->getNoOfPackage(); ++$i) {
-            $waybill_number = $this->getWaybillNumber() . '-' . $i . '-' . $this->getNoOfPackage();
+            $waybill_number =  $this->getWaybillNumber() . '-' . $i . '-' . $this->getNoOfPackage();
             $sub_parcel = new Parcel();
             $sub_parcel->setTransaction($transaction);
             $sub_parcel->initData(
@@ -2580,8 +2611,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 null,
                 null,
                 null,
-                null
-
+                null,
+                $this->getReturnStatus(),
+                $this->getOrderNumber(),
+                $this->getPickupDate()
             );
 
             if (!$sub_parcel->save()) {

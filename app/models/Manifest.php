@@ -799,4 +799,10 @@ class Manifest extends \Phalcon\Mvc\Model
 
         return ['where' => $where, 'bind' => $bind];
     }
+
+    public static function isToBranch($manifest_id, $to_branch_id){
+        $manifest = self::findFirst(array('id' => $manifest_id));
+        if(!$manifest) return false;
+        return $manifest->getToBranchId() == $to_branch_id;
+    }
 }

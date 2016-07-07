@@ -7,10 +7,10 @@ environments:
 
     development:
         adapter: mysql
-        host: localhost
-        name: trackplus
-        user: root
-        pass: ''
+        host: MYSQL5013.Smarterasp.net
+        name: db_9a9b4e_tnt
+        user: db_9a9b4e_blenyo
+        pass: 'ojima123'
         port: 3306
         charset: utf8
 
