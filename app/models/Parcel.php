@@ -2284,6 +2284,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $total_charge += $parcel_data['storage_demurrage'];
         $total_charge += $parcel_data['others'];
 
+        //init parcel if all is okay
         if ($check) {
             $this->initData($parcel_data['parcel_type'], $sender_obj->getId(), $sender_addr_obj->getId(),
                 $receiver_obj->getId(), $receiver_addr_obj->getId(), $parcel_data['weight'], $total_charge,
