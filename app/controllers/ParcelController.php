@@ -115,6 +115,12 @@ class ParcelController extends ControllerBase
             $parcel_obj = Parcel::findFirstById($parcel['id']);
             $parcel_edit_history->before_data = json_encode($parcel_obj->toArray());
         } else {
+            //check reference number duplicate reference_number
+            if(!empty($parcel['reference_number']) && Parcel::findFirstByReferenceNumber($parcel['reference_number']))
+            {
+                return $this->response->sendError('The reference number you entered has been used');
+            }
+
             $parcel_obj = new Parcel();
         }
 
@@ -190,6 +196,20 @@ class ParcelController extends ControllerBase
                             'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']');
                     }
                 }
+
+                if($parcel_obj->getNotificationStatus() == Status::ACTIVE){
+                    //send sms to sender and receiver
+                    if($sender['phone']){
+                        SmsMessage::send($sender['phone'], 'Courierplus',
+                            'Your shipment have been created. You can track it using '. $parcel_obj->getWaybillNumber());
+                    }
+
+                    if($receiver['phone']){
+                        SmsMessage::send($receiver['phone'], 'Courierplus',
+                            'Your shipment have been created. You can track it using '. $parcel_obj->getWaybillNumber());
+                    }
+                }
+
                 return $this->response->sendSuccess(['id' => $parcel_obj->getId(), 'waybill_number' => $waybill_numbers]);
             } else {
                 return $this->response->sendError();

@@ -123,6 +123,7 @@ class BulkParcelCreationJob extends BaseJob
         $parcelData['cost_of_crating'] = 0;
         $parcelData['storage_demurrage'] = 0;
         $parcelData['others'] = 0;
+        $parcelData['is_bulk_shipment'] = 1;
 
         $sender_address = [];
         $sender_address['street1'] = $parcelData['sender_address'];

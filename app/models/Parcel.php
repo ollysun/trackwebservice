@@ -317,6 +317,13 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $pickup_date;
 
     /**
+     * @var
+     */
+    protected $notification_status;
+
+    protected $is_bulk_shipment;
+
+    /**
      * @author Babatunde Otaru <tunde@cottacush.com>
      * @return mixed
      */
@@ -832,6 +839,15 @@ class Parcel extends \Phalcon\Mvc\Model
     {
         $this->bank_account_id = $bank_account_id;
 
+        return $this;
+    }
+
+    /**
+     * @param string $notification_status
+     * @return $this
+     */
+    public function setNotificationStatus($notification_status){
+        $this->notification_status = $notification_status;
         return $this;
     }
 
@@ -1373,6 +1389,23 @@ class Parcel extends \Phalcon\Mvc\Model
     public function getPickupDate(){
         return $this->pickup_date;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getNotificationStatus(){
+        return $this->notification_status;
+    }
+
+    public function setIsBulkShipment($is_bulk_shipment){
+        $this->is_bulk_shipment = $is_bulk_shipment;
+        return $this;
+    }
+
+    public function getIsBulkShipment(){
+        return$this->is_bulk_shipment;
+    }
+
     /**
      * Initialize method for model.
      */
@@ -1469,7 +1502,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'base_price' => 'base_price',
             'return_status' => 'return_status',
             'order_number' => 'order_number',
-            'pickup_date' => 'pickup_date'
+            'pickup_date' => 'pickup_date',
+            'notification_status' => 'notification_status',
+            'is_bulk_shipment' => 'is_bulk_shipment'
         );
     }
 
@@ -1524,7 +1559,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'base_price' => $this->getBasePrice(),
             'return_status' => $this->getReturnStatus(),
             'order_number' => $this->getOrderNumber(),
-            'pickup_date' => $this->getPickupDate()
+            'pickup_date' => $this->getPickupDate(),
+            'notification_status' => $this->getNotificationStatus(),
+            'is_bulk_shipment' => $this->getIsBulkShipment()
         );
     }
 
@@ -1534,7 +1571,8 @@ class Parcel extends \Phalcon\Mvc\Model
                              $pos_amount, $pos_trans_id, $created_by, $is_visible = 1, $entity_type = 1, $waybill_number = null, $bank_account_id = null, $is_billing_overridden = 0,
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
-                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null, $pickup_date = null
+                             $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null, $pickup_date = null,
+                            $notification_status = Status::INACTIVE, $is_bulk_shipment = 0
     )
 
     {
@@ -1594,6 +1632,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReturnStatus($return_status);
         $this->setOrderNumber($order_number);
         $this->setPickupDate($pickup_date);
+        $this->setNotificationStatus($notification_status);
+        $this->setIsBulkShipment($is_bulk_shipment);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1642,6 +1682,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setReturnStatus(0);
         $this->setOrderNumber(null);
         $this->setPickupDate(null);
+        $this->setNotificationStatus(0);
+        $this->setIsBulkShipment(0);
     }
 
     private function getEntityTypeLabel()
@@ -2298,6 +2340,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
 
             $this->setOrderNumber($parcel_data['order_number']);
+            if(isset($parcel_data['pickup_date'])){
+                $this->setPickupDate($parcel_data['pickup_date']);
+            }
+            $this->setNotificationStatus($parcel_data['notification_status']);
             $check = $this->save();
         } else {
             if ($bank_account != null) {

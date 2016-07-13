@@ -289,6 +289,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
             $mailer = \Phalcon\Di::getDefault()->getMailer();
             return $mailer->send($email_msg->getMessage(), $email_msg->getMessage(), $email_msg->getSubject(), [$receiver_email => ''], [$from_email => $from_name], $cc, [], $msg_params);
         } catch (Exception $e) {
+            Util::slackDebug('Email Not Sent', $e->getMessage());
             return false;
         }
     }
