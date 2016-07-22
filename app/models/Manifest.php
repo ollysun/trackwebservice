@@ -84,6 +84,8 @@ class Manifest extends \Phalcon\Mvc\Model
      */
     protected $status;
 
+    protected $transit_time;
+
     /**
      * Method to set the value of field id
      *
@@ -383,6 +385,14 @@ class Manifest extends \Phalcon\Mvc\Model
         return $this->status;
     }
 
+    public function getTransitTime(){
+        return $this->transit_time;
+    }
+
+    public function setTransitTime($transit_time){
+        $this->transit_time = $transit_time;
+        return $this;
+    }
     /**
      * Initialize method for model.
      */
@@ -431,7 +441,8 @@ class Manifest extends \Phalcon\Mvc\Model
             'no_of_parcels' => 'no_of_parcels',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'status' => 'status'
+            'status' => 'status',
+            'transit_time' => 'transit_time'
         );
     }
 
@@ -498,7 +509,8 @@ class Manifest extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $sender_admin_id, $held_by_id, $type_id)
+    public static function createOne($parcel_arr, $label, $from_branch_id, $to_branch_id,
+                                     $sender_admin_id, $held_by_id, $type_id, $is_defaulter = false)
     {
         if (empty($parcel_arr)) {
             return ['manifest' => null, 'bad_parcels' => []];
@@ -533,6 +545,8 @@ class Manifest extends \Phalcon\Mvc\Model
                 return false;
             }
 
+            $transit_time = TransitTime::fetchByLink($to_branch_id, $from_branch_id);
+
             foreach ($parcel_arr as $parcel) {
                 if ($parcel->getToBranchId() != $to_branch_id || $parcel->getFromBranchId() != $from_branch_id) {
                     $bad_parcel[$parcel->getId()] = ResponseMessage::MANIFEST_PARCEL_DIRECTION_MISMATCH;
@@ -543,6 +557,17 @@ class Manifest extends \Phalcon\Mvc\Model
                     $bad_parcel[$parcel->getId()] = ResponseMessage::CANNOT_MOVE_PARCEL;
                     continue;
                 }
+
+
+                if(!$is_defaulter){
+                    //create transit info for this parcel
+                    $transit_info = new TransitInfo();
+                    $transit_info->init($parcel->getId(), $held_by_id, $sender_admin_id, $from_branch_id,
+                        $to_branch_id, $transit_time?$transit_time->getHours():24);
+
+                    $transit_info->save();
+                }
+
                 $no_of_parcels++;
             }
             if ($no_of_parcels == 0) {
@@ -656,6 +681,79 @@ class Manifest extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if (isset($fetch_with['with_from_branch'])) {
+            $columns[] = 'FromBranch.*';
+            $builder->innerJoin('FromBranch', 'FromBranch.id = Manifest.from_branch_id', 'FromBranch');
+        }
+
+        if (isset($fetch_with['with_to_branch'])) {
+            $columns[] = 'ToBranch.*';
+            $builder->innerJoin('ToBranch', 'ToBranch.id = Manifest.to_branch_id', 'ToBranch');
+        }
+
+        if (isset($fetch_with['with_sender_admin'])) {
+            $columns[] = 'SenderAdmin.*';
+            $builder->innerJoin('SenderAdmin', 'SenderAdmin.id = Manifest.sender_admin_id', 'SenderAdmin');
+        }
+
+        if (isset($fetch_with['with_receiver_admin'])) {
+            $columns[] = 'ReceiverAdmin.*';
+            $builder->leftJoin('ReceiverAdmin', 'ReceiverAdmin.id = Manifest.receiver_admin_id', 'ReceiverAdmin');
+        }
+
+        if (isset($fetch_with['with_holder'])) {
+            $columns[] = 'Holder.*';
+            $builder->innerJoin('Holder', 'Holder.id = Manifest.held_by_id', 'Holder');
+        }
+
+        $builder->columns($columns);
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        $result = [];
+        foreach ($data as $item) {
+            $manifest = [];
+            if (!isset($item->manifest)) {
+                $manifest = $item->getData();
+            } else {
+                $manifest = $item->manifest->getData();
+                if (isset($fetch_with['with_from_branch'])) {
+                    $manifest['from_branch'] = $item->fromBranch->getData();
+                }
+                if (isset($fetch_with['with_to_branch'])) {
+                    $manifest['to_branch'] = $item->toBranch->getData();
+                }
+                if (isset($fetch_with['with_sender_admin'])) {
+                    $manifest['sender_admin'] = $item->senderAdmin->getData();
+                }
+                if (isset($fetch_with['with_receiver_admin'])) {
+                    $manifest['receiver_admin'] = $item->receiverAdmin->getData();
+                }
+                if (isset($fetch_with['with_holder'])) {
+                    $manifest['holder'] = $item->holder->getData();
+                }
+            }
+            $result[] = $manifest;
+        }
+
+        return $result;
+    }
+
+    public static function fetchDelayedShipments($offset, $count, $filter_by, $fetch_with)
+    {
+        $obj = new Manifest();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('Manifest')
+            ->limit($count, $offset);
+
+        $columns = ['Manifest.*'];
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $where[] = "";
 
         if (isset($fetch_with['with_from_branch'])) {
             $columns[] = 'FromBranch.*';

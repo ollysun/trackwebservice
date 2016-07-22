@@ -444,6 +444,11 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::NO_PARCEL_TO_BAG);
         }
 
+        //validate seal id
+        if(Parcel::findFirst(["seal_id = '$seal_id'"])){
+            return $this->response->sendError(ResponseMessage::SEAL_ID_IN_USE);
+        }
+
         $auth_data = $this->auth->getData();
 
         try {
@@ -574,6 +579,15 @@ class ParcelController extends ControllerBase
         $auth_data = $this->auth->getData();
         $current_branch_id = $auth_data['branch']['id'];
 
+        foreach (Parcel::getByWaybillNumberList($waybill_number_arr, true) as $parcel) {
+            if($parcel->getEntityType() == Parcel::ENTITY_TYPE_BAG){
+                $bagged_parcels = Parcel::getBag($parcel->getWaybillNumber())['parcels'];
+                foreach ($bagged_parcels as $bagged_parcel) {
+                    $waybill_number_arr[] = $bagged_parcel['waybill_number'];
+                }
+            }
+        }
+
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
@@ -639,7 +653,8 @@ class ParcelController extends ControllerBase
 
                 if($changed){
                     //-- create a manifest for the parcel
-                    $manifested = Manifest::createOne([$parcel], '', $previous_branch, $current_branch_id, $auth_data['id'], $held_by_id, Manifest::TYPE_SWEEP);
+                    $manifested = Manifest::createOne([$parcel], '', $previous_branch,
+                        $current_branch_id, $auth_data['id'], $held_by_id, Manifest::TYPE_SWEEP, true);
 
                     if($manifested){
                         $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
@@ -769,12 +784,25 @@ class ParcelController extends ControllerBase
             if (isset($bad_parcel[$waybill_number])) {
                 unset($parcel_arr[$waybill_number]);
             }
+
+            //if it is a bag, get content and add then to the parcel arr
+            if($parcel->getEntityType() == Parcel::ENTITY_TYPE_BAG){
+                $bagged_parcels = Parcel::getBag($parcel->getWaybillNumber())['parcels'];
+                $waybill_number2s = [];
+                foreach ($bagged_parcels as $item) {
+                    $waybill_number2s[] =  $item['waybill_number'];
+                }
+                $parcel_arr = array_merge($parcel_arr, Parcel::getByWaybillNumberList($waybill_number2s, true));
+            }
+
         }
+
 
         $check = Manifest::createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $admin_id, $held_by_id, Manifest::TYPE_SWEEP);
         if ($check == false) {
             return $this->response->sendError();
         }
+
 
         /** @var Manifest $manifest */
         $manifest = isset($check['manifest']) ? $check['manifest'] : null;
@@ -1894,6 +1922,7 @@ class ParcelController extends ControllerBase
     public function getHistoriesAction(){
         $waybill_number = $this->request->getQuery('waybill_number');
 
+
         $parcel = Parcel::getByWaybillNumber($waybill_number);
         if(!$parcel){
             return $this->response->sendError('Parcel found for the supplied waybill number');
@@ -1908,6 +1937,13 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess($histories[$waybill_number]);
+    }
+
+    public function getDelayedShipmentsAction(){
+        $param = $this->request->getQuery();
+        $info = TransitInfo::fetchAll($param);
+        return $this->response->sendSuccess($info);
+
     }
 }
 

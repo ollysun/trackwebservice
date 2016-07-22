@@ -2549,7 +2549,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
             if ($this->save()) {
                 if ($this->getEntityType() == Parcel::ENTITY_TYPE_BAG) {
-                    $check = $this->alterSubs();
+                    //$check = $this->alterSubs();
                 }
 
                 if (!$check) {
@@ -2564,6 +2564,10 @@ class Parcel extends \Phalcon\Mvc\Model
                         $parcel_history->setTransaction($transaction);
                         $parcel_history->initData($this->getId(), $this->getFromBranchId(), $message, $admin_id, $status, $this->getToBranchId());
                         if ($parcel_history->save()) {
+                            //mark transit info as arrived
+                            if($status == Status::PARCEL_ARRIVAL){
+                                TransitInfo::MarkAsArrived($this->getId(), $this->getFromBranchId(), $this->getToBranchId());
+                            }
                             $transactionManager->commit();
                             return true;
                         }
@@ -3024,6 +3028,12 @@ class Parcel extends \Phalcon\Mvc\Model
         if (!$check) {
             throw new Exception(ResponseMessage::CANNOT_MOVE_PARCEL);
         } else {
+            if($parcel->getEntityType() == Parcel::ENTITY_TYPE_BAG){
+                $bagged_parcels = Parcel::getBag($parcel->getWaybillNumber());
+                foreach($bagged_parcels as $bagged_parcel){
+                    self::moveToSweeper($bagged_parcel['waybill_number'], $auth, $to_branch_id, $return_to_origin);
+                }
+            }
             return true;
         }
     }

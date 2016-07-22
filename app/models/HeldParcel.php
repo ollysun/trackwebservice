@@ -323,8 +323,8 @@ class HeldParcel extends \Phalcon\Mvc\Model
 
         return HeldParcel::query()
             ->columns($columns)
-            ->where('manifest_id = :manifest_id:')
-            ->bind(['manifest_id' => $manifestId])
+            ->where('manifest_id = :manifest_id: AND Parcel.is_visible = :is_visible:')
+            ->bind(['manifest_id' => $manifestId, 'is_visible' => 1])
             ->innerJoin('Parcel')
             ->leftJoin('ToBranch', 'Parcel.to_branch_id = ToBranch.id')
             ->leftJoin('User', 'Parcel.sender_id = Shipper.id', 'Shipper')

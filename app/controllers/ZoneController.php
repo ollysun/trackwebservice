@@ -368,4 +368,59 @@ class ZoneController extends ControllerBase
             return $this->response->sendError($ex->getMessage());
         }
     }
+
+    public function getTransitTimeAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $branch_id = $this->request->getQuery('branch_id');//optional
+        $other_branch_id = $this->request->getQuery('other_branch_id');//optional
+
+        $filter_by = [];
+
+        if (!is_null($branch_id)) {
+            $filter_by['branch_id'] = $branch_id;
+        }
+        if (!is_null($other_branch_id)) {
+            $filter_by['other_branch_id'] = $other_branch_id;
+        }
+
+        return $this->response->sendSuccess(TransitTime::fetchAll($filter_by));
+    }
+
+
+    public function saveTransitTimeAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $transit_time_info = $this->request->getJsonRawBody(true);
+//        $matrix_info = [
+//            ['to_branch_id' => 4, 'from_branch_id' => 5, 'zone_id' => 1],
+//            ['to_branch_id' => 5, 'from_branch_id' => 9, 'zone_id' => 2],
+//            ['to_branch_id' => 4, 'from_branch_id' => 9, 'zone_id' => 3],
+//            ['to_branch_id' => 4, 'from_branch_id' => 12, 'zone_id' => 1],
+//        ];
+        $bad_transit_time_info = TransitTime::saveTransitTime($transit_time_info);
+        return $this->response->sendSuccess(['bad_matrix_info' => $bad_transit_time_info]);
+    }
+
+    public function removeTransitTimeAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $transit_time_id = $this->request->getPost('transit_time_id');
+
+        if ($transit_time_id == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $transit_time = TransitTime::fetchById($transit_time_id);
+        if ($transit_time != false) {
+            if ($transit_time->delete()) {
+                return $this->response->sendSuccess();
+            }
+            return $this->response->sendError();
+        }
+        return $this->response->sendError(ResponseMessage::TRANSIT_TIME_NOT_EXIST);
+    }
+
 } 

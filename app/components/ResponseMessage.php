@@ -91,6 +91,9 @@ class ResponseMessage
 
     const ZONE_MATRIX_NOT_EXIST = 'Zone matrix mapping does not exist';
 
+    const TRANSIT_TIME_NOT_EXIST = 'Transit time mapping does not exist';
+
+    const SEAL_ID_IN_USE = "The seal ID you entered is already in use";
     const NO_PARCEL_TO_BAG = 'No parcel to bag';
     const NO_PARCEL_TO_REMOVE_FROM_BAG = 'No parcel to remove from bag';
     const PARCEL_NOT_BE_BAGGED = 'Parcel cannot be bagged';
