@@ -696,4 +696,34 @@ class Branch extends \Phalcon\Mvc\Model
         return $result;
     }
 
+
+    public static function fetchOneByStateId($state_id)
+    {
+        $obj = new Branch();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Branch.*', 'State.*'])
+            ->from('Branch')
+            ->innerJoin('State', 'Branch.state_id = State.id');
+
+        $bind = array();
+
+        $builder->where('Branch.state_id = :state_id:');
+        $bind['state_id'] = $state_id;
+
+        $builder->andWhere('Branch.status = :status:');
+        $bind['status'] = Status::ACTIVE;
+
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        $result = $data[0]->branch->getData();
+        $parent = Branch::getParentById($data[0]->branch->getId());
+        $result['parent'] = ($parent == null) ? null : $parent->getData();
+        $result['state'] = $data[0]->state->getData();
+
+        return $result;
+    }
 }

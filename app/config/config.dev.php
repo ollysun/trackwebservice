@@ -28,8 +28,8 @@ return new \Phalcon\Config([
 
     'params' => [
         'mailer' => [
-            'mandrill_username' => 'yemexx1@gmail.com',
-            'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
+            'mandrill_username' => 'ademuanthony',
+            'mandrill_password' => 'cDeMity@9078',
             'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
             'smtp_host' => 'smtp.mandrillapp.com',
             'smtp_port' => 587

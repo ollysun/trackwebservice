@@ -1,0 +1,1 @@
+ALTER TABLE `parcel` CHANGE `created_by` `created_by` INT(11) NULL;

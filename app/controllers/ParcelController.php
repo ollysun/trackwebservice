@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -42,6 +42,7 @@ class ParcelController extends ControllerBase
         $to_hub = (isset($payload['to_hub'])) ? $payload['to_hub'] : null;
         $is_corporate_lead = (isset($payload['is_corporate_lead'])) ? $payload['is_corporate_lead'] : null;
         $to_branch_id = (isset($payload['to_branch_id'])) ? $payload['to_branch_id'] : null;
+        $nearest_branch_id = $this->auth->isCooperateUser()? City::findFirst($sender_address['city_id'])->getBranchId(): null;
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -49,8 +50,9 @@ class ParcelController extends ControllerBase
 
         $auth_data = $this->auth->getData();
 
-        //Ensuring the officer is an EC or HUB officer or an Admin
-        if (!in_array($auth_data['branch']['branch_type'], [BranchType::HQ, BranchType::EC, BranchType::HUB])) {
+        //Ensuring the officer is an EC or HUB officer or an Admin or a cooperate officer
+        if (!in_array($auth_data['branch']['branch_type'], [BranchType::HQ, BranchType::EC, BranchType::HUB])
+            && !$this->auth->isCooperateUser()) {
             return $this->response->sendAccessDenied();
         }
 
@@ -62,13 +64,18 @@ class ParcelController extends ControllerBase
                     if ($to_branch == null) {
                         return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
                     }
-
                     $to_branch_id = $to_branch->getId();
                 } else if ($to_branch_id == null) {
                     return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS . ': Destination branch');
                 }
             } else {
-                $to_branch_id = $auth_data['branch']['id'];
+                if($this->auth->isCooperateUser()){
+                    //$sender_state_id = City::fetchOne($sender_address['city_id'], [])['state_id'];
+                    $to_branch_id = $nearest_branch_id;
+                }else{
+                    $to_branch_id = $auth_data['branch']['id'];
+                }
+
             }
         } else {
             $to_branch_id = Parcel::findFirstById($parcel['id'])->toArray()['to_branch_id'];
@@ -111,6 +118,7 @@ class ParcelController extends ControllerBase
         }
 
         $parcel_edit_history = new ParcelEditHistory();
+
         if (isset($parcel['id'])) {
             $parcel_obj = Parcel::findFirstById($parcel['id']);
             $parcel_edit_history->before_data = json_encode($parcel_obj->toArray());
@@ -124,7 +132,8 @@ class ParcelController extends ControllerBase
             $parcel_obj = new Parcel();
         }
 
-        $created_by = $this->auth->getPersonId();
+        //created by is an admin from the neareast branch for shipments created by cooperate
+        $created_by = !$this->auth->isCooperateUser()? $this->auth->getPersonId():Admin::findFirstByBranchId($nearest_branch_id)->getId();
 
         // Check if edit branch is related to created branch
         if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
@@ -137,7 +146,7 @@ class ParcelController extends ControllerBase
         }
 
         try {
-            //check that the waybill number is valid if any it is sent
+            //check that the waybill number is valid if any is sent
             if(!empty($parcel['waybill_number'])){
                 if(!Parcel::isWaybillNumber($parcel['waybill_number'])){
                     return $this->response->sendError('Invalid waybill number format');
@@ -146,8 +155,8 @@ class ParcelController extends ControllerBase
                     return $this->response->sendError('The waybill number you entered is already in use');
                 }
             }
-            $waybill_numbers = $parcel_obj->saveForm($auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
-                $bank_account, $parcel, $to_branch_id, $created_by);
+            $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+                $bank_account, $parcel, $to_branch_id, $created_by, $this->auth->isCooperateUser());
             if (isset($parcel['id'])) {
                 $parcel_edit_history->parcel_id = $parcel['id'];
                 $parcel_edit_history->after_data = json_encode($parcel_obj->toArray());
@@ -285,7 +294,7 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);

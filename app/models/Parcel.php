@@ -2016,17 +2016,24 @@ class Parcel extends \Phalcon\Mvc\Model
 
     public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
     {
+        /**
+         * @var Auth $auth
+         */
+        $auth = Di::getDefault()->getAuth();
+        if(isset($auth->getData()['company_id'])){
+            $fetch_with['with_company'] = 1;
+            $filter_by['company_id'] = $auth->getData()['company_id'];
+        }
+
         //filters
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
         $data = $builder->getQuery()->execute();
-        $auth = Di::getDefault()->getAuth();
-        /**
-         * @var Auth $auth
-         */
+
         $this_branch_id = $auth->getData()['branch']['id'];
+
         $result = [];
         foreach ($data as $item) {
             $parcel = [];
@@ -2087,7 +2094,7 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_parcel_comment'])) {
                     $parcel['return_reason'] = $item->parcelComment->toArray();
                 }
-                if (isset($fetch_with['with_edit_access'])) {
+                if (isset($fetch_with['with_edit_access']) && $this_branch_id) {
                     $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id'], $this_branch_id);
                 }
             }
@@ -2144,16 +2151,20 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * @param int $from_branch_id
-     * @param int $to_branch_id
      * @param array $sender
      * @param array $sender_address
      * @param array $receiver
      * @param array $receiver_address
      * @param array $bank_account
      * @param array $parcel_data
+     * @param int $to_branch_id
+     * @param $admin_id
+     * @param bool $created_by_customer
      * @return bool
+     * @throws Exception
      */
-    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account, $parcel_data, $to_branch_id, $admin_id)
+    public function saveForm($from_branch_id, $sender, $sender_address, $receiver, $receiver_address, $bank_account,
+                             $parcel_data, $to_branch_id, $admin_id, $created_by_customer = false)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -2294,6 +2305,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if ($this->waybill_number == null) {
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = 1;
+            if($created_by_customer){
+                $parcel_status = Status::PARCEL_CREATED_BY_CUSTOMER;
+                $is_visible = 0;
+            }
         } else {
             $parcel_status = $this->getStatus();
             $is_visible = $this->getIsVisible();
@@ -2393,8 +2408,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = $waybill_number != false;
         }
 
-        //saving the parcel history
-        if ($check) {
+        //saving the parcel history if it is not been created by a merchant
+        if ($check && !$created_by_customer) {
             $parcel_history = new ParcelHistory();
             $parcel_history->setTransaction($transaction);
             $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
@@ -2535,6 +2550,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @param HeldParcel $held_parcel_record
      * @param int $admin_id
      * @param int $status
+     * @param string $message
      * @return bool
      */
     public function checkIn($held_parcel_record, $admin_id, $status = Status::PARCEL_ARRIVAL, $message = ParcelHistory::MSG_FOR_ARRIVAL)

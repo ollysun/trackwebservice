@@ -245,4 +245,8 @@ class Auth
         }
         return false;
     }
+
+    public function isCooperateUser(){
+        return $this->getUserType() == Role::COMPANY_ADMIN || $this->getUserType() == Role::COMPANY_OFFICER;
+    }
 } 
