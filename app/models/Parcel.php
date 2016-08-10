@@ -2306,8 +2306,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = 1;
             if($created_by_customer){
-                $parcel_status = Status::PARCEL_CREATED_BY_CUSTOMER;
-                $is_visible = 0;
+                $parcel_status = Status::PARCEL_CREATED_BUT_WITH_CUSTOMER;
             }
         } else {
             $parcel_status = $this->getStatus();
@@ -3164,6 +3163,18 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     public static function getReportData($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
     {
+        /**
+         * @var Auth $auth
+         */
+        $auth = Di::getDefault()->getAuth();
+        if(isset($auth->getData()['company_id'])){
+            $fetch_with['with_company'] = 1;
+            $filter_by['company_id'] = $auth->getData()['company_id'];
+        }
+
+        if($auth->getUserType() == Role::SALES_AGENT){
+            $filter_by['created_by'] = $auth->getPersonId();
+        }
 
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];

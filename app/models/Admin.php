@@ -518,6 +518,31 @@ class Admin extends \Phalcon\Mvc\Model
         return $admin;
     }
 
+    public static function fetchOfficerForBranch($branch_id){
+        $obj = new Admin();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Admin.*', 'Role.*', 'Branch.*', 'UserAuth.*'])
+            ->from('Admin')
+            ->innerJoin('Role', 'Admin.role_id = Role.id')
+            ->innerJoin('Branch', 'Admin.branch_id = Branch.id')
+            ->innerJoin('UserAuth', 'UserAuth.id = Admin.user_auth_id');
+
+        $builder->where('Admin.branch_id = :branch_id: AND role_id = :role_id:', ['branch_id' => $branch_id, 'role_id' => Role::OFFICER]);
+
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0){
+            return false;
+        }
+        $admin = $data[0]->admin->getData();
+        $admin['email'] = $data[0]->userAuth->getEmail();
+        $admin['status'] = $data[0]->userAuth->getStatus();
+        $admin['branch'] = $data[0]->branch->toArray();
+        $admin['role'] = $data[0]->role->toArray();
+
+        return $admin;
+    }
+
     public static function getById($id, $role_id=null){
         $condition = 'id = :id:';
         $bind = array('id' => $id);

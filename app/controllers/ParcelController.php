@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::SALES_AGENT, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -128,12 +128,11 @@ class ParcelController extends ControllerBase
             {
                 return $this->response->sendError('The reference number you entered has been used');
             }
-
             $parcel_obj = new Parcel();
         }
 
-        //created by is an admin from the neareast branch for shipments created by cooperate
-        $created_by = !$this->auth->isCooperateUser()? $this->auth->getPersonId():Admin::findFirstByBranchId($nearest_branch_id)->getId();
+        //created by is an admin from the nearest branch for shipments created by cooperate
+        $created_by = !$this->auth->isCooperateUser()? $this->auth->getPersonId():Admin::fetchOfficerForBranch($nearest_branch_id)['id'];
 
         // Check if edit branch is related to created branch
         if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
@@ -155,6 +154,7 @@ class ParcelController extends ControllerBase
                     return $this->response->sendError('The waybill number you entered is already in use');
                 }
             }
+
             $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
                 $bank_account, $parcel, $to_branch_id, $created_by, $this->auth->isCooperateUser());
             if (isset($parcel['id'])) {
@@ -230,7 +230,7 @@ class ParcelController extends ControllerBase
 
     public function getOneAction()
     {
-        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
         $id = $this->request->getQuery('id');
         $waybill_number = $this->request->getQuery('waybill_number');
@@ -294,7 +294,7 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -588,6 +588,9 @@ class ParcelController extends ControllerBase
         $auth_data = $this->auth->getData();
         $current_branch_id = $auth_data['branch']['id'];
 
+
+
+        /** @author Ademu Anthony */
         foreach (Parcel::getByWaybillNumberList($waybill_number_arr, true) as $parcel) {
             if($parcel->getEntityType() == Parcel::ENTITY_TYPE_BAG){
                 $bagged_parcels = Parcel::getBag($parcel->getWaybillNumber())['parcels'];
@@ -597,6 +600,7 @@ class ParcelController extends ControllerBase
             }
         }
 
+        /** @author Ademu Anthony */
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
@@ -854,6 +858,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $route_id = $this->request->getPost('route_id');
+        //$enforce_action = $this->request->getPost('enforce_action');
         $admin_id = $this->auth->getPersonId();
 
 
@@ -884,11 +889,11 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
 
-                //ensure parcel is in arrival or for groundsman or parcel is for return and is in transit
-            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN]) && !($parcel->getForReturn() == '1' && $parcel->getStatus() == Status::PARCEL_IN_TRANSIT)) {
+                //ensure parcel is in arrival or for groundsman or parcel is for return and is in transit.. And not enforcing
+            } else if ((!in_array($parcel->getStatus(), [Status::PARCEL_ARRIVAL, Status::PARCEL_FOR_GROUNDSMAN]) && !($parcel->getForReturn() == '1' && $parcel->getStatus() == Status::PARCEL_IN_TRANSIT))) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FROM_ARRIVAL;
                 continue;
-            } else if ($parcel->getToBranchId() != $auth_data['branch']['id']) {
+            } else if (($parcel->getToBranchId() != $auth_data['branch']['id'])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             }
@@ -1047,6 +1052,7 @@ class ParcelController extends ControllerBase
         $receiver_email = $this->request->getPost('receiver_email', null, null);
         $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $admin_id = $this->auth->getPersonId();
+        $enforce_action = $this->request->getPost('enforce_action');
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -1068,8 +1074,15 @@ class ParcelController extends ControllerBase
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
                 continue;
             } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
-                continue;
+                if($enforce_action){
+                    if($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
+                        //force receive
+                    }
+                }else{
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                    continue;
+                }
+
             }
 
             $check = $parcel->changeStatus(Status::PARCEL_DELIVERED, $admin_id, ParcelHistory::MSG_DELIVERED, $auth_data['branch_id']);
