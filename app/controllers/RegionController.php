@@ -190,7 +190,7 @@ class RegionController extends ControllerBase
 
     public function getOneCityAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $city_id = $this->request->getQuery('city_id');
 

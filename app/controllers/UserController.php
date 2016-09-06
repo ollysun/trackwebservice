@@ -4,7 +4,7 @@
 class UserController extends ControllerBase {
 
     public function getByPhoneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::COMPANY_ADMIN, Role::OFFICER]);
 
         $phone = $this->request->getQuery('phone');
         $fetch_parcel = $this->request->getQuery('fetch_parcel');

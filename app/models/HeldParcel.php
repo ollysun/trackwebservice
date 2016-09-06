@@ -286,11 +286,19 @@ class HeldParcel extends \Phalcon\Mvc\Model
         return $check == false;
     }
 
-    public static function fetchUncleared($parcel_id, $held_by_id){
-        return HeldParcel::findFirst([
-            'parcel_id = :parcel_id: AND held_by_id = :held_by_id: AND status = :status:',
-            'bind' => ['parcel_id' => $parcel_id, 'held_by_id' => $held_by_id, 'status' => Status::PARCEL_UNCLEARED]
-        ]);
+    public static function fetchUncleared($parcel_id, $held_by_id = -1){
+        if($held_by_id > 0){
+            return HeldParcel::findFirst([
+                'parcel_id = :parcel_id: AND held_by_id = :held_by_id: AND status = :status:',
+                'bind' => ['parcel_id' => $parcel_id, 'held_by_id' => $held_by_id, 'status' => Status::PARCEL_UNCLEARED]
+            ]);
+        }else{
+            return HeldParcel::findFirst([
+                'parcel_id = :parcel_id: AND status = :status:',
+                'bind' => ['parcel_id' => $parcel_id, 'status' => Status::PARCEL_UNCLEARED]
+            ]);
+        }
+
     }
 
     /**

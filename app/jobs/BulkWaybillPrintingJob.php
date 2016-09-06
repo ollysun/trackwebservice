@@ -84,7 +84,7 @@ class BulkWaybillPrintingJob extends BaseJob
      */
     private function getWaybillHtml($waybill_number)
     {
-        $copies = ["Sender's Copy", "EC Copy", "Ack. Copy", "Recipient's Copy"];
+        $copies = ["Sender's Copy", "EC Copy"];//["Sender's Copy", "EC Copy", "Ack. Copy", "Recipient's Copy"];
         $waybill_html = '';
         $waybill_template = file_get_contents(dirname(__DIR__) . '/html/waybill_template.html');
         $parcel = Parcel::fetchOne($waybill_number, false, 'waybill_number');

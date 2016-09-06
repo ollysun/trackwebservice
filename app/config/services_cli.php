@@ -54,7 +54,7 @@ $di->set('pheanStalkServer', function () use ($config) {
 
 /**
  * Register s3 client as a lazy loaded service
- */
+
 $di->set('s3Client', function () use ($config) {
     return new S3Client(
         $config->aws->aws_key,
@@ -62,4 +62,15 @@ $di->set('s3Client', function () use ($config) {
         $config->aws->s3->region,
         null,
         $config->aws->s3->namespace);
+});
+ */
+
+$di->set('s3Client', function () use ($config) {
+    return new S3Client(
+        'AKIAJ57TMSWZMAIY3QOQ',//$config->aws->aws_key,
+        'cDOLlR6Fa2tOe/ZUK5/lOEUrp7UccXlhQf9Xbk30',//$config->aws->aws_secret,
+        'us-east-1',
+        'tnt-storage',//$config->aws->s3->bucket,
+        'staging'//$config->aws->s3->namespace
+    );
 });

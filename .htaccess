@@ -3,3 +3,8 @@
 	RewriteRule  ^$ public/    [L]
 	RewriteRule  (.*) public/$1 [L]
 </IfModule>
+
+SetEnv AWS_KEY AKIAJ57TMSWZMAIY3QOQ
+SetEnv AWS_SECRET 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
+SetEnv BEANSTALKD_HOST 127.0.0.1
+SetEnv BEANSTALKD_PORT 11300

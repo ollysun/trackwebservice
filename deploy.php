@@ -121,8 +121,12 @@ task('slack:after_run_migrations',  function () {
 
 function postToSlack($message)
 {
-    runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus\", \"username\": \"Tnt-Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
+   // runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus\", \"username\": \"Tnt-Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
+
+    runLocally('curl -s -S -X POST --data-urlencode payload="{\"channel\": \"#courier_plus\", \"username\": \"Tnt-Service Release Bot\", \"text\": \"' . $message . '\"}" https://hooks.slack.com/services/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');
 }
+
+//
 
 after('workers:start', 'slack:after_workers_start');
 before('workers:start', 'slack:before_workers_start');

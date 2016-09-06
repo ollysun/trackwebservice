@@ -18,6 +18,9 @@ class Util
      */
     public static function slackDebug($tag, $text)
     {
+        if($tag == 'Email Not Sent'){
+            return;
+        }
         //xoxb-55390846452-E4AmK4St8uQBvR21WDqtMhx9
         /** @var \Phalcon\Http\Request $request */
         $environment_name = Di::getDefault()->has('request') ? Di::getDefault()->getRequest()->getServer('SERVER_NAME') : 'CLI';
@@ -34,6 +37,13 @@ class Util
             ]];
         //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
         $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+
+        try{
+
+        }catch (Exception $exception){
+            //var_dump($exception);
+        }
+
     }
 
     /**

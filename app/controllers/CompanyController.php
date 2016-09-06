@@ -40,7 +40,7 @@ class CompanyController extends ControllerBase
             return $this->response->sendError($companyContactValidator->getMessages());
         }
 
-        $postData->primary_contact->password = $this->auth->generateToken(6);
+        $postData->primary_contact->password = '123456';// $this->auth->generateToken(6);
         //create contacts and link to company
         $primary_contact = $company->createUser(Role::COMPANY_ADMIN, (array)$postData->primary_contact);
         if (!$primary_contact) {

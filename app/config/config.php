@@ -3,10 +3,11 @@
 return new \Phalcon\Config([
     'database' => [
         'adapter' => 'Mysql',
-        'host' => 'localhost',
+        'host' => 'tnt-new.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
-        'password' => '',
-        'dbname' => 'trackplus',
+        'password' => 'thelcmof8is2',
+        'dbname' => 'tnt_live',
+        //'dbname' => 'trackplus',
         'charset' => 'utf8',
     ],
     'application' => [

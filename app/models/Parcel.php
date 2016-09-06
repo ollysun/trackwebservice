@@ -1806,8 +1806,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['manifest_id'] = $filter_by['manifest_id'];
         }
 
-        $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
 
+        $bind['is_visible'] = (isset($filter_by['is_visible'])) ? $filter_by['is_visible'] : 1;
         $initial_cond = 'Parcel.is_visible = :is_visible:';
         if (isset($filter_by['show_both_parent_and_splits'])) {
             $initial_cond = 'Parcel.is_visible != :is_visible: AND Parcel.entity_type != ' . self::ENTITY_TYPE_BAG;
@@ -1816,7 +1816,9 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['show_parents'])) {
             $initial_cond = '(Parcel.is_visible = :is_visible: OR Parcel.entity_type = ' . self::ENTITY_TYPE_PARENT . ') AND Parcel.entity_type != ' . self::ENTITY_TYPE_SUB;
         }
+
         $where[] = $initial_cond;
+
 
         if (isset($filter_by['parent_id'])) {
             $where[] = 'LinkedParcel.parent_id = :parent_id:';
@@ -2025,10 +2027,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $filter_by['company_id'] = $auth->getData()['company_id'];
         }
 
+
         //filters
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
         $data = $builder->getQuery()->execute();
 
@@ -2354,6 +2358,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
 
             $this->setOrderNumber($parcel_data['order_number']);
+            if(isset($parcel_data['is_bulk_shipment'])){
+                $this->setIsBulkShipment($parcel_data['is_bulk_shipment']);
+            }
             if(isset($parcel_data['pickup_date'])){
                 $this->setPickupDate($parcel_data['pickup_date']);
             }
@@ -2605,13 +2612,165 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function getByWaybillNumberList($waybill_number_arr, $make_assoc = false)
+    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null)
     {
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel')
             ->inWhere('waybill_number', $waybill_number_arr);
+
+
+        if($fetch_with){
+            $columns = ['Parcel.*'];
+            if (isset($fetch_with['with_to_branch'])) {
+                $columns[] = 'ToBranch.*';
+                $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
+                $columns[] = 'ToBranchState.*';
+                $builder->innerJoin('ToBranchState', 'ToBranchState.id = ToBranch.state_id', 'ToBranchState');
+            }
+            if (isset($fetch_with['with_from_branch'])) {
+                $columns[] = 'FromBranch.*';
+                $builder->innerJoin('FromBranch', 'FromBranch.id = Parcel.from_branch_id', 'FromBranch');
+                $columns[] = 'FromBranchState.*';
+                $builder->innerJoin('FromBranchState', 'FromBranchState.id = FromBranch.state_id', 'FromBranchState');
+            }
+            if (isset($fetch_with['with_sender_address'])) {
+                $columns[] = 'SenderAddress.*';
+                $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+                $columns[] = 'SenderAddressState.*';
+                $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
+                $columns[] = 'SenderAddressCity.*';
+                $builder->leftJoin('SenderAddressCity', 'SenderAddressCity.id = SenderAddress.city_id', 'SenderAddressCity');
+            }
+            if (isset($fetch_with['with_receiver_address'])) {
+                $columns[] = 'ReceiverAddress.*';
+                $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+                $columns[] = 'ReceiverAddressState.*';
+                $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
+                $columns[] = 'ReceiverAddressCity.*';
+                $builder->leftJoin('ReceiverAddressCity', 'ReceiverAddressCity.id = ReceiverAddress.city_id', 'ReceiverAddressCity');
+            }
+            if (isset($fetch_with['with_holder'])) {
+                $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id AND HeldParcel.status = ' . Status::PARCEL_UNCLEARED);
+                $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+                $columns[] = 'Admin.*';
+            }
+            if (isset($fetch_with['with_bank_account'])) {
+                $columns[] = 'BankAccount.*';
+                $builder->leftJoin('BankAccount', 'BankAccount.id = Parcel.bank_account_id', 'BankAccount');
+                $columns[] = 'Bank.*';
+                $builder->leftJoin('Bank', 'Bank.id = BankAccount.bank_id');
+            }
+            if (isset($fetch_with['with_created_branch'])) {
+                $columns[] = 'CreatedBranch.*';
+                $builder->leftJoin('CreatedBranch', 'CreatedBranch.id = Parcel.created_branch_id', 'CreatedBranch');
+                $columns[] = 'CreatedBranchState.*';
+                $builder->leftJoin('CreatedBranchState', 'CreatedBranchState.id = CreatedBranch.state_id', 'CreatedBranchState');
+            }
+            if (isset($fetch_with['with_created_by'])) {
+                $columns[] = 'CreatedBy.*';
+                $builder->innerJoin('CreatedBy', 'CreatedBy.id = Parcel.created_by', 'CreatedBy');
+            }
+            if (isset($fetch_with['with_route'])) {
+                $columns[] = 'Routes.*';
+                $builder->leftJoin('Route', 'Routes.id = Parcel.route_id', 'Routes');
+            }
+
+            if (isset($fetch_with['with_sender'])) {
+                $columns[] = 'Sender.*';
+                $builder->leftJoin('Sender', 'Sender.id = Parcel.sender_id', 'Sender');
+            }
+            if (isset($fetch_with['with_receiver'])) {
+                $columns[] = 'Receiver.*';
+                $builder->leftJoin('Receiver', 'Receiver.id = Parcel.receiver_id', 'Receiver');
+            }
+            if (isset($fetch_with['with_delivery_receipt'])) {
+                $columns[] = 'DeliveryReceipt.*';
+                $builder->leftJoin('DeliveryReceipt', 'DeliveryReceipt.waybill_number = Parcel.waybill_number', 'DeliveryReceipt');
+                $builder->groupBy('Parcel.waybill_number');
+            }
+
+            if (isset($fetch_with['with_payment_type'])) {
+                $columns[] = 'PaymentType.*';
+                $builder->innerJoin('PaymentType', 'PaymentType.id = Parcel.payment_type', 'PaymentType');
+            }
+
+            $builder->columns($columns);
+        }
+
+
         $data = $builder->getQuery()->execute();
+
+        if($fetch_with){
+            $result = [];
+            foreach ($data as $item) {
+                $parcel = [];
+                if (!property_exists($item, 'parcel')) {
+                    $parcel = $item->getData();
+                } else {
+                    $parcel = $item->parcel->getData();
+                    if (isset($fetch_with['with_holder'])) {
+                        $parcel['holder'] = $item->admin->getData();
+                    }
+                    if (isset($fetch_with['with_to_branch'])) {
+                        $parcel['to_branch'] = $item->toBranch->getData();
+                        $parcel['to_branch']['state'] = $item->toBranchState->getData();
+                    }
+                    if (isset($fetch_with['with_from_branch'])) {
+                        $parcel['from_branch'] = $item->fromBranch->getData();
+                        $parcel['from_branch']['state'] = $item->fromBranchState->getData();
+                    }
+                    if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
+                    if (isset($fetch_with['with_sender_address'])) {
+                        $parcel['sender_address'] = $item->senderAddress->getData();
+                        $parcel['sender_address']['state'] = $item->senderAddressState->getData();
+                        $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
+                    }
+                    if (isset($fetch_with['with_receiver'])) $parcel['receiver'] = $item->receiver->getData();
+                    if (isset($fetch_with['with_receiver_address'])) {
+                        $parcel['receiver_address'] = $item->receiverAddress->getData();
+                        $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
+                        $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
+                    }
+                    if (isset($fetch_with['with_bank_account'])) {
+                        $parcel['bank_account'] = $item->bankAccount->getData();
+                        $parcel['bank_account']['bank'] = $item->bank->getData();
+                    }
+                    if (isset($fetch_with['with_created_branch'])) {
+                        $parcel['created_branch'] = $item->createdBranch->getData();
+                        $parcel['created_branch']['state'] = $item->createdBranchState->getData();
+                    }
+                    if (isset($fetch_with['with_route'])) {
+                        $parcel['route'] = $item->Routes->getData();
+                    }
+                    if (isset($fetch_with['with_created_by'])) {
+                        $parcel['created_by'] = $item->createdBy->getData();
+                    }
+                    if (isset($fetch_with['with_delivery_receipt'])) {
+                        $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
+                    }
+                    if (isset($fetch_with['with_payment_type'])) {
+                        $parcel['payment_type'] = $item->paymentType->toArray();
+                    }
+                    if (isset($fetch_with['with_company'])) {
+                        $parcel['company'] = $item->company->toArray();
+                        $parcel['billing_plan'] = $item->billingPlan->toArray();
+                    }
+                    if (isset($fetch_with['with_invoice_parcel'])) {
+                        $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
+                    }
+                    if (isset($fetch_with['with_parcel_comment'])) {
+                        $parcel['return_reason'] = $item->parcelComment->toArray();
+                    }
+                    if (isset($fetch_with['with_edit_access']) && $this_branch_id) {
+                        $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id'], $this_branch_id);
+                    }
+                }
+                $result[] = $parcel;
+            }
+            return $result;
+        }
+
 
         if ($make_assoc) {
             $assoc_data = [];
@@ -3170,10 +3329,6 @@ class Parcel extends \Phalcon\Mvc\Model
         if(isset($auth->getData()['company_id'])){
             $fetch_with['with_company'] = 1;
             $filter_by['company_id'] = $auth->getData()['company_id'];
-        }
-
-        if($auth->getUserType() == Role::SALES_AGENT){
-            $filter_by['created_by'] = $auth->getPersonId();
         }
 
         $filter_cond = self::filterConditions($filter_by);

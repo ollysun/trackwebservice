@@ -10,7 +10,8 @@ use Phalcon\Mvc\Dispatcher as MvcDispatcher;
  */
 class Auth
 {
-    const TOKEN_SUFFIX = '.token';
+    //const TOKEN_SUFFIX = '.token';
+    const TOKEN_SUFFIX = '.toks';
 
     const STATUS_OK = 1;
     const STATUS_ACCESS_DENIED = 2;

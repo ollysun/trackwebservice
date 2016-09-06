@@ -26,6 +26,7 @@ class BulkShipmentCreationValidation extends BaseValidation
             'message' => 'data must be an array of shipments'
         ]));
 
+
         $this->add('company_id', new Model([
             'model' => Company::class
         ]));

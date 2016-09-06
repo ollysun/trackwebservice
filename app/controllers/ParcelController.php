@@ -269,8 +269,8 @@ class ParcelController extends ControllerBase
             'sender_id', 'sender_address_id', 'receiver_id', 'receiver_address_id', 'status', 'min_weight', 'max_weight',
             'min_amount_due', 'max_amount_due', 'cash_on_delivery', 'min_delivery_amount', 'max_delivery_amount', 'delivery_type',
             'payment_type', 'shipping_type', 'min_cash_amount', 'max_cash_amount', 'min_pos_amount', 'max_pos_amount',
-            'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number',
-            'waybill_number_arr', 'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
+            'start_created_date', 'end_created_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr',
+            'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
             'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed'
         ];
@@ -295,6 +295,7 @@ class ParcelController extends ControllerBase
     public function getAllAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -326,11 +327,17 @@ class ParcelController extends ControllerBase
 
         $filter_by = $this->getFilterParams();
 
-        if (!is_null($send_all)) {
-            $filter_by['send_all'] = true;
+        $fetch_with = [];
+
+
+        /**
+         * @author Ademu Anthony
+         * if the report is for delivered parcels,  then fetch delivery receipt and delivered by
+         */
+        if(isset($filter_by['status']) && $filter_by['status'] == Status::PARCEL_DELIVERED){
+            $with_delivery_receipt = true;
         }
 
-        $fetch_with = [];
         if (!is_null($with_to_branch)) {
             $fetch_with['with_to_branch'] = true;
         }
@@ -384,6 +391,16 @@ class ParcelController extends ControllerBase
             $fetch_with['with_edit_access'] = true;
         }
 
+        ///*
+        if($this->request->get('for_direct_delivery') == 'true'){
+            unset($filter_by['status']);
+            $waybill_numbers = Parcel::sanitizeWaybillNumbers($filter_by['waybill_number_arr']);
+            return $this->response->sendSuccess(
+                Parcel::getByWaybillNumberList($waybill_numbers, false, $fetch_with)
+            );
+        }
+        //*/
+
         if (!is_null($report) && $report == 1) {
             $parcels = Parcel::getReportData($offset, $count, $filter_by, $fetch_with, $order_by);
         } else {
@@ -398,6 +415,38 @@ class ParcelController extends ControllerBase
             ];
         } else {
             $result = $parcels;
+        }
+
+        return $this->response->sendSuccess($result);
+    }
+
+    public function getDeliverablePackagesAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+
+        $from_branch_id = $this->request->getQuery("from_branch_id");
+        $status = Status::PARCEL_ARRIVAL;
+
+        $filter_by = [];
+        $filter_by['to_branch_id'] = $from_branch_id;
+        $filter_by['status'] = $status;
+        $filter_by['send_all'] = true;
+
+        $fetch_with = [];
+        $fetch_with['with_receiver_address'] = true;
+
+        $parcels = Parcel::fetchAll(0, 20, $filter_by, $fetch_with);
+
+        $result = [];
+
+        /** @var Branch $current_branch */
+        $current_branch = Branch::fetchOne(['branch_id' => $from_branch_id]);
+
+        $state_code = $current_branch['state']['code'];
+
+        for($i = 0; $i < count($parcels); $i++){
+            if($parcels[$i]['receiver_address']['state']['code'] == $state_code){
+                $result[] = $parcels[$i];
+            }
         }
 
         return $this->response->sendSuccess($result);
@@ -584,10 +633,10 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
         $current_branch_id = $auth_data['branch']['id'];
-
 
 
         /** @author Ademu Anthony */
@@ -626,9 +675,22 @@ class ParcelController extends ControllerBase
                     $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                     continue;
                 }
-            }else if ($parcel->getToBranchId() == $current_branch_id && $parcel->getStatus() != Status::MANIFEST_IN_TRANSIT) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
-                continue;
+            }else{
+                if ($parcel->getToBranchId() == $current_branch_id && $parcel->getStatus() != Status::MANIFEST_IN_TRANSIT) {
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
+                    continue;
+                }else{
+                    /** @Author Ademu Anthony If created but with customer*/
+                    if($parcel->getStatus() == Status::PARCEL_CREATED_BUT_WITH_CUSTOMER){
+                        $parcel->setCreatedBranchId($current_branch_id);
+                        $parcel->setCreatedBy($this->auth->getPersonId());
+                        $parcel->setIsVisible(1);
+                        $parcel->setStatus(Status::PARCEL_FOR_SWEEPER);
+                        $parcel->setFromBranchId($current_branch_id);
+                        $parcel->save();
+                        continue;
+                    }
+                }
             }
 
             //checking if the parcel is held by the correct person
@@ -646,10 +708,16 @@ class ParcelController extends ControllerBase
                 //if parcel is in transit then it was not received into the first defaulter's hub. Receive it
                 if($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
                     //get the manifest for the parcel
+                    $last_held_record = HeldParcel::fetchUncleared($parcel->getId());
 
+                    if($last_held_record){
+                        if(!($parcel->checkIn($last_held_record, $this->auth->getPersonId()))){
+                            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT.' In Previous Hub';
+                            continue;
+                        }
+                    }
                 }
 
-                $will_receive_to_first_hub = $parcel->getStatus() == Status::PARCEL_IN_TRANSIT;
 
                 $lastHistoryToBranchId = $lastHistory['to_branch_id'];
                 if(empty($previous_branch)){
@@ -708,13 +776,274 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            if($will_receive_to_first_hub){
-                $this->moveToArrivalAction();
-            }
         }
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
+
+    private function moveToArrival($waybill_number, $force_receive, $held_by_id){
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        $auth_data = $this->auth->getData();
+        $current_branch_id = $auth_data['branch']['id'];
+        $bad_parcel = [];
+
+        if ($parcel === false) {
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+            return $bad_parcel;
+        }
+
+        //if the parcel have arrived and its currently in this branch
+        if ($parcel->getStatus() == Status::PARCEL_ARRIVAL && $parcel->getToBranchId() == $current_branch_id) {
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
+            return $bad_parcel;
+        }
+
+        //do not check if force receiving
+        if($force_receive == false){
+            if ($parcel->getStatus() != Status::PARCEL_IN_TRANSIT) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_TRANSIT;
+                return $bad_parcel;
+            } else if ($parcel->getToBranchId() != $current_branch_id) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
+                return $bad_parcel;
+            }
+        }else if ($parcel->getToBranchId() == $current_branch_id && $parcel->getStatus() != Status::MANIFEST_IN_TRANSIT) {
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_ARRIVAL;
+            return $bad_parcel;
+        }
+
+        //checking if the parcel is held by the correct person
+        $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+
+        if ($held_parcel_record == false) {
+            if(!$force_receive){
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_HELD_BY_WRONG_OFFICIAL;
+                return $bad_parcel;
+            }
+
+
+            //get last manifest for this parcel
+            $lastHistory = ParcelHistory::getLastHistoryForParcel($parcel->getId());
+            //if parcel is in transit then it was not received into the first defaulter's hub. Receive it
+            if($parcel->getStatus() == Status::PARCEL_IN_TRANSIT){
+                //get the manifest for the parcel
+                $last_held_record = HeldParcel::fetchUncleared($parcel->getId());
+
+                if($last_held_record){
+                    if(!($parcel->checkIn($last_held_record, $this->auth->getPersonId()))){
+                        $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT.' In Previous Hub';
+                        return $bad_parcel;
+                    }
+                }
+            }
+
+
+            $lastHistoryToBranchId = $lastHistory['to_branch_id'];
+            if(empty($previous_branch)){
+                $previous_branch = $lastHistoryToBranchId;
+            }
+
+            /**
+             *
+             */
+
+            //move the parcel to the hand on the current held by
+            $parcel->setToBranchId($previous_branch); // -- we can check here to see if the previous branch is the only defaulter
+            $changed = $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $current_branch_id, $auth_data['id'], ParcelHistory::MSG_FOR_SWEEPER);
+
+            if($changed){
+                //-- create a manifest for the parcel
+                $manifested = Manifest::createOne([$parcel], '', $previous_branch,
+                    $current_branch_id, $auth_data['id'], $held_by_id, Manifest::TYPE_SWEEP, true);
+
+                if($manifested){
+                    $held_parcel_record = HeldParcel::fetchUncleared($parcel->getId(), $held_by_id);
+                    //record defaulter
+                    if($lastHistoryToBranchId != $previous_branch){
+                        $shipmentExceptionDate =  array(
+                            'defaulter_branch_id' => $lastHistoryToBranchId,
+                            'detector_branch_id' => $current_branch_id,
+                            'action_description' => ShipmentException::ACTION_DESCRIPTION_NOT_SENT,
+                            'held_by_id' => $held_by_id,
+                            'admin_id' => $auth_data['id'],
+                            'creation_date' => date('Y-m-d H:i:s'),
+                            'modification_date' => date('Y-m-d H:i:s'),
+                            'parcel_id' => $parcel->getId()
+                        );
+                        ShipmentException::createOne($shipmentExceptionDate);
+                    }
+                    $shipmentExceptionDate =  array(
+                        'defaulter_branch_id' => $previous_branch,
+                        'detector_branch_id' => $current_branch_id,
+                        'action_description' => ShipmentException::ACTION_DESCRIPTION_NOT_SENT,
+                        'held_by_id' => $held_by_id,
+                        'admin_id' => $auth_data['id'],
+                        'creation_date' => date('Y-m-d H:i:s'),
+                        'modification_date' => date('Y-m-d H:i:s'),
+                        'parcel_id' => $parcel->getId()
+                    );
+
+                    ShipmentException::createOne($shipmentExceptionDate);
+                }
+            }
+
+        }
+
+        $check = $parcel->checkIn($held_parcel_record, $this->auth->getPersonId());
+        if (!$check) {
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CLEARED;
+        }
+        return $bad_parcel;
+    }
+
+    public function createDirectManifestAction(){
+        $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $to_branch_id = $this->request->getPost('to_branch_id');
+        $label = $this->request->getPost('label');
+        $admin_id = $this->request->getPost('admin_id');
+        $held_by = $this->request->getPost('held_by_id');
+
+        if(in_array(null, [$waybill_numbers, $to_branch_id, $admin_id, $held_by])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        //sort the parcels
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
+
+        $soft_result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
+
+        if(count($soft_result['bad_parcels'])){
+            foreach ($soft_result as $key => $value) {
+                unset($waybill_number_arr[$key]);
+            }
+        }
+
+
+        $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
+        $admin_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
+        $label = $this->request->getPost('label', null, '');
+
+        $other_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $held_by_id : $admin_id;
+        $other = Admin::getById($other_id);
+
+        if ($other != false) {
+            //check if officer is valid
+            if (in_array($this->auth->getUserType(), [Role::DISPATCHER]) && !in_array($other->getRoleId(), [Role::SWEEPER, Role::OFFICER, Role::GROUNDSMAN])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+            }
+
+            //check if sweeper or dispatcher is valid
+            if (!in_array($other->getRoleId(), [Role::SWEEPER, Role::DISPATCHER]) && in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+
+        } else {
+            //if currently logged in user is a dispatcher or sweeper the officer is invalid
+            if (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) {
+                return $this->response->sendError(ResponseMessage::INVALID_OFFICER);
+
+                //if currently logged in user is an officer or groundsman the sweeper or dispatcher is invalid
+            } else if (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) {
+                return $this->response->sendError(ResponseMessage::INVALID_SWEEPER_OR_DISPATCHER);
+            }
+        }
+
+        $auth_data = $this->auth->getData();
+        $user_branch_id = $auth_data['branch_id']; // logged on user's branch
+
+        $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
+        $bad_parcel = [];
+
+        $from_branch_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $user_branch_id : $other->getBranchId();
+
+        /**
+         * @var Parcel $parcel
+         */
+        foreach ($waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                continue;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            if ($parcel->getStatus() == Status::PARCEL_IN_TRANSIT) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_IN_TRANSIT;
+            } else if ($parcel->getFromBranchId() != $from_branch_id) {
+                //if the from branch is not this branch, then the shipment is yet to be received. So receive it first
+
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICER_BRANCH;
+            } else if ($parcel->getStatus() != Status::PARCEL_FOR_SWEEPER) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_SWEEPING;
+            } else if ($parcel->getToBranchId() != $to_branch_id) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_HEADING_TO_DESTINATION;
+            } else if (!HeldParcel::clearedForMovement($parcel->getId())) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_CLEARED_FOR_TRANSIT;
+            }
+
+            //Removing bad parcel before adding to manifest
+            if (isset($bad_parcel[$waybill_number])) {
+                unset($parcel_arr[$waybill_number]);
+            }
+
+            //if it is a bag, get content and add then to the parcel arr
+            if($parcel->getEntityType() == Parcel::ENTITY_TYPE_BAG){
+                $bagged_parcels = Parcel::getBag($parcel->getWaybillNumber())['parcels'];
+                $waybill_number2s = [];
+                foreach ($bagged_parcels as $item) {
+                    $waybill_number2s[] =  $item['waybill_number'];
+                }
+                $parcel_arr = array_merge($parcel_arr, Parcel::getByWaybillNumberList($waybill_number2s, true));
+            }
+
+        }
+
+
+        $check = Manifest::createOne($parcel_arr, $label, $from_branch_id, $to_branch_id, $admin_id, $held_by_id, Manifest::TYPE_SWEEP);
+        if ($check == false) {
+            return $this->response->sendError();
+        }
+
+
+        /** @var Manifest $manifest */
+        $manifest = isset($check['manifest']) ? $check['manifest'] : null;
+        $bad_parcels = array_merge($check['bad_parcels'], $bad_parcel);
+
+        //send out notification for parcels in transit that are not bad
+        $admin = Admin::findFirst($admin_id);
+
+        if ($admin && !is_null($manifest)) {
+            /** @var  $originBranch  Branch */
+            $originBranch = Branch::findFirst($from_branch_id);
+            /** @var  $destinationBranch Branch */
+            $destinationBranch = Branch::findFirst($to_branch_id);
+            EmailMessage::send(
+                EmailMessage::PARCEL_IN_TRANSIT,
+                [
+                    'fullname' => ucwords($admin->getFullname()),
+                    'manifest_label' => $manifest->getLabel(),
+                    'origin' => $originBranch->getName(),
+                    'destination' => $destinationBranch->getName()
+                ],
+                'Courier Plus',
+                $admin->getEmail()
+            );
+        }
+
+        //set response data
+        $check['manifest_id'] = null;
+        if (!is_null($manifest)) {
+            $check['manifest'] = $manifest->getData();
+            $check['manifest_id'] = $manifest->getId();
+        }
+        $check['bad_parcels'] = $bad_parcels;
+        return $this->response->sendSuccess($check);
+
+
+
+
+    }
+
     /**
      * Move package to in transit
      * @author Adeyemi Olaoye <yemi@cottacush.com>
@@ -978,13 +1307,15 @@ class ParcelController extends ControllerBase
             }
 
             $parcel = $parcel_arr[$waybill_number];
+            //set both from and to beranch to the current branch
+            $parcel->setFromBranchId($parcel->getToBranchId());
 
             if ($parcel->getStatus() == Status::PARCEL_BEING_DELIVERED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_BEING_DELIVERED;
             } else if ($parcel->getStatus() != Status::PARCEL_FOR_DELIVERY) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
+                //$bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
             } else if ($parcel->getToBranchId() != $user_branch_id) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
+                //$bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_IN_OFFICE;
             }
 
             //Removing bad parcel before adding to manifest
@@ -1052,6 +1383,7 @@ class ParcelController extends ControllerBase
         $receiver_email = $this->request->getPost('receiver_email', null, null);
         $date_and_time_of_delivery = $this->request->getPost('date_and_time_of_delivery', null, Util::getCurrentDateTime());
         $admin_id = $this->auth->getPersonId();
+        /** @author Ademu Anthony */
         $enforce_action = $this->request->getPost('enforce_action');
 
         if (in_array(null, [$waybill_numbers, $admin_id])) {
@@ -1121,11 +1453,13 @@ class ParcelController extends ControllerBase
             //create delivery receipt if receiver name and phone number was supplied
             if (isset($receiver_name)) {
                 if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
-                    $data = ['waybill_number' => $waybill_number,
+                    $data = [
+                        'waybill_number' => $waybill_number,
                         'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL,
                         'delivered_by' => $this->auth->getPersonId(),
                         'name' => $receiver_name,
-                        'delivered_at' => $date_and_time_of_delivery];
+                        'delivered_at' => $date_and_time_of_delivery
+                    ];
                 }
                 if (isset($receiver_email)) {
                     $data['email'] = $receiver_email;
@@ -1151,7 +1485,7 @@ class ParcelController extends ControllerBase
      */
     public function cancelAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN]);
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::COMPANY_ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $admin_id = $this->auth->getPersonId();
@@ -1179,7 +1513,14 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
+            if($this->auth->isCooperateUser()){
+                $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $parcel->getCreatedBy(), ParcelHistory::MSG_CANCELLED, $parcel->getCreatedBranchId(), true);
+            }else{
+                $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
+            }
+
+
+
             if (!$check) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
@@ -1217,10 +1558,13 @@ class ParcelController extends ControllerBase
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
+
+
     public function historyAction()
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+        //$for_scanner = $this->request->getQuery('for_scanner', null, DEFAULT_COUNT);
 
         $filter_params = [
             'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number', 'order_number'
@@ -1251,6 +1595,15 @@ class ParcelController extends ControllerBase
         }
 
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
+
+        $parcelHistory_for_scanner = [];
+        /*
+         * if($for_scanner == 1){
+            foreach ($parcelHistory as $parcelHistory) {
+                $parcelHistory_for_scanner[] = $parcelHistory;
+            }
+        }
+        */
         if (!empty($parcelHistory)) {
             return $this->response->sendSuccess($parcelHistory);
         }
@@ -1412,6 +1765,7 @@ class ParcelController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::DISPATCHER, Role::SWEEPER]);
 
         $receiver_name = $this->request->getPost('receiver_name', null);
+        $enforce_action = $this->request->getPost('enforce_action');
 
         if(empty($receiver_name)){
             return $this->response->sendError("Receiver's Name Missing");
@@ -1447,7 +1801,7 @@ class ParcelController extends ControllerBase
             } else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
                 continue;
-            } else if (!Parcel::isBranchesRelated($parcel->getCreatedBranchId(), $admin->getBranchId())) {
+            } else if ($enforce_action != '1' && !Parcel::isBranchesRelated($parcel->getCreatedBranchId(), $admin->getBranchId())) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             }
@@ -1530,6 +1884,7 @@ class ParcelController extends ControllerBase
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $held_by_id = $this->request->getPost('held_by_id');
+        $enforce_action = $this->request->getPost('enforce_action', 0);
         $admin_id = $this->auth->getPersonId();
 
         if (in_array(null, [$waybill_numbers, $admin_id, $held_by_id])) {
@@ -1553,7 +1908,7 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
-            if ($parcel->getToBranchId() != $admin->getBranchId()) {
+            if ($parcel->getToBranchId() != $admin->getBranchId() && $enforce_action != 1) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_WRONG_DESTINATION;
                 continue;
             } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
@@ -1775,6 +2130,7 @@ class ParcelController extends ControllerBase
     public function createBulkShipmentTaskAction()
     {
         $postData = $this->request->getJsonRawBody();
+
         $validation = new BulkShipmentCreationValidation($postData);
 
         if (!$validation->validate()) {

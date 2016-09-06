@@ -3,10 +3,10 @@
 return new \Phalcon\Config(array(
     'database' => array(
         'adapter'     => 'Mysql',
-        'host'        => getenv(TNT_DB_HOST),
-        'username'    => getenv(TNT_DB_USERNAME),
-        'password'    => getenv(TNT_DB_PASSWORD),
-        'dbname'      => getenv(TNT_DBNAME),
+        'host'        => 'localhost',// getenv(TNT_DB_HOST),
+        'username'    => 'root',//getenv(TNT_DB_USERNAME),
+        'password'    => '123@qwe',//getenv(TNT_DB_PASSWORD),
+        'dbname'      => 'tnt_live',//getenv(TNT_DBNAME),
         'charset'     => 'utf8',
     ),
     'application' => array(
