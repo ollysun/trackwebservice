@@ -1,8 +1,8 @@
 <?php
-
 return new \Phalcon\Config([
     'database' => [
         'adapter' => 'Mysql',
+        //'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
         'password' => 'thelcmof8is2',

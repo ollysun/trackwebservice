@@ -2612,6 +2612,13 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
+    public static function getByReferenceNumber($reference_number){
+        return Parcel::findFirst([
+            'reference_number = :reference_number:',
+            'bind' => ['reference_number' => trim(strtoupper($reference_number))]
+        ]);
+    }
+
     public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null)
     {
         $obj = new Parcel();
@@ -3184,7 +3191,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $parcel = self::getByWaybillNumber($waybill_number);
 
         if ($parcel === false) {
-            throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+            $parcel = self::getByReferenceNumber($waybill_number);
+            if($parcel === false){
+                throw new Exception(ResponseMessage::PARCEL_NOT_EXISTING);
+            }
         }
 
         if ($parcel->getStatus() == Status::PARCEL_FOR_SWEEPER) {

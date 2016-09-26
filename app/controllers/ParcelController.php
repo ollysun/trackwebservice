@@ -44,6 +44,9 @@ class ParcelController extends ControllerBase
         $to_branch_id = (isset($payload['to_branch_id'])) ? $payload['to_branch_id'] : null;
         $nearest_branch_id = $this->auth->isCooperateUser()? City::findFirst($sender_address['city_id'])->getBranchId(): null;
 
+        /** @Author if this is a cooperate user and the receiver is not in their address list */
+
+
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
@@ -150,7 +153,7 @@ class ParcelController extends ControllerBase
                 if(!Parcel::isWaybillNumber($parcel['waybill_number'])){
                     return $this->response->sendError('Invalid waybill number format');
                 }
-                if(Parcel::getByWaybillNumber($parcel['waybill_number'])){
+                if(!isset($parcel['id']) && Parcel::getByWaybillNumber($parcel['waybill_number'])){
                     return $this->response->sendError('The waybill number you entered is already in use');
                 }
             }
@@ -202,7 +205,8 @@ class ParcelController extends ControllerBase
                                 'phone' => (isset($sender['phone'])) ? $sender['phone'] : '',
                                 'year' => date('Y')
                             ],
-                            'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']');
+                            'Courier Plus [' . strtoupper($auth_data['branch']['name']) . ']'
+                        );
                     }
                 }
 
@@ -436,11 +440,13 @@ class ParcelController extends ControllerBase
 
         $parcels = Parcel::fetchAll(0, 20, $filter_by, $fetch_with);
 
-        $result = [];
-
         /** @var Branch $current_branch */
         $current_branch = Branch::fetchOne(['branch_id' => $from_branch_id]);
+        //get parcels for branches in the same state
+        $related_branches = Branch::fetchAll(0, 0, ['state_id' => $current_branch['state_id'],
+            'branch_type'=> $current_branch['branch_type']], [], false);
 
+        $result = [];
         $state_code = $current_branch['state']['code'];
 
         for($i = 0; $i < count($parcels); $i++){
@@ -448,6 +454,24 @@ class ParcelController extends ControllerBase
                 $result[] = $parcels[$i];
             }
         }
+
+        if(is_array($related_branches)){
+            foreach($related_branches as $branch){
+                $filter_by['to_branch_id'] = $branch['id'];
+                $parcels = Parcel::fetchAll(0, 20, $filter_by, $fetch_with);
+                $current_branch = Branch::fetchOne(['branch_id' => $branch['id']]);
+                $state_code = $current_branch['state']['code'];
+
+                for($i = 0; $i < count($parcels); $i++){
+                    if($parcels[$i]['receiver_address']['state']['code'] == $state_code){
+                        $result[] = $parcels[$i];
+                    }
+                }
+            }
+        }
+
+
+
 
         return $this->response->sendSuccess($result);
     }
@@ -653,11 +677,16 @@ class ParcelController extends ControllerBase
         $bad_parcel = [];
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
-            $will_receive_to_first_hub = false;
+            /*$will_receive_to_first_hub = false;*/
 
             if ($parcel === false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                if(!Parcel::isWaybillNumber($waybill_number)){
+                    $parcel = Parcel::getByReferenceNumber($waybill_number);
+                    if($parcel === false){
+                        $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                        continue;
+                    }
+                }
             }
 
             //if the parcel have arrived and its currently in this branch
@@ -684,7 +713,7 @@ class ParcelController extends ControllerBase
                     if($parcel->getStatus() == Status::PARCEL_CREATED_BUT_WITH_CUSTOMER){
                         $parcel->setCreatedBranchId($current_branch_id);
                         $parcel->setCreatedBy($this->auth->getPersonId());
-                        $parcel->setIsVisible(1);
+                        $parcel->setIsVisible();
                         $parcel->setStatus(Status::PARCEL_FOR_SWEEPER);
                         $parcel->setFromBranchId($current_branch_id);
                         $parcel->save();
@@ -788,8 +817,13 @@ class ParcelController extends ControllerBase
         $bad_parcel = [];
 
         if ($parcel === false) {
-            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-            return $bad_parcel;
+            if(!Parcel::isWaybillNumber($waybill_number)){
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    return $bad_parcel;
+                }
+            }
         }
 
         //if the parcel have arrived and its currently in this branch
@@ -961,8 +995,12 @@ class ParcelController extends ControllerBase
          */
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel_arr[$waybill_number] = $parcel;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -1039,9 +1077,6 @@ class ParcelController extends ControllerBase
         $check['bad_parcels'] = $bad_parcels;
         return $this->response->sendSuccess($check);
 
-
-
-
     }
 
     /**
@@ -1104,8 +1139,12 @@ class ParcelController extends ControllerBase
          */
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel_arr[$waybill_number] = $parcel;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -1212,8 +1251,16 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                if(!Parcel::isWaybillNumber($waybill_number)){
+                    $parcel = Parcel::getByReferenceNumber($waybill_number);
+                    if($parcel === false){
+                        $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                        continue;
+                    }
+                }else{
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
             } else if ($parcel->getStatus() == Status::PARCEL_FOR_DELIVERY) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY;
                 continue;
@@ -1260,6 +1307,7 @@ class ParcelController extends ControllerBase
         $held_by_id = (in_array($this->auth->getUserType(), [Role::SWEEPER, Role::DISPATCHER])) ? $this->auth->getPersonId() : $this->request->getPost('held_by_id');
         $admin_id = (in_array($this->auth->getUserType(), [Role::OFFICER, Role::GROUNDSMAN])) ? $this->auth->getPersonId() : $this->request->getPost('admin_id');
         $label = $this->request->getPost('label', null, '');
+        $originBranch_id = $this->request->getPost('origin_branch_id');
 
         if (in_array(null, [$waybill_numbers, $held_by_id, $admin_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -1292,7 +1340,8 @@ class ParcelController extends ControllerBase
 
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
-        $user_branch_id = $auth_data['branch_id']; // logged on user's branch
+
+        $user_branch_id = $originBranch_id? $originBranch_id: $auth_data['branch_id']; // logged on user's branch
 
         $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
         $bad_parcel = [];
@@ -1302,8 +1351,16 @@ class ParcelController extends ControllerBase
          */
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                if(!Parcel::isWaybillNumber($waybill_number)){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel_arr[$waybill_number] = $parcel;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -1398,8 +1455,11 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
             }
 
             if ($parcel->getStatus() == Status::PARCEL_DELIVERED) {
@@ -1452,9 +1512,9 @@ class ParcelController extends ControllerBase
 
             //create delivery receipt if receiver name and phone number was supplied
             if (isset($receiver_name)) {
-                if (!DeliveryReceipt::doesReceiptExist($waybill_number, DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
+                if (!DeliveryReceipt::doesReceiptExist($parcel->getWaybillNumber(), DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL)) {
                     $data = [
-                        'waybill_number' => $waybill_number,
+                        'waybill_number' => $parcel->getWaybillNumber(),
                         'receipt_type' => DeliveryReceipt::RECEIPT_TYPE_RECEIVER_DETAIL,
                         'delivered_by' => $this->auth->getPersonId(),
                         'name' => $receiver_name,
@@ -1476,6 +1536,238 @@ class ParcelController extends ControllerBase
 
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
+
+
+
+
+    public function undoReverseDeliveryToReturn1Action(){
+        die('deleted');
+        set_time_limit (1200);
+        ini_set('memory_limit', '-1');
+        $offset = $this->request->getQuery('offset');
+        $count = $this->request->getQuery('count');
+
+        // MySQL host
+        $mysql_host = DB_HOST;
+        // MySQL username
+        $mysql_username = DB_USERNAME;
+        // MySQL password
+        $mysql_password = DB_PASSWORD;
+        // Database name
+        $mysql_database = DB_DATABASE;
+
+        $options = array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ, PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING);
+        $db = new PDO('mysql' . ':host=' . $mysql_host . ';dbname=' . $mysql_database,
+            $mysql_username, $mysql_password, $options);
+
+
+        //$sql = "SELECT * FROM parcel WHERE `status` = 23 AND reference_number = '' LIMIT $offset, $count";
+        $sql = "SELECT * FROM parcel WHERE `status` = 23 AND reference_number = ''";
+
+        $query = $db->prepare($sql);
+        $query->execute();
+        $result = $query->fetchAll();
+
+        $affected_waybill_numbers = [];
+        $correct_waybill_numbers = [];
+        foreach($result as $item){
+            //get delivery receipt
+            $sql = "SELECT COUNT(*) AS no FROM delivery_receipts WHERE waybill_number = '".$item->waybill_number."'";
+
+            $query = $db->prepare($sql);
+            $query->execute();
+            $rcpt_result = $query->fetchAll()[0];
+            $query->closeCursor();
+
+            if($rcpt_result->no > 0){
+                //if there is a receipt continue
+                $correct_waybill_numbers[$item->waybill_number] = $item->status;
+                continue;
+            }
+
+            $sql = "SELECT * FROM parcel_history WHERE parcel_id = $item->id ORDER BY id DESC LIMIT 1";
+
+            $query = $db->prepare($sql);
+            $query->execute();
+            $last_history = $query->fetchAll()[0];
+
+            $affected_waybill_numbers[$item->waybill_number] = $last_history->status;
+
+        }
+
+        $sql = '';
+        foreach ($affected_waybill_numbers as $waybill_number => $status) {
+            $sql .= "UPDATE parcel SET status = ".$status." WHERE waybill_number = '". $waybill_number. "'; ";
+        }
+
+        echo $sql;
+
+    }
+
+
+    public function undoReverseDeliveryToReturnAction(){
+        die('deleted');
+        set_time_limit (1200);
+        ini_set('memory_limit', '-1');
+        $offset = $this->request->getQuery('offset');
+        $count = $this->request->getQuery('count');
+
+        // MySQL host
+        $mysql_host = DB_HOST;
+        // MySQL username
+        $mysql_username = DB_USERNAME;
+        // MySQL password
+        $mysql_password = DB_PASSWORD;
+        // Database name
+        $mysql_database = DB_DATABASE;
+
+        $options = array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ, PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING);
+        $db = new PDO('mysql' . ':host=' . $mysql_host . ';dbname=' . $mysql_database,
+            $mysql_username, $mysql_password, $options);
+
+
+
+        //$sql = "SELECT * FROM parcel WHERE `status` = 23 AND reference_number = ''";
+
+        $sql = "SELECT  DISTINCT parcel.id, parcel.waybill_number, parcel.status, parcel.entity_type
+                    FROM parcel LEFT JOIN delivery_receipts ON parcel.waybill_number = delivery_receipts.waybill_number
+                    WHERE parcel.status = 23 AND parcel.reference_number = '' AND  delivery_receipts.id IS NULL";
+
+        $sql = "SELECT parcel.id, parcel.waybill_number, parcel.status, parcel.entity_type FROM parcel
+                  WHERE `status` = 23 AND reference_number = ''";
+
+        $status_sql = "SELECT parcel_history.status  FROM parcel_history WHERE parcel_history.parcel_id = parcel.id ORDER BY parcel_history.id DESC LIMIT 1";
+        $update_sql = "UPDATE parcel SET `status` = ($status_sql) WHERE parcel.waybill_number IN ('2N20600699044', '2N20600699045', '2N20600699046', '2N20600699047') AND `status` = 23 AND reference_number = ''";
+
+        die($update_sql);
+
+        $query = $db->prepare($sql);
+        $query->execute();
+        $result = $query->fetchAll();
+
+
+        $sql = '';
+        foreach($result as $item){
+            if($item->entity_type == 3){
+                $parent_sql = "SELECT linked_parcel.parent_id FROM linked_parcel WHERE linked_parcel.child_id = '".$item->id."' ORDER BY id DESC LIMIT 1";
+
+                $status_sql = "SELECT parcel_history.status  FROM parcel_history WHERE parcel_history.parcel_id = ($parent_sql) ORDER BY id DESC LIMIT 1";
+            }else{
+                $status_sql = "SELECT parcel_history.status  FROM parcel_history WHERE parcel_id = $item->id ORDER BY id DESC LIMIT 1";
+            }
+
+
+            $sql .= "UPDATE parcel SET status = (".$status_sql.") WHERE waybill_number = '". $item->waybill_number. "'; ";
+
+            //echo "UPDATE parcel SET status =  (".$status_sql.") WHERE waybill_number = '". $item->waybill_number. "'; ";
+
+            continue;
+            $query = $db->prepare($sql);
+            $query->execute();
+            $last_history = $query->fetchAll()[0];
+
+            $affected_waybill_numbers[$item->waybill_number] = $last_history->status;
+
+        }
+
+exit();
+        echo $sql;die();
+
+
+
+    }
+
+    public function reverseDeliveryToReturnAction(){
+        die('deleted');
+        set_time_limit (120);
+        $offset = $this->request->getQuery('offset');
+        $count = $this->request->getQuery('count');
+        //$paginate = $this->request->getQuery('paginate');
+
+
+        // MySQL host
+        $mysql_host = 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com';
+        // MySQL username
+        $mysql_username = 'root';
+        // MySQL password
+        $mysql_password = 'thelcmof8is2';
+        // Database name
+        $mysql_database = 'tnt';
+
+        $options = array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ, PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING);
+        $db = new PDO('mysql' . ':host=' . $mysql_host . ';dbname=' . $mysql_database,
+            $mysql_username, $mysql_password, $options);
+
+
+        $sql = "SELECT * FROM parcel WHERE `status` = 23 AND reference_number = ''";
+
+
+
+
+
+
+
+
+
+
+
+
+        $sql = "SELECT * FROM confliting_parcel LIMIT $offset, $count";
+
+        $query = $db->prepare($sql);
+        $query->execute();
+        $result = $query->fetchAll();
+        $query->closeCursor();
+
+        $waybill_numbers = [];
+        foreach ($result as $item) {
+            $waybill_numbers[] = "'$item->waybill_number'";
+        }
+
+        $waybill_numbers = implode(',', $waybill_numbers);
+        $sql = "UPDATE parcel SET Status = 23 WHERE waybill_number in ($waybill_numbers) OR reference_number IN ($waybill_numbers)";
+
+        dd($sql);
+
+        $query = $db->prepare($sql);
+        $result = $query->execute();
+
+        return $result? $this->response->sendSuccess('Good'): $this->response->sendError('Bad');
+
+
+        //$conflicting_parcels = ConflitingParcel::fetchAll($offset, $count, $paginate);
+        //dd($conflicting_parcels);
+
+        foreach ($result as $conflicting_parcel) {
+            $parcel = Parcel::getByWaybillNumber($conflicting_parcel->waybill_number);
+            $parcel->setStatus(Status::PARCEL_RETURNED);
+            $parcel->save();
+        }
+
+        return $this->response->sendSuccess('Good');
+
+        $bad_parcel = [];
+        /** @var Parcel $parcel */
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if(!$parcel){
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+        }elseif ($parcel->getStatus() !== Status::PARCEL_DELIVERED) {
+            $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_DELIVERED;
+        }else{
+            $history = ParcelHistory::findFirst(['status' => Status::PARCEL_DELIVERED, 'parcel_id' => $parcel->getId() ]);
+            if($history){
+                $history->delete();
+            }
+            $receipt = DeliveryReceipt::findFirst(['parcel_id' => $parcel->getId()]);
+            if($receipt){
+                $receipt->delete();
+            }
+            $parcel->setStatus(Status::PARCEL_BEING_DELIVERED);
+            $parcel->save();
+        }
+        return $bad_parcel;
+    }
+
 
     /**
      * Marks a shipment as CANCELLED
@@ -1501,6 +1793,13 @@ class ParcelController extends ControllerBase
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
+                if(!Parcel::isWaybillNumber($waybill_number)){
+                    $parcel = Parcel::getByReferenceNumber($waybill_number);
+                    if($parcel === false){
+                        $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                        continue;
+                    }
+                }
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;
             }
@@ -1564,7 +1863,8 @@ class ParcelController extends ControllerBase
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
-        //$for_scanner = $this->request->getQuery('for_scanner', null, DEFAULT_COUNT);
+        $for_scanner = $this->request->getQuery('for_scanner', null, -1);
+        $waybill_number = $this->request->getQuery('waybill_number', null, null);
 
         $filter_params = [
             'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number', 'order_number'
@@ -1587,6 +1887,7 @@ class ParcelController extends ControllerBase
             }
         }
 
+
         $fetch_with = [];
         foreach ($fetch_params as $param) {
             if (!is_null($$param)) {
@@ -1597,13 +1898,15 @@ class ParcelController extends ControllerBase
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
 
         $parcelHistory_for_scanner = [];
-        /*
-         * if($for_scanner == 1){
-            foreach ($parcelHistory as $parcelHistory) {
-                $parcelHistory_for_scanner[] = $parcelHistory;
+
+         if($for_scanner == 1 && !Parcel::isWaybillNumber($waybill_number) ){
+            foreach ($parcelHistory as $history) {
+                $parcelHistory_for_scanner[$waybill_number] = $history;
+                break;
             }
+             $parcelHistory = $parcelHistory_for_scanner;
         }
-        */
+
         if (!empty($parcelHistory)) {
             return $this->response->sendSuccess($parcelHistory);
         }
@@ -1636,7 +1939,10 @@ class ParcelController extends ControllerBase
         //check if parcel with waybill_number exists
         $parcel = Parcel::findFirstByWaybillNumber($waybill_number);
         if (!$parcel) {
-            return $this->response->sendError('Parcel with waybill number does not exist');
+            $parcel = Parcel::getByReferenceNumber($waybill_number);
+            if($parcel === false){
+                return $this->response->sendError('Parcel with waybill number does not exist');
+            }
         }
 
         //check if delivering user exists
@@ -1717,8 +2023,12 @@ class ParcelController extends ControllerBase
          */
         foreach ($waybill_number_arr as $waybill_number) {
             if (!isset($parcel_arr[$waybill_number])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
-                continue;
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+               $parcel_arr[$waybill_number] = $parcel;
             }
 
             $parcel = $parcel_arr[$waybill_number];
@@ -1787,6 +2097,7 @@ class ParcelController extends ControllerBase
         $admin = Admin::findFirst($admin_id);
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
+
             if ($parcel === false) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;

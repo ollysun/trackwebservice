@@ -367,7 +367,7 @@ class Audit extends \Phalcon\Mvc\Model
      */
     public static function fetchAll($offset, $count, $filter_by, $paginate = false)
     {
-        $obj = new City();
+        $obj = new Audit();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Audit')
             ->orderBy('id DESC');
