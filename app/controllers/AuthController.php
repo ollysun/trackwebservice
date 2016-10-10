@@ -151,6 +151,7 @@ class AuthController extends ControllerBase
         return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
     }
 
+
     /**
      * Validates password reset token
      * @author Adegoke Obasa <goke@cottacush.com>

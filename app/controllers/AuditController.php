@@ -21,6 +21,7 @@ class AuditController extends ControllerBase
 
         $username = $this->request->getQuery('username');
         $service = $this->request->getQuery('service');
+        $action = $this->request->getQuery('action');
         $ip_address = $this->request->getQuery('ip_address');
         $start_time = $this->request->getQuery('start_time');
         $end_time = $this->request->getQuery('end_time');
@@ -32,6 +33,9 @@ class AuditController extends ControllerBase
         if (!is_null($service)) {
             $filter_by['service'] = $service;
         }
+        if (!is_null($action)) {
+            $filter_by['action'] = $action;
+        }
         if (!is_null($ip_address)) {
             $filter_by['ip_address'] = $ip_address;
         }
@@ -42,8 +46,11 @@ class AuditController extends ControllerBase
             $filter_by['end_time'] = $end_time;
         }
 
+        $audit_trail = Audit::fetchAll($offset, $count, $filter_by, $paginate);
+        $total_count = Audit::logCount($filter_by);
 
-        return $this->response->sendSuccess(Audit::fetchAll($offset, $count, $filter_by, $paginate));
+
+        return $this->response->sendSuccess(['audit_trails' => $audit_trail, 'total_count' => $total_count]);
     }
 
 }

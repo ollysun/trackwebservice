@@ -134,6 +134,40 @@ class CompanyController extends ControllerBase
         return $this->response->sendError(ResponseMessage::UNABLE_TO_CHANGE_COMPANY_STATUS);
     }
 
+
+    /**
+     * Reset password action
+     * @author Ademu Anthony <ademuanthony@gmail.com>
+     */
+    public function resetCompanyAdminPasswordAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $company_id = $this->request->getPost('company_id');
+        $password = $this->request->getPost('password');
+
+        if (in_array(null, [$company_id, $password])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $company = Company::findFirst($company_id);
+
+        $users = $company->getUserAuth();
+        $successful_emails = [];
+        foreach ($users as $admin) {
+            /** @var UserAuth */
+            $admin->changePassword($password);
+
+            if ($admin->save()) {
+                $successful_emails[] = $admin->getEmail();
+            } else {
+                return $this->response->sendError(ResponseMessage::UNABLE_TO_RESET_PASSWORD);
+            }
+        }
+
+        $message = "Password reset for ".implode(', ', $successful_emails);
+        return $this->response->sendSuccess($message);
+
+    }
+
     /**
      * This fetches a paginated list of company using filter params. More info can be hydrated using certain params starting with 'with'.
      * @author Rahman Shitu <rahman@cottacush.com>

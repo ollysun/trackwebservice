@@ -9,6 +9,8 @@
 class Audit extends \Phalcon\Mvc\Model
 {
 
+    public static $excludes = ['/audit/getAllAudit', '/auth/login'];
+
     /**
      *
      * @var integer
@@ -381,15 +383,19 @@ class Audit extends \Phalcon\Mvc\Model
         $columns = ['Audit.*'];
 
 
-        if (isset($filter_by['username'])) {
+        if (!empty($filter_by['username'])) {
             $where[] = 'Audit.username = :username:';
             $bind['username'] = $filter_by['username'];
         }
-        if (isset($filter_by['service'])) {
+        if (!empty($filter_by['service'])) {
             $where[] = 'Audit.service = :service:';
             $bind['service'] = $filter_by['service'];
         }
-        if (isset($filter_by['ip_address'])) {
+        if (!empty($filter_by['action'])) {
+            $where[] = 'Audit.action_name = :action:';
+            $bind['action'] = $filter_by['action'];
+        }
+        if (!empty($filter_by['ip_address'])) {
             $where[] = 'Audit.ip_address = :ip_address:';
             $bind['ip_address'] = $filter_by['ip_address'];
         }
@@ -398,20 +404,9 @@ class Audit extends \Phalcon\Mvc\Model
             $bind['start_time'] = $filter_by['start_time'];
         }
         if (isset($filter_by['end_time'])) {
-            $where[] = 'Audit.end_time < :end_time:';
+            $where[] = 'Audit.start_time < :end_time:';
             $bind['end_time'] = $filter_by['end_time'];
         }
-        /*
-          if (isset($filter_by['start_time'])) {
-             $where[] = 'Audit.start_time = :start_time:';
-             $bind['start_time'] = $filter_by['start_time'];
-         }
-         if (isset($filter_by['end_time'])) {
-             $where[] = 'Audit.end_time = :end_time:';
-             $bind['end_time'] = $filter_by['end_time'];
-         }
-         */
-
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
@@ -431,4 +426,47 @@ class Audit extends \Phalcon\Mvc\Model
         return $result;
     }
 
+
+    public static function logCount($filter_by)
+    {
+        $obj = new Audit();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS log_count')
+            ->from('Audit');
+
+        //filters
+        $where = [];
+        $bind = [];
+        if (!empty($filter_by['username'])) {
+            $where[] = 'Audit.username = :username:';
+            $bind['username'] = $filter_by['username'];
+        }
+        if (!empty($filter_by['service'])) {
+            $where[] = 'Audit.service = :service:';
+            $bind['service'] = $filter_by['service'];
+        }
+        if (!empty($filter_by['ip_address'])) {
+            $where[] = 'Audit.ip_address = :ip_address:';
+            $bind['ip_address'] = $filter_by['ip_address'];
+        }
+
+        if (isset($filter_by['start_time'])) {
+             $where[] = 'Audit.start_time > :start_time:';
+             $bind['start_time'] = $filter_by['start_time'];
+         }
+         if (isset($filter_by['end_time'])) {
+             $where[] = 'Audit.end_time < :end_time:';
+             $bind['end_time'] = $filter_by['end_time'];
+         }
+
+
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->log_count);
+    }
 }

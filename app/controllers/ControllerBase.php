@@ -20,6 +20,11 @@ class ControllerBase extends Controller
     private $start_time;
 
     /**
+     * @var String
+     */
+    private $data;
+
+    /**
      * @var datetime
      */
     private $end_time;
@@ -28,15 +33,20 @@ class ControllerBase extends Controller
      * @param Phalcon\Mvc\Dispatcher $dispatcher
      */
     public function beforeExecuteRoute($dispatcher){
+        $request = $this->request->get();
         $this->start_time = date("Y-m-d H:i:s");
-
     }
 
     /**
      * @param Phalcon\Mvc\Dispatcher $dispatcher
      */
     public function afterExecuteRoute($dispatcher){
-
+        $data = $this->request->get();
+        if(isset($data['_url'])){
+            if(in_array($data['_url'], Audit::$excludes)){
+                return;
+            }
+        }
         $audit = new Audit();
         $audit->setUsername($this->auth->getEmail());
         $audit->setService($dispatcher->getControllerName());
@@ -46,9 +56,9 @@ class ControllerBase extends Controller
         $audit->setIpAddress($this->request->getClientAddress());
         $audit->setClient($this->request->getUserAgent());
         $audit->setBrowser($this->request->getUserAgent());
-        $data = $this->request->getPost();
         if(isset($data['password'])) unset($data['password']);
         if(isset($data['identifier'])) unset($data['identifier']);
+        if(isset($data['_url'])) unset($data['_url']);
         $audit->setParameters(json_encode($data));
 
         $audit->save();
