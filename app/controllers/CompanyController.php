@@ -153,7 +153,7 @@ class CompanyController extends ControllerBase
         $users = $company->getUserAuth();
         $successful_emails = [];
         foreach ($users as $admin) {
-            /** @var UserAuth */
+            /** @var UserAuth $admin */
             $admin->changePassword($password);
 
             if ($admin->save()) {

@@ -130,6 +130,34 @@ class AuthController extends ControllerBase
      */
     public function resetPasswordAction()
     {
+        if($this->request->getPost('company_id') != null){
+            $company_id = $this->request->getPost('company_id');
+            $password = $this->request->getPost('password');
+
+            if (in_array(null, [$company_id, $password])) {
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+            }
+
+            $company = Company::findFirst($company_id);
+
+            $users = $company->getUserAuth();
+            $successful_emails = [];
+            foreach ($users as $admin) {
+                /** @var UserAuth */
+                $admin->changePassword($password);
+
+                if ($admin->save()) {
+                    $successful_emails[] = $admin->getEmail();
+                } else {
+                    return $this->response->sendError(ResponseMessage::UNABLE_TO_RESET_PASSWORD);
+                }
+            }
+
+            $message = "Password reset for ".implode(', ', $successful_emails);
+            return $this->response->sendSuccess($message);
+
+        }
+
         $userAuthId = $this->request->getPost('user_auth_id');
         $password = $this->request->getPost('password');
 
@@ -151,6 +179,38 @@ class AuthController extends ControllerBase
         return $this->response->sendError(ResponseMessage::ACCOUNT_DOES_NOT_EXIST);
     }
 
+    /**
+     * Reset password action
+     * @author Ademu Anthony <ademuanthony@gmail.com>
+     */
+    public function resetCompanyAdminPasswordAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $company_id = $this->request->getPost('company_id');
+        $password = $this->request->getPost('password');
+
+        if (in_array(null, [$company_id, $password])) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $company = Company::findFirst($company_id);
+
+        $users = $company->getUserAuth();
+        $successful_emails = [];
+        foreach ($users as $admin) {
+            /** @var UserAuth */
+            $admin->changePassword($password);
+
+            if ($admin->save()) {
+                $successful_emails[] = $admin->getEmail();
+            } else {
+                return $this->response->sendError(ResponseMessage::UNABLE_TO_RESET_PASSWORD);
+            }
+        }
+
+        $message = "Password reset for ".implode(', ', $successful_emails);
+        return $this->response->sendSuccess($message);
+
+    }
 
     /**
      * Validates password reset token
