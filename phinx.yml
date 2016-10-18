@@ -7,10 +7,10 @@ environments:
 
     development:
         adapter: mysql
-        host: trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com
-        name: tnt
+        host: localhost
+        name: trackplus
         user: root
-        pass: 'thelcmof8is2'
+        pass: ''
         port: 3306
         charset: utf8
 

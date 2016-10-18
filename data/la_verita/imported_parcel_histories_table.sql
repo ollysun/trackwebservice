@@ -1,0 +1,1 @@
+CREATE TABLE `trackplus`.`imported_parcel_histories` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `imported_parcel_id` INT(11) NOT NULL , `status` VARCHAR(265) NOT NULL , `date` DATETIME NOT NULL , `text` VARCHAR(500) NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;

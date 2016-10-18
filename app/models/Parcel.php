@@ -1935,6 +1935,14 @@ class Parcel extends \Phalcon\Mvc\Model
             $where[] = 'Parcel.created_date <= :end_created_date:';
             $bind['end_created_date'] = $filter_by['end_created_date'];
         }
+        if (isset($filter_by['start_pickup_date'])) {
+            $where[] = 'Parcel.pickup_date >= :start_pickup_date:';
+            $bind['start_pickup_date'] = $filter_by['start_pickup_date'];
+        }
+        if (isset($filter_by['end_pickup_date'])) {
+            $where[] = 'Parcel.pickup_date <= :end_pickup_date:';
+            $bind['end_pickup_date'] = $filter_by['end_pickup_date'];
+        }
         if (isset($filter_by['start_modified_date'])) {
             $where[] = 'Parcel.modified_date >= :start_modified_date:';
             $bind['start_modified_date'] = $filter_by['start_modified_date'];
@@ -2306,7 +2314,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //finally saving the parcel
-        if ($this->waybill_number == null) {
+        if (!isset($parcel_data['id'])) {
             $parcel_status = ($to_branch_id == $from_branch_id) ? Status::PARCEL_FOR_DELIVERY : Status::PARCEL_FOR_SWEEPER;
             $is_visible = 1;
             if($created_by_customer){
@@ -2363,6 +2371,8 @@ class Parcel extends \Phalcon\Mvc\Model
             }
             if(isset($parcel_data['pickup_date'])){
                 $this->setPickupDate($parcel_data['pickup_date']);
+            }else{
+                $this->setPickupDate(date('Y-m-d H:i:s'));
             }
             $this->setNotificationStatus($parcel_data['notification_status']);
             $check = $this->save();

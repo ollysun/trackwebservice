@@ -7,7 +7,7 @@ class AddPickupDateParcel extends AbstractMigration
     public function up()
     {
         $this->table('parcel')
-            ->addColumn('pickup_date', 'date', ['null' => true, 'default' => null, 'after' => 'order_number'])
+            ->addColumn('pickup_date', 'datetime', ['null' => true, 'default' => null, 'after' => 'order_number'])
             ->update();
     }
 
