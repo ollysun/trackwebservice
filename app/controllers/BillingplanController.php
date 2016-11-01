@@ -13,6 +13,7 @@ class BillingplanController extends ControllerBase
         $name = $this->request->getPost('name');
         $type = $this->request->getPost('type');
         $company_id = $this->request->getPost('company_id'); //optional, null if the billing is a default plan
+        $discount = $this->request->getPost('discount', null, 0);
 
         if (in_array(null, [$name, $type])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -28,12 +29,30 @@ class BillingplanController extends ControllerBase
         }
 
         $plan = new BillingPlan();
-        $plan->initData($name, $type, $company_id);
+        $plan->initData($name, $type, $company_id, $discount);
         if ($plan->save()) {
             //TODO Check status of cloning
             BillingPlan::cloneDefaultBilling($plan->getId());
             return $this->response->sendSuccess(['id' => $plan->getId()]);
         }
+        return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
+    }
+
+    public function updatediscountAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $plan_id = $this->request->getPost('plan_id');
+        $discount = $this->request->getPost('discount');
+
+        if(in_array(null, [$plan_id, $discount])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $plan = BillingPlan::fetchById($plan_id);
+        $plan->setDiscount($discount);
+        if($plan->save()){
+            return $this->response->sendSuccess();
+        }
+
         return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
     }
 
@@ -227,12 +246,14 @@ class BillingplanController extends ControllerBase
         $companyId = $this->request->getPost('company_id');
         $baseBillingPlanId = $this->request->getPost('base_billing_plan_id');
         $billingPlanName = $this->request->getPost('billing_plan_name');
+        $discount = $this->request->getPost('discount');
+
         $billingPlan = BillingPlan::fetchByName($billingPlanName, $companyId);
         if ($billingPlan != false) {
             return $this->response->sendError(ResponseMessage::ANOTHER_HAS_SAME_NAME);
         }
         $newBillingPlan = new BillingPlan();
-        $newBillingPlan->initData($billingPlanName, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING, $companyId);
+        $newBillingPlan->initData($billingPlanName, BillingPlan::TYPE_WEIGHT_AND_ON_FORWARDING, $companyId, $discount);
         if (!$newBillingPlan->save()) {
             return $this->response->sendError(ResponseMessage::BILLING_PLAN_NOT_SAVED);
         }

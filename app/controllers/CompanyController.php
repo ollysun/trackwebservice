@@ -30,6 +30,10 @@ class CompanyController extends ControllerBase
         }
 
         $this->db->begin();
+        //validate bm
+        if(!BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
+            return $this->response->sendError($postData->company->business_manager_staff_id . ' is not a business manager');
+        }
         /** @var Company $company */
         if (!($company = Company::add((array)$postData->company))) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY);
@@ -95,6 +99,11 @@ class CompanyController extends ControllerBase
         $companyRequestValidator = new CompanyUpdateRequestValidation($postData, 'company');
         if (!$companyRequestValidator->validate()) {
             return $this->response->sendError($companyRequestValidator->getMessages());
+        }
+
+        //validate bm
+        if(!BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
+            return $this->response->sendError($postData->company->business_manager_staff_id . ' is not a business manager');
         }
 
         if(Company::edit((array) $postData->company)) {

@@ -32,6 +32,11 @@ class BillingPlan extends \Phalcon\Mvc\Model
     protected $name;
 
     /**
+     * @var double
+     */
+    protected $discount;
+
+    /**
      *
      * @var string
      */
@@ -98,6 +103,12 @@ class BillingPlan extends \Phalcon\Mvc\Model
     {
         $this->name = Text::removeExtraSpaces(strtolower($name));
 
+        return $this;
+    }
+
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
         return $this;
     }
 
@@ -180,6 +191,11 @@ class BillingPlan extends \Phalcon\Mvc\Model
         return $this->name;
     }
 
+    public function getDiscount()
+    {
+        return $this->discount;
+    }
+
     /**
      * Returns the value of field created_date
      *
@@ -245,6 +261,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
             'company_id' => 'company_id',
             'type' => 'type',
             'name' => 'name',
+            'discount' => 'discount',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
             'status' => 'status'
@@ -258,6 +275,7 @@ class BillingPlan extends \Phalcon\Mvc\Model
             'company_id' => $this->getCompanyId(),
             'type' => $this->getType(),
             'name' => $this->getName(),
+            'discount' => $this->getDiscount(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus()
@@ -268,13 +286,15 @@ class BillingPlan extends \Phalcon\Mvc\Model
      * @author Abdul-Rahman Shitu <rahman@cottacush.com>
      * @param $name
      * @param $type
+     * @param $discount
      * @param null $company_id - null if it is a default plan
      */
-    public function initData($name, $type, $company_id = null)
+    public function initData($name, $type, $company_id = null, $discount = 0)
     {
         $this->setName($name);
         $this->setType($type);
         $this->setCompanyId($company_id);
+        $this->setDiscount($discount);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -286,11 +306,13 @@ class BillingPlan extends \Phalcon\Mvc\Model
      * @author Abdul-Rahman Shitu <rahman@cottacush.com>
      * @param $name
      * @param $status
+     * @param $discount
      */
-    public function edit($name, $status)
+    public function edit($name, $status, $discount = 0)
     {
         $this->setName($name);
         $this->setStatus($status);
+        $this->setDiscount($discount);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 

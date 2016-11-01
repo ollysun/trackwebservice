@@ -85,6 +85,11 @@ class Company extends EagerModel
     protected $relations_officer_id;
 
     /**
+     * @var string
+     */
+    protected $business_manager_staff_id;
+
+    /**
      *
      * @var string
      */
@@ -264,6 +269,13 @@ class Company extends EagerModel
         return $this;
     }
 
+    public function setBusinessManagerStaffId($business_manager_staff_id)
+    {
+        $this->business_manager_staff_id = $business_manager_staff_id;
+
+        return $this;
+    }
+
     /**
      * Method to set the value of field created_date
      *
@@ -424,6 +436,14 @@ class Company extends EagerModel
     }
 
     /**
+     * @return string
+     */
+    public function getBusinessManagerStaffId()
+    {
+        return $this->business_manager_staff_id;
+    }
+
+    /**
      * Returns the value of field created_date
      *
      * @return string
@@ -522,6 +542,7 @@ class Company extends EagerModel
             'primary_contact_id' => 'primary_contact_id',
             'sec_contact_id' => 'sec_contact_id',
             'relations_officer_id' => 'relations_officer_id',
+            'business_manager_staff_id' => 'business_manager_staff_id',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
             'status' => 'status',
@@ -544,6 +565,7 @@ class Company extends EagerModel
             'primary_contact_id' => $this->getPrimaryContactId(),
             'sec_contact_id' => $this->getSecContactId(),
             'relations_officer_id' => $this->getRelationsOfficerId(),
+            'business_manager_staff_id' => $this->getBusinessManagerStaffId(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus(),
@@ -572,6 +594,7 @@ class Company extends EagerModel
             $company_data['credit_limit'],
             $company_data['discount'],
             $company_data['relations_officer_id'],
+            $company_data['business_manager_staff_id'],
             $company_data['account_type']);
         if ($company->save()) {
             return $company;
@@ -603,7 +626,8 @@ class Company extends EagerModel
                 $company_data['city_id'],
                 $company_data['credit_limit'],
                 $company_data['discount'],
-                $company_data['relations_officer_id']);
+                $company_data['relations_officer_id'],
+                $company_data['business_manager_staff_id']);
             if ($company->save()) {
                 return $company;
             }
@@ -638,8 +662,9 @@ class Company extends EagerModel
      * @param $credit_limit
      * @param $discount
      * @param $relations_officer_id
+     * @param $business_manager_staff_id
      */
-    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id)
+    public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $business_manager_staff_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -650,6 +675,7 @@ class Company extends EagerModel
         $this->setCreditLimit($credit_limit);
         $this->setDiscount($discount);
         $this->setRelationsOfficerId($relations_officer_id);
+        $this->setBusinessManagerStaffId($business_manager_staff_id);
 
         $now = date('Y-m-d H:i:s');
         $this->setModifiedDate($now);
@@ -657,7 +683,7 @@ class Company extends EagerModel
         $this->setStatus(Status::ACTIVE);
     }
 
-    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $account_type_id)
+    public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $relations_officer_id, $business_manager_staff_id, $account_type_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -670,6 +696,7 @@ class Company extends EagerModel
         $this->setPrimaryContactId(null);
         $this->setSecContactId(null);
         $this->setRelationsOfficerId($relations_officer_id);
+        $this->setBusinessManagerStaffId($business_manager_staff_id);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -679,7 +706,7 @@ class Company extends EagerModel
         $this->setAccountTypeId($account_type_id);
     }
 
-    public function changeDetails($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $primary_contact_id, $sec_contact_id, $relations_officer_id, $status_id)
+    public function changeDetails($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount, $primary_contact_id, $sec_contact_id, $relations_officer_id, $business_manager_staff_id, $status_id)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -692,6 +719,7 @@ class Company extends EagerModel
         $this->setPrimaryContactId($primary_contact_id);
         $this->setSecContactId($sec_contact_id);
         $this->setRelationsOfficerId($relations_officer_id);
+        $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setStatus($status_id);
 
         $this->setModifiedDate(date('Y-m-d H:i:s'));

@@ -412,6 +412,8 @@ class Audit extends \Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
+        return $data;
+
         $result = [];
         foreach ($data as $item) {
             $audit = [];

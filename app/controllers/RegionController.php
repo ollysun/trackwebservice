@@ -10,6 +10,7 @@ class RegionController extends ControllerBase
         $country_id = $this->request->getPost('country_id');
         $name = $this->request->getPost('name');
         $description = $this->request->getPost('description');
+        $manager_id = $this->request->getPost('manager_id');
 
         if (in_array(null, [$country_id, $name, $description])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -17,7 +18,7 @@ class RegionController extends ControllerBase
 
         if (!Region::isExisting($country_id, $name)) {
             $region = new Region();
-            $region->initData($country_id, $name, $description);
+            $region->initData($country_id, $name, $description, $manager_id);
             if ($region->save()) {
                 return $this->response->sendSuccess(['id' => $region->getId()]);
             }
@@ -34,6 +35,13 @@ class RegionController extends ControllerBase
         $country_id = $this->request->getPost('country_id');
         $name = $this->request->getPost('name');
         $description = $this->request->getPost('description');
+        $manager_id = $this->request->getPost('manager_id');
+
+        if($manager_id){
+            if(!$admin = Admin::fetchOne(['staff_id' => $manager_id])){
+                return $this->response->sendError(' Invalid manager Id');
+            }
+        }
 
         if (in_array(null, [$country_id, $name, $region_id, $description])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -45,7 +53,7 @@ class RegionController extends ControllerBase
 
         $region = Region::fetchActive($region_id);
         if ($region != false) {
-            $region->edit($country_id, $name, $description);
+            $region->edit($country_id, $name, $description, $manager_id);
             if ($region->save()) {
                 return $this->response->sendSuccess();
             }

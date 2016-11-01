@@ -399,6 +399,11 @@ class Zone extends \Phalcon\Mvc\Model
         }
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
+
+        //apply discount from the billing plan
+        $discount = ($weight_billing_plan->getDiscount()/100) * $calc_weight_billing;
+
+        //$final_billing = $final_billing - $discount;
         return $final_billing;
     }
 }

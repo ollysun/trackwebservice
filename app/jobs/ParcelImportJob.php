@@ -20,6 +20,14 @@ class ParcelImportJob extends BaseJob
 
 
             print ' new reading emails... \n\r ';
+            /*// 4. argument is the directory into which attachments are to be saved:
+            $mailbox = new PhpImap\Mailbox('{imap.gmail.com:993/imap/ssl}INBOX', 'some@gmail.com', '*********', __DIR__);
+
+            // Read all messaged into an array:
+            $mailsIds = $mailbox->searchMailbox('ALL');
+            if(!$mailsIds) {
+                die('Mailbox is empty');
+            }*/
 
             $reader = new Email_reader();
 
@@ -33,8 +41,10 @@ class ParcelImportJob extends BaseJob
             print "$reader->msg_cnt emails extracted \n ";
             //add a new job
             $worker = new ParcelImportWorker();
-            $worker->addJob(date('Y:m:d H:i:s'));
+
+            $worker->addJob('{"date":"'.date('YMDHIS').'", "created_by":"321"}');
         }catch (\Exception $ec){
+            Util::slackDebug('Imported parcels', $ec->getMessage());
             return false;
         }
         return true;
@@ -129,7 +139,7 @@ class Email_reader {
     // the imap_open function parameters will need to be changed for the particular server
     // these are laid out to connect to a Dreamhost IMAP server
     function connect() {
-        $this->conn = imap_open('{'.$this->server.'/notls}', $this->user, $this->pass);
+        $this->conn = @imap_open('{'.$this->server.'/notls}', $this->user, $this->pass, OP_SILENT);
     }
 
     public function extract(){

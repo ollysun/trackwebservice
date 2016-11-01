@@ -34,6 +34,12 @@ class Region extends \Phalcon\Mvc\Model
     protected $active_fg;
 
     /**
+     *
+     * @var string
+     */
+    protected $manager_id;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -68,6 +74,18 @@ class Region extends \Phalcon\Mvc\Model
     public function setName($name)
     {
         $this->name = Text::removeExtraSpaces(strtolower($name));
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of the manager_id
+     * @param string $manager_id
+     * @return $this
+     */
+    public function setManagerId($manager_id)
+    {
+        $this->manager_id = $manager_id;
 
         return $this;
     }
@@ -139,6 +157,16 @@ class Region extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Return the value of field manager_id
+     *
+     * @return string
+     */
+    public function getManagerId()
+    {
+        return $this->manager_id;
+    }
+
+    /**
      * Returns the value of field active_fg
      *
      * @return integer
@@ -154,6 +182,19 @@ class Region extends \Phalcon\Mvc\Model
     public function initialize()
     {
         $this->belongsTo('country_id', 'Country', 'id', array('alias' => 'Country'));
+        $this->hasOne('manager_id', 'Admin', 'staff_id');
+    }
+
+    public static function getAll($country_id){
+        $obj = new Region();
+
+        $builder = $obj->getModelsManager()->createBuilder()
+                    ->from('Region')
+                    ->columns('Region.*, Admin.*')
+                    ->where('country_id = :country_id: AND active_fg=1')
+                    ->leftJoin('Admin', 'Admin.staff_id = Region.manager_id');
+        $data = $builder->getQuery()->execute(['country_id' => $country_id]);
+        return $data;
     }
 
     /**
@@ -182,6 +223,7 @@ class Region extends \Phalcon\Mvc\Model
             'country_id' => 'country_id', 
             'name' => 'name',
             'description' => 'description',
+            'manager_id' => 'manager_id',
             'active_fg' => 'active_fg'
         );
     }
@@ -192,21 +234,24 @@ class Region extends \Phalcon\Mvc\Model
             'country_id' => $this->getCountryId(),
             'name' => $this->getName(),
             'description' => $this->getDescription(),
+            'manager_id' => $this->getManagerId(),
             'active_fg' => $this->getActiveFg()
         );
     }
 
-    public function initData($country_id, $name, $desc){
+    public function initData($country_id, $name, $desc, $manager_id = null){
         $this->setCountryId($country_id);
         $this->setName($name);
         $this->setDescription($desc);
+        $this->setManagerId($manager_id);
         $this->setActiveFg(1);
     }
 
-    public function edit($country_id, $name, $desc){
+    public function edit($country_id, $name, $desc, $manager_id = null){
         $this->setDescription($desc);
         $this->setCountryId($country_id);
         $this->setName($name);
+        $this->setManagerId($manager_id);
     }
 
     public function changeActiveFg($active_fg){

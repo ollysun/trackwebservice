@@ -33,14 +33,21 @@ class RefController extends ControllerBase {
 
     public function regionAction(){
         $country_id = $this->request->getQuery('country_id');
+        $with_manager = $this->request->getQuery('with_manager');
+
         if (is_null($country_id)){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $data = Region::find([
-            'country_id = :country_id: AND active_fg=1',
-            'bind' => ['country_id' => $country_id]
-        ]);
+        if($with_manager == '1'){
+            $data = Region::getAll($country_id);
+        }else{
+            $data = Region::find([
+                'country_id = :country_id: AND active_fg=1',
+                'bind' => ['country_id' => $country_id]
+            ]);
+        }
+
         return $this->response->sendSuccess($data->toArray());
     }
 

@@ -2424,8 +2424,8 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = $waybill_number != false;
         }
 
-        //saving the parcel history if it is not been created by a merchant
-        if ($check && !$created_by_customer) {
+        //saving the parcel history if it is not been created by a merchant and it is not been edited
+        if ($check && !$created_by_customer && !$parcel_data['id']) {
             $parcel_history = new ParcelHistory();
             $parcel_history->setTransaction($transaction);
             $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;

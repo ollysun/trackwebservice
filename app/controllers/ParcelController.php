@@ -1778,6 +1778,7 @@ exit();
         $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::COMPANY_ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
+        $enforce_action = $this->request->getPost('enforce_action');
         $admin_id = $this->auth->getPersonId();
 
         if (!isset($waybill_numbers, $admin_id)) {
@@ -1805,7 +1806,7 @@ exit();
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
-            } else if (!in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
+            } else if ($enforce_action != '1' &&  !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
@@ -1864,6 +1865,10 @@ exit();
         $for_scanner = $this->request->getQuery('for_scanner', null, -1);
         $waybill_number = $this->request->getQuery('waybill_number', null, null);
 
+        if($this->request->getQuery('imported_parcel', null, 0) == 1){
+            return $this->importedParcelHistory();
+        }
+
         $filter_params = [
             'waybill_number', 'parcel_id', 'paginate', 'status', 'reference_number', 'order_number'
         ];
@@ -1911,10 +1916,10 @@ exit();
         return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
     }
 
-    public function importedParcelHistoryAction(){
+    private function importedParcelHistory(){
         //add a new job
         $worker = new ParcelImportWorker();
-        $worker->addJob(date('Y:m:d H:i:s'));
+        $worker->addJob('{"date":"'.date('YMDHIS').'", "created_by":"321"}');
 
         $tracking_number = $this->request->getQuery('tracking_number', null, null);
         if(!$tracking_number){
@@ -1922,9 +1927,14 @@ exit();
         }
 
         /*set_time_limit(2000);
-        $reader = new Email_reader();
+        try{
+            $reader = new Email_reader();
 
-        $reader->extract();*/
+            $reader->extract();
+        }catch (\Exception $x){
+            Util::slackDebug("Imported tracking", $x->getMessage());
+        }
+        */
 
 
 
@@ -2129,10 +2139,10 @@ exit();
                 continue;
             }
 
-            if ($parcel->getForReturn() == 0) {
+            if ($enforce_action != '1' && $parcel->getForReturn() == 0) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_RETURN;
                 continue;
-            } else if ($parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
+            } else if ($enforce_action != '1' && $parcel->getStatus() != Status::PARCEL_BEING_DELIVERED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_FOR_DELIVERY;
                 continue;
             } else if ($parcel->getStatus() == Status::PARCEL_RETURNED) {
@@ -2662,108 +2672,3 @@ exit();
     }
 }
 
-
-
-class Email_reader {
-
-    // imap server connection
-    public $conn;
-
-    // inbox storage and inbox message count
-    private $inbox;
-    public $msg_cnt;
-
-    // email login credentials
-    private $server = 'webmail.courierplus-ng.com';
-    private $user   = 'kangarootracker@courierplus-ng.com';
-    private $pass   = 'Tracker1';
-    private $port   = 143; // adjust according to server settings
-
-    // connect to the server and get the inbox emails
-    function __construct() {
-        $this->connect();
-        $this->inbox();
-    }
-
-    // close the server connection
-    function close() {
-        $this->inbox = array();
-        $this->msg_cnt = 0;
-
-        imap_close($this->conn);
-    }
-
-    // open the server connection
-    // the imap_open function parameters will need to be changed for the particular server
-    // these are laid out to connect to a Dreamhost IMAP server
-    function connect() {
-        $this->conn = imap_open('{'.$this->server.'/notls}', $this->user, $this->pass);
-    }
-
-    public function extract(){
-        //$emails = [];
-        $total_messages = $this->msg_cnt;
-        for($i = 1; $i <= $total_messages; $i++){
-            //$emails[] = $reader->get($i);
-            ImportedParcelHistory::addFromEmail($this->get($i));
-        }
-
-        $this->close();
-        //dd($emails);
-    }
-
-    // move the message to a new folder
-    function move($msg_index, $folder='INBOX.Processed') {
-        // move on server
-        imap_mail_move($this->conn, $msg_index, $folder);
-        imap_expunge($this->conn);
-
-        // re-read the inbox
-        $this->inbox();
-    }
-
-    // get a specific message (1 = first email, 2 = second email, etc.)
-    function get($msg_index=NULL) {
-        if (count($this->inbox) <= 0) {
-            return array();
-        }
-        elseif ( ! is_null($msg_index) && isset($this->inbox[$msg_index])) {
-            return $this->inbox[$msg_index];
-        }
-
-        return $this->inbox[0];
-    }
-
-    // read the inbox
-    function inbox() {
-        $emails = imap_search($this->conn,'UNSEEN');
-        $this->msg_cnt = count($emails);
-
-        $in = array();
-        $i = 1;
-        foreach ($emails as $email) {
-            $in[] = array(
-                'index'     => $i++,
-                'header'    => imap_headerinfo($this->conn, $email),
-                'body'      => imap_body($this->conn, $email),
-                'structure' => imap_fetchstructure($this->conn, $email)
-            );
-        }
-
-        /*for($i = 1; $i <= $this->msg_cnt; $i++) {
-            $in[] = array(
-                'index'     => $i,
-                'header'    => imap_headerinfo($this->conn, $i),
-                'body'      => imap_body($this->conn, $i),
-                'structure' => imap_fetchstructure($this->conn, $i)
-            );
-        }*/
-
-        $this->inbox = $in;
-    }
-
-    function number(){
-        return $this->msg_cnt;
-    }
-
-}
