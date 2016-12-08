@@ -42,6 +42,19 @@ class TellerController extends ControllerBase {
 
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
+
+        //amount check
+        $parcels = Parcel::getByWaybillNumberList($waybill_number_arr);
+        $amount = 0;
+        foreach($parcels as $parcel){
+            /** $parcel Parcel */
+            $amount += $parcel->getAmountDue();
+        }
+
+        if($amount_paid < ($amount - 49)){
+            return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
+        }
+
         $bad_parcels = array();
         $good_parcels = array();
 
@@ -72,6 +85,38 @@ class TellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::TELLER_ALREADY_USED);
         }
         return $this->response->sendError($teller);
+    }
+
+    public function approveAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $id = $this->request->getPost('id');
+        if(in_array(null, [$id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        /** @var Teller $teller */
+        $teller = Teller::findFirst("id = $id");
+        if(!$teller){
+            return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+        }
+        $teller->setStatus(Status::TELLER_APPROVED);
+        $teller->save();
+        return $this->response->sendSuccess();
+    }
+
+    public function declineAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $id = $this->request->getPost('id');
+        if(in_array(null, [$id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        /** @var Teller $teller */
+        $teller = Teller::findFirst("id = $id");
+        if(!$teller){
+            return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+        }
+        $teller->setStatus(Status::TELLER_DECLINED);
+        $teller->save();
+        return $this->response->sendSuccess();
     }
 
     /**

@@ -31,9 +31,12 @@ class CompanyController extends ControllerBase
 
         $this->db->begin();
         //validate bm
-        if(!BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
-            return $this->response->sendError($postData->company->business_manager_staff_id . ' is not a business manager');
-        }
+        /*if($postData->company->business_manager_staff_id){
+            if(!BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
+                return $this->response->sendError($postData->company->business_manager_staff_id . ' is not a business manager');
+            }
+        }*/
+
         /** @var Company $company */
         if (!($company = Company::add((array)$postData->company))) {
             return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_COMPANY);
@@ -263,6 +266,76 @@ class CompanyController extends ControllerBase
             return $this->response->sendSuccess($company);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
+    }
+
+    public function getCompanyAccessAction(){
+        $registration_number = $this->request->get('registration_number');
+        if(!Company::findFirst([[
+            'registration_number = :registration_number:',
+            'bind' => $registration_number
+        ]])){
+            return $this->response->sendError('Invalid registration number');
+        }
+
+        $company_access = CompanyAccess::findFirst([
+            'registration_number = :registration_number:',
+            'bind' => ['registration_number' => $registration_number]
+        ]);
+
+        if(!$company_access){
+            return $this->response->sendError('Access not found');
+        }
+
+        $company_access->setToken('');
+        return $this->response->sendSuccess($company_access);
+    }
+
+    public function manageCompanyAccessAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $registration_number = $this->request->getPost('registration_number');
+        $allow_portal_login = $this->request->getPost('allow_portal_login');
+        $allow_api_call = $this->request->getPost('allow_api_call');
+        $branch_id = $this->request->getPost('branch_id');
+
+        if(in_array(null, [$registration_number, $allow_api_call, $allow_portal_login, $branch_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $company = Company::findFirst([
+            'reg_no = :registration_number:',
+            'bind' => ['registration_number' => $registration_number
+            ]]);
+
+        if(!$company){
+            return $this->response->sendError('Invalid registration number');
+        }
+
+
+
+        $company_access = CompanyAccess::findFirst([
+            'registration_number = :registration_number:',
+            'bind' => ['registration_number' => $registration_number]
+            ]);
+
+
+
+        $api_staff_id = "api_bot_$registration_number";
+        $auth_username = "$api_staff_id@courierplus-ng.com";
+
+        if(!Admin::fetchByIdentifier($auth_username, $api_staff_id)){
+            (new Admin())->createWithAuth($branch_id, Role::COMPANY_ADMIN, $api_staff_id, $auth_username, CompanyAccess::PASSWORD, $company->getName(), '', Status::ACTIVE);
+        }
+
+
+        if(!$company_access){
+            CompanyAccess::createOne($registration_number, $allow_portal_login, $allow_api_call, $auth_username, $company->getId());
+        }else{
+            $company_access->setAllowApiCall($allow_api_call);
+            $company_access->setAllowPortalLogin($allow_portal_login);
+        }
+
+        return $this->response->sendSuccess($company_access);
     }
 
     /**

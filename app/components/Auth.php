@@ -250,4 +250,15 @@ class Auth
     public function isCooperateUser(){
         return $this->getUserType() == Role::COMPANY_ADMIN || $this->getUserType() == Role::COMPANY_OFFICER;
     }
+
+    public function getCompanyId(){
+        if(isset($this->getData()['company_id'])) return $this->getData()['company_id'];
+        if($this->getUserType() == Role::COMPANY_ADMIN || $this->getUserType() == Role::COMPANY_OFFICER){
+            $company_access = CompanyAccess::findFirst(['auth_username = :email:', 'bind' => ['email' => $this->getEmail()]]);
+            if($company_access){
+                return $company_access->getCompanyId();
+            }
+        }
+        return false;
+    }
 } 

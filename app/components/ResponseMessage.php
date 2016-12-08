@@ -133,6 +133,7 @@ class ResponseMessage
     const INVALID_RECEIVER_CITY_SUPPLIED = 'Invalid receiver city supplied';
     const INVALID_RECEIVER_STATE_SUPPLIED = 'Invalid receiver state supplied';
     const COULD_NOT_CREATE_REQUEST = 'Could not create request';
+    const COMPANY_USER_HAS_NO_EMAIL = 'Company user has no email';
 
     const INVALID_REQUEST_TYPE = 'Invalid request type';
     const PARCEL_NOT_ACCESSIBLE = 'Parcel not accessible for this action';
@@ -157,6 +158,7 @@ class ResponseMessage
     const BILLING_PLAN_DOES_NOT_EXIST = 'BIlling plan does not exist';
     const BILLING_PLAN_NOT_SAVED = 'Could not save billing plan';
     const BILLING_PLAN_NOT_CLONED = 'Could not clone billing Plan';
+    const COMPANY_NOT_LINKED_TO_PLAN = 'Company not linked to billing plan';
 
     const ONFORWARDING_CITY_EXISTS = 'City is already linked to onforwarding charge';
     const ONFORWARDING_CITY_NOT_EXISTS = 'City is not linked to onforwarding charge';

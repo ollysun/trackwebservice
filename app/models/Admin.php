@@ -326,9 +326,10 @@ class Admin extends \Phalcon\Mvc\Model
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
+
     }
 
-    public function createWithAuth($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone)
+    public function createWithAuth($branch_id, $role_id, $staff_id, $email, $password, $fullname, $phone, $status = false)
     {
         $transactionManager = new TransactionManager();
         $transaction = $transactionManager->get();
@@ -337,7 +338,7 @@ class Admin extends \Phalcon\Mvc\Model
 
             $auth = new UserAuth();
             $auth->setTransaction($transaction);
-            $auth->initData($email, $password, UserAuth::ENTITY_TYPE_ADMIN);
+            $auth->initData($email, $password, UserAuth::ENTITY_TYPE_ADMIN, $status);
             if ($auth->save()){
                 $this->initData($branch_id, $role_id, $staff_id, $auth->getId(), $fullname, $phone);
                 if ($this->save()){

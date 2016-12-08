@@ -725,8 +725,7 @@ class Company extends EagerModel
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
 
-    public
-    function changeStatus($status)
+    public function changeStatus($status)
     {
         $this->setStatus($status);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
@@ -1067,5 +1066,12 @@ class Company extends EagerModel
                 'reference_key' => 'id'
             ]
         ];
+    }
+
+    /**
+     * @return BillingPlan
+     */
+    public function getBillingPlan(){
+        return BillingPlan::findFirstByCompanyId($this->getId());
     }
 }

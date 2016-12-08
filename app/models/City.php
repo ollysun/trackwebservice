@@ -2,6 +2,7 @@
 
 class City extends \Phalcon\Mvc\Model
 {
+    const EXPORT_CITY_ID = 1700;
 
     /**
      *

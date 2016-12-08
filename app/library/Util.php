@@ -94,6 +94,16 @@ class Util
         return $builder;
     }
 
+    public static function formatCurrency($value, $dp = 2)
+    {
+        if (intval($value) <= 0) return $value;
+        $decimal_holder = explode('.', $value);
+        $value_arr = str_split($decimal_holder[0]);
+        if (count($value_arr) <= 3) return $value;
+        $final_value = number_format($value, $dp, ".", ",");
+        return $final_value;
+    }
+
 
     /**
      * Regex float validation

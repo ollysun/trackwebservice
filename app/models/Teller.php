@@ -582,6 +582,10 @@ class Teller extends \Phalcon\Mvc\Model
             $where[] = 'Teller.teller_no LIKE :teller_no:';
             $bind['teller_no'] = '%' . $filter_by['teller_no'] . '%';
         }
+        if (isset($filter_by['status'])) {
+            $where[] = 'Teller.status = :status:';
+            $bind['teller_no'] = $filter_by['status'];
+        }
 
         return ['where' => $where, 'bind' => $bind];
     }
@@ -672,14 +676,15 @@ class Teller extends \Phalcon\Mvc\Model
         $transaction = $transactionManager->get();
         try {
             $this->setTransaction($transaction);
-
             $this->initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, Status::TELLER_AWAITING_APPROVAL);
+
             $check = $this->save();
+
             //saving the parcels with the teller id
             if ($check) {
-                $teller_parcel = new TellerParcel();
-                $teller_parcel->setTransaction($transaction);
                 foreach ($parcel_id_array as $parcel_id) {
+                    $teller_parcel = new TellerParcel();
+                    $teller_parcel->setTransaction($transaction);
                     $teller_parcel->initData($this->getId(), $parcel_id);
                     $check = $teller_parcel->save();
                 }
@@ -692,6 +697,11 @@ class Teller extends \Phalcon\Mvc\Model
                 return $this->getId();
             }
         } catch (Exception $e) {
+            if ($e->getPrevious()) {
+                print $e->getPrevious()->getMessage() . "\n";
+            } else {
+                print $e->getMessage() . "\n";
+            }
         }
 
         $transactionManager->rollback();
@@ -710,6 +720,7 @@ class Teller extends \Phalcon\Mvc\Model
             'id' => $this->getId(),
             'teller_no' => $this->getTellerNo(),
             'branch_id' => $this->getBranchId(),
+            'account_no' => $this->getAccountNo(),
             'bank_id' => $this->getBankId(),
             'amount_paid' => $this->getAmountPaid(),
             'status' => $this->getStatus(),

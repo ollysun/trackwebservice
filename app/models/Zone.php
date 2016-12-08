@@ -351,7 +351,7 @@ class Zone extends \Phalcon\Mvc\Model
      * @param $from_branch_id
      * @param $to_branch_id
      * @param $weight
-     * @param $weight_billing_plan_id
+     * @param $billing_plan_id
      * @param $city_id
      * @param $onforwarding_billing_plan_id
      * @return bool|float|int
@@ -361,13 +361,13 @@ class Zone extends \Phalcon\Mvc\Model
         $from_branch_id,
         $to_branch_id,
         $weight,
-        $weight_billing_plan_id,
+        $billing_plan_id,
         $city_id,
         $onforwarding_billing_plan_id
     ) {
-        $weight_billing_plan = BillingPlan::findFirst($weight_billing_plan_id);
+        $billing_plan = BillingPlan::findFirst($billing_plan_id);
 
-        if (!$weight_billing_plan) {
+        if (!$billing_plan) {
             throw new Exception(ResponseMessage::INVALID_WEIGHT_BILLING_PLAN);
         }
 
@@ -375,7 +375,7 @@ class Zone extends \Phalcon\Mvc\Model
             $from_branch_id,
             $to_branch_id,
             $weight,
-            $weight_billing_plan_id
+            $billing_plan_id
         );
 
         if ($calc_weight_billing == false) {
@@ -383,8 +383,8 @@ class Zone extends \Phalcon\Mvc\Model
                 throw new Exception(ResponseMessage::ZONE_MAPPING_ORIGIN_DESTINATION_NOT_EXIST);
             }
 
-            if (WeightBilling::weightExceedsRange($weight, $weight_billing_plan_id)) {
-                if (!is_null($weight_billing_plan->getCompanyId())) {
+            if (WeightBilling::weightExceedsRange($weight, $billing_plan_id)) {
+                if (!is_null($billing_plan->getCompanyId())) {
                     return 0;
                 }
                 throw new Exception(ResponseMessage::WEIGHT_EXCEEDS_SET_LIMIT);
@@ -401,9 +401,78 @@ class Zone extends \Phalcon\Mvc\Model
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
 
         //apply discount from the billing plan
-        $discount = ($weight_billing_plan->getDiscount()/100) * $calc_weight_billing;
+        $discount = ($billing_plan->getDiscount()/100) * $calc_weight_billing;
 
         //$final_billing = $final_billing - $discount;
         return $final_billing;
+    }
+
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $from_branch_id
+     * @param $to_branch_id
+     * @param $weight
+     * @param $billing_plan_id
+     * @param $city_id
+     * @param $onforwarding_billing_plan_id
+     * @return bool|float|int
+     * @throws Exception
+     */
+    public static function getQuote(
+        $from_branch_id,
+        $to_branch_id,
+        $weight,
+        $billing_plan_id,
+        $city_id,
+        $onforwarding_billing_plan_id
+    ) {
+        $billing_plan = BillingPlan::findFirst($billing_plan_id);
+
+        if (!$billing_plan) {
+            throw new Exception(ResponseMessage::INVALID_WEIGHT_BILLING_PLAN);
+        }
+
+        $calc_weight_billing = WeightBilling::calcBilling(
+            $from_branch_id,
+            $to_branch_id,
+            $weight,
+            $billing_plan_id
+        );
+
+        if ($calc_weight_billing == false) {
+            if (!WeightBilling::zoneMappingExists($from_branch_id, $to_branch_id)) {
+                throw new Exception(ResponseMessage::ZONE_MAPPING_ORIGIN_DESTINATION_NOT_EXIST);
+            }
+
+            if (WeightBilling::weightExceedsRange($weight, $billing_plan_id)) {
+                if (!is_null($billing_plan->getCompanyId())) {
+                    return 0;
+                }
+                throw new Exception(ResponseMessage::WEIGHT_EXCEEDS_SET_LIMIT);
+            }
+
+            throw new Exception(ResponseMessage::WEIGHT_BILLING_DOES_NOT_EXIST_FOR_ZONE);
+        }
+
+        $onforwarding_charge = OnforwardingCharge::fetchByCity($city_id, $onforwarding_billing_plan_id);
+        if ($onforwarding_charge == false) {
+            throw new Exception(ResponseMessage::CALC_BILLING_ONFORWARDING);
+        }
+
+        $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
+
+        //apply discount from the billing plan
+        $pp = ($billing_plan->getDiscount()/100);
+        $discount = ($billing_plan->getDiscount()/100) * $final_billing;
+        $discount_percentage = $billing_plan->getDiscount();
+
+        $gross_amount = $final_billing - $discount;
+
+        $vat = (0.05 * $gross_amount);
+
+        $amount_due = $gross_amount + $vat;
+
+        return ['total_amount' => $final_billing, 'discount' => $discount, 'gross_amount' => $gross_amount, 'vat' => $vat, 'amount_due' => $amount_due, 'discount_percentage' => $discount_percentage, 'pp' => $pp];
     }
 }

@@ -282,7 +282,7 @@ class UserAuth extends \Phalcon\Mvc\Model
         );
     }
 
-    public function initData($email, $password, $entity_type)
+    public function initData($email, $password, $entity_type, $status = false)
     {
         $this->setEntityType($entity_type);
         $this->setEmail($email);
@@ -291,7 +291,7 @@ class UserAuth extends \Phalcon\Mvc\Model
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
-        $this->setStatus(Status::INACTIVE);
+        $this->setStatus($status?$status: Status::INACTIVE);
     }
 
     public function getData()

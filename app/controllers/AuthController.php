@@ -7,20 +7,9 @@
  */
 class AuthController extends ControllerBase
 {
-    /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
-     * @author Rahman Shitu <rahman@cottacush.com>
-     * @return $this
-     */
-    public function loginAction()
-    {
-        $identifier = $this->request->getPost('identifier'); //email
-        $password = $this->request->getPost('password');
 
-        if (in_array(null, array($identifier, $password))) {
-            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
-        }
-
+    /** @author Ademu Anthony E */
+    private function login($identifier, $password){
         /** @var UserAuth $authUser */
         $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {
@@ -62,6 +51,86 @@ class AuthController extends ControllerBase
             }
         }
         return $this->response->sendError(ResponseMessage::INVALID_CRED);
+    }
+
+    /**
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @author Rahman Shitu <rahman@cottacush.com>
+     * @return $this
+     */
+    public function loginAction()
+    {
+        if($this->request->getPost('api_login') == 1){
+            return $this->apiLogin();
+        }
+
+        $identifier = $this->request->getPost('identifier'); //email
+        $password = $this->request->getPost('password');
+
+        if (in_array(null, array($identifier, $password))) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        return $this->login($identifier, $password);
+
+        /** @var UserAuth $authUser */
+       /* $authUser = UserAuth::getByIdentifier($identifier);
+        if ($authUser != false) {
+            if ($this->security->checkHash($password, $authUser->getPassword())) {
+                $userData = false;
+                if ($authUser->getEntityType() == UserAuth::ENTITY_TYPE_ADMIN) {
+                    $userData = Admin::fetchLoginData($authUser->getId());
+                } else if ($authUser->getEntityType() == UserAuth::ENTITY_TYPE_CORPORATE) {
+                    $userData = Company::fetchLoginData($authUser->getId());
+                }
+
+                if (empty($userData)) {
+                    return $this->response->sendError('Could not fetch user login data');
+                }
+
+                if ($this->auth->clientTokenExists($authUser->getId())) {
+                    $this->auth->loadTokenData($authUser->getId());
+                    $token = $this->auth->getToken();
+                } else {
+                    $token = $this->auth->generateToken();
+                }
+
+                $userData['email'] = $authUser->getEmail();
+                $userData['status'] = $authUser->getStatus();
+                $userData['last_login_time'] = $authUser->getLastLoginTime();
+                $role_id = ($authUser->getStatus() == Status::ACTIVE) ? $userData['role_id'] : Role::INACTIVE_USER;
+
+                $this->auth->saveTokenData($authUser->getId(), [
+                    Auth::L_EMAIL => $authUser->getEmail(),
+                    Auth::L_USER_TYPE => $role_id,
+                    Auth::L_TOKEN => $token,
+                    Auth::L_DATA => $userData
+                ]);
+
+                $authUser->setLastLoginTime(time());
+                $authUser->save();
+
+                return $this->response->sendSuccess($userData);
+            }
+        }
+        return $this->response->sendError(ResponseMessage::INVALID_CRED);*/
+    }
+
+    public function apiLogin(){
+        $token = $this->request->getPost('private_key');
+        $registration_number = $this->request->getPost('registration_number');
+
+        $apiToken = CompanyAccess::findFirst([
+           'conditions' => 'registration_number = :registration_number: AND token = :token:',
+            'bind' => ['registration_number' => $registration_number, 'token' => $token]
+        ]);
+
+        if(!$apiToken){
+            return $this->response->sendError('Invalid API credentials');
+        }
+
+        return $this->login($apiToken->getAuthUsername(), CompanyAccess::PASSWORD);
+
     }
 
     public function changePasswordAction()
@@ -143,6 +212,9 @@ class AuthController extends ControllerBase
             $users = $company->getUserAuth();
             $successful_emails = [];
             foreach ($users as $admin) {
+                if($admin->getEmail() == 'noemailaddress@thiscorporate.com'){
+                    return $this->response->sendError(ResponseMessage::COMPANY_USER_HAS_NO_EMAIL);
+                }
                 /** @var UserAuth */
                 $admin->changePassword($password);
 

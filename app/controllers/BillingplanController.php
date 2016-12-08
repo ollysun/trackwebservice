@@ -100,13 +100,131 @@ class BillingplanController extends ControllerBase
         return $this->response->sendError(ResponseMessage::BILLING_PLAN_DOES_NOT_EXIST);
     }
 
+    public function linkcompanyAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+        $company_id = $this->request->get('company_id');
+        $plan_id = $this->request->get('billing_plan_id');
+        $is_default = $this->request->get('is_default');
+
+        if(in_array(null, [$company_id, $plan_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        if(CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
+            'bind' => [
+                'company_id' => $company_id, 'billing_plan_id' => $plan_id
+            ]])){
+            return $this->response->sendError('This company is already in the selected plan');
+        }
+
+        if($is_default == '1'){
+            $default_plan = CompanyBillingPlan::findFirst(['company_id = :company_id: AND is_default = 1',
+                'bind' => [
+                    'company_id' => $company_id
+                ]]);
+            if($default_plan){
+                $default_plan->setIsDefault(0);
+                $default_plan->save();
+            }
+        }
+
+        $company_plan = new CompanyBillingPlan();
+        $company_plan->init(['status' => Status::ACTIVE, 'company_id' => $company_id, 'billing_plan_id' => $plan_id, 'is_default' => $is_default]);
+        $company_plan->save();
+
+        return $this->response->sendSuccess();
+    }
+
+    public function removecompanyAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $company_id = $this->request->get('company_id');
+        $plan_id = $this->request->get('billing_plan_id');
+
+        if(in_array(null, [$plan_id, $company_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $plan_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
+            'bind' => [
+                'company_id' => $company_id, 'billing_plan_id' => $plan_id
+            ]]);
+
+        if($plan_link){
+            $plan_link->delete();
+        }
+        return $this->response->sendSuccess();
+    }
+
+    public function makedefaultAction(){
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $company_id = $this->request->get('company_id');
+        $plan_id = $this->request->get('billing_plan_id');
+
+        if(in_array(null, [$plan_id, $company_id])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $plan_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
+            'bind' => [
+                'company_id' => $company_id, 'billing_plan_id' => $plan_id
+            ]]);
+
+        if(!$plan_link){
+            return $this->response->sendError(ResponseMessage::COMPANY_NOT_LINKED_TO_PLAN);
+        }
+
+        $default_plan = CompanyBillingPlan::findFirst(['company_id = :company_id: AND is_default = 1',
+            'bind' => [
+                'company_id' => $company_id
+            ]]);
+        if($default_plan){
+            $default_plan->setIsDefault(0);
+            $default_plan->save();
+        }
+
+        $plan_link->setIsDefault(1);
+        $plan_link->save();
+
+        return $this->response->sendSuccess();
+    }
+
+    /**
+     * @author Ademu Anthony <ademuanthony@gmail.com>
+     */
+    public function getCompaniesAction(){
+        $this->auth->allowOnly(Role::ADMIN);
+
+        $billing_plan_id = $this->request->get('billing_plan_id');
+        if(is_null($billing_plan_id)){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $data = CompanyBillingPlan::getLinkedCompanies($billing_plan_id);
+        return $this->response->sendSuccess($data);
+    }
+
+    public function getCompanyPlansAction(){
+        $this->auth->allowOnly([Role::SWEEPER, Role::DISPATCHER, Role::ADMIN, Role::OFFICER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $company_id = $this->request->get('company_id');
+
+        $filter_by = [];
+        if($company_id){
+            $filter_by['company_id'] = $company_id;
+        }
+
+        $plans = CompanyBillingPlan::fetchAllWithCompanies($filter_by);
+        return $this->response->sendSuccess($plans);
+    }
+
     /**
      * @author Rahman Shitu <rahman@cottacush.com>
      * @return array
      */
     private function getFilterParams()
     {
-        $filter_params = ['company_id', 'type', 'status', 'company_only', 'no_paginate', 'company_name'];
+        $filter_params = ['company_id', 'type', 'status', 'company_only', 'no_paginate', 'company_name', 'plan_name'];
         $filter_by = [];
         foreach ($filter_params as $param) {
             $$param = $this->request->getQuery($param);
@@ -130,6 +248,7 @@ class BillingplanController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $with_company = $this->request->getQuery('with_company');
+        $linked_companies_count = $this->request->getQuery('linked_companies_count');
         $with_total_count = $this->request->getQuery('with_total_count');
 
         $fetch_with = [];
@@ -137,10 +256,14 @@ class BillingplanController extends ControllerBase
             $fetch_with['with_company'] = true;
         }
 
+        if(!is_null($linked_companies_count)){
+            $fetch_with['linked_companies_count'] = true;
+        }
+
         $filter_by = $this->getFilterParams();
 
         $plans = BillingPlan::fetchAll($offset, $count, $filter_by, $fetch_with);
-        $result = [];
+
         if ($with_total_count != null) {
             $count = BillingPlan::fetchCount($filter_by);
             $result = [

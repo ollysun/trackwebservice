@@ -86,8 +86,8 @@ class BulkWaybillPrintingJob extends BaseJob
     {
         $copies = ["Sender's Copy", "EC Copy"];//["Sender's Copy", "EC Copy", "Ack. Copy", "Recipient's Copy"];
         $waybill_html = '';
-        $waybill_template = file_get_contents(dirname(__DIR__) . '/html/waybill_template.html');
         $parcel = Parcel::fetchOne($waybill_number, false, 'waybill_number');
+        $waybill_template = file_get_contents(dirname(__DIR__) . '/html/waybill_template.html');
         if (!$parcel) {
             return '';
         }
@@ -143,6 +143,7 @@ class BulkWaybillPrintingJob extends BaseJob
             'parcel_type' => $this->shippingTypes[$parcel['parcel_type']],
             'cod_yes' => (($parcel['cash_on_delivery'] == '1') ? 'is-active' : ''),
             'cod_no' => (($parcel['cash_on_delivery'] == '1') ? '' : 'is-active'),
+            'cod_amt' => Util::formatCurrency($parcel['delivery_amount']),
             'other_info' => $parcel['other_info'],
             'barcode_data' => $barCodeData
         ];

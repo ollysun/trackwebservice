@@ -118,8 +118,8 @@ $di->set('auth', function () {
  */
 $di->set('mailer', function () use ($config) {
     return new MailerHandler(
-        $config->params->mailer->mandrill_username,
-        $config->params->mailer->mandrill_password,
+        $config->params->mailer->ses_username,
+        $config->params->mailer->ses_password,
         $config->params->mailer->smtp_host,
         $config->params->mailer->smtp_port,
         $config->params->mailer->default_from);

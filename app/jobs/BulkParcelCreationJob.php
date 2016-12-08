@@ -33,6 +33,7 @@ class BulkParcelCreationJob extends BaseJob
             $bulkShipmentJobDetail->save();
             try {
                 $parcelData->billing_plan_id = $jobData->billing_plan_id;
+                $parcelData->company_id = $jobData->company_id;
                 $parcelData->created_by = $jobData->created_by;
                 $parcel = $this->createParcel($parcelData, $jobData->billing_plan_id, $jobData->created_by);
                 if (!$parcel) {
@@ -102,8 +103,13 @@ class BulkParcelCreationJob extends BaseJob
             throw new Exception(ResponseMessage::CALC_BILLING_ONFORWARDING);
         }
         $parcelData['amount_due'] = $calc_weight_billing + $onforwarding_charge->getAmount();
-        $parcelData['cash_on_delivery'] = 0;
-        $parcelData['cash_on_delivery_amount'] = null;
+        if(isset($parcelData['cash_on_delivery_amount']) && $parcelData['cash_on_delivery_amount'] > 0){
+            $parcelData['cash_on_delivery'] = 1;
+        }else{
+            $parcelData['cash_on_delivery'] = 0;
+            $parcelData['cash_on_delivery_amount'] = null;
+        }
+
         $parcelData['delivery_type'] = DeliveryType::DISPATCH;
         $parcelData['shipping_type'] = ShippingType::EXPRESS;
         $parcelData['package_value'] = '';

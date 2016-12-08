@@ -162,7 +162,7 @@ class BranchController extends ControllerBase
 
     public function getAllHubAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $state_id = $this->request->getQuery('state_id', null, null);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);

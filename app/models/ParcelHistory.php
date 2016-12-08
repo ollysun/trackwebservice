@@ -371,6 +371,7 @@ class ParcelHistory extends \Phalcon\Mvc\Model
                     $result[$item->parcel->waybill_number]['delivery_receipt'] = $item->parcel->getProofOfDelivery();
                 }
                 $result[$item->parcel->waybill_number]['parcel_return_comment'] = $item->parcelComment->toArray();
+
             }
             $history = $item->parcelHistory->getData();
             $history['from_branch'] = (is_null($item->fromBranch->id)) ? null : $item->fromBranch->getData();
@@ -383,6 +384,29 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    public static function getHistoryForApi($waybill_number){
+        $obj = new ParcelHistory();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('ParcelHistory');
+
+
+        $where = [];
+        $bind = [];
+        $columns = ['ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
+
+        $where[] = "Parcel.waybill_number = :waybill_number: OR Parcel.reference_number = :waybill_number:";
+        $bind['waybill_number'] = $waybill_number;
+
+        //doing the left join after any possible inner join
+        $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
+        $builder->leftJoin('FromBranch', 'FromBranch.id = ParcelHistory.from_branch_id', 'FromBranch');
+        $builder->leftJoin('ToBranch', 'ToBranch.id = ParcelHistory.to_branch_id', 'ToBranch');
+
+        $builder->columns($columns);
+        $builder->where(join(' AND ', $where));
+        $data = $builder->getQuery()->execute($bind);
+        return $data;
+    }
 
     public static function getLastHistoryForParcel($parcelId){
         $obj = new ParcelHistory();
@@ -409,5 +433,30 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         }
 
         return $history;
+    }
+
+    public static function getLastHistoryForParcelForApi($parcelId){
+        $obj = new ParcelHistory();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->where('ParcelHistory.parcel_id = :id: AND ParcelHistory.status = :status:',
+                ['id' => $parcelId, 'status' => Status::PARCEL_IN_TRANSIT])
+            ->from('ParcelHistory');
+
+        $columns = ['ParcelHistory.*', 'FromBranch.*', 'ToBranch.*'];
+        $builder->orderBy('ParcelHistory.id DESC');
+
+
+        $builder->innerJoin('Parcel', 'Parcel.id = ParcelHistory.parcel_id');
+        $builder->leftJoin('FromBranch', 'FromBranch.id = ParcelHistory.from_branch_id', 'FromBranch');
+        $builder->leftJoin('ToBranch', 'ToBranch.id = ParcelHistory.to_branch_id', 'ToBranch');
+
+        $builder->columns($columns);
+        $data = $builder->getQuery()->execute();
+
+        if (count($data) == 0) {
+            return false;
+        }
+
+        return $data[0];
     }
 }

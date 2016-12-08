@@ -129,6 +129,7 @@ class BusinessManager extends Phalcon\Mvc\Model
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);
 
+
         return $data;
     }
 

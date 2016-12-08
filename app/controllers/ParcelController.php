@@ -46,9 +46,22 @@ class ParcelController extends ControllerBase
 
         /** @Author if this is a cooperate user and the receiver is not in their address list */
 
-
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        //if this is for a cooporate, check that the billing_plan is correct
+        if($parcel['weight_billing_plan'] != 1){
+            if(!$parcel['company_id'])
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+            $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
+                'bind' => [
+                    'company_id' => $parcel['company_id'],
+                    'billing_plan_id' => $parcel['weight_billing_plan']
+                ]]);
+            if(!$billing_link){
+                return $this->response->sendError(ResponseMessage::INVALID_BILLING_PLAN);
+            }
         }
 
         $auth_data = $this->auth->getData();
@@ -232,6 +245,163 @@ class ParcelController extends ControllerBase
         }
     }
 
+    public function addFromApiAction(){
+
+      /*  EmailMessage::send(
+            EmailMessage::USER_ACCOUNT_CREATION,
+            [
+                'name' => 'Ademu Anthony',
+                'email' => 'bleny112gmail.com',
+                'password' => 'ojima123',
+                'link' => $this->config->fe_base_url . '/site/changePassword?ican=' . md5(5) . '&salt=' . 5,
+                'year' => date('Y')
+            ],
+            'Courier Plus',
+            'blenyo11@gmail.com',
+            EmailMessage::DEFAULT_FROM_EMAIL,
+            ['cc' => ['itsupport@courierplus-ng.com' => 'CourierPlus IT Support']]
+        );
+
+        dd('here');*/
+
+        //$this->auth->allowOnly([Role::COMPANY_ADMIN]);
+
+        $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
+
+        $company_id = $this->auth->getCompanyId();
+        /** @var Company $company */
+        $company = Company::findFirst($company_id);
+        if(!$company){
+            return $this->response->sendError('Unable to resolve customer account');
+        }
+
+        $billing_plan = $company->getBillingPlan();
+        if(!$billing_plan){
+            return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
+        }
+
+        $billingPlanId = $billing_plan->getId();
+
+        //get parcel creator and branch
+        $createdBy = Admin::findFirst($this->auth->getPersonId());
+        $creatorBranch = $createdBy->getBranch();
+
+        if ($creatorBranch->getBranchType() == BranchType::EC) {
+            $to_branch = Branch::getParentById($creatorBranch->getId());
+            if ($to_branch == null) {
+                return $this->response->sendError(ResponseMessage::EC_NOT_LINKED_TO_HUB);
+            }
+            $to_branch_id = $to_branch->getId();
+        } else {
+            $to_branch_id = $createdBy->getBranchId();
+        }
+
+        //parcel no_of_package validation
+        $parcelData['no_of_package'] = intval($parcelData['no_of_package']);
+        if ($parcelData['no_of_package'] < 1) {
+            return $this->response->sendError(ResponseMessage::INVALID_PACKAGE_COUNT);
+        }
+
+
+        $parcel_obj = new Parcel();
+        $receiver = [];
+        $receiver['phone'] = empty($parcelData['receiver_phone_number']) ? Parcel::NOT_APPLICABLE : $parcelData['receiver_phone_number'];
+        $receiver['firstname'] = $parcelData['receiver_name'];
+        $receiver['lastname'] = null;
+        $receiver['email'] = $parcelData['receiver_email'];
+
+        $sender = [];
+        $sender['phone'] = empty($parcelData['sender_phone_number']) ? $company->getPhoneNumber() : $parcelData['sender_phone_number'];
+        $sender['firstname'] = empty($parcelData['sender_name'])? $company->getName(): $parcelData['sender_name'];
+        $sender['lastname'] = null;
+        $sender['email'] = empty($parcelData['sender_email'])? $company->getEmail(): $parcelData['sender_email'];
+
+        $sender_city = empty($parcelData['sender_city']) ? City::findFirst($company->getCityId()): City::findFirstByName($parcelData['sender_city']);
+        if(!$sender_city){
+            return $this->response->sendError($parcelData['sender_city']. ' is not a valid city name. Please check ref/cities for a list of valid city name');
+        }
+        $parcelData['sender_city'] = $sender_city->getId();
+        $sender_state = State::findFirst($sender_city->getStateId());
+        $parcelData['sender_state'] = $sender_state->getId();
+        $parcelData['sender_country'] = $sender_state->getCountryId();
+        $parcelData['sender_address_1'] = isset($parcelData['sender_address_1'])?$company->getAddress():$parcelData['sender_address_1'];
+
+        /** @var City $receiver_city */
+        $receiver_city = City::findFirstByName($parcelData['receiver_city']);
+        if(!$receiver_city){
+            return $this->response->sendError($parcelData['receiver_city']. ' is not a valid city name. Please check ref/cities for a list of valid city name');
+        }
+        $parcelData['receiver_city'] = $receiver_city->getId();
+        $receiver_state = State::findFirst($receiver_city->getStateId());
+        $parcelData['receiver_state'] = $receiver_state->getId();
+        $parcelData['receiver_country'] = $receiver_state->getCountryId();
+
+        /** @var City $billingFromBranch */
+        $billingFromBranch = $sender_city;
+
+        /** @var City $billingToBranch */
+        $billingToBranch = City::findFirst($parcelData['receiver_city']);
+
+        $parcelData['receiver_city'] = $billingToBranch->getId();
+
+        $calc_weight_billing = WeightBilling::calcBilling($billingFromBranch->getBranchId(), $billingToBranch->getBranchId(), $parcelData['weight'], $billingPlanId);
+        if ($calc_weight_billing == false) {
+            return $this->response->sendError(ResponseMessage::CALC_BILLING_WEIGHT);
+        }
+
+        $onforwarding_charge = OnforwardingCharge::fetchByCity($parcelData['receiver_city'], $billingPlanId);
+        if ($onforwarding_charge == false) {
+            return $this->response->sendError(ResponseMessage::CALC_BILLING_ONFORWARDING);
+        }
+
+        $parcelData['company_id'] = $company_id;
+        $parcelData['amount_due'] = $calc_weight_billing + $onforwarding_charge->getAmount();
+        $parcelData['delivery_type'] = DeliveryType::DISPATCH;
+        $parcelData['shipping_type'] = ShippingType::EXPRESS;
+        $parcelData['cash_amount'] = 0;
+        $parcelData['is_billing_overridden'] = 0;
+        $parcelData['pos_amount'] = 0;
+        $parcelData['pos_trans_id'] = '';
+        $parcelData['request_type'] = RequestType::OTHERS;
+        $parcelData['billing_type'] = 'corporate';
+        $parcelData['weight_billing_plan'] = $billingPlanId;
+        $parcelData['onforwarding_billing_plan'] = $billingPlanId;
+        $parcelData['is_freight_included'] = 1;
+        $parcelData['qty_metrics'] = 'weight';
+        $parcelData['insurance'] = 0;
+        $parcelData['duty_charge'] = 0;
+        $parcelData['handling_charge'] = 0;
+        $parcelData['cost_of_crating'] = 0;
+        $parcelData['storage_demurrage'] = 0;
+        $parcelData['others'] = 0;
+
+
+        $sender_address = [];
+        $sender_address['street1'] = $parcelData['sender_address_1'];
+        $sender_address['street2'] = $parcelData['sender_address_2'];
+        $sender_address['country_id'] = $parcelData['sender_country'];
+        $sender_address['city_id'] = $parcelData['sender_city'];
+        $sender_address['state_id'] = $parcelData['sender_state'];
+        $sender_address['id'] = null;
+
+        $receiver_address = [];
+        $receiver_address['street1'] = $parcelData['receiver_address_1'];
+        $receiver_address['street2'] = $parcelData['receiver_address_2'];
+        $receiver_address['country_id'] = $parcelData['receiver_country'];
+        $receiver_address['city_id'] = $parcelData['receiver_city'];
+        $receiver_address['state_id'] = $parcelData['receiver_state'];
+        $receiver_address['id'] = null;
+
+
+
+        $status = $parcel_obj->saveForm($creatorBranch->getId(), $sender, $sender_address, $receiver, $receiver_address,
+            '', $parcelData, $to_branch_id, $createdBy->getId());
+        return ($status) ? $this->response->sendSuccess(['waybill_number' => $parcel_obj->getWaybillNumber()]) :
+            $this->response->sendError();
+
+    }
+
+
     public function getOneAction()
     {
         $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
@@ -276,7 +446,7 @@ class ParcelController extends ControllerBase
             'start_created_date', 'end_created_date', 'start_pickup_date', 'end_pickup_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr',
             'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
-            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed'
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed', 'delivery_branch_id'
         ];
 
         $filter_by = [];
@@ -331,6 +501,7 @@ class ParcelController extends ControllerBase
 
         $filter_by = $this->getFilterParams();
 
+        //dd($filter_by);
         $fetch_with = [];
 
 
@@ -406,6 +577,8 @@ class ParcelController extends ControllerBase
         //*/
 
         if (!is_null($report) && $report == 1) {
+            //return $this->response->sendError($filter_by);
+            $fetch_with['teller'] = 1;
             $parcels = Parcel::getReportData($offset, $count, $filter_by, $fetch_with, $order_by);
         } else {
             $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -478,7 +651,7 @@ class ParcelController extends ControllerBase
 
     public function countAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
 
         $filter_by = $this->getFilterParams();
 
@@ -487,6 +660,37 @@ class ParcelController extends ControllerBase
             return $this->response->sendError();
         }
         return $this->response->sendSuccess($count);
+    }
+
+
+    public function groupCountAction(){
+        $start_time = date('d-M-y h:i:s');
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+
+        $stat_keys = ['created','for_sweep', 'for_sweep_ecommerce', 'for_delivery', 'received', 'groundsman', 'sorted', 'transit_to_customer', 'sorted_still_at_hub', 'delivered', 'ready_for_sorting'];
+
+        $stats = [];
+
+        $entries = $this->request->getPost();
+        //$entries = json_decode($this->request->getRawBody(), true);
+        //dd($entries);
+
+        //$filter_by = $this->getFilterParams();
+        foreach ($stat_keys as $stat_key) {
+            if(!array_key_exists($stat_key, $entries)) continue;
+            //$filter_by = $entries[$stat_key];
+            $filter_by = json_decode($entries[$stat_key], true);
+            if(is_null($filter_by)){continue;}
+            $stats[$stat_key] = Parcel::parcelCount($filter_by);
+        }
+
+        $end_time = date('d-M-y h:i:s');
+
+        //dd($stats);
+
+        $stats['start_time'] = $start_time;
+        $stats['end_time'] = $end_time;
+        return $this->response->sendSuccess($stats);
     }
 
     public function moveToForSweeperAction()
@@ -944,10 +1148,10 @@ class ParcelController extends ControllerBase
         //sort the parcels
         $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
 
-        $soft_result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
+        $sort_result = Parcel::bulkMoveToForSweeper($waybill_number_arr, $to_branch_id);
 
-        if(count($soft_result['bad_parcels'])){
-            foreach ($soft_result as $key => $value) {
+        if(count($sort_result['bad_parcels'])){
+            foreach ($sort_result as $key => $value) {
                 unset($waybill_number_arr[$key]);
             }
         }
@@ -1856,8 +2060,6 @@ exit();
      * @author Olawale Lawal <wale@cottacush.com>
      * @return $this
      */
-
-
     public function historyAction()
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -1898,7 +2100,16 @@ exit();
             }
         }
 
+
+
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
+
+        if(count($parcelHistory) && count($waybill_number) == 1){
+            $is_exported = Parcel::parcelIsExported($waybill_number);
+            foreach($parcelHistory as $key => $value){
+                $parcelHistory[$key]['is_exported'] = $is_exported;
+            }
+        }
 
         $parcelHistory_for_scanner = [];
 
@@ -1916,6 +2127,9 @@ exit();
         return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
     }
 
+    /**
+     * @return $this
+     */
     private function importedParcelHistory(){
         //add a new job
         $worker = new ParcelImportWorker();
@@ -1946,6 +2160,15 @@ exit();
         }
         $result = $parcel->getData();
         $result['histories'] = $parcel->getHistories();
+        return $this->response->sendSuccess($result);
+    }
+
+    public function getIsParcelExportedAction(){
+        $waybill_number = $this->request->get('waybill_number');
+        if(is_null($waybill_number)){
+            return ResponseMessage::ERROR_REQUIRED_FIELDS;
+        }
+        $result = Parcel::parcelIsExported($waybill_number);
         return $this->response->sendSuccess($result);
     }
 
@@ -2039,6 +2262,7 @@ exit();
         $comment = $this->request->getPost('comment');
         $attempted_delivery = $this->request->getPost('attempted_delivery', null, 0);
         $return_flag = $this->request->getPost('return_flag', null, 1);
+        $extra_note = $this->request->getPost('extra_note');
 
         if (!in_array($return_flag, [0, 1])) {
             return $this->response->sendError(ResponseMessage::INVALID_VALUES);
@@ -2095,10 +2319,77 @@ exit();
             }
 
             if (!is_null($comment)) {
-                ParcelComment::add(['type' => ParcelComment::COMMENT_TYPE_RETURNED, 'comment' => $comment, 'created_by' => $this->auth->getPersonId(), 'waybill_number' => $parcel->getWaybillNumber()]);
+                ParcelComment::add(['type' => ParcelComment::COMMENT_TYPE_RETURNED, 'comment' => $comment,
+                    'created_by' => $this->auth->getPersonId(), 'waybill_number' => $parcel->getWaybillNumber(), 'extra_note' => $extra_note]);
             }
         }
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+    }
+
+    public function removeNegativeFlagAction(){
+        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::SWEEPER, Role::DISPATCHER]);
+        $waybill_numbers = $this->request->getPost('waybill_number');
+
+        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
+        $auth_data = $this->auth->getData();
+
+        $parcel_arr = Parcel::getByWaybillNumberList($waybill_number_arr, true);
+        $bad_parcel = [];
+
+        /**
+         * @var Parcel $parcel
+         */
+        foreach ($waybill_number_arr as $waybill_number) {
+            if (!isset($parcel_arr[$waybill_number])) {
+                $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if($parcel === false){
+                    $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel_arr[$waybill_number] = $parcel;
+            }
+
+            $parcel = $parcel_arr[$waybill_number];
+
+            //cannot flag a return for a delivered parcel
+            if ($parcel->getStatus() == Status::PARCEL_DELIVERED) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_DELIVERED;
+                continue;
+            }
+
+            //if it is an officer, his branch must be either the to or from branch id
+            if ($this->auth->getUserType() == Role::OFFICER && !in_array($auth_data['branch_id'],
+                    [$parcel->getToBranchId(), $parcel->getFromBranchId()])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_ACCESSIBLE;
+                continue;
+            }
+
+            //bags and split parcel parent can not be returned
+            if (in_array($parcel->getEntityType(), [Parcel::ENTITY_TYPE_BAG, Parcel::ENTITY_TYPE_PARENT])) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+
+            $parcel->setReturnStatus(0);
+            $parcel->setForReturn(0);
+            if (!$parcel->save()) {
+                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_CHANGE_RETURN_FLAG;
+                continue;
+            }
+
+            $comment = ParcelComment::findFirst([
+                'conditions' => "waybill_number = :waybill_number:",
+                'bind' => ['waybill_number' => $waybill_number]
+            ]);
+
+            if($comment){
+                $comment->delete();
+            }
+
+        }
+
+
+        return $this->response->sendSuccess();
     }
 
     /**
@@ -2476,12 +2767,27 @@ exit();
      */
     public function createBulkShipmentTaskAction()
     {
+       /* try{
+
+        }catch (\Exception $e){
+            if ($e->getPrevious()) {
+                print $e->getPrevious()->getMessage() . "\n";
+            } else {
+                print $e->getMessage() . "\n";
+            }
+        }*/
         $postData = $this->request->getJsonRawBody();
 
         $validation = new BulkShipmentCreationValidation($postData);
 
+
         if (!$validation->validate()) {
             return $this->response->sendError($validation->getMessages());
+        }
+
+        if(!CompanyBillingPlan::findFirst(['billing_plan_id = :billing_plan_id: AND company_id = :company_id:',
+            'bind' => ['billing_plan_id' => $postData->billing_plan_id, 'company_id' => $postData->company_id]])){
+            return $this->response->sendError('Billing plan does not belong to company');
         }
 
         $company = Company::findFirst($postData->company_id);
@@ -2490,6 +2796,7 @@ exit();
         $postData->company = $company->toArray();
         $postData->billing_plan = $billing_plan->toArray();
         $postData->creator = $this->auth->getData();
+
 
         $worker = new ParcelCreationWorker();
         $job_id = $worker->addJob(json_encode($postData));
@@ -2663,6 +2970,63 @@ exit();
 
         return $this->response->sendSuccess($histories[$waybill_number]);
     }
+
+    public function getHistoryForApiAction(){
+        $waybill_number = $this->request->getQuery('waybill_number');
+
+
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if(!$parcel){
+            $parcel = Parcel::getByReferenceNumber($waybill_number);
+            if(!$parcel){
+                return $this->response->sendError('Parcel found for the supplied waybill number');
+            }
+        }
+
+        $histories = ParcelHistory::getHistoryForApi($waybill_number);
+
+        if(!$histories){
+            return $this->response->sendError('Could not load history for parcel');
+        }
+
+        $results = [];
+        foreach ($histories as $data) {
+            $results[] = [
+                'status' => $data['parcelHistory']->getDescription(),
+                'from_branch' => $data['fromBranch']->getName(),
+                'to_branch' => $data['toBranch']->getName(),
+                'date' => $data['parcelHistory']->getCreatedDate(),
+            ];
+        }
+
+        return $this->response->sendSuccess($results);
+    }
+
+    public function getParcelLastStatusForApiAction(){
+        $waybill_number = $this->request->getQuery('waybill_number');
+
+
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if(!$parcel){
+            $parcel = Parcel::getByReferenceNumber($waybill_number);
+            if(!$parcel){
+                return $this->response->sendError('Parcel found for the supplied waybill number');
+            }
+        }
+
+        $data = ParcelHistory::getLastHistoryForParcelForApi($parcel->getId());
+
+        $history = [
+            'status' => $data['parcelHistory']->getDescription(),
+            'from_branch' => $data['fromBranch']->getName(),
+            'to_branch' => $data['toBranch']->getName(),
+            'date' => $data['parcelHistory']->getCreatedDate(),
+        ];
+
+        return $this->response->sendSuccess($history);
+
+    }
+
 
     public function getDelayedShipmentsAction(){
         $param = $this->request->getQuery();

@@ -4,7 +4,8 @@ use PhalconUtils\Mailer\MailerHandler;
 
 class EmailMessage extends \Phalcon\Mvc\Model
 {
-    const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
+    //const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
+    const DEFAULT_FROM_EMAIL = 'info@openbulksms.com';
     const CORPORATE_LEAD = 'marketing_opportunity';
     const USER_ACCOUNT_CREATION = 'staff_account_creation';
     const COMPANY_USER_ACCOUNT_CREATION = 'company_user_account_creation';

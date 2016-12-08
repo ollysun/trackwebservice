@@ -29,13 +29,15 @@ return new \Phalcon\Config(array(
     'params' => array(
 
         //TODO change to production config
-        'mailer' => array(
-            'mandrill_username' => 'yemi@cottacush.com',
-            'mandrill_password' => 'c483t67ANIZJNsVpRMTH4Q',
-            'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
-            'smtp_host' => 'smtp.mandrillapp.com',
+        'mailer' => [
+            'mandrill_username' => 'yemexx1@gmail.com',
+            'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
+            'ses_username' => 'AKIAJ6NFQVK5GD4JHGZQ',
+            'ses_password' => 'AmFS3R7LwHCSqynaB5HMFYAIy+A96CkTEY5eVRReGrnO',
+            'default_from' => ['trackplus@openbulksms.com' => 'Courier Plus'],
+            'smtp_host' => 'email-smtp.us-east-1.amazonaws.com',
             'smtp_port' => 587
-        ),
+        ]
     ),
 
 

@@ -245,6 +245,11 @@ class Parcel extends \Phalcon\Mvc\Model
     protected $onforwarding_billing_plan_id;
 
     /**
+     * @var integer
+     */
+    protected $company_id;
+
+    /**
      * @var string
      */
     protected $billing_type;
@@ -924,6 +929,16 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param $company_id
+     * @return $this
+     */
+    public function setCompanyId($company_id){
+        if($this->company_id > 0) return $this;
+        $this->company_id = $company_id;
+        return $this;
+    }
+
+    /**
      * @author Adegoke Obasa <goke@cottacush.com>
      * @param string $billing_type
      */
@@ -1332,6 +1347,15 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @author Ademu Anthony
+     * @return int
+     */
+    public function getCompanyId()
+    {
+        return $this->company_id;
+    }
+
+    /**
      * @author Adegoke Obasa <goke@cottacush.com>
      * @return string
      */
@@ -1504,7 +1528,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'order_number' => 'order_number',
             'pickup_date' => 'pickup_date',
             'notification_status' => 'notification_status',
-            'is_bulk_shipment' => 'is_bulk_shipment'
+            'is_bulk_shipment' => 'is_bulk_shipment',
+            'company_id' => 'company_id'
         );
     }
 
@@ -1561,7 +1586,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'order_number' => $this->getOrderNumber(),
             'pickup_date' => $this->getPickupDate(),
             'notification_status' => $this->getNotificationStatus(),
-            'is_bulk_shipment' => $this->getIsBulkShipment()
+            'is_bulk_shipment' => $this->getIsBulkShipment(),
+            'company_id' => $this->getCompanyId()
         );
     }
 
@@ -1572,7 +1598,7 @@ class Parcel extends \Phalcon\Mvc\Model
                              $reference_number = null, $route_id = null, $request_type = RequestType::OTHERS, $billing_type = null, $weight_billing_plan_id = null, $onforwarding_billing_plan_id = null,
                              $is_freight_included = 0, $qty_metrics = Parcel::QTY_METRICS_WEIGHT, $insurance = null, $duty_charge = null, $handling_charge = null,
                              $cost_of_crating = null, $storage_demurrage = null, $others = null, $base_price, $return_status = 0, $order_number = null, $pickup_date = null,
-                            $notification_status = Status::INACTIVE, $is_bulk_shipment = 0
+                            $notification_status = Status::INACTIVE, $is_bulk_shipment = 0, $company_id = null
     )
 
     {
@@ -1634,6 +1660,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $this->setPickupDate($pickup_date);
         $this->setNotificationStatus($notification_status);
         $this->setIsBulkShipment($is_bulk_shipment);
+        $this->setCompanyId($company_id);
     }
 
     public function initDataWithBasicInfo($from_branch_id, $to_branch_id, $created_by, $status, $waybill_number, $entity_type, $is_visible)
@@ -1998,7 +2025,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         if (isset($filter_by['company_id'])) {
-            $where[] = 'Company.id = :company_id:';
+            $where[] = 'Parcel.company_id = :company_id:';
             $bind['company_id'] = $filter_by['company_id'];
         }
 
@@ -2030,9 +2057,9 @@ class Parcel extends \Phalcon\Mvc\Model
          * @var Auth $auth
          */
         $auth = Di::getDefault()->getAuth();
-        if(isset($auth->getData()['company_id'])){
+        if($auth->isCooperateUser()){
             $fetch_with['with_company'] = 1;
-            $filter_by['company_id'] = $auth->getData()['company_id'];
+            $filter_by['company_id'] = $auth->getCompanyId();
         }
 
 
@@ -2122,6 +2149,15 @@ class Parcel extends \Phalcon\Mvc\Model
             ->columns('COUNT(*) AS parcel_count')
             ->from('Parcel');
 
+        /**
+         * @var Auth $auth
+         */
+        $auth = Di::getDefault()->getAuth();
+        if($auth->isCooperateUser()){
+            $filter_by['company_id'] = $auth->getCompanyId();
+        }
+
+
         //filters
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
@@ -2142,10 +2178,10 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->columns('COUNT(DISTINCT Parcel.id) AS parcel_count');
         }
 
-        if (isset($filter_by['company_id'])) {
+        /*if (isset($filter_by['company_id'])) {
             $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
             $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
-        }
+        }*/
 
         if (isset($filter_by['return_reason_comment'])) {
             $builder->innerJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
@@ -2159,6 +2195,14 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         return intval($data[0]->parcel_count);
+    }
+
+    public static function parcelIsExported($waybill_number){
+        $parcel = self::fetchAll(0, 1, ['waybill_number' => $waybill_number], ['with_receiver_address' => true]);
+        if(count($parcel) < 1) return false;
+        $parcel = $parcel[0];
+        //return ($parcel['receiver_address']);
+        return $parcel['receiver_address']['city']['id'] == City::EXPORT_CITY_ID;// && $parcel['status'] == Status::PARCEL_DELIVERED;
     }
 
     /**
@@ -2366,6 +2410,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
 
             $this->setOrderNumber($parcel_data['order_number']);
+            if(isset($parcel_data['company_id'])){
+                $this->setCompanyId($parcel_data['company_id']);
+            }
             if(isset($parcel_data['is_bulk_shipment'])){
                 $this->setIsBulkShipment($parcel_data['is_bulk_shipment']);
             }
@@ -2425,7 +2472,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //saving the parcel history if it is not been created by a merchant and it is not been edited
-        if ($check && !$created_by_customer && !$parcel_data['id']) {
+        if ($check && !$created_by_customer && !array_key_exists('id', $parcel_data)) {
             $parcel_history = new ParcelHistory();
             $parcel_history->setTransaction($transaction);
             $history_desc = ($to_branch_id == $from_branch_id) ? ParcelHistory::MSG_FOR_DELIVERY : ParcelHistory::MSG_FOR_SWEEPER;
@@ -2858,6 +2905,9 @@ class Parcel extends \Phalcon\Mvc\Model
                 $this->getOrderNumber(),
                 $this->getPickupDate()
             );
+
+            $sub_parcel->setIsBulkShipment($this->getIsBulkShipment());
+            $sub_parcel->setCompanyId($this->getCompanyId());
 
             if (!$sub_parcel->save()) {
                 $check = false;
@@ -3355,6 +3405,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
+
         $intermediate = $builder->getQuery()->parse();
         $readConnection = (new self())->getReadConnection();
         $sql = $readConnection->getDialect()->select($intermediate);
@@ -3375,6 +3426,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $sql = str_replace(':APL0', $count, $sql);
         $sql = str_replace(':APL1', $offset, $sql);
+
 
         $data = $readConnection->fetchAll($sql, PDO::FETCH_ASSOC, $bind);
         return $data;
@@ -3427,7 +3479,20 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->groupBy('Parcel.id');
         }
 
+        if(isset($filter_by['delivery_branch_id'])){
+            $branch_id = addslashes($filter_by['delivery_branch_id']);
+            $builder->innerJoin('Address', 'Address.id = Parcel.receiver_address_id');
+            $builder->innerJoin('City', "City.id = Address.city_id AND City.branch_id = '$branch_id'");
+        }
+
         //model hydration
+        if($fetch_with['teller']){
+            $columns[] = 'Teller.*';
+            $columns[] = 'TellerBank.*';
+            $builder->leftJoin('TellerParcel', 'Parcel.id = TellerParcel.parcel_id');
+            $builder->leftJoin('Teller', 'TellerParcel.teller_id = Teller.id');
+            $builder->leftJoin('TellerBank', 'TellerBank.id = Teller.bank_id', 'TellerBank');
+        }
         if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
             $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');
@@ -3511,7 +3576,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'Company.*';
             $columns[] = 'BillingPlan.*';
             $builder->leftJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id', 'BillingPlan');
-            $builder->leftJoin('Company', 'Company.id = BillingPlan.company_id', 'Company');
+            $builder->leftJoin('Company', 'Company.id = Parcel.company_id', 'Company');
         }
 
         if (isset($fetch_with['with_invoice_parcel'])) {

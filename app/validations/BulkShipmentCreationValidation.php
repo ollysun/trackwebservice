@@ -35,11 +35,11 @@ class BulkShipmentCreationValidation extends BaseValidation
             'model' => BillingPlan::class
         ]));
 
-        $this->add('billing_plan_id', new Model([
+       /*$this->add('billing_plan_id', new Model([
             'model' => BillingPlan::class,
             'conditions' => 'id=:id: AND company_id=:company_id:',
             'bind' => ['id' => $this->getValue('billing_plan_id'), 'company_id' => $this->getValue('company_id')],
             'message' => 'Billing Plan does not belong to the company supplied'
-        ]));
+        ]));*/
     }
 }

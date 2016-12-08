@@ -293,7 +293,9 @@ class BillingPlan extends \Phalcon\Mvc\Model
     {
         $this->setName($name);
         $this->setType($type);
-        $this->setCompanyId($company_id);
+        if($company_id && $company_id > 0){
+            $this->setCompanyId($company_id);
+        }
         $this->setDiscount($discount);
 
         $now = date('Y-m-d H:i:s');
@@ -435,6 +437,12 @@ class BillingPlan extends \Phalcon\Mvc\Model
             $bind['name'] = '%' . strtolower(trim($filter_by['company_name'])) . '%';
         }
 
+        if (isset($filter_by['plan_name'])) {
+            $where[] = 'name LIKE :plan_name:';
+            $bind['plan_name'] = '%' . strtolower(trim($filter_by['plan_name'])) . '%';
+        }
+
+
         if (isset($filter_by['type'])) {
             $where[] = 'BillingPlan.type = :type:';
             $bind['type'] = $filter_by['type'];
@@ -483,9 +491,18 @@ class BillingPlan extends \Phalcon\Mvc\Model
             $columns[] = 'Company.*';
         }
 
+        if(isset($fetch_with['linked_companies_count'])){
+            $columns[] = 'COUNT(CompanyBillingPlan.company_id) AS linked_companies_count';
+            $builder->leftJoin('CompanyBillingPlan', 'BillingPlan.id = CompanyBillingPlan.billing_plan_id');
+
+            $builder->groupBy('BillingPlan.id');
+        }
+
         $builder->where(join(' AND ', $where), $bind);
 
         $builder->columns($columns);
+
+
         $data = $builder->getQuery()->execute();
         $result = [];
         foreach ($data as $item) {
@@ -498,6 +515,10 @@ class BillingPlan extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_company'])) {
                     $plan['company'] = (empty($billing_company)) ? null : $item->company->getData();
                 }
+            }
+
+            if(isset($fetch_with['linked_companies_count'])){
+                $plan['linked_companies_count'] = $item->linked_companies_count;
             }
             $result[] = $plan;
         }
@@ -570,7 +591,9 @@ class BillingPlan extends \Phalcon\Mvc\Model
     {
         $result = true;
         $this->clonePricingAndWeightRanges($baseBillingPlanId, $newBillingPlan->getId());
-        $onForwardingCharges = OnforwardingCharge::findByBillingPlanId($baseBillingPlanId);
+        //if using weight default, use onforwarding default
+        $chargeToUseId = $baseBillingPlanId == 1?2:$baseBillingPlanId;
+        $onForwardingCharges = OnforwardingCharge::findByBillingPlanId($chargeToUseId);
         foreach ($onForwardingCharges as $onForwardingCharge) {
             /**
              * @var OnforwardingCharge $onForwardingCharge
