@@ -2178,6 +2178,12 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->columns('COUNT(DISTINCT Parcel.id) AS parcel_count');
         }
 
+        if(isset($filter_by['delivery_branch_id'])){
+            $branch_id = addslashes($filter_by['delivery_branch_id']);
+            $builder->innerJoin('Address', 'Address.id = Parcel.receiver_address_id');
+            $builder->innerJoin('City', "City.id = Address.city_id AND City.branch_id = '$branch_id'");
+        }
+
         /*if (isset($filter_by['company_id'])) {
             $builder->innerJoin('BillingPlan', 'BillingPlan.id= Parcel.onforwarding_billing_plan_id');
             $builder->innerJoin('Company', 'Company.id = BillingPlan.company_id');
@@ -2236,6 +2242,8 @@ class Parcel extends \Phalcon\Mvc\Model
         $sender_obj->setTransaction($transaction);
         $sender_obj->initData($sender['firstname'], $sender['lastname'], $sender['phone'], $sender['email'], null, $is_sender_existing);
         $check = $sender_obj->save();
+
+
 
         //saving the receiver's user info
         if ($check) {
@@ -2423,6 +2431,7 @@ class Parcel extends \Phalcon\Mvc\Model
             }
             $this->setNotificationStatus($parcel_data['notification_status']);
             $check = $this->save();
+
         } else {
             if ($bank_account != null) {
                 Util::slackDebug("Parcel not created", "Unable to save bank account");
@@ -2444,7 +2453,12 @@ class Parcel extends \Phalcon\Mvc\Model
                 }else{
                     $this->generateWaybillNumber($from_branch_id);
                 }
+
+                //dd($this);
                 $check = $this->save();
+                if(!$check){
+                    Util::slackDebug("Parcel not created", var_export($this->getMessages(), true));
+                }
             }
         } else {
             Util::slackDebug("Parcel not created", "Unable to save parcel");
@@ -2463,6 +2477,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         $waybill_number = [$this->getWaybillNumber()];
+
 
 
         //creating sub-parcel if the number of packages is more than 1
@@ -2492,7 +2507,8 @@ class Parcel extends \Phalcon\Mvc\Model
             return $waybill_number;
         } else {
             Util::slackDebug("Parcel not created", "Unable to save parcel history");
-            Util::slackDebug("Parcel not created", $parcel_history->getMessages());
+            if(isset($parcel_history))
+                Util::slackDebug("Parcel not created", $parcel_history->getMessages());
             return false;
         }
     }
@@ -2676,12 +2692,16 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null)
+    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null, $where_id_reference_number)
     {
+        $waybill_csv = "'" . implode("','", $waybill_number_arr). "'";
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel')
             ->inWhere('waybill_number', $waybill_number_arr);
+        if($where_id_reference_number){
+            $builder = $builder->orWhere("Parcel.reference_number IN ($waybill_csv)");
+        }
 
 
         if($fetch_with){
@@ -2824,7 +2844,9 @@ class Parcel extends \Phalcon\Mvc\Model
                         $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
                     }
                     if (isset($fetch_with['with_parcel_comment'])) {
+                        if(isset($item->parcelComent))
                         $parcel['return_reason'] = $item->parcelComment->toArray();
+                        else $parcel['return_reason'] = [];
                     }
                     if (isset($fetch_with['with_edit_access']) && $this_branch_id) {
                         $parcel['edit_access'] = Parcel::isEditAccessGranted($parcel['created_branch_id'], $this_branch_id);
@@ -3486,12 +3508,20 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //model hydration
-        if($fetch_with['teller']){
+        if(isset($fetch_with['with_sales_teller'])){
             $columns[] = 'Teller.*';
             $columns[] = 'TellerBank.*';
             $builder->leftJoin('TellerParcel', 'Parcel.id = TellerParcel.parcel_id');
-            $builder->leftJoin('Teller', 'TellerParcel.teller_id = Teller.id');
+            $builder->leftJoin('Teller', 'TellerParcel.teller_id = Teller.id AND Teller.status != '.Status::TELLER_DECLINED);
             $builder->leftJoin('TellerBank', 'TellerBank.id = Teller.bank_id', 'TellerBank');
+        }
+
+        if(isset($fetch_with['with_cod_teller'])){
+            $columns[] = 'CodTeller.*';
+            $columns[] = 'CodTellerBank.*';
+            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id');
+            $builder->leftJoin('CodTeller', 'CodTellerParcel.teller_id = CodTeller.id AND CodTeller.status != '. Status::TELLER_DECLINED);
+            $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
         }
         if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
@@ -3570,6 +3600,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $waybill_number_arr = explode(',', $filter_by['waybill_number_arr']);
 
             $builder->inWhere('Parcel.waybill_number', $waybill_number_arr);
+
         }
 
         if (isset($fetch_with['with_company'])) {

@@ -218,6 +218,13 @@ class BillingplanController extends ControllerBase
         return $this->response->sendSuccess($plans);
     }
 
+    public function getAllCompanyPlansAction(){
+        $this->auth->allowOnly([Role::SWEEPER, Role::DISPATCHER, Role::ADMIN, Role::OFFICER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+
+        $plans = CompanyBillingPlan::find();
+        return $this->response->sendSuccess($plans);
+    }
+
     /**
      * @author Rahman Shitu <rahman@cottacush.com>
      * @return array

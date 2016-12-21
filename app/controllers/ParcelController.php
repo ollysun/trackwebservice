@@ -44,11 +44,30 @@ class ParcelController extends ControllerBase
         $to_branch_id = (isset($payload['to_branch_id'])) ? $payload['to_branch_id'] : null;
         $nearest_branch_id = $this->auth->isCooperateUser()? City::findFirst($sender_address['city_id'])->getBranchId(): null;
 
+
         /** @Author if this is a cooperate user and the receiver is not in their address list */
 
         if (in_array(null, array($parcel, $sender, $sender_address, $receiver, $receiver_address)) or $to_hub === null) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
+
+        //unset zero and null id
+        if(isset($sender['id']) && ($sender['id'] == '0' || $parcel['id'] == null)){
+            unset($sender['id']);
+        }
+        if(isset($sender_address['id']) && ($sender_address['id'] == '0' || $parcel['id'] == null)){
+            unset($sender_address['id']);
+        }
+        if(isset($receiver['id']) && ($receiver['id'] == '0' || $parcel['id'] == null)){
+            unset($receiver['id']);
+        }
+        if(isset($receiver_address['id']) && ($receiver_address['id'] == '0' || $parcel['id'] == null)){
+            unset($receiver_address['id']);
+        }
+        if(isset($parcel['id']) && ($parcel['id'] == '0' || $parcel['id'] == null)){
+            unset($parcel['id']);
+        }
+
 
         //if this is for a cooporate, check that the billing_plan is correct
         if($parcel['weight_billing_plan'] != 1){
@@ -366,7 +385,7 @@ class ParcelController extends ControllerBase
         $parcelData['billing_type'] = 'corporate';
         $parcelData['weight_billing_plan'] = $billingPlanId;
         $parcelData['onforwarding_billing_plan'] = $billingPlanId;
-        $parcelData['is_freight_included'] = 1;
+        $parcelData['is_freight_included'] = 0;
         $parcelData['qty_metrics'] = 'weight';
         $parcelData['insurance'] = 0;
         $parcelData['duty_charge'] = 0;
@@ -490,6 +509,8 @@ class ParcelController extends ControllerBase
         $with_company = $this->request->getQuery('with_company');
         $with_invoice_parcel = $this->request->getQuery('with_invoice_parcel');
         $with_parcel_comment = $this->request->getQuery('with_parcel_comment');
+        $with_sales_teller = $this->request->getQuery('with_sales_teller');
+        $with_cod_teller = $this->request->getQuery('with_cod_teller');
         $with_edit_access = 1;
 
         $with_total_count = $this->request->getQuery('with_total_count');
@@ -511,6 +532,10 @@ class ParcelController extends ControllerBase
          */
         if(isset($filter_by['status']) && $filter_by['status'] == Status::PARCEL_DELIVERED){
             $with_delivery_receipt = true;
+        }
+
+        if(!is_null($send_all)){
+            $filter_by['send_all'] = true;
         }
 
         if (!is_null($with_to_branch)) {
@@ -562,6 +587,14 @@ class ParcelController extends ControllerBase
             $fetch_with['with_parcel_comment'] = true;
         }
 
+        if(!is_null($with_sales_teller)){
+            $fetch_with['with_sales_teller'] = true;
+        }
+
+        if(!is_null($with_cod_teller)){
+            $fetch_with['with_cod_teller'] = true;
+        }
+
         if(!is_null($with_edit_access)){
             $fetch_with['with_edit_access'] = true;
         }
@@ -571,14 +604,13 @@ class ParcelController extends ControllerBase
             unset($filter_by['status']);
             $waybill_numbers = Parcel::sanitizeWaybillNumbers($filter_by['waybill_number_arr']);
             return $this->response->sendSuccess(
-                Parcel::getByWaybillNumberList($waybill_numbers, false, $fetch_with)
+                Parcel::getByWaybillNumberList($waybill_numbers, false, $fetch_with, true)
             );
         }
         //*/
 
         if (!is_null($report) && $report == 1) {
             //return $this->response->sendError($filter_by);
-            $fetch_with['teller'] = 1;
             $parcels = Parcel::getReportData($offset, $count, $filter_by, $fetch_with, $order_by);
         } else {
             $parcels = Parcel::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
@@ -1741,6 +1773,36 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
     }
 
+
+    public function updatePodAction(){
+        $this->auth->allowOnly(Role::ADMIN);
+        $waybill_number = $this->request->getPost('waybill_number');
+        $receiver_name = $this->request->getPost('receiver_name');
+        $phone = $this->request->getPost('phone_number');
+        $date = $this->request->getPost('date');
+        $hour = $this->request->getPost('hour');
+        $minute = $this->request->getPost('minute');
+
+        if(in_array(null, [$waybill_number, $receiver_name])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $parcel = Parcel::getByWaybillNumber($waybill_number);
+        if(!$parcel){
+            return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+
+        if($parcel->getStatus() != Status::PARCEL_DELIVERED){
+            return $this->response->sendError('Parcel not yet delivered');
+        }
+
+        /** @var DeliveryReceipt $receipt */
+        $receipt = DeliveryReceipt::findFirst(['conditions' => 'waybill_number = :waybill_number:', 'bind' =>[':waybill_number:' => $waybill_number]]);
+        if(!$receipt){
+            return $this->response->sendError('POD not found');
+        }
+        $receipt->update(['name' => $receiver_name, 'waybill_number' => $waybill_number, 'delivered_at' => $date]);
+    }
 
     public function undoReverseDeliveryToReturn1Action(){
         die('deleted');
