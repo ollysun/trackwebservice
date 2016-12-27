@@ -122,7 +122,7 @@ class BusinessManager extends Phalcon\Mvc\Model
 
         if (!empty($filter_by['region_id'])) {
             $where[] = 'BusinessManager.region_id = :region_id:';
-            $bind['region_by'] = $filter_by['region_id'];
+            $bind['region_id'] = $filter_by['region_id'];
         }
 
         $builder->columns($columns);
@@ -145,7 +145,7 @@ class BusinessManager extends Phalcon\Mvc\Model
 
         if (!empty($filter_by['region_id'])) {
             $where[] = 'BusinessManager.region_id = :region_id:';
-            $bind['region_by'] = $filter_by['region_id'];
+            $bind['region_id'] = $filter_by['region_id'];
         }
 
 

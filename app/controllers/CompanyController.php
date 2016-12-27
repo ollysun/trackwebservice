@@ -105,7 +105,8 @@ class CompanyController extends ControllerBase
         }
 
         //validate bm
-        if(!BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
+        if($postData->company->business_manager_staff_id &&
+            !BusinessManager::findFirstByStaff_id($postData->company->business_manager_staff_id)){
             return $this->response->sendError($postData->company->business_manager_staff_id . ' is not a business manager');
         }
 
