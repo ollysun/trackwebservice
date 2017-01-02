@@ -252,6 +252,26 @@ class CompanyBillingPlan extends \Phalcon\Mvc\Model
         return $plans;
     }
 
+    public static function fetchPlansForCompany(array $filter_by){
+        $data_source = new \Phalcon\Mvc\Model\Query\Builder();
+        $data_source->addFrom('CompanyBillingPlan', 'CompanyBillingPlan');
+        $data_source->leftJoin('BillingPlan', 'BillingPlan.id = CompanyBillingPlan.billing_plan_id', 'BillingPlan');
+        $data_source->columns(['BillingPlan.*']);
+        $data_source->orderBy(['CompanyBillingPlan.is_default DESC']);
+
+        if(isset($filter_by['company_id'])){
+            $data_source->where("CompanyBillingPlan.company_id = '".$filter_by['company_id']."'");
+        }
+
+        $data = $data_source->getQuery()->execute();
+
+        $plans = [];
+        foreach ($data as $item) {
+            $plans[] = $item->toArray();
+        }
+        return $plans;
+    }
+
     public static function getLinkedCompanies($plan_id){
         $dataSource = new \Phalcon\Mvc\Model\Query\Builder();
         $dataSource->addFrom('CompanyBillingPlan', 'CompanyBillingPlan');

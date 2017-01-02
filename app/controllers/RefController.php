@@ -3,6 +3,35 @@
 
 //todo: cache all responses
 class RefController extends ControllerBase {
+    public function addCountryAction(){
+        //$this->auth->allowOnly(Role::ADMIN);
+
+        $country_name = $this->request->getPost('country');
+        $state_name = $this->request->getPost('state');
+        $town_name = $this->request->getPost('town');
+
+        $country = Country::findFirstByName($country_name);
+        if($country){
+            return $this->response->sendError('Duplicate Error');
+        }
+
+        $country = new Country();
+        $country->setName($country_name);
+        $country->save();
+
+        $state = new State();
+        $state->setName($state_name);
+        $state->setCountryId($country->getId());
+        $state->save();
+
+        $city = new City();
+        $city->initData($state->getId(), $town_name, '1', '0');
+        $city->save();
+
+        return $this->response->sendSuccess($country->getId());
+
+    }
+
     public function countriesAction(){
         return $this->response->sendSuccess(Ref::fetch('Country'));
     }

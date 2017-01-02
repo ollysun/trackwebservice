@@ -200,6 +200,7 @@ class BranchController extends ControllerBase
         $state_id = $this->request->getQuery('state_id');
         $branch_type = $this->request->getQuery('branch_type');
         $with_parent = $this->request->getQuery('with_parent');
+        $with_region = $this->request->getQuery('with_region');
 
         $filter_by = [];
         if (!is_null($state_id)) {
@@ -212,6 +213,10 @@ class BranchController extends ControllerBase
         $fetch_with = [];
         if (!is_null($with_parent)) {
             $fetch_with['with_parent'] = true;
+        }
+
+        if(!is_null($with_region)){
+            $fetch_with['with_region'] = true;
         }
 
         $branch_data = Branch::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate);

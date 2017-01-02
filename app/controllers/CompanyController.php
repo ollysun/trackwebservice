@@ -216,8 +216,9 @@ class CompanyController extends ControllerBase
         }
 
         $companies = Company::fetchAll($offset, $count, $filter_by, $fetch_with);
+        //return $this->response->sendSuccess($companies);
         $result = [];
-        if (!empty($with_total_count)) {
+        if (isset($with_total_count)) {
             $count = Company::getTotalCount($filter_by);
             $result = [
                 'total_count' => $count,

@@ -119,6 +119,11 @@ class Company extends EagerModel
     protected $account_type_id;
 
     /**
+     * @var integer
+     */
+    protected $extra_info;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -326,6 +331,15 @@ class Company extends EagerModel
     }
 
     /**
+     *
+     * @return $this
+     */
+    public function setExtraInfo($extra_info){
+        $this->extra_info = $extra_info;
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -508,6 +522,13 @@ class Company extends EagerModel
         $this->account_type_id = $account_type_id;
     }
 
+    /**
+     * @return int
+     */
+    public function getExtraInfo(){
+        return $this->extra_info;
+    }
+
 
     /**
      * Initialize method for model.
@@ -564,7 +585,8 @@ class Company extends EagerModel
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
             'status' => 'status',
-            'account_type_id' => 'account_type_id'
+            'account_type_id' => 'account_type_id',
+            'extra_info' => 'extra_info'
         );
     }
 
@@ -588,7 +610,8 @@ class Company extends EagerModel
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus(),
-            'account_type_id' => $this->getAccountTypeId()
+            'account_type_id' => $this->getAccountTypeId(),
+            'extra_info' => $this->getExtraInfo()
         );
     }
 
@@ -615,7 +638,8 @@ class Company extends EagerModel
             $company_data['relations_officer_id'],
             $company_data['business_manager_staff_id'],
             $company_data['business_zone_id'],
-            $company_data['account_type']);
+            $company_data['account_type'],
+            $company_data['extra_info']);
         if ($company->save()) {
             return $company;
         } else {
@@ -648,7 +672,8 @@ class Company extends EagerModel
                 $company_data['discount'],
                 $company_data['relations_officer_id'],
                 $company_data['business_manager_staff_id'],
-                $company_data['business_zone_id']);
+                $company_data['business_zone_id'],
+                $company_data['extra_info']);
             if ($company->save()) {
                 return $company;
             }
@@ -684,9 +709,10 @@ class Company extends EagerModel
      * @param $discount
      * @param $relations_officer_id
      * @param $business_manager_staff_id
+     * @param $extra_info
      */
     public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount,
-                               $relations_officer_id, $business_manager_staff_id, $business_zone_id)
+                               $relations_officer_id, $business_manager_staff_id, $business_zone_id, $extra_info)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -699,6 +725,7 @@ class Company extends EagerModel
         $this->setRelationsOfficerId($relations_officer_id);
         $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setBusinessZoneId($business_zone_id);
+        $this->setExtraInfo($extra_info);
 
         $now = date('Y-m-d H:i:s');
         $this->setModifiedDate($now);
@@ -707,7 +734,7 @@ class Company extends EagerModel
     }
 
     public function initData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount,
-                             $relations_officer_id, $business_manager_staff_id, $business_zone_id, $account_type_id)
+                             $relations_officer_id, $business_manager_staff_id, $business_zone_id, $account_type_id, $extra_info)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -722,6 +749,7 @@ class Company extends EagerModel
         $this->setRelationsOfficerId($relations_officer_id);
         $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setBusinessZoneId($business_zone_id);
+        $this->setExtraInfo($extra_info);
 
         $now = date('Y-m-d H:i:s');
         $this->setCreatedDate($now);
@@ -732,7 +760,8 @@ class Company extends EagerModel
     }
 
     public function changeDetails($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount,
-                                  $primary_contact_id, $sec_contact_id, $relations_officer_id, $business_manager_staff_id, $business_zone_id, $status_id)
+                                  $primary_contact_id, $sec_contact_id, $relations_officer_id, $business_manager_staff_id,
+                                  $business_zone_id, $status_id , $extra_info)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -748,6 +777,7 @@ class Company extends EagerModel
         $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setBusinessZoneId($business_zone_id);
         $this->setStatus($status_id);
+        $this->setExtraNote($extra_info);
 
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
@@ -896,6 +926,8 @@ class Company extends EagerModel
         $obj->setFetchWith($fetch_with)
             ->joinWith($builder, $columns);
 
+
+
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
 
@@ -908,6 +940,8 @@ class Company extends EagerModel
                 $relatedRecords = $obj->loadRelatedModels($item, true);
 
                 $company = array_merge($company, $relatedRecords);
+
+
             } else {
                 $company = $item->getData();
             }
@@ -1091,6 +1125,38 @@ class Company extends EagerModel
                 'ref_model_name' => 'CorporateAccountType',
                 'foreign_key' => 'account_type_id',
                 'reference_key' => 'id'
+            ],
+            [
+                'field' => 'company_billing_plan',
+                'model_name' => 'Company',
+                'ref_model_name' => 'CompanyBillingPlan',
+                'foreign_key' => 'id',
+                'reference_key' => 'company_id',
+                'join_type' => 'left'
+            ],
+            [
+                'field' => 'billing_plan',
+                'model_name' => 'CompanyBillingPlan',
+                'ref_model_name' => 'BillingPlan',
+                'foreign_key' => 'billing_plan_id',
+                'reference_key' => 'id',
+                'join_type' => 'left'
+            ],
+            [
+                'field' => 'business_zone',
+                'model_name' => 'Company',
+                'ref_model_name' => 'BusinessZone',
+                'foreign_key' => 'business_zone_id',
+                'reference_key' => 'id',
+                'join_type' => 'left'
+            ],
+            [
+                'field' => 'region',
+                'model_name' => 'BusinessZone',
+                'ref_model_name' => 'Region',
+                'foreign_key' => 'region_id',
+                'reference_key' => 'id',
+                'join_type' => 'left'
             ]
         ];
     }
@@ -1099,6 +1165,11 @@ class Company extends EagerModel
      * @return BillingPlan
      */
     public function getBillingPlan(){
-        return BillingPlan::findFirstByCompanyId($this->getId());
+        $plans = CompanyBillingPlan::fetchPlansForCompany(['company_id' => $this->getId()]);
+        if(count($plans) > 0){
+            return BillingPlan::findFirstById($plans[0]['id']);
+        }
+        return false;
+        //return BillingPlan::findFirstByCompanyId($this->getId());
     }
 }

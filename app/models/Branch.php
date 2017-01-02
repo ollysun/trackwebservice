@@ -583,10 +583,18 @@ class Branch extends \Phalcon\Mvc\Model
     {
         $obj = new Branch();
         $builder = $obj->getModelsManager()->createBuilder()
-            ->columns(['Branch.*', 'State.*'])
             ->from('Branch')
             ->innerJoin('State', 'Branch.state_id = State.id')
             ->orderBy('Branch.name');
+
+        $columns = ['Branch.*', 'State.*'];
+
+        if($fetch_with['with_region']){
+            $builder->innerJoin('Region', 'Region.id = State.region_id', 'Region');
+            $columns[] = 'Region.*';
+        }
+
+        $builder->columns($columns);
 
         //paginate if paginate flag is true
         if ($paginate) {
@@ -608,6 +616,9 @@ class Branch extends \Phalcon\Mvc\Model
                 $branch['parent'] = ($parent == null) ? null : $parent->getData();
             }
             $branch['state'] = $item->state->getData();
+            if($fetch_with['with_region']){
+                $branch['region'] = $item->region->getData();
+            }
             $result[] = $branch;
         }
         return $result;

@@ -949,10 +949,13 @@ class ParcelController extends ControllerBase
                     if($parcel->getStatus() == Status::PARCEL_CREATED_BUT_WITH_CUSTOMER){
                         $parcel->setCreatedBranchId($current_branch_id);
                         $parcel->setCreatedBy($this->auth->getPersonId());
-                        $parcel->setIsVisible();
+                        $parcel->setIsVisible(1);
                         $parcel->setStatus(Status::PARCEL_FOR_SWEEPER);
                         $parcel->setFromBranchId($current_branch_id);
                         $parcel->save();
+                        //record history
+                        $parcel->changeDestination(Status::PARCEL_FOR_SWEEPER, $current_branch_id, $auth_data['id'],
+                            ParcelHistory::MSG_FOR_SWEEPER);
                         continue;
                     }
                 }
