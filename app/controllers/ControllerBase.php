@@ -63,4 +63,16 @@ class ControllerBase extends Controller
 
         $audit->save();
     }
+
+    protected function getPost($name, $filters = null, $defaultValue = null){
+        return $this->request->getPost($name, $filters, $defaultValue);
+    }
+
+    protected function get($name, $filters = null, $defaultValue = null){
+        return $this->request->get($name, $filters, $defaultValue);
+    }
+
+    protected function getQuery($name, $filters = null, $defaultValue = null){
+        return $this->request->getQuery($name, $filters, $defaultValue);
+    }
 }
