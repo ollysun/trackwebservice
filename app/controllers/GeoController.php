@@ -9,7 +9,7 @@
 class GeoController extends ControllerBase
 {
     public function saveCountryAction(){
-        //$this->auth->allowOnly(Role::ADMIN);
+        $this->auth->allowOnly(Role::ADMIN);
 
         $country_name = $this->request->getPost('name');
         $id = $this->getPost('id');
@@ -19,7 +19,10 @@ class GeoController extends ControllerBase
             return $this->response->sendError('Duplicate Error');
         }
 
-        if($id) $country = Country::findFirst(['conditions' => 'id = :id:', 'bind' => ['id' => $id]]);
+        if($id) {
+            $country = Country::findFirst(['conditions' => 'id = :id:', 'bind' => ['id' => $id]]);
+            if(!$country) return $this->response->sendError('Country not found');
+        }
         else $country = new Country();
         $country->setName($country_name);
 
@@ -27,6 +30,29 @@ class GeoController extends ControllerBase
             return $this->response->sendSuccess($country->getId());
         }
         return $this->response->sendError();
+
+    }
+
+
+    public function saveRegionAction(){
+        $id = $this->getPost('id');
+        $is_new = $id == null || $id < 1;
+        $name = $this->getPost('name');
+        $country_id = $this->getPost('country_id');
+        $description = $this->getPost('description');
+
+        if($region = Region::findFirst(['conditions' => 'name = :name: AND country_id = :country_id:',
+            'bind' => ['name' => $name, 'country_id' => $country_id]])){
+            if($region->getId() != $id)
+                return $this->response->sendError('Duplicate Error');
+        }
+
+        $region = $is_new? new Region(): Region::findFirst(['conditions' => 'id = :id:', 'bind' => ['id' => $id]]);
+        if($is_new) $region->initData($country_id, $name, $description);
+        else $region->edit($country_id, $name, $description);
+
+        if($region->save()) return $this->response->sendSuccess($region->getId());
+        return $this->response->sendError(implode(',', $region->getMessages()));
 
     }
 
