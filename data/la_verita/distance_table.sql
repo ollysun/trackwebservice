@@ -1,12 +1,14 @@
 CREATE TABLE `distance` (
-	`id` INT NOT NULL AUTO_INCREMENT,
-	`from_city_id` INT NOT NULL,
-	`to_city_id` INT NOT NULL,
-	`lenght` INT NOT NULL,
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`from_branch_id` INT(11) NOT NULL,
+	`to_branch_id` INT(11) NOT NULL,
+	`lenght` INT(11) NOT NULL,
 	PRIMARY KEY (`id`),
-	CONSTRAINT `FK__distance_from_city` FOREIGN KEY (`from_city_id`) REFERENCES `city` (`id`),
-	CONSTRAINT `FK__distance_to_city` FOREIGN KEY (`to_city_id`) REFERENCES `city` (`id`)
+	INDEX `FK__distance_from_city` (`from_branch_id`),
+	INDEX `FK__distance_to_city` (`to_branch_id`),
+	CONSTRAINT `FK__distance_from_branch` FOREIGN KEY (`from_branch_id`) REFERENCES `branch` (`id`),
+	CONSTRAINT `FK__distance_to_branch` FOREIGN KEY (`to_branch_id`) REFERENCES `branch` (`id`)
 )
-COLLATE='latin1_swedish_ci'
-ENGINE=InnoDB
+	COLLATE='latin1_swedish_ci'
+	ENGINE=InnoDB
 ;

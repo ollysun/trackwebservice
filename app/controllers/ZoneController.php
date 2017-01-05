@@ -390,6 +390,8 @@ class ZoneController extends ControllerBase
         }
     }
 
+
+    //transit time
     public function getTransitTimeAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
 
@@ -407,7 +409,6 @@ class ZoneController extends ControllerBase
 
         return $this->response->sendSuccess(TransitTime::fetchAll($filter_by));
     }
-
 
     public function saveTransitTimeAction()
     {
@@ -443,5 +444,55 @@ class ZoneController extends ControllerBase
         }
         return $this->response->sendError(ResponseMessage::TRANSIT_TIME_NOT_EXIST);
     }
+
+
+    //distance table
+    public function getDistanceAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+
+        $branch_id = $this->request->getQuery('branch_id');//optional
+        $other_branch_id = $this->request->getQuery('other_branch_id');//optional
+
+        $filter_by = [];
+
+        if (!is_null($branch_id)) {
+            $filter_by['branch_id'] = $branch_id;
+        }
+        if (!is_null($other_branch_id)) {
+            $filter_by['other_branch_id'] = $other_branch_id;
+        }
+
+        return $this->response->sendSuccess(Distance::fetchAll($filter_by));
+    }
+
+    public function saveDistanceAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $distance_info = $this->request->getJsonRawBody(true);
+        $bad_distance_info = Distance::saveDistance($distance_info);
+        return $this->response->sendSuccess(['bad_matrix_info' => $bad_distance_info]);
+    }
+
+    public function removeDistanceAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN]);
+
+        $transit_time_id = $this->request->getPost('transit_time_id');
+
+        if ($transit_time_id == null) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+
+        $transit_time = TransitTime::fetchById($transit_time_id);
+        if ($transit_time != false) {
+            if ($transit_time->delete()) {
+                return $this->response->sendSuccess();
+            }
+            return $this->response->sendError();
+        }
+        return $this->response->sendError(ResponseMessage::TRANSIT_TIME_NOT_EXIST);
+    }
+
 
 } 
