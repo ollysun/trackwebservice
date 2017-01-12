@@ -1,4 +1,14 @@
 <?php
+// AWS Credentials
+define( 'AWSAccessKeyId', 'AKIAJFG642ALS2CEVSAA' );
+define( 'AWSSecretKey', 'AgsO3Mg+gzmKkcSRidCU4+0CWOzJe0nubcD8Ho3mupUk' );
+
+// Email address to send test email from
+define( 'FROM_ADDRESS', 'trackplus@courierplus-ng.com' );
+
+// Set the correct endpoint. http://docs.aws.amazon.com/general/latest/gr/rande.html#ses_region
+define( 'AWSSESEndpoint', 'https://email.us-east-1.amazonaws.com/' );
+
 
 return new \Phalcon\Config([
    /* 'database' => [
@@ -39,15 +49,15 @@ return new \Phalcon\Config([
         'mailer' => [
             'mandrill_username' => 'yemexx1@gmail.com',
             'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
-            'ses_username' => 'AKIAJ6NFQVK5GD4JHGZQ',
-            'ses_password' => 'AmFS3R7LwHCSqynaB5HMFYAIy+A96CkTEY5eVRReGrnO',
+            'ses_key' => 'AKIAIZJGZVNDYZPUTV5Q',
+            'ses_secret' => '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',
             'default_from' => ['trackplus@openbulksms.com' => 'Courier Plus'],
             'smtp_host' => 'email-smtp.us-east-1.amazonaws.com',
             'smtp_port' => 587
         ]
     ],
 
-    'fe_base_url' => 'http://local.courierplus.tnt.com',
+    'fe_base_url' => 'http://trackplus.courierplus-ng.com/',
 
     'aws' => [
         'aws_key' => getenv('AWS_KEY'),

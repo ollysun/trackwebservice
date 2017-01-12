@@ -494,5 +494,4 @@ class ZoneController extends ControllerBase
         return $this->response->sendError(ResponseMessage::TRANSIT_TIME_NOT_EXIST);
     }
 
-
 } 

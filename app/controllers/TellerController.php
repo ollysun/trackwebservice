@@ -8,7 +8,7 @@ class TellerController extends ControllerBase {
      * Creates a teller using the specified details.
      * It returns the id of the created teller, if successful or the error, if not.
      *
-     * @return int
+     * @return PackedResponse
      */
     public function addAction(){
         $bank_id = $this->request->getPost('bank_id');
@@ -51,7 +51,7 @@ class TellerController extends ControllerBase {
             $amount += $parcel->getAmountDue();
         }
 
-        if($amount_paid < ($amount - 49)){
+        if($amount_paid <= ($amount - 5)){
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
@@ -137,7 +137,8 @@ class TellerController extends ControllerBase {
 
         $teller = Teller::fetchOne($id);
         if ($teller != false){
-            return $this->response->sendSuccess($teller->getData());
+            $teller['teller_parcels'] = TellerParcel::fetchAll($id);
+            return $this->response->sendSuccess($teller);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
@@ -200,6 +201,7 @@ class TellerController extends ControllerBase {
         $with_creator = $this->request->getQuery('with_creator');
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
+        $with_branch = $this->request->getQuery('with_branch');
 
         $order_by = $this->request->getQuery('order_by'); //'Parcel.created_date DESC'
 
@@ -212,6 +214,7 @@ class TellerController extends ControllerBase {
         if (!is_null($with_payer)){ $fetch_with['with_payer'] = true; }
         if (!is_null($with_creator)){ $fetch_with['with_creator'] = true; }
         if (!is_null($with_snapshot)){ $fetch_with['with_snapshot'] = true; }
+        if((!is_null($with_branch))){$fetch_with['with_branch'] = true;}
 
         $tellers = Teller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];

@@ -10,7 +10,7 @@ use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 use Phalcon\Session\Adapter\Files as SessionAdapter;
 use Phalcon\Mvc\Dispatcher as MvcDispatcher;
 use Phalcon\Events\Manager as EventsManager;
-use PhalconUtils\Mailer\MailerHandler;
+use Superflux\Mailer\MailerHandler;
 use PhalconUtils\S3\S3Client;
 use Pheanstalk\Pheanstalk;
 
@@ -118,8 +118,8 @@ $di->set('auth', function () {
  */
 $di->set('mailer', function () use ($config) {
     return new MailerHandler(
-        $config->params->mailer->ses_username,
-        $config->params->mailer->ses_password,
+        $config->params->mailer->ses_key,
+        $config->params->mailer->ses_secret,
         $config->params->mailer->smtp_host,
         $config->params->mailer->smtp_port,
         $config->params->mailer->default_from);

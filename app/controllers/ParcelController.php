@@ -2123,7 +2123,7 @@ exit();
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @author Rahman Shitu <rahman@cottacush.com>
      * @author Olawale Lawal <wale@cottacush.com>
-     * @return $this
+     * @return PackedResponse
      */
     public function historyAction()
     {
@@ -2193,7 +2193,7 @@ exit();
     }
 
     /**
-     * @return $this
+     * @return PackedResponse
      */
     private function importedParcelHistory(){
         //add a new job

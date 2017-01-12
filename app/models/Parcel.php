@@ -2205,7 +2205,12 @@ class Parcel extends \Phalcon\Mvc\Model
 
     public static function parcelIsExported($waybill_number){
         $parcel = self::fetchAll(0, 1, ['waybill_number' => $waybill_number], ['with_receiver_address' => true]);
-        if(count($parcel) < 1) return false;
+        if(count($parcel) < 1) {
+            $parcel = self::fetchAll(0, 1, ['reference_number' => $waybill_number], ['with_receiver_address' => true]);
+            if(count($parcel) < 1) {
+                return false;
+            }
+        }
         $parcel = $parcel[0];
         //return ($parcel['receiver_address']);
         return $parcel['receiver_address']['city']['id'] == City::EXPORT_CITY_ID;// && $parcel['status'] == Status::PARCEL_DELIVERED;

@@ -1,9 +1,13 @@
 <?php
 
-
-class CodtellerController extends ControllerBase {
-
-
+/**
+ * Created by PhpStorm.
+ * User: ELACHI
+ * Date: 1/9/2017
+ * Time: 2:27 PM
+ */
+class RtdtellerController extends ControllerBase
+{
     /**
      * Creates a teller using the specified details.
      * It returns the id of the created teller, if successful or the error, if not.
@@ -44,16 +48,15 @@ class CodtellerController extends ControllerBase {
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
 
         //amount check
-        /** @var Parcel[] $parcels */
         $parcels = Parcel::getByWaybillNumberList($waybill_number_arr);
         $amount = 0;
         foreach($parcels as $parcel){
             /** $parcel Parcel */
-            $amount += $parcel->getCashOnDeliveryAmount();
+            $amount += $parcel->getAmountDue();
         }
 
         if($amount_paid <= ($amount - 5)){
-            return $this->response->sendError(ResponseMessage::INVALID_AMOUNT . ". Expected Amount: $amount");
+            return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
         $bad_parcels = array();
@@ -74,9 +77,9 @@ class CodtellerController extends ControllerBase {
         }
 
         //check for the pre-existence of the teller no before the creation of the teller
-        $teller = CodTeller::getTeller($bank_id, $teller_no);
+        $teller = RtdTeller::getTeller($bank_id, $teller_no);
         if($teller === false) {
-            $teller = new CodTeller();
+            $teller = new Teller();
             $teller_id = $teller->saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $good_parcels, $paid_by, $created_by, $branch_id);
             if ($teller_id){
                 return $this->response->sendSuccess(['id' => $teller_id]);
@@ -85,7 +88,7 @@ class CodtellerController extends ControllerBase {
         else{
             return $this->response->sendError(ResponseMessage::TELLER_ALREADY_USED);
         }
-        return $this->response->sendError('Cannot add teller');
+        return $this->response->sendError($teller);
     }
 
     public function approveAction(){
@@ -94,8 +97,8 @@ class CodtellerController extends ControllerBase {
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-        /** @var CodTeller $teller */
-        $teller = CodTeller::findFirst("id = $id");
+        /** @var Teller $teller */
+        $teller = Teller::findFirst("id = $id");
         if(!$teller){
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
@@ -110,8 +113,8 @@ class CodtellerController extends ControllerBase {
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-        /** @var CodTeller $teller */
-        $teller = CodTeller::findFirst("id = $id");
+        /** @var Teller $teller */
+        $teller = Teller::findFirst("id = $id");
         if(!$teller){
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
@@ -136,7 +139,7 @@ class CodtellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $teller = CodTeller::fetchOne($id);
+        $teller = Teller::fetchOne($id);
         if ($teller != false){
             return $this->response->sendSuccess($teller->getData());
         }
@@ -214,10 +217,10 @@ class CodtellerController extends ControllerBase {
         if (!is_null($with_creator)){ $fetch_with['with_creator'] = true; }
         if (!is_null($with_snapshot)){ $fetch_with['with_snapshot'] = true; }
 
-        $tellers = CodTeller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
+        $tellers = Teller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
         if ($with_total_count != null){
-            $count = CodTeller::tellerCount($filter_by);
+            $count = Teller::tellerCount($filter_by);
             $result = [
                 'total_count' => $count,
                 'tellers' => $tellers
@@ -240,7 +243,7 @@ class CodtellerController extends ControllerBase {
 
         $filter_by = $this->getFilterParams();
 
-        $count = CodTeller::tellerCount($filter_by);
+        $count = Teller::tellerCount($filter_by);
         if ($count === null){
             return $this->response->sendError();
         }

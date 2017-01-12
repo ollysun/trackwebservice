@@ -1,11 +1,11 @@
 <?php
 
-use PhalconUtils\Mailer\MailerHandler;
+use Superflux\Mailer\MailerHandler;
 
 class EmailMessage extends \Phalcon\Mvc\Model
 {
     //const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
-    const DEFAULT_FROM_EMAIL = 'info@openbulksms.com';
+    const DEFAULT_FROM_EMAIL = 'trackplus@courierplus-ng.com';// 'info@openbulksms.com';
     const CORPORATE_LEAD = 'marketing_opportunity';
     const USER_ACCOUNT_CREATION = 'staff_account_creation';
     const COMPANY_USER_ACCOUNT_CREATION = 'company_user_account_creation';
@@ -257,6 +257,8 @@ class EmailMessage extends \Phalcon\Mvc\Model
             'bind' => ['id' => $id, 'status' => Status::ACTIVE]
         ]);
     }
+
+
 
     /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
