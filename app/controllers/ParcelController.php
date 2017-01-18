@@ -167,7 +167,8 @@ class ParcelController extends ControllerBase
         }
 
         //created by is an admin from the nearest branch for shipments created by cooperate
-        $created_by = !$this->auth->isCooperateUser()? $this->auth->getPersonId():Admin::fetchOfficerForBranch($nearest_branch_id)['id'];
+        $created_by = !$this->auth->isCooperateUser()? $this->auth->getPersonId():
+            Admin::fetchOfficerForBranch($nearest_branch_id)['id'];
 
         // Check if edit branch is related to created branch
         if (isset($parcel['id']) && $auth_data['branch']['branch_type'] != BranchType::HQ) {
@@ -2170,9 +2171,15 @@ exit();
         $parcelHistory = ParcelHistory::fetchAll($offset, $count, $filter_by, $fetch_with);
 
         if(count($parcelHistory) && count($waybill_number) == 1){
+            //check if the city is export and add an indicator
             $is_exported = Parcel::parcelIsExported($waybill_number);
             foreach($parcelHistory as $key => $value){
                 $parcelHistory[$key]['is_exported'] = $is_exported;
+            }
+            //check if the city is aramex export and put an indicator
+            $is_aramex_exported = Parcel::parcelIsAramexExported($waybill_number);
+            foreach($parcelHistory as $key => $value){
+                $parcelHistory[$key]['is_aramex_exported'] = $is_aramex_exported;
             }
         }
 

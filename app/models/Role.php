@@ -11,6 +11,11 @@ class Role extends \Phalcon\Mvc\Model
     const COMPANY_OFFICER = 7;
     const SUPER_ADMIN = 8;
     const SALES_AGENT = 9;
+    const BUSINESS_MANAGER = 10;
+    const REGIONAL_MANAGER = 11;
+    const FINANCE = 12;
+    const BILLING = 13;
+
     const INACTIVE_USER = -1;
     /**
      *

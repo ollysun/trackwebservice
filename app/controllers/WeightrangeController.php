@@ -162,7 +162,22 @@ class WeightrangeController extends ControllerBase {
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
         $weight_range_id = $this->request->getPost('weight_range_id');
+        $weight_range_ids = $this->request->getPost('weight_range_ids');
+        $force_delete = $this->request->getPost('force_delete');
 
+        $response = $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        if($weight_range_id){
+            $response = $this->delete($weight_range_id, $force_delete);
+        }elseif($weight_range_ids){
+            $weight_range_ids = explode(',', $weight_range_ids);
+            foreach ($weight_range_ids as $weight_range_id) {
+                $response = $this->delete($weight_range_id, $force_delete);
+            }
+        }
+        return $response;
+    }
+
+    private function delete($weight_range_id, $force_delete){
         // Check if weight range is valid
         $weightRange = WeightRange::fetchById($weight_range_id);
         if(!$weightRange) {
@@ -172,7 +187,14 @@ class WeightrangeController extends ControllerBase {
         // Check if there's a pricing for the weight range
         $weightBillings = WeightBilling::fetchAll(DEFAULT_OFFSET, DEFAULT_COUNT, ['weight_range_id' => $weight_range_id]);
         if(!empty($weightBillings)) {
-            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING);
+            if($force_delete == '1'){//if forcing the delete then delete the prices
+                foreach ($weightBillings as $weightBilling) {
+                    $billing = WeightBilling::fetchById($weightBilling['id']);
+                    if ($billing != false) {
+                        $billing->delete();
+                    }
+                }
+            }else return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING);
         }
 
         if($weightRange->delete()) {

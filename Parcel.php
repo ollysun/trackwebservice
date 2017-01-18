@@ -2216,18 +2216,6 @@ class Parcel extends \Phalcon\Mvc\Model
         return $parcel['receiver_address']['city']['id'] == City::EXPORT_CITY_ID;// && $parcel['status'] == Status::PARCEL_DELIVERED;
     }
 
-    public static function parcelIsAramexExported($waybill_number){
-        $parcel = self::fetchAll(0, 1, ['waybill_number' => $waybill_number], ['with_receiver_address' => true]);
-        if(count($parcel) < 1) {
-            $parcel = self::fetchAll(0, 1, ['reference_number' => $waybill_number], ['with_receiver_address' => true]);
-            if(count($parcel) < 1) {
-                return false;
-            }
-        }
-        $parcel = $parcel[0];
-        //return ($parcel['receiver_address']);
-        return $parcel['receiver_address']['city']['id'] == City::ARAMEX_EXPORT_CITY_ID;// && $parcel['status'] == Status::PARCEL_DELIVERED;
-    }
 
     /**
      * @param int $from_branch_id
@@ -3508,11 +3496,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
 
-        if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])) {
-            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
-        } else if (isset($filter_by['held_by_staff_id'])) {
-            $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
-            $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+        if (!isset($fetch_with['with_holder'])) {//fetch with holder will add this tables
+            if (isset($filter_by['held_by_id']) or isset($filter_by['manifest_id'])) {
+                $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+            } else if (isset($filter_by['held_by_staff_id'])) {
+                $builder->innerJoin('HeldParcel', 'HeldParcel.parcel_id = Parcel.id');
+                $builder->innerJoin('Admin', 'Admin.id = HeldParcel.held_by_id');
+            }
         }
         if (isset($filter_by['history_status']) or isset($filter_by['history_from_branch_id']) or isset($filter_by['history_to_branch_id']) or isset($filter_by['history_start_created_date']) or isset($filter_by['history_end_created_date'])) {
             $builder->innerJoin('ParcelHistory', 'ParcelHistory.parcel_id = Parcel.id');

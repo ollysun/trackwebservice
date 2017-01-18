@@ -455,6 +455,9 @@ class Teller extends \Phalcon\Mvc\Model
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Teller');
 
+
+
+
         if (!isset($filter_by['send_all'])) {
             $builder->limit($count, $offset);
         }
@@ -465,6 +468,30 @@ class Teller extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        //if the current user is a regional manger, get teller for his region alone
+        /**
+         * @var Auth $auth
+         */
+        $auth = \Phalcon\Di::getDefault()->getAuth();
+        if($auth->getUserType() == Role::REGIONAL_MANAGER){
+
+            $region = Region::findFirst([
+                'conditions' => 'Region.manager_id = :staff_id:',
+                'bind' => ['staff_id'  => $auth->getPersonId()]
+            ]);
+
+            if(!$region) return [];
+
+            $builder->innerJoin('Admin', 'Teller.created_by = Admin.id');
+            $builder->innerJoin('Branch', 'Branch.id = Admin.branch_id');
+            $builder->innerJoin('State', 'State.id = Branch.state_id');
+            $builder->innerJoin('Region', 'Region.id = State.region_id');
+
+            $where[] = 'Region.id = :id:';
+            $bind['id'] = $region->getId();
+
+        }
 
         if ($order_by_clause != null) {
             $builder->orderBy($order_by_clause);

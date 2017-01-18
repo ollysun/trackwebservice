@@ -16,9 +16,23 @@ class RegionController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        if($manager_id){
+            $manager = Admin::findFirst(['conditions' => ['staff_id = :staff_id:'], 'bind' => ['staff_id' => $manager_id]]);
+            if(!$manager){
+                return $this->response->sendError('Invalid Staff Id provided for manager Id');
+            }
+            //check that hee is not a manager currently
+            $current_region = Region::findFirst(['conditions' => ['Region.manager_id = :manager_id:'],
+                'bind' => ['manager_id' => $manager->getId()]]);
+            if($current_region){
+                return $this->response->sendError($manager->getStaffId().' is already managing '.$current_region->getName());
+            }
+        }
+
+
         if (!Region::isExisting($country_id, $name)) {
             $region = new Region();
-            $region->initData($country_id, $name, $description, $manager_id);
+            $region->initData($country_id, $name, $description, isset($manager)?$manager->getId():null);
             if ($region->save()) {
                 return $this->response->sendSuccess(['id' => $region->getId()]);
             }
@@ -38,8 +52,16 @@ class RegionController extends ControllerBase
         $manager_id = $this->request->getPost('manager_id');
 
         if($manager_id){
-            if(!$admin = Admin::fetchOne(['staff_id' => $manager_id])){
-                return $this->response->sendError(' Invalid manager Id');
+            /** @var Admin $manager */
+            $manager = Admin::fetchOne(['staff_id' => $manager_id]);
+            if(!$manager){
+                return $this->response->sendError('Invalid Staff Id provided for manager Id');
+            }
+            //check that hee is not a manager currently
+            $current_region = Region::findFirst(['conditions' => ['Region.manager_id = :manager_id: AND Region.id <> :id:'],
+            'bind' => ['manager_id' => $manager['id'], 'id' => $region_id]]);
+            if($current_region){
+                return $this->response->sendError($manager->getStaffId().' is already managing '.$current_region->getName());
             }
         }
 
@@ -53,7 +75,7 @@ class RegionController extends ControllerBase
 
         $region = Region::fetchActive($region_id);
         if ($region != false) {
-            $region->edit($country_id, $name, $description, $manager_id);
+            $region->edit($country_id, $name, $description, isset($manager)?$manager['id']:null);
             if ($region->save()) {
                 return $this->response->sendSuccess();
             }
