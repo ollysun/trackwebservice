@@ -136,7 +136,7 @@ class CodtellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        dd($id  );
+
         $teller = CodTeller::fetchOne($id);
         if ($teller != false){
             return $this->response->sendSuccess($teller->getData());
