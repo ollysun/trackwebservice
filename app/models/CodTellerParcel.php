@@ -188,6 +188,12 @@ class CodTellerParcel extends \Phalcon\Mvc\Model
         $this->setCreatedDate(date('Y-m-d H:i:s'));
     }
 
+    public function getData()
+    {
+        return ['id' => $this->getId(), 'teller_id' => $this->getTellerId(),
+            'parcel_id' => $this->getParcelId(), 'create_date' => $this->getCreatedDate()];
+    }
+
     public static function getParcelTeller($parcel_id){
         return CodTellerParcel::findFirst([
             'parcel_id = :parcel_id:',
