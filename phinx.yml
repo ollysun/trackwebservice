@@ -5,16 +5,16 @@ environments:
     default_migration_table: phinxlog
     default_database: development
 
-    developmentold:
+    development:
         adapter: mysql
         host: trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com
-        name: trackplus
+        name: tnt
         user: root
         pass: thelcmof8is2
         port: 3306
         charset: utf8
 
-    development:
+    developmentold:
         adapter: mysql
         host: localhost
         name: trackplus
