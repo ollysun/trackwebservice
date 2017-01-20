@@ -195,4 +195,28 @@ class CodTellerParcel extends \Phalcon\Mvc\Model
         ]);
     }
 
+
+    public static function fetchAll($teller_id)
+    {
+        $obj = new Parcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->from('CodTellerParcel')
+            ->where('CodTellerParcel.teller_id = :teller_id:', ['teller_id' => $teller_id]);
+
+        $columns = ['CodTellerParcel.*'];
+        $builder->leftJoin('Parcel', 'Parcel.id = CodTellerParcel.parcel_id', 'Parcel');
+
+        $builder->columns($columns);
+        $data = $builder->getQuery()->execute();
+
+        $result = [];
+        foreach ($data as $item) {
+            //dd($item);
+            $teller = $item->getData();
+            $teller['parcel'] = $item->parcel->getData();
+            $result[] = $teller;
+        }
+        return $result;
+    }
+
 }

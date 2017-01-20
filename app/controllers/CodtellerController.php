@@ -139,8 +139,10 @@ class CodtellerController extends ControllerBase {
 
         $teller = CodTeller::fetchOne($id);
         if ($teller != false){
+            $teller['teller_parcels'] = CodTellerParcel::fetchAll($id);
             return $this->response->sendSuccess($teller);
         }
+
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
