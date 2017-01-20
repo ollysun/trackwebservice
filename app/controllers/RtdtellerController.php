@@ -47,11 +47,15 @@ class RtdtellerController extends ControllerBase
 
         $waybill_number_arr = $this->sanitizeWaybillNumbers($waybill_numbers);
 
+        $bad_parcels = array();
+        $good_parcels = array();
+
         //amount check
         $parcels = Parcel::getByWaybillNumberList($waybill_number_arr);
         $amount = 0;
         foreach($parcels as $parcel){
             /** $parcel Parcel */
+           //we can check to see if the parcel have been return
             $amount += $parcel->getAmountDue();
         }
 
@@ -59,14 +63,13 @@ class RtdtellerController extends ControllerBase
             return $this->response->sendError(ResponseMessage::INVALID_AMOUNT);
         }
 
-        $bad_parcels = array();
-        $good_parcels = array();
 
         //checking the waybill_numbers for validity
         foreach ($waybill_number_arr as $waybill_number) {
             $parcel = Parcel::getByWaybillNumber($waybill_number);
             if ($parcel === false) {
-                $bad_parcels[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                if(empty($waybill_number)) continue;
+                    $bad_parcels[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
             }
             else {
                 $good_parcels[] = $parcel->getId();
@@ -79,7 +82,7 @@ class RtdtellerController extends ControllerBase
         //check for the pre-existence of the teller no before the creation of the teller
         $teller = RtdTeller::getTeller($bank_id, $teller_no);
         if($teller === false) {
-            $teller = new Teller();
+            $teller = new RtdTeller();
             $teller_id = $teller->saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $good_parcels, $paid_by, $created_by, $branch_id);
             if ($teller_id){
                 return $this->response->sendSuccess(['id' => $teller_id]);
@@ -98,7 +101,7 @@ class RtdtellerController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
         /** @var Teller $teller */
-        $teller = Teller::findFirst("id = $id");
+        $teller = RtdTeller::findFirst("id = $id");
         if(!$teller){
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
@@ -113,8 +116,8 @@ class RtdtellerController extends ControllerBase
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-        /** @var Teller $teller */
-        $teller = Teller::findFirst("id = $id");
+        /** @var RtdTeller $teller */
+        $teller = RtdTeller::findFirst("id = $id");
         if(!$teller){
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
@@ -139,7 +142,7 @@ class RtdtellerController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $teller = Teller::fetchOne($id);
+        $teller = RtdTeller::fetchOne($id);
         if ($teller != false){
             return $this->response->sendSuccess($teller->getData());
         }
@@ -217,7 +220,7 @@ class RtdtellerController extends ControllerBase
         if (!is_null($with_creator)){ $fetch_with['with_creator'] = true; }
         if (!is_null($with_snapshot)){ $fetch_with['with_snapshot'] = true; }
 
-        $tellers = Teller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
+        $tellers = RtdTeller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
         if ($with_total_count != null){
             $count = Teller::tellerCount($filter_by);
@@ -243,7 +246,7 @@ class RtdtellerController extends ControllerBase
 
         $filter_by = $this->getFilterParams();
 
-        $count = Teller::tellerCount($filter_by);
+        $count = RtdTeller::tellerCount($filter_by);
         if ($count === null){
             return $this->response->sendError();
         }

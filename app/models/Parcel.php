@@ -2447,7 +2447,8 @@ class Parcel extends \Phalcon\Mvc\Model
             }else{
                 $this->setPickupDate(date('Y-m-d H:i:s'));
             }
-            $this->setNotificationStatus($parcel_data['notification_status']);
+            if(isset($parcel_data['notification_status']))
+                $this->setNotificationStatus($parcel_data['notification_status']);
             $check = $this->save();
 
         } else {
@@ -3534,6 +3535,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('TellerBank', 'TellerBank.id = Teller.bank_id', 'TellerBank');
         }
 
+        //with_cod_teller
         if(isset($fetch_with['with_cod_teller'])){
             $columns[] = 'CodTeller.*';
             $columns[] = 'CodTellerBank.*';
@@ -3541,6 +3543,16 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('CodTeller', 'CodTellerParcel.teller_id = CodTeller.id AND CodTeller.status != '. Status::TELLER_DECLINED);
             $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
         }
+
+        //with_rtd_teller
+        if(isset($fetch_with['with_rtd_teller'])){
+            $columns[] = 'RtdTeller.*';
+            $columns[] = 'RtdTellerBank.*';
+            $builder->leftJoin('RtdTellerParcel', 'Parcel.id = RtdTellerParcel.parcel_id');
+            $builder->leftJoin('RtdTeller', 'RtdTellerParcel.teller_id = RtdTeller.id AND RtdTeller.status != '. Status::TELLER_DECLINED);
+            $builder->leftJoin('RtdTellerBank', 'RtdTellerBank.id = RtdTeller.bank_id', 'RtdTellerBank');
+        }
+
         if (isset($fetch_with['with_to_branch'])) {
             $columns[] = 'ToBranch.*';
             $builder->innerJoin('ToBranch', 'ToBranch.id = Parcel.to_branch_id', 'ToBranch');

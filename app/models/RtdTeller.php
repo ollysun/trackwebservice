@@ -583,7 +583,7 @@ class RtdTeller extends \Phalcon\Mvc\Model
      */
     public static function tellerCount($filter_by)
     {
-        $obj = new Teller();
+        $obj = new RtdTeller();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS teller_count')
             ->from('RtdTeller');
@@ -721,11 +721,11 @@ class RtdTeller extends \Phalcon\Mvc\Model
      * @param bank_id
      * @param teller_no
      * @author  Olawale Lawal
-     * @return Teller
+     * @return RtdTeller
      */
     public static function getTeller($bank_id, $teller_no)
     {
-        return Teller::findFirst([
+        return RtdTeller::findFirst([
             'bank_id = :bank_id: AND teller_no = :teller_no:',
             'bind' => array('bank_id' => $bank_id, 'teller_no' => $teller_no)
         ]);

@@ -512,6 +512,7 @@ class ParcelController extends ControllerBase
         $with_parcel_comment = $this->request->getQuery('with_parcel_comment');
         $with_sales_teller = $this->request->getQuery('with_sales_teller');
         $with_cod_teller = $this->request->getQuery('with_cod_teller');
+        $with_rtd_teller = $this->request->getQuery('with_rtd_teller');
         $with_edit_access = 1;
 
         $with_total_count = $this->request->getQuery('with_total_count');
@@ -594,6 +595,10 @@ class ParcelController extends ControllerBase
 
         if(!is_null($with_cod_teller)){
             $fetch_with['with_cod_teller'] = true;
+        }
+
+        if(!is_null($with_rtd_teller)){
+            $fetch_with['with_rtd_teller'] = true;
         }
 
         if(!is_null($with_edit_access)){
