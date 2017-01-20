@@ -84,7 +84,8 @@ class TellerController extends ControllerBase {
         else{
             return $this->response->sendError(ResponseMessage::TELLER_ALREADY_USED);
         }
-        return $this->response->sendError(ResponseMessage::INTERNAL_ERROR.' '.implode(', '.$teller->getMessages()));
+        dd($teller->getMessages());
+        return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
     }
 
     public function approveAction(){
