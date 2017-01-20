@@ -3544,7 +3544,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
         }
 
+<<<<<<< HEAD
         //with_rtd_teller = true
+=======
+        //with_rtd_teller = tr
+>>>>>>> faf631428716e63d0d7d8377b43d79fbf1a1b747
         if(isset($fetch_with['with_rtd_teller'])){
             $columns[] = 'RtdTeller.*';
             $columns[] = 'RtdTellerBank.*';
