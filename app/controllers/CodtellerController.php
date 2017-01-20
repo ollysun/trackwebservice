@@ -139,7 +139,7 @@ class CodtellerController extends ControllerBase {
 
         $teller = CodTeller::fetchOne($id);
         if ($teller != false){
-            return $this->response->sendSuccess($teller->getData());
+            return $this->response->sendSuccess($teller);
         }
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }

@@ -512,7 +512,6 @@ class CodTeller extends \Phalcon\Mvc\Model
 
         $result = $data[0]->codTeller->getData();
 
-        dd($result);
         $result['parcel'] = $data[0]->parcel->getData();
 
         return $result;
