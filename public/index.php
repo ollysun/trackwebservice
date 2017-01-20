@@ -29,7 +29,6 @@ try {
         $config = include __DIR__ . "/../app/config/config_$env.php";
     }
 
-    dd($config);
 
     /**
      * Read auto-loader
