@@ -304,6 +304,10 @@ class ZoneController extends ControllerBase
         return $this->response->sendSuccess(['bad_matrix_info' => $bad_matrix_info]);
     }
 
+    public function createMatrix(){
+
+    }
+
     public function removeMatrixAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
