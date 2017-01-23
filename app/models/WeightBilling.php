@@ -554,7 +554,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
 
         $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight, $billing_plan_id);
         if ($billing_info == false){
-            return false;
+            //weight not available in range, use default range
+            $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight, 2600);
+            if($billing_info == false)
+                return false;
         }
 
         $weight_billing = $billing_info['weight_billing'];
