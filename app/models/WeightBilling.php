@@ -472,7 +472,7 @@ class WeightBilling extends \Phalcon\Mvc\Model
             '
             ((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
             OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))
-            AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight > :weight:)
+            AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight >= :weight:)
             AND WeightRange.billing_plan_id = :billing_plan_id:
             ',
             ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight, 'billing_plan_id' => $billing_plan_id]

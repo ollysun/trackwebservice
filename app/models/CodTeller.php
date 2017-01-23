@@ -510,7 +510,8 @@ class CodTeller extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute(['id' => $id]);
         if (count($data) == 0) return false;
 
-        $result = $data[0]->teller->getData();
+        $result = $data[0]->codTeller->getData();
+
         $result['parcel'] = $data[0]->parcel->getData();
 
         return $result;
