@@ -12,7 +12,7 @@ define( 'AWSSESEndpoint', 'https://email.us-east-1.amazonaws.com/' );
 
 
 return new \Phalcon\Config([
-    /*'database' => [
+    'database' => [
         'adapter' => 'Mysql',
         'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
@@ -20,15 +20,15 @@ return new \Phalcon\Config([
         //'dbname' => 'tnt',
         'dbname' => 'trackplus',
         'charset' => 'utf8',
-    ],*/
-    'database' => [
+    ],
+    /*'database' => [
         'adapter' => 'Mysql',
         'host' => 'localhost',
         'username' => 'root',
         'password' => '',
         'dbname' => 'trackplus',
         'charset' => 'utf8',
-    ],
+    ],*/
     'application' => [
         'componentsDir' => __DIR__ . '/../../app/components/',
         'controllersDir' => __DIR__ . '/../../app/controllers/',

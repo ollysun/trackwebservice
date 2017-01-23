@@ -110,7 +110,7 @@ class BillingplanController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        if(CompanyBillingPlan::findFirst(['conditions' => 'company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
+        if($plan = CompanyBillingPlan::findFirst(['conditions' => 'company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
             'bind' => [
                 'company_id' => $company_id, 'billing_plan_id' => $plan_id
             ]])){
