@@ -70,7 +70,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != 1){
+        if($parcel['weight_billing_plan'] != BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
