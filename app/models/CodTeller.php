@@ -561,7 +561,7 @@ class CodTeller extends \Phalcon\Mvc\Model
         }
         if (isset($filter_by['status'])) {
             $where[] = 'CodTeller.status = :status:';
-            $bind['teller_no'] = $filter_by['status'];
+            $bind['status'] = $filter_by['status'];
         }
 
         return ['where' => $where, 'bind' => $bind];
