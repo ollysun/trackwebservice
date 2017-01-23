@@ -400,7 +400,7 @@ class Zone extends \Phalcon\Mvc\Model
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
 
-        //apply discount from the billing plan
+        //apply discount from the billing plan and company
         $discount_percentage = $billing_plan->getDiscount();
         if($company_id){
             $company = Company::fetchOne(['id' => $company_id], []);
@@ -472,7 +472,7 @@ class Zone extends \Phalcon\Mvc\Model
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
 
-        //apply discount from the billing plan and company then calc vat
+        //apply discount from the billing plan and company then calc vat for the tranx
         $discount_percentage = $billing_plan->getDiscount();
         if($company_id){
             $company = Company::fetchOne(['id' => $company_id], []);
