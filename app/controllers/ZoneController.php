@@ -361,6 +361,7 @@ class ZoneController extends ControllerBase
         $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
         $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
+        $company_id = $this->request->getPost('company_id');
 
 
         if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])) {
@@ -368,7 +369,8 @@ class ZoneController extends ControllerBase
         }
 
         try {
-            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id);
+            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                $city_id, $onforwarding_billing_plan_id, $company_id);
             return $this->response->sendSuccess($amountDue);
         } catch (Exception $ex) {
             return $this->response->sendError($ex->getMessage());
@@ -382,13 +384,15 @@ class ZoneController extends ControllerBase
         $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
         $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
+        $company_id = $this->request->getPost('company_id');
 
         if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         try {
-            $quote = Zone::getQuote($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id);
+            $quote = Zone::getQuote($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id,
+                $onforwarding_billing_plan_id, $company_id);
             return $this->response->sendSuccess($quote);
         } catch (Exception $ex) {
             return $this->response->sendError($ex->getMessage());
