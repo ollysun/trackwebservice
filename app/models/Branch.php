@@ -616,7 +616,7 @@ class Branch extends \Phalcon\Mvc\Model
                 $branch['parent'] = ($parent == null) ? null : $parent->getData();
             }
             $branch['state'] = $item->state->getData();
-            if($fetch_with['with_region']){
+            if(isset($fetch_with['with_region'])){
                 $branch['region'] = $item->region->getData();
             }
             $result[] = $branch;
