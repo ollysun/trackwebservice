@@ -628,6 +628,12 @@ class Teller extends \Phalcon\Mvc\Model
             $where[] = 'Teller.created_by = :created_by:';
             $bind['created_by'] = $filter_by['created_by'];
         }
+
+        if(isset($filter_by['branch_id'])){
+            $where[]= 'Teller.branch_id = :branch_id:';
+            $bind['branch_id'] = $filter_by['branch_id'];
+        }
+
         if (isset($filter_by['min_amount_paid'])) {
             $where[] = 'Teller.amount_paid >= :min_amount_paid:';
             $bind['min_amount_paid'] = $filter_by['min_amount_paid'];
