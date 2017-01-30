@@ -997,12 +997,29 @@ class Company extends EagerModel
         return $company;
     }
 
+    /**
+     * @param $name
+     * @return Company
+     */
     public static function getByName($name)
     {
         $name = Text::removeExtraSpaces(strtolower($name));
         return Company::findFirst([
             'conditions' => 'name = :name:',
             'bind' => ['name' => $name]
+        ]);
+    }
+
+    /**
+     * @param $name
+     * @return Company
+     */
+    public static function getByRegistrationNumber($reg_no)
+    {
+        $reg_no = Text::removeExtraSpaces(strtolower($reg_no));
+        return Company::findFirst([
+            'conditions' => 'reg_no = :reg_no:',
+            'bind' => ['reg_no' => $reg_no]
         ]);
     }
 

@@ -171,7 +171,7 @@ class CodtellerController extends ControllerBase {
         if (!is_null($bank_id)){ $filter_by['bank_id'] = $bank_id; }
         if (!is_null($teller_number)){ $filter_by['teller_number'] = $teller_number; }
         if (!is_null($teller_number_arr)){ $filter_by['teller_number_arr'] = $teller_number_arr; }
-        if (!is_null($paid_by)){ $filter_by['$paid_by'] = $paid_by; }
+        if (!is_null($paid_by)){ $filter_by['paid_by'] = $paid_by; }
         if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
         if (!is_null($branch_id)){ $filter_by['branch_id'] = $branch_id; }
         if (!is_null($status)){ $filter_by['status'] = $status; }
@@ -202,6 +202,7 @@ class CodtellerController extends ControllerBase {
         $with_bank = $this->request->getQuery('with_bank');
         $with_payer = $this->request->getQuery('with_payer');
         $with_creator = $this->request->getQuery('with_creator');
+        $with_branch = $this->request->getQuery('with_branch');
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
 
@@ -216,6 +217,7 @@ class CodtellerController extends ControllerBase {
         if (!is_null($with_payer)){ $fetch_with['with_payer'] = true; }
         if (!is_null($with_creator)){ $fetch_with['with_creator'] = true; }
         if (!is_null($with_snapshot)){ $fetch_with['with_snapshot'] = true; }
+        if (!is_null($with_branch)){ $fetch_with['with_branch'] = true; }
 
         $tellers = CodTeller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
