@@ -6,10 +6,19 @@
  * Date: 1/23/2017
  * Time: 11:20 AM
  */
+
+
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
+
 class RemittanceController extends ControllerBase
 {
     public function getDueParcelsAction(){
-        $company_id = $this->request->getQuery('company_id');
+        $company_registration_number = $this->request->getQuery('registration_number');
+        if($company_registration_number){
+            $company = Company::getByRegistrationNumber($company_registration_number);
+            if(!$company) return $this->response->sendError('Invalid Company Registration Number');
+            $company_id = $company->getId();
+        }
         $start_delivery_date = $this->request->getQuery('start_delivery_date');
         $end_delivery_date = $this->request->getQuery('end_delivery_date');
         $send_all = $this->request->getQuery('send_all', false);
@@ -19,14 +28,15 @@ class RemittanceController extends ControllerBase
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
         $filter_by = [];
-        if($company_id) $filter_by['company_id'] = $company_id;
+        if($company_registration_number) $filter_by['company_id'] = $company_id;
         if($start_delivery_date) $filter_by['start_delivery_date'] = $start_delivery_date;
         if($end_delivery_date) $filter_by['end_delivery_date'] = $end_delivery_date;
         if($send_all) $filter_by['send_all'] = true;
 
-        $parcels = Remittance::fetchUnPaidParcels($offset, $count, $filter_by);
+
+        $parcels = Remittance::fetchDueForPaymentParcels($offset, $count, $filter_by);
         if($with_total_count){
-            $count = Remittance::unpaidParcelCount($filter_by);
+            $count = Remittance::dueForPaymentParcelCount($filter_by);
             $result = [
                 'total_count' => $count,
                 'parcels' => $parcels
@@ -76,24 +86,93 @@ class RemittanceController extends ControllerBase
         return $this->response->sendSuccess($result);
     }
 
-    public function saveRemittanceAction(){
-         $waybill_number = $this->request->getQuery('waybill_number');
-         $payer = $this->request->getQuery('payer_id');
-         $company_registration_number = $this->request->getQuery('company_registration_number');
+    public function saveAction(){
+        $company_ids = $this->request->getPost('company_ids');
+        if(in_array(null, [$company_ids])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
 
-         if(in_array(null, [$waybill_number, $payer, $company_registration_number]))
-             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        $company_ids = explode(',', $company_ids);
 
-         $parcel = Parcel::getByWaybillNumber($waybill_number);
-         if(!$parcel)
-             return $this->response->sendError('Invalid waybill number');
+        $transactionManager = new TransactionManager();
+        $transaction = $transactionManager->get();
 
-         $remittance = new Remittance();
-         $remittance->init($waybill_number, $parcel->getCashOnDeliveryAmount(), $company_registration_number, $payer);
-         if($remittance->save()){
-             return $this->response->sendSuccess();
-         }else{
-             return $this->response->sendError('Error in saving changes '. implode(', ', $remittance->getMessages()));
-         }
+        $ref = time();
+        try{
+            foreach ($company_ids as $company_id) {
+                $company = Company::fetchOne(['id' => $company_id], []);
+                $parcels = Remittance::fetchDueForPaymentParcels(0, 0, ['send_all' => 1, 'company_id' => $company_id]);
+                if($parcels && count($parcels) > 0){
+                    foreach ($parcels as $parcel) {
+                        $remittance = new Remittance();
+                        $remittance->init($parcel['waybill_number'], $parcel['delivery_amount'],
+                            $company['reg_no'], $this->auth->getPersonId(), $ref, Status::REMITTANCE_PAID);
+                        $remittance->setTransaction($transaction);
+                        if(!$remittance->save()) {
+                            $transaction->rollback();
+                            return $this->response->sendError('Cannot create remittance. Please try again');
+                        }
+                    }
+                }
+            }
+            $transaction->commit();
+        }catch (Exception $exception){
+            Util::slackDebug('Cannot Create Remittance', $exception->getTraceAsString());
+            $transaction->rollback();
+            return $this->response->sendError('Error in creating remittance');
+        }
+
+
+        return $this->response->sendSuccess($ref);
     }
+
+    public function getPaymentAdviceForDownloadAction(){
+        $ref = $this->request->get('ref');
+        $company_id = $this->request->get('company_id');
+        if(in_array(null, [$ref])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        $filter_by = ['send_all' => 1];
+        if($company_id) $filter_by['company_id'] = $company_id;
+        $payments = Remittance::fetchDuePaymentAdvice(0, 0, $ref, $filter_by);
+        return $this->response->sendSuccess($payments);
+    }
+
+    public function getPaymentsAction(){
+
+    }
+
+    public function getPendingPaymentsAction(){
+        $company_registration_number = $this->request->getQuery('registration_number');
+        if($company_registration_number){
+            $company = Company::getByRegistrationNumber($company_registration_number);
+            if(!$company) return $this->response->sendError('Invalid Company Registration Number');
+            $company_id = $company->getId();
+        }
+        $start_delivery_date = $this->request->getQuery('start_delivery_date');
+        $end_delivery_date = $this->request->getQuery('end_delivery_date');
+        $send_all = $this->request->getQuery('send_all', null, false);
+        $with_total_count = $this->request->getQuery('with_total_count');
+
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $filter_by = [];
+        if($company_registration_number) $filter_by['company_id'] = $company_id;
+        if($start_delivery_date) $filter_by['start_delivery_date'] = $start_delivery_date;
+        if($end_delivery_date) $filter_by['end_delivery_date'] = $end_delivery_date;
+        if($send_all) $filter_by['send_all'] = true;
+
+        $parcels = Remittance::fetchPendingDuePaymentAdvice($offset, $count, $filter_by);
+        if($with_total_count){
+            $count = Remittance::countPendingDuePaymentAdvice($filter_by);
+            $result = [
+                'total_count' => $count,
+                'payments' => $parcels
+            ];
+        }else $result = $parcels;
+
+        return $this->response->sendSuccess($result);
+    }
+
 }
