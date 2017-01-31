@@ -100,7 +100,26 @@ class CodtellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
         $teller->setStatus(Status::TELLER_APPROVED);
-        $teller->save();
+        if($teller->save()){
+            $tellerParcels = CodTellerParcel::fetchAll($teller->getId());
+            if($tellerParcels){
+                foreach ($tellerParcels as $tellerParcel) {
+                    $waybill = $tellerParcel['parcel']['waybill_number'];
+                    $remittance = Remittance::getByWaybillNumber($waybill);
+                    if($remittance) {
+                        $remittance->setStatus(Status::REMITTANCE_READY_FOR_PAYOUT);
+                    }else{
+                        /** @var Company $company */
+                        $company = Company::findFirstById($tellerParcel['parcel']['company_id']);
+                        if(!$company) continue;
+                        $remittance = new Remittance();
+                        $remittance->init($waybill, $tellerParcel['parcel']['delivery_amount'], $company->getRegNo(),
+                            null, null, Status::REMITTANCE_READY_FOR_PAYOUT);
+                    }
+                    $remittance->save();
+                }
+            }
+        }
         return $this->response->sendSuccess();
     }
 
