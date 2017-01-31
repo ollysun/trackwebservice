@@ -228,8 +228,8 @@ class RemittanceController extends ControllerBase
 
         try{
 
-            for ($i = 0; $i <= $count; $i+=500){
-                $old_remittances = OldRemittance::fetchAll($i, 500);
+            for ($i = 0; $i <= $count; $i+=50){
+                $old_remittances = OldRemittance::fetchAll($i, 50);
                 foreach ($old_remittances as $old_remittance) {
                     $waybill_number = $old_remittance->getHawb();
 
