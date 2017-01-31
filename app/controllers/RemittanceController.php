@@ -219,7 +219,33 @@ class RemittanceController extends ControllerBase
     }
 
     public function importPaidParcelsAction(){
-        $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $parcels = Parcel::getByWaybillNumberList(implode(',', $waybill_numbers));
+        $old_remittances = OldRemittance::find();
+        try{
+            foreach ($old_remittances as $old_remittance) {
+                $parcel = Parcel::getByWaybillNumber($old_remittance->getHawb());
+                if(!$parcel){
+                    $parcel = Parcel::getByReferenceNumber($old_remittance->getHawb());
+                    if(!$parcel) {
+                        $old_remittance->setNarration('NAP');//not a parcel
+                        $old_remittance->save();
+                        continue;
+                    }
+                }
+                $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $old_remittance->getCustomer()]]);
+                if(!$company){
+                    $old_remittance->setNarration('NAC');//not a customer
+                    $old_remittance->save();
+                    continue;
+                }
+                $remittance = new Remittance();
+                $remittance->init($parcel->getWaybillNumber(), $old_remittance->getValue(),
+                    $company->getRegNo(), $this->auth->getPersonId(), 0, Status::REMITTANCE_PAID);
+
+                $remittance->save();
+            }
+        }catch (Exception $exception){
+            Util::slackDebug('Import error - old remittance',
+                $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString());
+        }
     }
 }
