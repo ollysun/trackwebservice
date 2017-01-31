@@ -219,30 +219,52 @@ class RemittanceController extends ControllerBase
     }
 
     public function importPaidParcelsAction(){
-        $old_remittances = OldRemittance::find();
+        $this->auth->allowOnly(Role::ADMIN);
+        ini_set('memory_limit', '-1');//to be removed
+        ini_set('max_execution_time', 3600);
+        $count = OldRemittance::count();
+       /* $old_remittances = OldRemittance::find();
+        dd($old_remittances);*/
+
         try{
-            foreach ($old_remittances as $old_remittance) {
-                $parcel = Parcel::getByWaybillNumber($old_remittance->getHawb());
-                if(!$parcel){
-                    $parcel = Parcel::getByReferenceNumber($old_remittance->getHawb());
-                    if(!$parcel) {
-                        $old_remittance->setNarration('NAP');//not a parcel
+
+            for ($i = 0; $i <= $count; $i+=500){
+                $old_remittances = OldRemittance::fetchAll($i, 500);
+                foreach ($old_remittances as $old_remittance) {
+                    $waybill_number = $old_remittance->getHawb();
+
+                    /** @var OldRemittance $old_remittance */
+                    $parcel = Parcel::getByWaybillNumber($waybill_number);
+                    if(!$parcel){
+                        $parcel = Parcel::getByReferenceNumber($old_remittance->getHawb());
+                        if(!$parcel) {
+                            $old_remittance->setNarration('NAP');//not a parcel
+                            $old_remittance->save();
+                            continue;
+                        }
+                    }
+                    $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $old_remittance->getCustomer()]]);
+                    if(!$company){
+                        $old_remittance->setNarration('NAC');//not a customer
                         $old_remittance->save();
                         continue;
                     }
-                }
-                $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $old_remittance->getCustomer()]]);
-                if(!$company){
-                    $old_remittance->setNarration('NAC');//not a customer
-                    $old_remittance->save();
-                    continue;
-                }
-                $remittance = new Remittance();
-                $remittance->init($parcel->getWaybillNumber(), $old_remittance->getValue(),
-                    $company->getRegNo(), $this->auth->getPersonId(), 0, Status::REMITTANCE_PAID);
+                    if(Remittance::findFirst(['waybill_number = :waybill_number:',
+                        'bind' => ['waybill_number' => $parcel->getWaybillNumber()]])){
+                        $old_remittance->setNarration('DUP');//duplicate
+                        $old_remittance->save();
+                        continue;
+                    }
+                    $remittance = new Remittance();
+                    $remittance->init($parcel->getWaybillNumber(), $old_remittance->getValue(),
+                        $company->getRegNo(), $this->auth->getPersonId(), 0, Status::REMITTANCE_PAID);
 
-                $remittance->save();
+                    $remittance->save();
+                    $old_remittance->setNarration('DONE');
+                    $old_remittance->save();
+                }
             }
+
         }catch (Exception $exception){
             Util::slackDebug('Import error - old remittance',
                 $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString());
