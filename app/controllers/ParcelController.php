@@ -1728,12 +1728,32 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
+            //if the parcel is cod, create a remittance record
+            if($parcel->getCashOnDelivery() == 1){
+                if(Remittance::fetchOne($parcel->getWaybillNumber(), 'waybill_number')){
+                    continue;
+                }
+                /** @var Company $company */
+                $company = Company::findFirstById($parcel->getCompanyId());
+                if(!$company) {
+                    Util::slackDebug('Remittance not save for '.$parcel->getWaybillNumber(), 'Company not set');
+                    continue;
+                }
+                $remittance = new Remittance();
+                $remittance->init($parcel->getWaybillNumber(), $parcel->getCashOnDeliveryAmount(), $company->getRegNo(),
+                    $this->auth->getPersonId(), 1, Status::REMITTANCE_AWAITING_CLEARANCE);
+
+                if(!$remittance->save()){
+                    Util::slackDebug('Remittance not save for '.$parcel->getWaybillNumber(), implode(', ', $remittance->getMessages()));
+                }
+            }
+
             //get recipients
             $recipients = [];
             if ($admin) {
                 $recipients[$admin->getEmail()] = $admin->getFullname();
             }
-            $sender = User::findFirst($parcel->getSenderId());
+            $sender = User::findFirst($parcel->getSenderId());//error in the retrieval
             if ($sender) {
                 $recipients[$sender->getEmail()] = $sender->getFirstname();
             }

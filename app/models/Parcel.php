@@ -2711,7 +2711,8 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null, $where_id_reference_number = false)
+    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false,
+                                                  $fetch_with = null, $where_id_reference_number = false)
     {
         $waybill_csv = "'" . implode("','", $waybill_number_arr). "'";
         $obj = new Parcel();
