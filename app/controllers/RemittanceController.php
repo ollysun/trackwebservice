@@ -269,8 +269,10 @@ class RemittanceController extends ControllerBase
 
         }catch (Exception $exception){
             Util::slackDebug('Import error - old remittance',
-                $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString());
-            $message = $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString();
+                $exception->getPrevious()?$exception->getPrevious()->getMessage().': '.
+                    $exception->getPrevious()->getTraceAsString(): $exception->getMessage().': '.$exception->getTraceAsString());
+            $message = $exception->getPrevious()?$exception->getPrevious()->getMessage().': '.
+                $exception->getPrevious()->getTraceAsString(): $exception->getMessage().': '.$exception->getTraceAsString();
         }
 
         return $this->response->sendSuccess($message);
