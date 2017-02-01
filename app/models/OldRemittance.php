@@ -956,7 +956,6 @@ class OldRemittance extends \Phalcon\Mvc\Model
     public static function fetchAll($offset, $count){
         $builder = (new Remittance())->getModelsManager()->createBuilder()->from('OldRemittance');
         $builder->limit($count, $offset);
-        $builder->where('id > 50542');
         return $builder->getQuery()->execute();
     }
 
