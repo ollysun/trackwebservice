@@ -239,6 +239,7 @@ class RemittanceController extends ControllerBase
                     if(!$parcel){
                         $parcel = Parcel::getByReferenceNumber($old_remittance->getHawb());
                         if(!$parcel) {
+                            continue;
                             $old_remittance->setNarration('NAP');//not a parcel
                             $old_remittance->save();
                             continue;
@@ -246,12 +247,14 @@ class RemittanceController extends ControllerBase
                     }
                     $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $old_remittance->getCustomer()]]);
                     if(!$company){
+                        continue;
                         $old_remittance->setNarration('NAC');//not a customer
                         $old_remittance->save();
                         continue;
                     }
                     if(Remittance::findFirst(['waybill_number = :waybill_number:',
                         'bind' => ['waybill_number' => $parcel->getWaybillNumber()]])){
+                        continue;
                         $old_remittance->setNarration('DUP');//duplicate
                         $old_remittance->save();
                         continue;
@@ -261,8 +264,8 @@ class RemittanceController extends ControllerBase
                         $company->getRegNo(), $this->auth->getPersonId(), 0, Status::REMITTANCE_PAID);
 
                     $remittance->save();
-                    $old_remittance->setNarration('DONE');
-                    $old_remittance->save();
+                    //$old_remittance->setNarration('DONE');
+                    //$old_remittance->save();
                 }
             }
             $message = 'done';
