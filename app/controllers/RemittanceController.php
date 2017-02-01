@@ -231,7 +231,7 @@ class RemittanceController extends ControllerBase
             for ($i = 0; $i <= $count; $i+=20){
                 $old_remittances = OldRemittance::fetchAll($i, 20);
                 foreach ($old_remittances as $old_remittance) {
-                    $old_remittance = OldRemittance::findFirst(['id = :id:', 'bind' => ['id' => $old_remittance->getId()]]);
+                    $old_remittance = OldRemittance::findFirst(['Id = :id:', 'bind' => ['id' => $old_remittance->getId()]]);
                     $waybill_number = $old_remittance->getHawb();
 
                     /** @var OldRemittance $old_remittance */
