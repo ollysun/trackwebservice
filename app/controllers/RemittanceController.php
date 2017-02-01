@@ -231,7 +231,7 @@ class RemittanceController extends ControllerBase
             for ($i = 0; $i <= $count; $i+=20){
                 $old_remittances = OldRemittance::fetchAll($i, 20);
                 foreach ($old_remittances as $old_remittance) {
-                    $old_remittance = OldRemittance::findFirst(['Id = :id:', 'bind' => ['id' => $old_remittance->getId()]]);
+                    //$old_remittance = OldRemittance::findFirst(['Id = :id:', 'bind' => ['id' => $old_remittance->getId()]]);
                     $waybill_number = $old_remittance->getHawb();
 
                     /** @var OldRemittance $old_remittance */
@@ -240,24 +240,24 @@ class RemittanceController extends ControllerBase
                         $parcel = Parcel::getByReferenceNumber($old_remittance->getHawb());
                         if(!$parcel) {
                             continue;
-                            $old_remittance->setNarration('NAP');//not a parcel
+                            /*$old_remittance->setNarration('NAP');//not a parcel
                             $old_remittance->save();
-                            continue;
+                            continue;*/
                         }
                     }
                     $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $old_remittance->getCustomer()]]);
                     if(!$company){
                         continue;
-                        $old_remittance->setNarration('NAC');//not a customer
+                        /*$old_remittance->setNarration('NAC');//not a customer
                         $old_remittance->save();
-                        continue;
+                        continue;*/
                     }
                     if(Remittance::findFirst(['waybill_number = :waybill_number:',
                         'bind' => ['waybill_number' => $parcel->getWaybillNumber()]])){
                         continue;
-                        $old_remittance->setNarration('DUP');//duplicate
+                        /*$old_remittance->setNarration('DUP');//duplicate
                         $old_remittance->save();
-                        continue;
+                        continue;*/
                     }
                     $remittance = new Remittance();
                     $remittance->init($parcel->getWaybillNumber(), $old_remittance->getValue(),
