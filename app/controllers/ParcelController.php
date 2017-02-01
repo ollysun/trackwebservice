@@ -1741,7 +1741,7 @@ class ParcelController extends ControllerBase
                 }
                 $remittance = new Remittance();
                 $remittance->init($parcel->getWaybillNumber(), $parcel->getCashOnDeliveryAmount(), $company->getRegNo(),
-                    $this->auth->getPersonId(), 1, Status::REMITTANCE_AWAITING_CLEARANCE);
+                    92, 1, Status::REMITTANCE_AWAITING_CLEARANCE);
 
                 if(!$remittance->save()){
                     Util::slackDebug('Remittance not save for '.$parcel->getWaybillNumber(), implode(', ', $remittance->getMessages()));
