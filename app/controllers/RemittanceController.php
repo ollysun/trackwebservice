@@ -228,8 +228,8 @@ class RemittanceController extends ControllerBase
 
         try{
 
-            for ($i = 0; $i <= $count; $i+=20000){
-                $old_remittances = OldRemittance::fetchAll($i, 20000);
+            for ($i = 0; $i <= $count; $i+=20){
+                $old_remittances = OldRemittance::fetchAll($i, 20);
                 foreach ($old_remittances as $old_remittance) {
                     $old_remittance = OldRemittance::findFirst(['id = :id:', 'bind' => ['id' => $old_remittance->getId()]]);
                     $waybill_number = $old_remittance->getHawb();
@@ -265,10 +265,14 @@ class RemittanceController extends ControllerBase
                     $old_remittance->save();
                 }
             }
+            $message = 'done';
 
         }catch (Exception $exception){
             Util::slackDebug('Import error - old remittance',
                 $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString());
+            $message = $exception->getPrevious()?$exception->getPrevious()->getTraceAsString(): $exception->getTraceAsString();
         }
+
+        return $this->response->sendSuccess($message);
     }
 }
