@@ -636,6 +636,8 @@ class ParcelController extends ControllerBase
     }
 
     public function validateNumbersAction(){
+        ini_set('memory_limit', '-1');//to be removed
+        ini_set('max_execution_time', 3600);
         $waybill_numbers = $this->request->getPost('numbers');
         $by = strtolower($this->request->getPost('by'));
 
@@ -643,7 +645,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
 
         if($by != 'waybill number' && $by != 'reference number'){
-            return $this->response->sendError('You only filter by waybill number of reference number');
+            return $this->response->sendError('You can only filter by waybill number of reference number');
         }
 
         $results = [];
