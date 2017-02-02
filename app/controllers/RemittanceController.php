@@ -141,6 +141,7 @@ class RemittanceController extends ControllerBase
 
         $ref = time();
         try{
+            $payer = Admin::getById($this->auth->getPersonId());
             foreach ($company_ids as $company_id) {
                 $company = Company::fetchOne(['id' => $company_id], []);
                 $parcels = Remittance::fetchAll(0, 0, ['send_all' => 1, 'status' => $current_status,
@@ -152,7 +153,7 @@ class RemittanceController extends ControllerBase
                             'bind' => ['id' => $parcel['id']]]);
                         if(!$remittance) continue;
                         $remittance->setStatus(Status::REMITTANCE_PAID);
-                        $remittance->setPayerId($this->auth->getPersonId());
+                        $remittance->setPayerId($payer->getStaffId());
                         $remittance->setRef($ref);
                         $remittance->setTransaction($transaction);
                         if(!$remittance->save()) {
