@@ -635,6 +635,31 @@ class ParcelController extends ControllerBase
         return $this->response->sendSuccess($result);
     }
 
+    public function validateNumbersAction(){
+        $waybill_numbers = $this->request->getPost('numbers');
+        $by = strtolower($this->request->getPost('by'));
+
+        if(in_array(null, [$waybill_numbers, $by]))
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+
+        if($by != 'waybill number' && $by != 'reference number'){
+            return $this->response->sendError('You only filter by waybill number of reference number');
+        }
+
+        $results = [];
+        foreach (explode(',', $waybill_numbers) as $waybill_number) {
+            $waybill_number = trim($waybill_number);
+            if($waybill_number == '') continue;
+            if(!(($by == 'waybill number' || Parcel::isWaybillNumber($waybill_number))?
+                Parcel::getByWaybillNumber($waybill_number): Parcel::getByReferenceNumber($waybill_number))){
+                $results[] = ['number' => $waybill_number, 'status' => 'NOT FOUND'];
+            }else{
+                $results[] = ['number' => $waybill_number, 'status' => 'FOUND'];
+            }
+        }
+        return $this->response->sendSuccess($results);
+    }
+
     public function getDeliverablePackagesAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
 
