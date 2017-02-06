@@ -111,7 +111,10 @@ class CodtellerController extends ControllerBase {
                     }else{
                         /** @var Company $company */
                         $company = Company::findFirstById($tellerParcel['parcel']['company_id']);
-                        if(!$company) continue;
+                        if(!$company) {
+                            Util::slackDebug('Remittance not save for '.$tellerParcel['parcel']['waybill_number'], 'Company not set');
+                            continue;
+                        }
                         $remittance = new Remittance();
                         $remittance->init($waybill, $tellerParcel['parcel']['delivery_amount'], $company->getRegNo(),
                             null, null, Status::REMITTANCE_READY_FOR_PAYOUT);
@@ -119,6 +122,9 @@ class CodtellerController extends ControllerBase {
                     $remittance->save();
                 }
             }
+        }else{
+            Util::slackDebug("Teller not approved", implode(',', $teller->getMessages()));
+            return $this->response->sendError('Error in approving teller please try again later');
         }
         return $this->response->sendSuccess();
     }
