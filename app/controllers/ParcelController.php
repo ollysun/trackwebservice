@@ -466,7 +466,8 @@ class ParcelController extends ControllerBase
             'start_created_date', 'end_created_date', 'start_pickup_date', 'end_pickup_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr',
             'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
-            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed', 'delivery_branch_id'
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed',
+            'delivery_branch_id', 'no_cod_teller'
         ];
 
         $filter_by = [];
