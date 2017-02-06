@@ -69,8 +69,9 @@ class OnforwardingchargeController extends ControllerBase {
         $description = $this->request->getPost('description', null, ' ');
         $amount = $this->request->getPost('amount');
         $percentage = $this->request->getPost('percentage');
+        $billing_plan_id = $this->request->getPost('billing_plan_id');
 
-        if (in_array(null, [$charge_id, $name, $code, $percentage, $amount])){
+        if (in_array(null, [$charge_id, $name, $code, $percentage, $amount, $billing_plan_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
         $amount = floatval($amount);
@@ -82,7 +83,11 @@ class OnforwardingchargeController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::INVALID_PERCENTAGE);
         }
 
-        $charge = OnforwardingCharge::fetchByDetails($name, $code);
+        //$charge = OnforwardingCharge::fetchByDetails($name, $code);
+        $charge = OnforwardingCharge::findFirst([
+            '(code = :code: OR name = :name:) AND billing_plan_id = :plan_id:',
+            'bind' => ['code' => $code, 'name' => $name, 'plan_id' => $billing_plan_id]
+        ]);
 
         if ($charge != false){
             if ($charge->hasSameName($name) && $charge->getId() != $charge_id){
