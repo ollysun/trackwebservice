@@ -674,7 +674,6 @@ class Remittance extends \Phalcon\Mvc\Model
     }
 
 
-
     /**
      * @param $offset
      * @param $count
@@ -834,5 +833,4 @@ class Remittance extends \Phalcon\Mvc\Model
 
         return intval($data[0]->total_count);
     }
-
 }

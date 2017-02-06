@@ -2044,6 +2044,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
 
+        //un remitted parcel filter
+        if(isset($filter_by['no_cod_teller']) && $filter_by['no_cod_teller']){
+            $where[] = 'CodTellerParcel.id IS NULL';
+        }
+
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
@@ -3498,6 +3503,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $columns = ['Parcel.*'];
 
 
+
         if ($order_by_clause != null) {
             $builder->orderBy($order_by_clause);
         } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])) {
@@ -3527,6 +3533,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('City', "City.id = Address.city_id AND City.branch_id = '$branch_id'");
         }
 
+
         //model hydration
         if(isset($fetch_with['with_sales_teller'])){
             $columns[] = 'Teller.*';
@@ -3540,9 +3547,12 @@ class Parcel extends \Phalcon\Mvc\Model
         if(isset($fetch_with['with_cod_teller'])){
             $columns[] = 'CodTeller.*';
             $columns[] = 'CodTellerBank.*';
-            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id');
+            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
             $builder->leftJoin('CodTeller', 'CodTellerParcel.teller_id = CodTeller.id AND CodTeller.status != '. Status::TELLER_DECLINED);
             $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
+        }elseif(isset($filter_by['no_cod_teller']) && $filter_by['no_cod_teller']){
+
+            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
         }
 
         //with_rtd_teller = true
