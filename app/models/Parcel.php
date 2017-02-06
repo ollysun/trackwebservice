@@ -2170,6 +2170,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
 
+        if(isset($filter_by['no_cod_teller'])){
+            $builder->innerJoin('CodTellerParcel', 'CodTellerParcel.parcel_id = Parcel.id');
+        }
+
         if (isset($filter_by['parent_id'])) {
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
         }
@@ -3454,6 +3458,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
+        /*if(isset($filter_by['no_cod_teller'])){
+            $builder->leftJoin('CodTellerParcel', 'CodTellerParcel.parcel_id = Parcel.id', 'CodTellerParcel');
+        }*/
 
         $intermediate = $builder->getQuery()->parse();
         $readConnection = (new self())->getReadConnection();
@@ -3552,7 +3559,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
             $builder->leftJoin('CodTeller', 'CodTellerParcel.teller_id = CodTeller.id AND CodTeller.status != '. Status::TELLER_DECLINED);
             $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
-        }elseif(isset($filter_by['no_cod_teller'])){
+        }else if(isset($filter_by['no_cod_teller'])){
             $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
         }
 
