@@ -40,7 +40,8 @@ class RouteController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER,
+            Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT, Role::BUSINESS_MANAGER, Role::REGIONAL_MANAGER]);
 
         $branchId = $this->request->getQuery('branch_id');
         $with_total_count = $this->request->getQuery('with_total_count');
