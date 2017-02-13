@@ -53,7 +53,7 @@ class IntlController extends ControllerBase
 
     }
 
-    public function getCountriesAction(){
+    public function getCountriesByZoneAction(){
         $zone_id = $this->request->get('zone_id');
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -226,26 +226,32 @@ class IntlController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id);
+        if($result['success']){
+            return $this->response->sendSuccess($result['amount']);
+        }
+        return $this->response->sendError($result['message']);
+
         /** @var Country $country */
-        $country = Country::findFirstById($country_id);
+        /*$country = Country::findFirstById($country_id);
         if(!$country){
             return $this->response->sendError('Invalid country id');
-        }
+        }*/
 
         /** @var IntlZoneCountryMap $zone */
-        $zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
+        /*$zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
         if(!$zone_map){
             return $this->response->sendError('Country not mapped');
-        }
+        }*/
 
         /** @var ParcelType $parcel_type */
-        $parcel_type = ParcelType::findFirstById($parcel_type_id);
+        /*$parcel_type = ParcelType::findFirstById($parcel_type_id);
         if(!$parcel_type){
             return $this->response->sendError('Invalid parcel type');
-        }
+        }*/
 
 
-        $weight_range = IntlWeightRange::findFirst(['conditions' =>
+        /*$weight_range = IntlWeightRange::findFirst(['conditions' =>
             ':weight: between min_weight AND max_weight', 'bind' => ['weight' => $weight]]);
         if(!$weight_range){
             return $this->response->sendError('Weight not in range');
@@ -258,8 +264,7 @@ class IntlController extends ControllerBase
         if(!$tariff){
             return $this->response->sendError('Tariff not found');
         }
-        return $this->response->sendSuccess($tariff->getBaseAmount());
-
+        return $this->response->sendSuccess($tariff->getBaseAmount());*/
 
     }
 }

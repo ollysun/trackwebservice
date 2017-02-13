@@ -212,4 +212,41 @@ class IntlZone extends \Phalcon\Mvc\Model
         return intval($data[0]->count);
     }
 
+
+    public static function calculateBilling($weight, $country_id, $parcel_type_id){
+        /** @var Country $country */
+        $country = Country::findFirstById($country_id);
+        if(!$country){
+            return ['success' => false, 'message' => 'Invalid country id'];
+        }
+
+        /** @var IntlZoneCountryMap $zone */
+        $zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
+        if(!$zone_map){
+            return ['success' => false, 'message' => 'Country not mapped'];
+        }
+
+        /** @var ParcelType $parcel_type */
+        $parcel_type = ParcelType::findFirstById($parcel_type_id);
+        if(!$parcel_type){
+            return ['success' => false, 'message' => 'Invalid parcel type'];
+        }
+
+
+        $weight_range = IntlWeightRange::findFirst(['conditions' =>
+            ':weight: between min_weight AND max_weight', 'bind' => ['weight' => $weight]]);
+        if(!$weight_range){
+            return ['success' => false, 'message' => 'Weight not in range'];
+        }
+
+        $tariff = IntlTariff::findFirst(['conditions' => 'zone_id = :zone_id: AND parcel_type_id = :parcel_type_id:
+        AND weight_range_id = :weight_range_id:',
+            'bind' => ['zone_id' => $zone_map->getZoneId(), 'parcel_type_id' => $parcel_type_id,
+                'weight_range_id' => $weight_range->getId()]]);
+        if(!$tariff){
+            return ['success' => false, 'message' => 'Tariff not found'];
+        }
+        return  ['success' => true, 'amount' => $tariff->getBaseAmount()];
+    }
+
 }

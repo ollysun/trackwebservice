@@ -89,7 +89,7 @@ class CodtellerController extends ControllerBase {
     }
 
     public function approveAction(){
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -130,7 +130,7 @@ class CodtellerController extends ControllerBase {
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -153,7 +153,7 @@ class CodtellerController extends ControllerBase {
      * @return int
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::BUSINESS_MANAGER]);
 
         $id = $this->request->getQuery('id');
 
@@ -218,7 +218,7 @@ class CodtellerController extends ControllerBase {
      * @return array
      */
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -266,7 +266,7 @@ class CodtellerController extends ControllerBase {
      * @return int
      */
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $filter_by = $this->getFilterParams();
 
