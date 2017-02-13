@@ -18,6 +18,17 @@ class BusinessManager extends Phalcon\Mvc\Model
 
     protected $status;
 
+    protected $business_zone_id;
+
+    public function getBusinessZoneId(){
+        return $this->business_zone_id;
+    }
+
+    public function setBusinessZoneId($business_zone_id){
+        $this->setBusinessZoneId($business_zone_id);
+        return $this;
+    }
+
     public function getStatus()
     {
         return $this->status;
@@ -94,7 +105,8 @@ class BusinessManager extends Phalcon\Mvc\Model
             'staff_id' => $this->getStaffId(),
             'name' => $this->getName(),
             'region_name' => $this->getRegionName(),
-            'status' => $this->getStatus()
+            'status' => $this->getStatus(),
+            'business_zone_id' => $this->getBusinessZoneId()
         );
     }
 
@@ -104,6 +116,7 @@ class BusinessManager extends Phalcon\Mvc\Model
         $this->setName($data['name']);
         $this->setRegionName($data['region_name']);
         $this->setStatus($data['status']);
+        $this->setBusinessZoneId($data['business_zone_id']);
     }
 
     public static function getAll($offset, $count, $filter_by, $paginate = false){

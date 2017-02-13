@@ -18,6 +18,7 @@ class BranchController extends ControllerBase
         $state_id = $this->request->getPost('state_id');
         $address = $this->request->getPost('address');
         $status = $this->request->getPost('status');
+        $business_zone_id = $this->request->getPost('business_zone_id');
 
         $hub_id = $this->request->getPost('hub_id'); //optional only used for EC creation
 
@@ -43,7 +44,7 @@ class BranchController extends ControllerBase
         }
 
         $branch = new Branch();
-        $branch->initData($name, $branch_type, $state_id, $address, $status);
+        $branch->initData($name, $branch_type, $state_id, $address, $status, $business_zone_id);
         if ($branch->saveBranch($hub_id)) {
             return $this->response->sendSuccess(['id' => $branch->getId(), 'code' => $branch->getCode()]);
         }
@@ -58,6 +59,7 @@ class BranchController extends ControllerBase
         $name = $this->request->getPost('name');
         $state_id = $this->request->getPost('state_id');
         $address = $this->request->getPost('address');
+        $business_zone_id = $this->request->getPost('business_zone_id');
 
         if (in_array(null, array($branch_id, $name, $state_id, $address))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -68,7 +70,7 @@ class BranchController extends ControllerBase
             return $this->response->sendError(ResponseMessage::BRANCH_NOT_EXISTING);
         }
 
-        $branch->editDetails($name, $state_id, $address);
+        $branch->editDetails($name, $state_id, $address, $business_zone_id);
         if ($branch->save()) {
             return $this->response->sendSuccess();
         }
