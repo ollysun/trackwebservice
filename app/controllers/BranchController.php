@@ -140,7 +140,7 @@ class BranchController extends ControllerBase
      */
     public function getAllECAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::BUSINESS_MANAGER]);
 
         $hub_id = $this->request->getQuery('hub_id');
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -164,7 +164,8 @@ class BranchController extends ControllerBase
 
     public function getAllHubAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN,
+            Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::BUSINESS_MANAGER]);
 
         $state_id = $this->request->getQuery('state_id', null, null);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -192,7 +193,7 @@ class BranchController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::BUSINESS_MANAGER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
