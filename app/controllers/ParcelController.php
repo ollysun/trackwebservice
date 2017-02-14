@@ -2130,7 +2130,8 @@ exit();
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
-            } else if ($enforce_action != '1' &&  !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
+            } else if ($enforce_action != '1' &&
+                !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
@@ -2140,7 +2141,6 @@ exit();
             }else{
                 $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
             }
-
 
 
             if (!$check) {
