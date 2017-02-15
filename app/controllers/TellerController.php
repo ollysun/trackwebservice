@@ -89,7 +89,7 @@ class TellerController extends ControllerBase {
     }
 
     public function approveAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -105,7 +105,7 @@ class TellerController extends ControllerBase {
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -128,7 +128,7 @@ class TellerController extends ControllerBase {
      * @return int
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
 
         $id = $this->request->getQuery('id');
 

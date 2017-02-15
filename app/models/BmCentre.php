@@ -166,7 +166,7 @@ class BmCentre extends \Phalcon\Mvc\Model
      * @param $count
      * @param $filter_by
      * @param $fetch_with
-     * @param bool|false $paginate
+     * @param bool|false $paginate bhh
      * @return array
      */
     public static function fetchAll($offset, $count, $filter_by, $fetch_with, $paginate = false){
