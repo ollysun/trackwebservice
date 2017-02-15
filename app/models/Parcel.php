@@ -2051,6 +2051,12 @@ class Parcel extends \Phalcon\Mvc\Model
             else $where[] = 'CodTellerParcel.id IS NOT NULL';
         }
 
+        //is_billing_overridden
+        if(isset($filter_by['is_billing_overridden'])){
+            $where[] = 'Parcel.is_billing_overridden = :is_billing_overridden:';
+            $bind['is_billing_overridden'] = $filter_by['is_billing_overridden'];
+        }
+
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
