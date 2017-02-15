@@ -70,7 +70,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN){
+        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlan()){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
@@ -81,6 +81,11 @@ class ParcelController extends ControllerBase
             if(!$billing_link){
                 return $this->response->sendError(ResponseMessage::INVALID_BILLING_PLAN);
             }
+        }
+
+        //if parcel is not for a corporate customer and payment is deferred, reject
+        if(!$parcel['company_id'] && $parcel['payment_type'] == 4){
+            return $this->response->sendError('Deferred payment is not allowed for cash sale');
         }
 
         $auth_data = $this->auth->getData();
