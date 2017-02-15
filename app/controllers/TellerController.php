@@ -128,7 +128,8 @@ class TellerController extends ControllerBase {
      * @return int
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,
+            Role::FINANCE, Role::REGIONAL_MANAGER]);
 
         $id = $this->request->getQuery('id');
 
@@ -192,7 +193,7 @@ class TellerController extends ControllerBase {
      */
     public function getAllAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER,
-            Role::DISPATCHER, Role::REGIONAL_MANAGER, Role::FINANCE]);
+            Role::DISPATCHER, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER, Role::FINANCE]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -240,7 +241,7 @@ class TellerController extends ControllerBase {
      * @return int
      */
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $filter_by = $this->getFilterParams();
 
