@@ -119,6 +119,27 @@ class IntlController extends ControllerBase
         return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
     }
 
+    public function editWeightRange(){
+        $this->auth->allowOnly(Role::ADMIN);
+        $id = $this->request->getPost('id');
+        $min_weight = $this->request->getPost('min_weight');
+        $max_weight = $this->request->getPost('max_weight');
+
+        if(in_array(null, [$id, $min_weight, $max_weight])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        //add validations
+
+        $range = IntlWeightRange::findFirst(['id = :id"', 'bind' => ['id' => $id]]);
+        if(!$range) return $this->response->sendError('Weight range not found');
+        $range->setMinWeight($min_weight);
+        $range->setMaxWeight($max_weight);
+        if($range->save()){
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
+    }
+
     public function getWeightRangesAction(){
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
