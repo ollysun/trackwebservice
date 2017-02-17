@@ -182,4 +182,53 @@ class ExportedParcel extends \Phalcon\Mvc\Model
         );
     }
 
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $paginate){
+        $builder = new \Phalcon\Mvc\Model\Query\Builder();
+        $builder->addFrom('ExportedParcel', 'ExportedParcel')
+                ->innerJoin('Parcel', 'Parcel.id = ExportedParcel.parcel_id')
+                ->innerJoin('ExportAgent', 'ExportAgent.id = ExportedParcel.export_agent_id')
+        ;
+
+        $builder->columns(['ExportedParcel.*', 'Parcel.*', 'ExportAgent.*']);
+
+        $bind = [];
+        if ($paginate) {
+            $builder = $builder->limit($count, $offset);
+        }
+
+        if(isset($filter_by['agent_id'])){
+            $builder->where('ExportedParcel.export_agent_id = :agent_id:');
+            $bind['agent_id'] = $filter_by['agent_id'];
+        }
+        if(isset($filter_by['start_created_date'])){
+            if(isset($filter_by['end_created_date'])){
+                $builder->where('Parcel.created_date >= :start_created_date: AND Parcel.created_date <= :end_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+                $bind['end_created_date'] = $filter_by['end_created_date'];
+            }else{
+                $builder->where('Parcel.created_date = :start_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+            }
+        }
+        if(isset($filter_by['waybill_number'])){
+            $builder->where('Parcel.waybill_number = :waybill_number:');
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        }
+
+        $result = $builder->getQuery()->execute($bind);
+
+        $parcels = [];
+        foreach ($result as $item) {
+            $exportedParcel = $item->exportedParcel->toArray();
+            $exportedParcel['parcel'] = $item->parcel->toArray();
+            $exportedParcel['agent'] = $item->exportAgent->toArray();
+            $parcels[] = $exportedParcel;
+        }
+        return $parcels;
+    }
+
+    public static function countParcels($filter_by){
+
+    }
+
 }

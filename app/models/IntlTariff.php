@@ -189,7 +189,7 @@ class IntlTariff extends \Phalcon\Mvc\Model
     {
         $this->belongsTo('zone_id', 'IntlZone', 'id', array('alias' => 'IntlZone'));
         $this->belongsTo('weight_range_id', 'IntlWeightRange', 'id', array('alias' => 'IntlWeightRange'));
-        $this->belongsTo('parcel_type_id', 'ParcelType', 'id', array('alias' => 'ParcelType'));
+        $this->belongsTo('parcel_type_id', 'ShippingType', 'id', array('alias' => 'ShippingType'));
     }
 
     /**
@@ -261,7 +261,7 @@ class IntlTariff extends \Phalcon\Mvc\Model
 
         if(isset($fetch_with['with_parcel_type'])){
             $columns[] = 'ParcelType.*';
-            $builder->innerJoin('ParcelType', 'ParcelType.id = Tariff.parcel_type_id', 'ParcelType');
+            $builder->innerJoin('ShippingType', 'ParcelType.id = Tariff.parcel_type_id', 'ParcelType');
         }
         if(isset($fetch_with['with_zone'])){
             $columns[] = 'Zone.*';
@@ -274,6 +274,12 @@ class IntlTariff extends \Phalcon\Mvc\Model
 
         $builder->columns($columns);
 
+
+        if(isset($filter_by['tariff_id'])){
+            $builder->where('Tariff.id = :id:');
+            $bind['id'] = $filter_by['tariff_id'];
+        }
+
         if(isset($filter_by['zone_id'])){
             $builder->where("Tariff.zone_id = :zone_id:");
             $bind['zone_id'] = $filter_by['zone_id'];
@@ -283,7 +289,17 @@ class IntlTariff extends \Phalcon\Mvc\Model
 
         $zones = [];
         foreach ($data as $item) {
-            $zones[] = $item->toArray();
+            $zone = $item->Tariff->toArray();
+            if (isset($fetch_with['with_parcel_type'])) {
+                $zone['parcel_type'] = $item->ParcelType->toArray();
+            }
+            if(isset($fetch_with['with_zone'])){
+                $zone['zone'] = $item->Zone->toArray();
+            }
+            if(isset($fetch_with['with_weight_range'])){
+                $zone['weight_range'] = $item->WeightRange->toArray();
+            }
+            $zones[] = $zone;
         }
         return $zones;
     }

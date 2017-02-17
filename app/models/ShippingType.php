@@ -7,6 +7,9 @@ class ShippingType extends \Phalcon\Mvc\Model
     const SPECIAL_PROJECTS = 2;
     const LOGISTICS = 3;
     const BULK_MAIL = 4;
+    const INTL_EXPRESS_DOCUMENT = 5;
+    const INTL_EXPRESS_NON_DOCUMENT = 6;
+    const INTL_ECONOMY_EXPRESS= 7;
 
     /**
      *
