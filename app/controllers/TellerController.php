@@ -89,7 +89,7 @@ class TellerController extends ControllerBase {
     }
 
     public function approveAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -183,7 +183,6 @@ class TellerController extends ControllerBase {
 
         return $filter_by;
     }
-
 
     /**
      * Returns the details of teller meeting a set of filter criteria.

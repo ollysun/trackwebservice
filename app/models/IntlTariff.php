@@ -274,6 +274,11 @@ class IntlTariff extends \Phalcon\Mvc\Model
 
         $builder->columns($columns);
 
+        if($filter_by['tariff_id']){
+            $builder->where('Tariff.id = :id:');
+            $bind['id'] = $filter_by['tariff_id'];
+        }
+
         if(isset($filter_by['zone_id'])){
             $builder->where("Tariff.zone_id = :zone_id:");
             $bind['zone_id'] = $filter_by['zone_id'];
@@ -283,7 +288,17 @@ class IntlTariff extends \Phalcon\Mvc\Model
 
         $zones = [];
         foreach ($data as $item) {
-            $zones[] = $item->toArray();
+            $zone = $item->Tariff->toArray();
+            if (isset($fetch_with['with_parcel_type'])) {
+                $zone['parcel_type'] = $item->parcelType->toArray();
+            }
+            if(isset($fetch_with['with_zone'])){
+                $zone['zone'] = $item->Zone->toArray();
+            }
+            if(isset($fetch_with['with_weight_range'])){
+                $zone['weight_range'] = $item->WeightRange->toArray();
+            }
+            $zones[] = $zone;
         }
         return $zones;
     }
