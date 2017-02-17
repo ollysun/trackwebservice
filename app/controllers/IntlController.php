@@ -173,7 +173,7 @@ class IntlController extends ControllerBase
             return $this->response->sendError('Invalid weight range');
         }
         //validate parcel type
-        if(!ParcelType::findFirst($parcel_type_id)){
+        if(!ShippingType::findFirst(['id = :id:', 'bind' => ['id' => $parcel_type_id]])){
             return $this->response->sendError('Invalid parcel type');
         }
         if(!$id){

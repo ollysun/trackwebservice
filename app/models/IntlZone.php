@@ -220,6 +220,12 @@ class IntlZone extends \Phalcon\Mvc\Model
             return ['success' => false, 'message' => 'Invalid country id'];
         }
 
+        //if the country is in the special countries, use its special price
+        if($special_intl_tariff = IntlSpecialCountryTariff::findFirst(['country_id = :country_id:',
+            'bind' => ['country_id' => $country_id]])){
+            return ['success' => true, 'amount' => $special_intl_tariff->getPrice()];
+        }
+
         /** @var IntlZoneCountryMap $zone */
         $zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
         if(!$zone_map){
@@ -227,7 +233,7 @@ class IntlZone extends \Phalcon\Mvc\Model
         }
 
         /** @var ParcelType $parcel_type */
-        $parcel_type = ParcelType::findFirstById($parcel_type_id);
+        $parcel_type = ShippingType::findFirstById($parcel_type_id);
         if(!$parcel_type){
             return ['success' => false, 'message' => 'Invalid parcel type'];
         }

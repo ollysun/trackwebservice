@@ -355,7 +355,7 @@ class ZoneController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
             Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
-        $country_id = $this->request->getPost('country_id');
+        $country_id = $this->request->getPost('to_country_id');
         if($country_id && $country_id != Country::DEFAULT_COUNTRY_ID){
             $weight = $this->request->getPost('weight');
             $parcel_type_id = $this->request->getPost('parcel_type_id');
