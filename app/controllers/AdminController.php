@@ -90,7 +90,6 @@ class AdminController extends ControllerBase
         if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id,$role_ids))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-
         $email = strtolower(trim($email));
         $staff_id = strtoupper(trim($staff_id));
         if (filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
@@ -116,7 +115,6 @@ class AdminController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
             }
         }
-
         $admin = Admin::findFirst(['id = :id:', 'bind' => ['id' => $admin_id]]);
         if ($admin != false) {
             $admin->changeDetails($branch_id, $role_id, $staff_id, $fullname, $phone);
@@ -129,16 +127,16 @@ class AdminController extends ControllerBase
                      foreach($rolesOfUser as $roleOfUser){
                          $rolesOfUserFromDb[]=$roleOfUser->getRoleId();
                     }
-                    foreach($role_ids as $role) {
-                      if(!in_array($role,$rolesOfUserFromDb)){
+                    foreach(json_decode($role_ids) as $role) {
+                        if(!in_array($role,$rolesOfUserFromDb)){
                           $userRole=new UserRoles();
                           $userRole->setRoleId($role);
-                          $userRole->setUserId( $admin->getUserAuthId());
+                          $userRole->setUserId($admin->getUserAuthId());
                           $userRole->save();
                       }
       }
                     foreach($rolesOfUserFromDb as $roleDb) {
-                        if(!in_array($roleDb,$role_ids)){
+                        if(!in_array($roleDb,json_decode($role_ids) )){
                             UserRoles::findFirst(["user_id=:user_id: and role_id=:role_id:",'bind' => ['user_id' => $admin->getUserAuthId(),'role_id' =>$roleDb]])
                             ->delete();
                         }
