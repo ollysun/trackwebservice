@@ -162,4 +162,15 @@ class ResourcePermission extends \Phalcon\Mvc\Model
         return $result;
     }
 
+    public static function getOperationsForUser($user_id){
+        $builder = (new ResourcePermission())->getModelsManager()->createBuilder();
+        $builder->addFrom('ResourcePermission')
+            ->innerJoin('UserRole', 'UserRole.role_id = ResourceOperation.role_id')
+            ->columns('resource_operation_id')
+            ->where('UserRole.user_id = :user_id:');
+
+        $result = $builder->getQuery()->execute(['user_id' => $user_id]);
+        return $result;
+    }
+
 }
