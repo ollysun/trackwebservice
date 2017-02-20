@@ -227,8 +227,137 @@ class ExportedParcel extends \Phalcon\Mvc\Model
         return $parcels;
     }
 
-    public static function countParcels($filter_by){
 
+    /**
+     * Returns the number of exported parcels based on condition
+     *
+     * @param array
+     * @return int
+     * @author  Olawale Lawal
+     */
+    public static function countExportedParcels($filter_by)
+    {
+        $obj = new Teller();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS parcel_count')
+            ->from('ExportedParcel');
+
+        $bind = [];
+
+        if(isset($filter_by['agent_id'])){
+            $builder->where('ExportedParcel.export_agent_id = :agent_id:');
+            $bind['agent_id'] = $filter_by['agent_id'];
+        }
+        if(isset($filter_by['start_created_date'])){
+            if(isset($filter_by['end_created_date'])){
+                $builder->where('Parcel.created_date >= :start_created_date: AND Parcel.created_date <= :end_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+                $bind['end_created_date'] = $filter_by['end_created_date'];
+            }else{
+                $builder->where('Parcel.created_date = :start_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+            }
+        }
+        if(isset($filter_by['waybill_number'])){
+            $builder->where('Parcel.waybill_number = :waybill_number:');
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        }
+
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->parcel_count);
     }
 
+
+
+    public static function fetchAllUnlinkedParcels($offset, $count, $filter_by, $paginate){
+        $builder = new \Phalcon\Mvc\Model\Query\Builder();
+        $builder->addFrom('Parcel', 'Parcel')
+            ->innerJoin('Address', 'Parcel.receiver_address_id = Address.id', 'Address')
+            ->innerJoin('Country', 'Address.country_id = Country.id', 'Country')
+            ->leftJoin('ExportParcel', 'Parcel.id = ExportedParcel.parcel_id')
+        ;
+
+
+        $builder->columns(['ExportedParcel.*', 'Parcel.*', 'ExportAgent.*']);
+
+        $bind = [];
+        $builder->where('ExportedParcel.id IS NULL AND Country.id != :default_country_id:');
+        $bind['default_country_id'] = Country::DEFAULT_COUNTRY_ID;
+
+        if ($paginate) {
+            $builder = $builder->limit($count, $offset);
+        }
+
+        if(isset($filter_by['start_created_date'])){
+            if(isset($filter_by['end_created_date'])){
+                $builder->where('Parcel.created_date >= :start_created_date: AND Parcel.created_date <= :end_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+                $bind['end_created_date'] = $filter_by['end_created_date'];
+            }else{
+                $builder->where('Parcel.created_date = :start_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+            }
+        }
+        if(isset($filter_by['waybill_number'])){
+            $builder->where('Parcel.waybill_number = :waybill_number:');
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        }
+
+        $result = $builder->getQuery()->execute($bind);
+
+        $parcels = [];
+        foreach ($result as $item) {
+            $exportedParcel = $item->exportedParcel->toArray();
+            $exportedParcel['parcel'] = $item->parcel->toArray();
+            $exportedParcel['agent'] = $item->exportAgent->toArray();
+            $parcels[] = $exportedParcel;
+        }
+        return $parcels;
+    }
+
+
+    /**
+     * Returns the number of exported parcels based on condition
+     *
+     * @param array
+     * @return int
+     * @author  Olawale Lawal
+     */
+    public static function countAllUnlinkedParcels($filter_by)
+    {
+        $obj = new Teller();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns('COUNT(*) AS parcel_count')
+            ->from('Parcel');
+
+        $bind = [];
+
+        if(isset($filter_by['start_created_date'])){
+            if(isset($filter_by['end_created_date'])){
+                $builder->where('Parcel.created_date >= :start_created_date: AND Parcel.created_date <= :end_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+                $bind['end_created_date'] = $filter_by['end_created_date'];
+            }else{
+                $builder->where('Parcel.created_date = :start_created_date:');
+                $bind['start_created_date'] = $filter_by['start_created_date'];
+            }
+        }
+        if(isset($filter_by['waybill_number'])){
+            $builder->where('Parcel.waybill_number = :waybill_number:');
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        }
+
+        $data = $builder->getQuery()->execute($bind);
+
+        if (count($data) == 0) {
+            return null;
+        }
+
+        return intval($data[0]->parcel_count);
+    }
 }
