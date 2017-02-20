@@ -31,6 +31,16 @@ COLLATE='latin1_swedish_ci'
 ENGINE=InnoDB
 ;
 
+CREATE TABLE `intl_parcel_type` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`name` INT NULL,
+	PRIMARY KEY (`id`)
+)
+	COLLATE='latin1_swedish_ci'
+	ENGINE=InnoDB
+;
+
+
 
 CREATE TABLE `intl_tariff` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
