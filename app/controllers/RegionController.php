@@ -6,7 +6,6 @@ class RegionController extends ControllerBase
     public function addAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
-
         $country_id = $this->request->getPost('country_id');
         $name = $this->request->getPost('name');
         $description = $this->request->getPost('description');

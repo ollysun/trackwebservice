@@ -35,6 +35,7 @@ class ControllerBase extends Controller
     public function beforeExecuteRoute($dispatcher){
         $request = $this->request->get();
         $this->start_time = date("Y-m-d H:i:s");
+
     }
 
     /**

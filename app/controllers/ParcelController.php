@@ -488,9 +488,12 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
+//dd(9);
+      //  $roleResourceManager = new RoleResourceManager();
+      //  echo $roleResourceManager->canUserPerformOperation(RoleResourceManager::ROLE_GUESTS,RoleResourceManager::RESOURCE_CUSTOMERS,RoleResourceManager::RESOURCE_CUSTOMERS_OPERATIONS_CREATE);
+       // die();
+
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
-
-
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
