@@ -182,4 +182,66 @@ class ExportedParcel extends \Phalcon\Mvc\Model
         );
     }
 
+    /**
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @param bool|false $paginate bhh
+     * @return array
+     */
+    /**
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @param bool|false $paginate bhh
+     * @return array
+     */
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $paginate = false){
+        $builder = new \Phalcon\Mvc\Model\Query\Builder();
+        $builder->addFrom('ExportedParcel');
+        $columns = ['ExportedParcel.*'];
+        $bind = [];
+        if ($paginate) {
+            $builder = $builder->limit($count, $offset);
+        }
+
+        $builder->columns($columns);
+
+
+        if(isset($filter_by['export_agent_id'])){
+            $builder->where("ExportParcel.export_agent_id = :export_agent_id:");
+            $bind['export_agent_id'] = $filter_by['export_agent_id'];
+        }
+
+        if(isset($filter_by['waybill_number'])){
+            $builder->where("Parcel.waybill_number = :waybill_number:");
+            $bind['waybill_number'] = $filter_by['waybill_number'];
+        }
+
+
+        if(isset($fetch_with['with_parcel'])){
+            $builder->innerJoin('Parcel', 'ExportedParcel.parcel_id = Parcel.id', 'Parcel');
+            $builder->innerJoin('Address', 'Address.id = Parcel.receiver_address_id', 'Address');
+            $builder->innerJoin('Country', 'Country.id = Address.country_id', 'Country');
+            //$builder->where("Country.id = :country_id:");
+            //$bind['country_id'] = $filter_by['country_id'];
+        }
+
+
+//        if(isset($fetch_with['with_staff'])){
+//            $builder->innerJoin('Admin', 'Admin.staff_id = BmCentre.staff_id', 'Admin');
+//        }
+
+        $data = $builder->getQuery()->execute($bind);
+
+
+        $zones = [];
+        foreach ($data as $item) {
+            $zones[] = $item->toArray();
+        }
+        return $zones;
+    }
+
 }
