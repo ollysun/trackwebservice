@@ -24,10 +24,11 @@ try {
      * Read the configuration
      */
     if (($env = getenv('APPLICATION_ENV')) == false) {
-        $config = include __DIR__ . "/../app/config/config.dev.php";
+        $config = include __DIR__ . "/../app/config/config_dev.php";
     } else {
         $config = include __DIR__ . "/../app/config/config_$env.php";
     }
+
 
     /**
      * Read auto-loader

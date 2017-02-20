@@ -203,7 +203,7 @@ class RegionController extends ControllerBase
         }
 
         if (City::isExisting($state_id, $name, $city_id)) {
-            return $this->response->sendError(ResponseMessage::REGION_EXISTS);
+            return $this->response->sendError(ResponseMessage::CITY_EXISTS);
         }
 
         $city = City::fetchActive($city_id);

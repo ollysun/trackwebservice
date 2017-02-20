@@ -66,6 +66,23 @@ class Branch extends \Phalcon\Mvc\Model
     protected $status;
 
     /**
+     * @var integer
+     */
+    protected $business_zone_id;
+
+
+    public function setBusinessZoneId($business_zone_id){
+        $this->business_zone_id = $business_zone_id;
+        return $this;
+    }
+
+    public function getBusinessZoneId(){
+        return $this->business_zone_id;
+    }
+
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -315,7 +332,8 @@ class Branch extends \Phalcon\Mvc\Model
             'address' => 'address',
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
-            'status' => 'status'
+            'status' => 'status',
+            'business_zone_id' => 'business_zone_id'
         );
     }
 
@@ -330,11 +348,12 @@ class Branch extends \Phalcon\Mvc\Model
             'address' => $this->getAddress(),
             'created_date' => $this->getCreatedDate(),
             'modified_date' => $this->getModifiedDate(),
-            'status' => $this->getStatus()
+            'status' => $this->getStatus(),
+            'business_zone_id' => $this->getBusinessZoneId()
         );
     }
 
-    public function initData($name, $branch_type, $state_id, $address, $status)
+    public function initData($name, $branch_type, $state_id, $address, $status, $business_zone_id = null)
     {
         $this->setName($name);
         $this->setCode(uniqid());
@@ -346,6 +365,7 @@ class Branch extends \Phalcon\Mvc\Model
         $this->setCreatedDate($now);
         $this->setModifiedDate($now);
         $this->setStatus($status);
+        if($business_zone_id) $this->setBusinessZoneId($business_zone_id);
     }
 
     public function generateCode()
@@ -397,12 +417,13 @@ class Branch extends \Phalcon\Mvc\Model
         return false;
     }
 
-    public function editDetails($name, $state_id, $address)
+    public function editDetails($name, $state_id, $address, $business_zone_id = null)
     {
         $this->setName($name);
         $this->setStateId($state_id);
         $this->setAddress($address);
         $this->setModifiedDate(date('Y-m-d H:i:s'));
+        if($business_zone_id) $this->setBusinessZoneId($business_zone_id);
     }
 
     public function changeStatus($status)
@@ -616,7 +637,7 @@ class Branch extends \Phalcon\Mvc\Model
                 $branch['parent'] = ($parent == null) ? null : $parent->getData();
             }
             $branch['state'] = $item->state->getData();
-            if($fetch_with['with_region']){
+            if(isset($fetch_with['with_region'])){
                 $branch['region'] = $item->region->getData();
             }
             $result[] = $branch;

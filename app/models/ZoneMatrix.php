@@ -235,6 +235,16 @@ class ZoneMatrix extends \Phalcon\Mvc\Model
     public static function saveMatrix($matrix_info){
         $bad_matrix_info = [];
         foreach ($matrix_info as $item){
+            if(isset($item['from_branch_code'])){
+                $from_branch = Branch::fetchOne(['code' => $item['from_branch_code']]);
+                $to_branch = Branch::fetchOne(['code' => $item['to_branch_code']]);
+                $zone = Zone::fetchByCode($item['zone_code']);
+
+                if(!$from_branch || !$to_branch) continue;
+                $item['from_branch_id'] = $from_branch['id'];
+                $item['to_branch_id'] = $to_branch['id'];
+                $item['zone_id'] = $zone->getId();
+            }
             try {
                 $cell = ZoneMatrix::fetchByLink($item['to_branch_id'], $item['from_branch_id']);
                 if ($cell == false) {

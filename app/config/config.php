@@ -16,8 +16,7 @@ return new \Phalcon\Config([
         'host' => 'tnt-new.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
         'password' => 'thelcmof8is2',
-        'dbname' => 'tnt_live',
-        //'dbname' => 'trackplus',
+        'dbname' => 'tnt',
         'charset' => 'utf8',
     ],*/
     'database' => [

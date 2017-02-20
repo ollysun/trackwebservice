@@ -31,7 +31,8 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::SALES_AGENT, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
+            Role::SALES_AGENT, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -70,7 +71,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != 1){
+        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlan()){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
@@ -81,6 +82,11 @@ class ParcelController extends ControllerBase
             if(!$billing_link){
                 return $this->response->sendError(ResponseMessage::INVALID_BILLING_PLAN);
             }
+        }
+
+        //if parcel is not for a corporate customer and payment is deferred, reject
+        if(!$parcel['company_id'] && $parcel['payment_type'] == 4){
+            return $this->response->sendError('Deferred payment is not allowed for cash sale');
         }
 
         $auth_data = $this->auth->getData();
@@ -191,7 +197,8 @@ class ParcelController extends ControllerBase
                 }
             }
 
-            $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+            $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'],
+                $sender, $sender_address, $receiver, $receiver_address,
                 $bank_account, $parcel, $to_branch_id, $created_by, $this->auth->isCooperateUser());
             if (isset($parcel['id'])) {
                 $parcel_edit_history->parcel_id = $parcel['id'];
@@ -466,7 +473,8 @@ class ParcelController extends ControllerBase
             'start_created_date', 'end_created_date', 'start_pickup_date', 'end_pickup_date', 'start_modified_date', 'end_modified_date', 'waybill_number', 'waybill_number_arr',
             'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
-            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed', 'delivery_branch_id'
+            'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed',
+            'delivery_branch_id', 'no_cod_teller', 'is_billing_overridden'
         ];
 
         $filter_by = [];
@@ -488,11 +496,6 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
-//dd(9);
-      //  $roleResourceManager = new RoleResourceManager();
-      //  echo $roleResourceManager->canUserPerformOperation(RoleResourceManager::ROLE_GUESTS,RoleResourceManager::RESOURCE_CUSTOMERS,RoleResourceManager::RESOURCE_CUSTOMERS_OPERATIONS_CREATE);
-       // die();
-
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -636,6 +639,33 @@ class ParcelController extends ControllerBase
         }
 
         return $this->response->sendSuccess($result);
+    }
+
+    public function validateNumbersAction(){
+        ini_set('memory_limit', '-1');//to be removed
+        ini_set('max_execution_time', 3600);
+        $waybill_numbers = $this->request->getPost('numbers');
+        $by = strtolower($this->request->getPost('by'));
+
+        if(in_array(null, [$waybill_numbers, $by]))
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+
+        if($by != 'waybill number' && $by != 'reference number'){
+            return $this->response->sendError('You can only filter by waybill number of reference number');
+        }
+
+        $results = [];
+        foreach (explode(',', $waybill_numbers) as $waybill_number) {
+            $waybill_number = trim($waybill_number);
+            if($waybill_number == '') continue;
+            if(!(($by == 'waybill number' || Parcel::isWaybillNumber($waybill_number))?
+                Parcel::getByWaybillNumber($waybill_number): Parcel::getByReferenceNumber($waybill_number))){
+                $results[] = ['number' => $waybill_number, 'status' => 'NOT FOUND'];
+            }else{
+                $results[] = ['number' => $waybill_number, 'status' => 'FOUND'];
+            }
+        }
+        return $this->response->sendSuccess($results);
     }
 
     public function getDeliverablePackagesAction(){
@@ -1731,12 +1761,32 @@ class ParcelController extends ControllerBase
                 continue;
             }
 
+            //if the parcel is cod, create a remittance record
+            if($parcel->getCashOnDelivery() == 1){
+                if(Remittance::fetchOne($parcel->getWaybillNumber(), 'waybill_number')){
+                    continue;
+                }
+                /** @var Company $company */
+                $company = Company::findFirstById($parcel->getCompanyId());
+                if(!$company) {
+                    Util::slackDebug('Remittance not save for '.$parcel->getWaybillNumber(), 'Company not set');
+                    continue;
+                }
+                $remittance = new Remittance();
+                $remittance->init($parcel->getWaybillNumber(), $parcel->getCashOnDeliveryAmount(), $company->getRegNo(),
+                    'TNT001', 1, Status::REMITTANCE_AWAITING_CLEARANCE);
+
+                if(!$remittance->save()){
+                    Util::slackDebug('Remittance not save for '.$parcel->getWaybillNumber(), implode(', ', $remittance->getMessages()));
+                }
+            }
+
             //get recipients
             $recipients = [];
             if ($admin) {
                 $recipients[$admin->getEmail()] = $admin->getFullname();
             }
-            $sender = User::findFirst($parcel->getSenderId());
+            $sender = User::findFirst($parcel->getSenderId());//error in the retrieval
             if ($sender) {
                 $recipients[$sender->getEmail()] = $sender->getFirstname();
             }
@@ -2084,7 +2134,8 @@ exit();
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
-            } else if ($enforce_action != '1' &&  !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
+            } else if ($enforce_action != '1' &&
+                !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
@@ -2094,7 +2145,6 @@ exit();
             }else{
                 $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
             }
-
 
 
             if (!$check) {

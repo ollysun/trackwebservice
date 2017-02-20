@@ -2044,6 +2044,19 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['entity_type'] = Parcel::ENTITY_TYPE_BAG;
         }
 
+        //un remitted parcel filter
+        if(isset($filter_by['no_cod_teller'])){
+            if($filter_by['no_cod_teller'])
+                $where[] = 'CodTellerParcel.id IS NULL';
+            else $where[] = 'CodTellerParcel.id IS NOT NULL';
+        }
+
+        //is_billing_overridden
+        if(isset($filter_by['is_billing_overridden'])){
+            $where[] = 'Parcel.is_billing_overridden = :is_billing_overridden:';
+            $bind['is_billing_overridden'] = $filter_by['is_billing_overridden'];
+        }
+
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
@@ -2162,6 +2175,10 @@ class Parcel extends \Phalcon\Mvc\Model
         $filter_cond = self::filterConditions($filter_by);
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
+
+        if(isset($filter_by['no_cod_teller'])){
+            $builder->innerJoin('CodTellerParcel', 'CodTellerParcel.parcel_id = Parcel.id');
+        }
 
         if (isset($filter_by['parent_id'])) {
             $builder->innerJoin('LinkedParcel', 'LinkedParcel.child_id = Parcel.id');
@@ -2402,14 +2419,23 @@ class Parcel extends \Phalcon\Mvc\Model
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
         if($parcel_data['billing_type'] != 'manual') {
-            $amountDue = Zone::calculateBilling(
-                $receiverCity->getBranchId(),
-                $senderCity->getBranchId(),
-                $parcel_data['weight'],
-                $parcel_data['weight_billing_plan'],
-                $receiverCity->getId(),
-                $parcel_data['onforwarding_billing_plan']
-            );
+            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
+                $result = IntlZone::calculateBilling($this->getWeight(), $receiver_addr_obj->getCountryId(), $this->getShippingType());
+                if(!$result['success']) throw new Exception($result['message']);
+                $amountDue = $result['amount'];
+            }else{
+                $amountDue = Zone::calculateBilling(
+                    $receiverCity->getBranchId(),
+                    $senderCity->getBranchId(),
+                    $parcel_data['weight'],
+                    $parcel_data['weight_billing_plan'],
+                    $receiverCity->getId(),
+                    $parcel_data['onforwarding_billing_plan']
+                );
+            }
+            $vat = $amountDue * 0.05;
+            $amountDue = $vat + $amountDue;
+
         }else{
             $amountDue = $parcel_data['amount_due'];
         }
@@ -2711,7 +2737,8 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
-    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false, $fetch_with = null, $where_id_reference_number)
+    public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false,
+                                                  $fetch_with = null, $where_id_reference_number = false)
     {
         $waybill_csv = "'" . implode("','", $waybill_number_arr). "'";
         $obj = new Parcel();
@@ -3446,6 +3473,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $where = $filter_cond['where'];
         $bind = $filter_cond['bind'];
         $builder = self::getAllParcelBuilder($count, $offset, $fetch_with, $order_by_clause, $where, $bind, $filter_by);
+        /*if(isset($filter_by['no_cod_teller'])){
+            $builder->leftJoin('CodTellerParcel', 'CodTellerParcel.parcel_id = Parcel.id', 'CodTellerParcel');
+        }*/
 
         $intermediate = $builder->getQuery()->parse();
         $readConnection = (new self())->getReadConnection();
@@ -3497,6 +3527,7 @@ class Parcel extends \Phalcon\Mvc\Model
         $columns = ['Parcel.*'];
 
 
+
         if ($order_by_clause != null) {
             $builder->orderBy($order_by_clause);
         } else if (isset($filter_by['start_modified_date']) or isset($filter_by['end_modified_date'])) {
@@ -3526,6 +3557,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $builder->innerJoin('City', "City.id = Address.city_id AND City.branch_id = '$branch_id'");
         }
 
+
         //model hydration
         if(isset($fetch_with['with_sales_teller'])){
             $columns[] = 'Teller.*';
@@ -3536,12 +3568,14 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //with_cod_teller
-        if(isset($fetch_with['with_cod_teller'])){
+        if(isset($fetch_with['with_cod_teller']) && $fetch_with['with_cod_teller']){
             $columns[] = 'CodTeller.*';
             $columns[] = 'CodTellerBank.*';
-            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id');
+            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
             $builder->leftJoin('CodTeller', 'CodTellerParcel.teller_id = CodTeller.id AND CodTeller.status != '. Status::TELLER_DECLINED);
             $builder->leftJoin('CodTellerBank', 'CodTellerBank.id = CodTeller.bank_id', 'CodTellerBank');
+        }else if(isset($filter_by['no_cod_teller'])){
+            $builder->leftJoin('CodTellerParcel', 'Parcel.id = CodTellerParcel.parcel_id', 'CodTellerParcel');
         }
 
         //with_rtd_teller = true

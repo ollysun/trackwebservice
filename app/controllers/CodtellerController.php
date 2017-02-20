@@ -89,7 +89,7 @@ class CodtellerController extends ControllerBase {
     }
 
     public function approveAction(){
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -100,12 +100,37 @@ class CodtellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
         }
         $teller->setStatus(Status::TELLER_APPROVED);
-        $teller->save();
+        if($teller->save()){
+            $tellerParcels = CodTellerParcel::fetchAll($teller->getId());
+            if($tellerParcels){
+                foreach ($tellerParcels as $tellerParcel) {
+                    $waybill = $tellerParcel['parcel']['waybill_number'];
+                    $remittance = Remittance::getByWaybillNumber($waybill);
+                    if($remittance) {
+                        $remittance->setStatus(Status::REMITTANCE_READY_FOR_PAYOUT);
+                    }else{
+                        /** @var Company $company */
+                        $company = Company::findFirstById($tellerParcel['parcel']['company_id']);
+                        if(!$company) {
+                            Util::slackDebug('Remittance not save for '.$tellerParcel['parcel']['waybill_number'], 'Company not set');
+                            continue;
+                        }
+                        $remittance = new Remittance();
+                        $remittance->init($waybill, $tellerParcel['parcel']['delivery_amount'], $company->getRegNo(),
+                            null, null, Status::REMITTANCE_READY_FOR_PAYOUT);
+                    }
+                    $remittance->save();
+                }
+            }
+        }else{
+            Util::slackDebug("Teller not approved", implode(',', $teller->getMessages()));
+            return $this->response->sendError('Error in approving teller please try again later');
+        }
         return $this->response->sendSuccess();
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -128,7 +153,7 @@ class CodtellerController extends ControllerBase {
      * @return int
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::BUSINESS_MANAGER]);
 
         $id = $this->request->getQuery('id');
 
@@ -136,10 +161,13 @@ class CodtellerController extends ControllerBase {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+
         $teller = CodTeller::fetchOne($id);
         if ($teller != false){
-            return $this->response->sendSuccess($teller->getData());
+            $teller['teller_parcels'] = CodTellerParcel::fetchAll($id);
+            return $this->response->sendSuccess($teller);
         }
+
         return $this->response->sendError(ResponseMessage::NO_RECORD_FOUND);
     }
 
@@ -168,7 +196,7 @@ class CodtellerController extends ControllerBase {
         if (!is_null($bank_id)){ $filter_by['bank_id'] = $bank_id; }
         if (!is_null($teller_number)){ $filter_by['teller_number'] = $teller_number; }
         if (!is_null($teller_number_arr)){ $filter_by['teller_number_arr'] = $teller_number_arr; }
-        if (!is_null($paid_by)){ $filter_by['$paid_by'] = $paid_by; }
+        if (!is_null($paid_by)){ $filter_by['paid_by'] = $paid_by; }
         if (!is_null($created_by)){ $filter_by['created_by'] = $created_by; }
         if (!is_null($branch_id)){ $filter_by['branch_id'] = $branch_id; }
         if (!is_null($status)){ $filter_by['status'] = $status; }
@@ -190,7 +218,7 @@ class CodtellerController extends ControllerBase {
      * @return array
      */
     public function getAllAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -199,6 +227,7 @@ class CodtellerController extends ControllerBase {
         $with_bank = $this->request->getQuery('with_bank');
         $with_payer = $this->request->getQuery('with_payer');
         $with_creator = $this->request->getQuery('with_creator');
+        $with_branch = $this->request->getQuery('with_branch');
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
 
@@ -213,6 +242,7 @@ class CodtellerController extends ControllerBase {
         if (!is_null($with_payer)){ $fetch_with['with_payer'] = true; }
         if (!is_null($with_creator)){ $fetch_with['with_creator'] = true; }
         if (!is_null($with_snapshot)){ $fetch_with['with_snapshot'] = true; }
+        if (!is_null($with_branch)){ $fetch_with['with_branch'] = true; }
 
         $tellers = CodTeller::fetchAll($offset, $count, $filter_by, $fetch_with, $order_by);
         $result = [];
@@ -236,7 +266,7 @@ class CodtellerController extends ControllerBase {
      * @return int
      */
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $filter_by = $this->getFilterParams();
 

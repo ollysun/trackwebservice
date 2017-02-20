@@ -26,7 +26,12 @@ class Status extends \Phalcon\Mvc\Model
     const MANIFEST_HAS_ISSUE = 22;
     const PARCEL_RETURNED = 23;
 
+
     const PARCEL_CREATED_BUT_WITH_CUSTOMER = 24;
+
+    const REMITTANCE_AWAITING_CLEARANCE = 25;
+    const REMITTANCE_READY_FOR_PAYOUT = 26;
+    const REMITTANCE_PAID = 27;
 
     const DELIVERY_ATTEMPTED = 1;
     const RETURNING_TO_ORIGIN = 2;

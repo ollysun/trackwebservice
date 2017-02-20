@@ -83,6 +83,16 @@ class CodTeller extends \Phalcon\Mvc\Model
     protected $branch_id;
 
     /**
+     * @var string
+     */
+    protected $approval_date;
+
+    /**
+     * @var integer
+     */
+    protected $approved_by;
+
+    /**
      * Method to set the value of field id
      *
      * @param string $id
@@ -239,6 +249,26 @@ class CodTeller extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param string $approval_date
+     * @return $this
+     */
+    public function setApprovalDate($approval_date)
+    {
+        $this->approval_date = $approval_date;
+        return $this;
+    }
+
+    /**
+     * @param int $approved_by
+     * @return $this
+     */
+    public function setApprovedBy($approved_by)
+    {
+        $this->approved_by = $approved_by;
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return string
@@ -359,6 +389,22 @@ class CodTeller extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @return string
+     */
+    public function getApprovalDate()
+    {
+        return $this->approval_date;
+    }
+
+    /**
+     * @return int
+     */
+    public function getApprovedBy()
+    {
+        return $this->approved_by;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -366,6 +412,7 @@ class CodTeller extends \Phalcon\Mvc\Model
         $this->belongsTo('paid_by', 'Admin', 'id', array('alias' => 'Admin'));
         $this->belongsTo('created_by', 'Admin', 'id', array('alias' => 'Admin'));
         $this->belongsTo('branch_id', 'Branch', 'id', array('alias' => 'Branch'));
+        $this->belongsTo('approved_by', 'Admin', 'id', array('alias' => 'Admin'));
     }
 
     /**
@@ -420,7 +467,9 @@ class CodTeller extends \Phalcon\Mvc\Model
             'created_date' => 'created_date',
             'modified_date' => 'modified_date',
             'status' => 'status',
-            'branch_id' => 'branch_id'
+            'branch_id' => 'branch_id',
+            'approval_date' => 'approval_date',
+            'approved_by' => 'approved_by'
         );
     }
 
@@ -510,7 +559,8 @@ class CodTeller extends \Phalcon\Mvc\Model
         $data = $builder->getQuery()->execute(['id' => $id]);
         if (count($data) == 0) return false;
 
-        $result = $data[0]->teller->getData();
+        $result = $data[0]->codTeller->getData();
+
         $result['parcel'] = $data[0]->parcel->getData();
 
         return $result;
@@ -530,6 +580,12 @@ class CodTeller extends \Phalcon\Mvc\Model
             $where[] = 'CodTeller.created_by = :created_by:';
             $bind['created_by'] = $filter_by['created_by'];
         }
+
+        if(isset($filter_by['branch_id'])){
+            $where[]= 'CodTeller.branch_id = :branch_id:';
+            $bind['branch_id'] = $filter_by['branch_id'];
+        }
+
         if (isset($filter_by['min_amount_paid'])) {
             $where[] = 'CodTeller.amount_paid >= :min_amount_paid:';
             $bind['min_amount_paid'] = $filter_by['min_amount_paid'];
@@ -560,7 +616,7 @@ class CodTeller extends \Phalcon\Mvc\Model
         }
         if (isset($filter_by['status'])) {
             $where[] = 'CodTeller.status = :status:';
-            $bind['teller_no'] = $filter_by['status'];
+            $bind['status'] = $filter_by['status'];
         }
 
         return ['where' => $where, 'bind' => $bind];
@@ -612,7 +668,8 @@ class CodTeller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      */
 
-    public function initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by, $created_by, $branch_id, $status)
+    public function initData($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $paid_by,
+                             $created_by, $branch_id, $status)
     {
         $this->setBankId($bank_id);
         $this->setAccountName($account_name);
@@ -645,7 +702,8 @@ class CodTeller extends \Phalcon\Mvc\Model
      * @author  Olawale Lawal
      * @return array
      */
-    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid, $parcel_id_array, $paid_by, $created_by, $branch_id)
+    public function saveForm($bank_id, $account_name, $account_no, $teller_no, $amount_paid,
+                             $parcel_id_array, $paid_by, $created_by, $branch_id)
     {
 
         $transactionManager = new TransactionManager();

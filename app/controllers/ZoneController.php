@@ -300,6 +300,10 @@ class ZoneController extends ControllerBase
         return $this->response->sendSuccess(['bad_matrix_info' => $bad_matrix_info]);
     }
 
+    public function createMatrix(){
+
+    }
+
     public function removeMatrixAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
@@ -344,7 +348,27 @@ class ZoneController extends ControllerBase
 
     public function calcBillingAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
+            Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+
+        $country_id = $this->request->getPost('to_country_id');
+        if($country_id && $country_id != Country::DEFAULT_COUNTRY_ID){
+            $weight = $this->request->getPost('weight');
+            $parcel_type_id = $this->request->getPost('parcel_type_id');
+
+            if(in_array(null, [$weight, $country_id, $parcel_type_id])){
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+            }
+
+            $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id);
+            if($result['success']){
+                $amountDue = $result['amount'];
+                $vat = 0.05 * $amountDue;
+                $amountDue = $amountDue + $vat;
+                return $this->response->sendSuccess($amountDue);
+            }
+            return $this->response->sendError($result['message']);
+        }
 
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');
@@ -352,6 +376,8 @@ class ZoneController extends ControllerBase
         $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
         $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
+        $company_id = $this->request->getPost('company_id');//for discount calc
+
 
 
         if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])) {
@@ -359,7 +385,11 @@ class ZoneController extends ControllerBase
         }
 
         try {
-            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id);
+            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                $city_id, $onforwarding_billing_plan_id, $company_id);
+
+            $vat = $amountDue * 0.05;
+            $amountDue = $amountDue + $vat;
             return $this->response->sendSuccess($amountDue);
         } catch (Exception $ex) {
             return $this->response->sendError($ex->getMessage());
@@ -367,19 +397,22 @@ class ZoneController extends ControllerBase
     }
 
     public function getQuoteAction(){
+
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');
         $onforwarding_billing_plan_id = $this->request->getPost('onforwarding_billing_plan_id');
         $city_id = $this->request->getPost('city_id');
         $weight = $this->request->getPost('weight');
         $weight_billing_plan_id = $this->request->getPost('weight_billing_plan_id');
+        $company_id = $this->request->getPost('company_id');//for discount calc
 
         if (in_array(null, [$city_id, $from_branch_id, $to_branch_id, $onforwarding_billing_plan_id, $weight, $weight_billing_plan_id])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
         try {
-            $quote = Zone::getQuote($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id, $onforwarding_billing_plan_id);
+            $quote = Zone::getQuote($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id, $city_id,
+                $onforwarding_billing_plan_id, $company_id);
             return $this->response->sendSuccess($quote);
         } catch (Exception $ex) {
             return $this->response->sendError($ex->getMessage());

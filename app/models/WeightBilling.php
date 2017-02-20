@@ -472,7 +472,7 @@ class WeightBilling extends \Phalcon\Mvc\Model
             '
             ((ZoneMatrix.to_branch_id = :branch_id: AND ZoneMatrix.from_branch_id = :other_branch_id:)
             OR (ZoneMatrix.to_branch_id = :other_branch_id: AND ZoneMatrix.from_branch_id = :branch_id:))
-            AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight > :weight:)
+            AND (WeightRange.min_weight <= :weight: AND WeightRange.max_weight >= :weight:)
             AND WeightRange.billing_plan_id = :billing_plan_id:
             ',
             ['branch_id' => $from_branch_id, 'other_branch_id' => $to_branch_id, 'weight' => $weight, 'billing_plan_id' => $billing_plan_id]
@@ -554,7 +554,10 @@ class WeightBilling extends \Phalcon\Mvc\Model
 
         $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight, $billing_plan_id);
         if ($billing_info == false){
-            return false;
+            //weight not available in range, use default range
+            $billing_info = WeightBilling::fetchForCalc($from_branch_id, $to_branch_id, $weight, 2600);
+            if($billing_info == false)
+                return false;
         }
 
         $weight_billing = $billing_info['weight_billing'];

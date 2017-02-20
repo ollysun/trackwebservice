@@ -53,7 +53,7 @@ class IntlController extends ControllerBase
 
     }
 
-    public function getCountriesAction(){
+    public function getCountriesByZoneAction(){
         $zone_id = $this->request->get('zone_id');
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -119,6 +119,27 @@ class IntlController extends ControllerBase
         return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
     }
 
+    public function editWeightRange(){
+        $this->auth->allowOnly(Role::ADMIN);
+        $id = $this->request->getPost('id');
+        $min_weight = $this->request->getPost('min_weight');
+        $max_weight = $this->request->getPost('max_weight');
+
+        if(in_array(null, [$id, $min_weight, $max_weight])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        //add validations
+
+        $range = IntlWeightRange::findFirst(['id = :id"', 'bind' => ['id' => $id]]);
+        if(!$range) return $this->response->sendError('Weight range not found');
+        $range->setMinWeight($min_weight);
+        $range->setMaxWeight($max_weight);
+        if($range->save()){
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
+    }
+
     public function getWeightRangesAction(){
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -152,7 +173,7 @@ class IntlController extends ControllerBase
             return $this->response->sendError('Invalid weight range');
         }
         //validate parcel type
-        if(!ParcelType::findFirst($parcel_type_id)){
+        if(!ShippingType::findFirst(['id = :id:', 'bind' => ['id' => $parcel_type_id]])){
             return $this->response->sendError('Invalid parcel type');
         }
         if(!$id){
@@ -189,9 +210,14 @@ class IntlController extends ControllerBase
         $with_parcel_type = $this->request->getQuery('with_parcel_type',  null, false);
 
         $zone_id = $this->request->getQuery('zone_id');
+        $tariff_id = $this->request->getQuery('id');
 
         $filter_by = [];
         $fetch_with = [];
+
+        if($tariff_id){
+            $filter_by['tariff_id'] = $tariff_id;
+        }
 
         if($zone_id){
             $filter_by['zone_id'] = $zone_id;
@@ -209,11 +235,23 @@ class IntlController extends ControllerBase
 
 
         $bms = IntlTariff::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate);
+        if($tariff_id && count($bms) > 0) {
+            $bms = $bms[0];
+        }
         if(!$paginate) return $this->response->sendSuccess($bms);
 
         $total_count = IntlTariff::getCount($filter_by);
         return $this->response->sendSuccess(['tariffs' => $bms, 'total_count' => $total_count]);
 
+    }
+
+    public function deleteTariffAction(){
+        $id = $this->request->getPost('id');
+        if(!$id) return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        $tariff = IntlTariff::findFirst(['id = :id:', 'bind' => ['id' => $id]]);
+        if(!$tariff) return $this->response->sendError('Tariff Not Found');
+        $tariff->delete();
+        return $this->response->sendSuccess();
     }
 
 
@@ -226,26 +264,32 @@ class IntlController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id);
+        if($result['success']){
+            return $this->response->sendSuccess($result['amount']);
+        }
+        return $this->response->sendError($result['message']);
+
         /** @var Country $country */
-        $country = Country::findFirstById($country_id);
+        /*$country = Country::findFirstById($country_id);
         if(!$country){
             return $this->response->sendError('Invalid country id');
-        }
+        }*/
 
         /** @var IntlZoneCountryMap $zone */
-        $zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
+        /*$zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
         if(!$zone_map){
             return $this->response->sendError('Country not mapped');
-        }
+        }*/
 
         /** @var ParcelType $parcel_type */
-        $parcel_type = ParcelType::findFirstById($parcel_type_id);
+        /*$parcel_type = ParcelType::findFirstById($parcel_type_id);
         if(!$parcel_type){
             return $this->response->sendError('Invalid parcel type');
-        }
+        }*/
 
 
-        $weight_range = IntlWeightRange::findFirst(['conditions' =>
+        /*$weight_range = IntlWeightRange::findFirst(['conditions' =>
             ':weight: between min_weight AND max_weight', 'bind' => ['weight' => $weight]]);
         if(!$weight_range){
             return $this->response->sendError('Weight not in range');
@@ -258,8 +302,7 @@ class IntlController extends ControllerBase
         if(!$tariff){
             return $this->response->sendError('Tariff not found');
         }
-        return $this->response->sendSuccess($tariff->getBaseAmount());
-
+        return $this->response->sendSuccess($tariff->getBaseAmount());*/
 
     }
 }

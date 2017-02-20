@@ -18,10 +18,14 @@ class Util
      */
     public static function slackDebug($tag, $text)
     {
+<<<<<<< HEAD
         return;
        /* if($tag == 'Email Not Sent'){
+=======
+        if($tag == 'Email Not Sent'){
+>>>>>>> 88ec81986a2f1a238bcc299562480454f8251753
             return;
-        }*/
+        }
         //xoxb-55390846452-E4AmK4St8uQBvR21WDqtMhx9
         /** @var \Phalcon\Http\Request $request */
         $environment_name = Di::getDefault()->has('request') ? Di::getDefault()->getRequest()->getServer('SERVER_NAME') : 'CLI';

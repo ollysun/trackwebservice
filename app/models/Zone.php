@@ -363,7 +363,7 @@ class Zone extends \Phalcon\Mvc\Model
         $weight,
         $billing_plan_id,
         $city_id,
-        $onforwarding_billing_plan_id
+        $onforwarding_billing_plan_id, $company_id = null
     ) {
         $billing_plan = BillingPlan::findFirst($billing_plan_id);
 
@@ -400,11 +400,20 @@ class Zone extends \Phalcon\Mvc\Model
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
 
-        //apply discount from the billing plan
-        $discount = ($billing_plan->getDiscount()/100) * $calc_weight_billing;
+        //apply discount from the billing plan and company
+        $discount_percentage = $billing_plan->getDiscount();
+        if($company_id){
+            $company = Company::fetchOne(['id' => $company_id], []);
+            if($company){
+                $discount_percentage += $company['discount'];
+            }
+        }
+        $discount = ($discount_percentage/100) * $final_billing;
 
-        //$final_billing = $final_billing - $discount;
-        return $final_billing;
+        $net_amount = $final_billing - $discount;
+
+
+        return $net_amount;
     }
 
 
@@ -416,7 +425,7 @@ class Zone extends \Phalcon\Mvc\Model
      * @param $billing_plan_id
      * @param $city_id
      * @param $onforwarding_billing_plan_id
-     * @return bool|float|int
+     * @return bool|array
      * @throws Exception
      */
     public static function getQuote(
@@ -425,7 +434,8 @@ class Zone extends \Phalcon\Mvc\Model
         $weight,
         $billing_plan_id,
         $city_id,
-        $onforwarding_billing_plan_id
+        $onforwarding_billing_plan_id,
+        $company_id = null
     ) {
         $billing_plan = BillingPlan::findFirst($billing_plan_id);
 
@@ -462,10 +472,16 @@ class Zone extends \Phalcon\Mvc\Model
 
         $final_billing = $calc_weight_billing + $onforwarding_charge->getAmount();
 
-        //apply discount from the billing plan
-        $pp = ($billing_plan->getDiscount()/100);
-        $discount = ($billing_plan->getDiscount()/100) * $final_billing;
+        //apply discount from the billing plan and company then calc vat for the tranx
         $discount_percentage = $billing_plan->getDiscount();
+        if($company_id){
+            $company = Company::fetchOne(['id' => $company_id], []);
+            if($company){
+                $discount_percentage += $company['discount'];
+            }
+        }
+        $pp = ($discount_percentage/100);
+        $discount = ($discount_percentage/100) * $final_billing;
 
         $gross_amount = $final_billing - $discount;
 
@@ -473,6 +489,8 @@ class Zone extends \Phalcon\Mvc\Model
 
         $amount_due = $gross_amount + $vat;
 
-        return ['total_amount' => $final_billing, 'discount' => $discount, 'gross_amount' => $gross_amount, 'vat' => $vat, 'amount_due' => $amount_due, 'discount_percentage' => $discount_percentage, 'pp' => $pp];
+        return ['total_amount' => $final_billing, 'discount' => $discount,
+            'gross_amount' => $gross_amount, 'vat' => $vat, 'amount_due' => $amount_due,
+            'discount_percentage' => $discount_percentage, 'pp' => $pp];
     }
 }

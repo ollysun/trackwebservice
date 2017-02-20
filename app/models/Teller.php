@@ -83,6 +83,17 @@ class Teller extends \Phalcon\Mvc\Model
     protected $modified_date;
 
     /**
+     * @var integer
+     */
+    protected $approved_by;
+
+    /**
+     * @var string
+     */
+    protected $approval_date;
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -252,6 +263,24 @@ class Teller extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @param string $approval_date
+     * @return $this
+     */
+    public function setApprovalDate($approval_date)
+    {
+        $this->approval_date = $approval_date;
+    }
+
+    /**
+     * @param int $approved_by
+     * @return $this
+     */
+    public function setApprovedBy($approved_by)
+    {
+        $this->approved_by = $approved_by;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -382,6 +411,22 @@ class Teller extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @return string
+     */
+    public function getApprovalDate()
+    {
+        return $this->approval_date;
+    }
+
+    /**
+     * @return int
+     */
+    public function getApprovedBy()
+    {
+        return $this->approved_by;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -435,7 +480,9 @@ class Teller extends \Phalcon\Mvc\Model
             'status' => 'status',
             'created_by' => 'created_by',
             'created_date' => 'created_date',
-            'modified_date' => 'modified_date'
+            'modified_date' => 'modified_date',
+            'approval_date' => 'approval_date',
+            'approved_by' => 'approved_by'
         );
     }
 
@@ -581,6 +628,12 @@ class Teller extends \Phalcon\Mvc\Model
             $where[] = 'Teller.created_by = :created_by:';
             $bind['created_by'] = $filter_by['created_by'];
         }
+
+        if(isset($filter_by['branch_id'])){
+            $where[]= 'Teller.branch_id = :branch_id:';
+            $bind['branch_id'] = $filter_by['branch_id'];
+        }
+
         if (isset($filter_by['min_amount_paid'])) {
             $where[] = 'Teller.amount_paid >= :min_amount_paid:';
             $bind['min_amount_paid'] = $filter_by['min_amount_paid'];
@@ -611,7 +664,7 @@ class Teller extends \Phalcon\Mvc\Model
         }
         if (isset($filter_by['status'])) {
             $where[] = 'Teller.status = :status:';
-            $bind['teller_no'] = $filter_by['status'];
+            $bind['status'] = $filter_by['status'];
         }
 
         return ['where' => $where, 'bind' => $bind];
@@ -754,7 +807,9 @@ class Teller extends \Phalcon\Mvc\Model
             'created_date' => $this->getCreatedDate(),
             'created_by' => $this->getCreatedBy(),
             'paid_by' => $this->getPaidBy(),
-            'modified_date' => $this->getModifiedDate()
+            'modified_date' => $this->getModifiedDate(),
+            'approved_by' => $this->getApprovedBy(),
+            'approval_date' => $this->getApprovalDate()
         );
     }
 

@@ -84,11 +84,12 @@ class TellerController extends ControllerBase {
         else{
             return $this->response->sendError(ResponseMessage::TELLER_ALREADY_USED);
         }
-        return $this->response->sendError($teller);
+        dd($teller->getMessages());
+        return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
     }
 
     public function approveAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -104,7 +105,7 @@ class TellerController extends ControllerBase {
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -127,7 +128,8 @@ class TellerController extends ControllerBase {
      * @return int
      */
     public function getOneAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::FINANCE]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,
+            Role::FINANCE, Role::REGIONAL_MANAGER]);
 
         $id = $this->request->getQuery('id');
 
@@ -182,7 +184,6 @@ class TellerController extends ControllerBase {
         return $filter_by;
     }
 
-
     /**
      * Returns the details of teller meeting a set of filter criteria.
      *
@@ -191,7 +192,7 @@ class TellerController extends ControllerBase {
      */
     public function getAllAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER,
-            Role::DISPATCHER, Role::REGIONAL_MANAGER, Role::FINANCE]);
+            Role::DISPATCHER, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER, Role::FINANCE]);
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -239,7 +240,7 @@ class TellerController extends ControllerBase {
      * @return int
      */
     public function countAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::BUSINESS_MANAGER]);
 
         $filter_by = $this->getFilterParams();
 
