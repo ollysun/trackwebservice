@@ -8,15 +8,12 @@ class ZoneController extends ControllerBase
     public function addAction()
     {
         $this->auth->allowOnly([Role::ADMIN]);
-
         $name = $this->request->getPost('name');
         $code = $this->request->getPost('code');
         $description = $this->request->getPost('description', null, ' ');
-
         if (in_array(null, [$name, $code])) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-
         $zone = Zone::fetchByDetails($name, $code);
         if ($zone != false) {
             if ($zone->hasSameName($name)) {
@@ -285,7 +282,6 @@ class ZoneController extends ControllerBase
         if (!is_null($send_all)) {
             $filter_by['send_all'] = $send_all;
         }
-
         return $this->response->sendSuccess(WeightBilling::fetchAll($offset, $count, $filter_by));
     }
 
