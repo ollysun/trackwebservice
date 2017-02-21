@@ -41,7 +41,8 @@ class AuthController extends ControllerBase
                     Auth::L_EMAIL => $authUser->getEmail(),
                     Auth::L_USER_TYPE => $role_id,
                     Auth::L_TOKEN => $token,
-                    Auth::L_DATA => $userData
+                    Auth::L_DATA => $userData,
+                    Auth::L_OPERATIONS => ResourcePermission::getOperationsForUser($authUser->getId())
                 ]);
 
                 $authUser->setLastLoginTime(time());

@@ -49,11 +49,15 @@ class RoleResourceManager
         $this->acl->allow($this::ROLE_ADMINISTRATORS, $this::RESOURCE_CUSTOMERS, $this::RESOURCE_CUSTOMERS_OPERATIONS_CREATE);
         $this->acl->allow($this::ROLE_ADMINISTRATORS, $this::RESOURCE_CUSTOMERS, $this::RESOURCE_CUSTOMERS_OPERATIONS_UPDATE);
     }
-    public function canUserPerformOperation($roleName, $resourceName, $operation)
+
+
+
+    public function canUserPerformOperation($userId, $operationId)
     {
-        if (empty($roleName) || empty($resourceName) || empty($operation)) {
+        if (empty($userId) || empty($operationId) ) {
             return 0;
         }
-        return $this->acl->isAllowed($roleName, $resourceName, $operation);
+        UserRoles::findFirst("");
+        return ;
     }
 }
