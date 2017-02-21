@@ -326,11 +326,11 @@ class ExportedParcel extends \Phalcon\Mvc\Model
      *
      * @param array
      * @return int
-     * @author  Olawale Lawal
+     * @author  Olawale Lawal Anthony Ademu
      */
     public static function countAllUnlinkedParcels($filter_by)
     {
-        $obj = new Teller();
+        $obj = new ExportedParcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->columns('COUNT(*) AS parcel_count')
             ->from('Parcel');
