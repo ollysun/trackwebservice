@@ -154,7 +154,7 @@ class IntlController extends ControllerBase
 
     public function getWeightRangeAction(){
         $min = $this->request->getQuery('min');
-        $weight_range = IntlWeightRange::findFirst(['min_weight = :min:', 'binds' => ['min' => $min]]);
+        $weight_range = IntlWeightRange::findFirst(['min_weight = :min:', 'bind' => ['min' => $min]]);
         if(!$weight_range) return $this->response->sendError('Record Not Found');
         return $this->response->sendSuccess($weight_range);
     }
