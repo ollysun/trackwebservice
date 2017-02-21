@@ -105,7 +105,7 @@ class TellerController extends ControllerBase {
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
