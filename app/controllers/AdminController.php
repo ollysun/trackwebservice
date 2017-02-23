@@ -79,6 +79,7 @@ class AdminController extends ControllerBase
 
         $admin_id = $this->request->getPost('admin_id');
         $role_id = $this->request->getPost('role_id');
+        $role_ids = $this->request->getPost('role_ids');
         $branch_id = $this->request->getPost('branch_id');
         $staff_id = $this->request->getPost('staff_id');
         $email = $this->request->getPost('email');
@@ -86,10 +87,9 @@ class AdminController extends ControllerBase
         $phone = $this->request->getPost('phone');
         $status = $this->request->getPost('status');
 
-        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id))) {
+        if (in_array(null, array($email, $role_id, $staff_id, $fullname, $status, $admin_id, $branch_id,$role_ids))) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
-
         $email = strtolower(trim($email));
         $staff_id = strtoupper(trim($staff_id));
         if (filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
@@ -115,7 +115,6 @@ class AdminController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::EXISTING_STAFF_ID);
             }
         }
-
         $admin = Admin::findFirst(['id = :id:', 'bind' => ['id' => $admin_id]]);
         if ($admin != false) {
             $admin->changeDetails($branch_id, $role_id, $staff_id, $fullname, $phone);
@@ -123,6 +122,25 @@ class AdminController extends ControllerBase
                 $auth = UserAuth::findFirst(['id = :id:', 'bind' => ['id' => $admin->getUserAuthId()]]);
                 $auth->changeDetails($email, $status);
                 if ($auth->save()) {
+                $rolesOfUser=UserRoles::find(["user_id=:user_id:",'bind' => ['user_id' => $admin->getUserAuthId()],"columns"=>"user_id,role_id"]);
+                    $rolesOfUserFromDb=[];
+                     foreach($rolesOfUser as $roleOfUser){
+                         $rolesOfUserFromDb[]=$roleOfUser->getRoleId();
+                    }
+                    foreach(json_decode($role_ids) as $role) {
+                        if(!in_array($role,$rolesOfUserFromDb)){
+                          $userRole=new UserRoles();
+                          $userRole->setRoleId($role);
+                          $userRole->setUserId($admin->getUserAuthId());
+                          $userRole->save();
+                      }
+      }
+                    foreach($rolesOfUserFromDb as $roleDb) {
+                        if(!in_array($roleDb,json_decode($role_ids) )){
+                            UserRoles::findFirst(["user_id=:user_id: and role_id=:role_id:",'bind' => ['user_id' => $admin->getUserAuthId(),'role_id' =>$roleDb]])
+                            ->delete();
+                        }
+                    }
                     return $this->response->sendSuccess();
                 }
             }

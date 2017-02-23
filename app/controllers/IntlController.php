@@ -152,6 +152,13 @@ class IntlController extends ControllerBase
         return $this->response->sendSuccess(['weight_ranges' => $weight_ranges, 'total_count' => $total_count]);
     }
 
+    public function getWeightRangeAction(){
+        $min = $this->request->getQuery('min');
+        $weight_range = IntlWeightRange::findFirst(['min_weight = :min:', 'bind' => ['min' => $min]]);
+        if(!$weight_range) return $this->response->sendError('Record Not Found');
+        return $this->response->sendSuccess($weight_range);
+    }
+
     public function saveTariffAction(){
         $this->auth->allowOnly(Role::ADMIN);
         $id = $this->request->getPost('id');

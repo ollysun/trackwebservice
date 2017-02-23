@@ -47,7 +47,7 @@ class TellerController extends ControllerBase {
         $parcels = Parcel::getByWaybillNumberList($waybill_number_arr);
         $amount = 0;
         foreach($parcels as $parcel){
-            /** $parcel Parcel */
+            /** @var Parcel $parcel */
             $amount += $parcel->getAmountDue();
         }
 
@@ -105,7 +105,7 @@ class TellerController extends ControllerBase {
     }
 
     public function declineAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::REGIONAL_MANAGER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::FINANCE, Role::BUSINESS_MANAGER]);
         $id = $this->request->getPost('id');
         if(in_array(null, [$id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);

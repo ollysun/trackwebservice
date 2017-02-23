@@ -21,6 +21,7 @@ class Auth
     const L_EMAIL = 'email';
     const L_USER_TYPE = 'user_type';
     const L_DATA = 'data';
+    const L_OPERATIONS = 'operations';
 
     const TOKEN_CHAR_SET = 'QWERTYUPASDFGHJKLZXCVBNM123456789';
     const TOKEN_LENGTH = 20;
@@ -45,9 +46,16 @@ class Auth
     protected $token = null;
 
     /**
+     * An array of operations a user can perform
+     * @var array
+     */
+    protected $operations = null;
+
+    /**
      * @var string|null
      */
     protected $email = null;
+
 
     /**
      * @var int|null
@@ -106,11 +114,13 @@ class Auth
             $this->email = null;
             $this->user_type = null;
             $this->data = null;
+            $this->operations = null;
         } else {
             $this->token = $stored_data[self::L_TOKEN];
             $this->email = $stored_data[self::L_EMAIL];
             $this->user_type = $stored_data[self::L_USER_TYPE];
             $this->data = $stored_data[self::L_DATA];
+            $this->operations = $stored_data[self::L_OPERATIONS];
         }
     }
 
@@ -131,10 +141,14 @@ class Auth
         $cache_data[self::L_USER_TYPE] = $this->user_type = (isset($data[self::L_USER_TYPE])) ? $data[self::L_USER_TYPE] : null;
         $cache_data[self::L_TOKEN] = $this->token = (isset($data[self::L_TOKEN])) ? $data[self::L_TOKEN] : null;
         $cache_data[self::L_DATA] = $this->data = (isset($data[self::L_DATA])) ? $data[self::L_DATA] : null;
+        //operations are added wen saving token
+        $cache_data[self::L_OPERATIONS] = $this->operations =
+            (isset($data[self::L_OPERATIONS]))?$data[self::L_OPERATIONS]:null;
 
         $cache_key = $this->getCacheKey();
         $this->cache->save($cache_key, $cache_data, $this->cache_life_time);
     }
+
 
     public function checkToken($token)
     {
@@ -198,6 +212,15 @@ class Auth
             echo $this->di['response']->sendAccessDenied()->getContent();
             exit();
         }
+    }
+
+    /**
+     * Checks if this user can perform the supplied operation
+     * @param $operation_id
+     * @return bool
+     */
+    public function canPerformOperation($operation_id){
+        return in_array($operation_id, $this->getOperations());
     }
 
     /**
