@@ -1,6 +1,6 @@
 <?php
 
-class ExportAgentController extends ControllerBase {
+class ExportagentController extends ControllerBase {
 
     public function getAllAction(){
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
