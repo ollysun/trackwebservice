@@ -84,6 +84,11 @@ class ParcelController extends ControllerBase
             }
         }
 
+        //if this is cash on delivery and no company is selected, return
+        if($parcel['cash_on_delivery']){
+            if(!$parcel['company_id']) return $this->response->sendError('You must select a company for COD transaction');
+        }
+
         //if parcel is not for a corporate customer and payment is deferred, reject
         if(!$parcel['company_id'] && $parcel['payment_type'] == 4){
             return $this->response->sendError('Deferred payment is not allowed for cash sale');

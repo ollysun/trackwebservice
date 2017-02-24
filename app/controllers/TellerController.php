@@ -47,7 +47,7 @@ class TellerController extends ControllerBase {
         $parcels = Parcel::getByWaybillNumberList($waybill_number_arr);
         $amount = 0;
         foreach($parcels as $parcel){
-            /** $parcel Parcel */
+            /** @var Parcel $parcel */
             $amount += $parcel->getAmountDue();
         }
 
