@@ -10,6 +10,9 @@ CREATE TABLE `export_agent` (
 	ENGINE=InnoDB
 ;
 
+INSERT INTO export_agent(id, name) VALUE (1, "ARAMEX");
+INSERT INTO export_agent(id, name) VALUE (2, "GMC");
+
 CREATE TABLE `exported_parcel` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`parcel_id` BIGINT NOT NULL DEFAULT '0',
