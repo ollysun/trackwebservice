@@ -2221,6 +2221,14 @@ exit();
             }
         }
 
+        //check if the way bill is exported
+        $parcel = Parcel::isWaybillNumber($filter_by['waybill_number'])?Parcel::getByWaybillNumber($filter_by['waybill_number']):
+            Parcel::getByReferenceOrOrderNumber($filter_by['waybill_number']);
+        if($parcel){
+            $export_record = ExportedParcel::findFirst(['parcel_id = :parcel_id:', 'bind' => ['parcel_id' => $parcel->getId()]]);
+            if($export_record)
+                return $this->response->sendSuccess($export_record);
+        }
 
         $fetch_with = [];
         foreach ($fetch_params as $param) {
