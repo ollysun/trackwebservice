@@ -271,6 +271,8 @@ class IntlController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
+        //dd([$weight, $country_id, $parcel_type_id]);
+
         $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id);
         if($result['success']){
             return $this->response->sendSuccess($result['amount']);
