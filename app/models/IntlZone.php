@@ -235,7 +235,7 @@ class IntlZone extends \Phalcon\Mvc\Model
         /** @var ParcelType $parcel_type */
         $parcel_type = ShippingType::findFirstById($parcel_type_id);
         if(!$parcel_type){
-            return ['success' => false, 'message' => 'Invalid parcel type'];
+            return ['success' => false, 'message' => 'Invalid parcel type '];
         }
 
 

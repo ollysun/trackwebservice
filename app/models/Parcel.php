@@ -2420,7 +2420,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
         if($parcel_data['billing_type'] != 'manual') {
             if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
-                $result = IntlZone::calculateBilling($this->getWeight(), $receiver_addr_obj->getCountryId(), $this->getShippingType());
+                $result = IntlZone::calculateBilling($parcel_data['weight'], $receiver_addr_obj->getCountryId(), $parcel_data['shipping_type']);
                 if(!$result['success']) throw new Exception($result['message']);
                 $amountDue = $result['amount'];
             }else{
