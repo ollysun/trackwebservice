@@ -3702,7 +3702,7 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         //fetching with region map
-        if($fetch_with['region']){
+        if($fetch_with['with_region']){
             $columns[] = 'CompanyMap.*';
             $builder->leftJoin('CompanyMap', 'CompanyMap.reg_no = Company.reg_no', 'CompanyMap');
         }
