@@ -479,7 +479,7 @@ class ParcelController extends ControllerBase
             'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
             'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed',
-            'delivery_branch_id', 'no_cod_teller', 'is_billing_overridden', 'region'
+            'delivery_branch_id', 'no_cod_teller', 'is_billing_overridden'
         ];
 
         $filter_by = [];
@@ -524,7 +524,6 @@ class ParcelController extends ControllerBase
         $with_sales_teller = $this->request->getQuery('with_sales_teller');
         $with_cod_teller = $this->request->getQuery('with_cod_teller');
         $with_rtd_teller = $this->request->getQuery('with_rtd_teller');
-        $with_region = $this->request->getQuery('with_region');
         $with_edit_access = 1;
 
         $with_total_count = $this->request->getQuery('with_total_count');
@@ -546,16 +545,6 @@ class ParcelController extends ControllerBase
          */
         if(isset($filter_by['status']) && $filter_by['status'] == Status::PARCEL_DELIVERED){
             $with_delivery_receipt = true;
-        }
-
-        //if filtering by region, fetch with company
-        if(isset($filter_by['region']) || $with_region){
-            $with_company = 1;
-            $fetch_with['with_region'] = true;
-        }
-
-        if(isset($with_region)){
-            $fetch_with['with_region'] = true;
         }
 
         if(!is_null($send_all)){
