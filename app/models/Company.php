@@ -625,7 +625,7 @@ class Company extends EagerModel
             'extra_info' => 'extra_info',
             'business_manager' => 'business_manager',
             'territory' => 'territory',
-            'region' => 'region'
+            'region' => 'region'//region
         );
     }
 
