@@ -551,6 +551,7 @@ class ParcelController extends ControllerBase
         //if filtering by region, fetch with company
         if(isset($filter_by['region']) || $with_region){
             $with_company = 1;
+            $fetch_with['with_region'] = true;
         }
 
         if(isset($with_region)){
