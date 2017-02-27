@@ -553,6 +553,10 @@ class ParcelController extends ControllerBase
             $with_company = 1;
         }
 
+        if(isset($with_region)){
+            $fetch_with['with_region'] = true;
+        }
+
         if(!is_null($send_all)){
             $filter_by['send_all'] = true;
         }
