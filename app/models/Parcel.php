@@ -2057,6 +2057,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $bind['is_billing_overridden'] = $filter_by['is_billing_overridden'];
         }
 
+        //filtering by region
+        if(isset($filter_by['region'])){
+            $where[] = 'CompanyMap.region = :region:';
+            $bind['region'] = $filter_by['region'];
+        }
+
+
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
@@ -3692,6 +3699,11 @@ class Parcel extends \Phalcon\Mvc\Model
         } elseif (isset($fetch_with['with_parcel_comment'])) {
             $columns[] = 'ParcelComment.*';
             $builder->leftJoin('ParcelComment', 'ParcelComment.waybill_number = Parcel.waybill_number');
+        }
+
+        //fetching with region map
+        if($fetch_with['region']){
+            $builder->leftJoin('CompanyMap', 'CompanyMap.reg_no = Company.reg_no', 'CompanyMap');
         }
 
         $builder->columns($columns);
