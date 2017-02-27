@@ -21,7 +21,7 @@ return new \Phalcon\Config([
         'dbname' => 'trackplus',
         'charset' => 'utf8',
     ],
-   /* 'database' => [
+   /*'database' => [
         'adapter' => 'Mysql',
         'host' => 'localhost',
         'username' => 'root',
