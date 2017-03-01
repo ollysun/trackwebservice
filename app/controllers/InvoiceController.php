@@ -6,6 +6,33 @@ use Phalcon\Mvc\Model\Resultset;
  */
 class InvoiceController extends ControllerBase
 {
+    protected function createInvoice($data){
+        $invoiceRequestValidator = new InvoiceValidation($data);
+        if (!$invoiceRequestValidator->validate()) {
+            return $this->response->sendError($invoiceRequestValidator->getMessages());
+        }
+
+        // Generate Invoice Number
+        $data->invoice_number = Invoice::generateInvoiceNumber();
+
+        $invoice = Invoice::generate((array)$data);
+
+        if ($invoice) {
+            // Add Invoice Parcels
+            if (!InvoiceParcel::validateParcels($data->parcels)) {
+                return ['success' => false, 'message' => ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST];
+            }
+
+            if (!InvoiceParcel::validateInvoiceParcel($data->parcels)) {
+                return ['success' => false, 'message' => ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS];
+            }
+
+            InvoiceParcel::addParcels($data->invoice_number, $data->parcels);
+
+            return ['success' => true];
+        }
+        return ['success' => false, 'message' => ResponseMessage::UNABLE_TO_CREATE_INVOICE];
+    }
 
     /**
      * Adds a new invoice
@@ -16,30 +43,55 @@ class InvoiceController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN]);
         $postData = $this->request->getJsonRawBody();
 
-        $invoiceRequestValidator = new InvoiceValidation($postData);
-        if (!$invoiceRequestValidator->validate()) {
-            return $this->response->sendError($invoiceRequestValidator->getMessages());
+        $result = $this->createInvoice($postData);
+        return $result['success']?$this->response->sendSuccess():$this->response->sendError($result['message']);
+    }
+
+    public function createAllInvoiceAction(){
+        $from_date = $this->request->getPost("from_date");
+        $to_date = $this->request->getPost("to_date");
+        if(in_array(null, [$from_date, $to_date])){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
+        /** @var Company[] $companies */
+        $companies = Company::find();
+        foreach($companies as $company){
+            $parcels = Parcel::fetchAll(0, 0, ['payment_type' => '1', 'start_created_date' => $from_date,
+                'end_created_date' => $to_date, 'company_id' => $company->getId()], []);
+            if(!$parcels) continue;
 
-        // Generate Invoice Number
-        $postData->invoice_number = Invoice::generateInvoiceNumber();
-        $invoice = Invoice::generate((array)$postData);
+            /*tmpObj = new InvoiceObject();
+            tmpObj.company_id = packets[d][0].company_id;
+                tmpObj.address = packets[d][0].company_name + ',' + "\n" + address;
+                tmpObj.to_address = tmpObj.address;
+                tmpObj.reference = packets[d][0].reference_number;
+                tmpObj.parcels = getParcelsWaybill(packets[d]);
+                tmpObj.stamp_duty = 0;
+                tmpObj.account_number = packets[d][0].account_number;
+                tmpObj.company_name = packets[d][0].company_name;*/
 
-        if ($invoice) {
-            // Add Invoice Parcels
-            if (!InvoiceParcel::validateParcels($postData->parcels)) {
-                return $this->response->sendError(ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST);
+
+            $invoiceData = [
+                'company_id' => $company->getId(), 'address' => $company->getName() . ',\n' . $company->getAddress(),
+                'to_address' => $company->getName() . ',\n' . $company->getAddress(), 'stamp_duty' => 0,
+                'account_number' => $company->getRegNo(), 'company_name' => $company->getName(), 'currency' => 'NGN'
+            ];
+            $total = 0;
+
+            foreach($parcels as $parcel){
+                $total += $parcel['amount_due'];
+                $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'], 'net_amount' => $parcel['amount_due']];
+                $invoiceData['reference'] = $parcel['reference_number']|$parcel['waybill_number'];
             }
 
-            if (!InvoiceParcel::validateInvoiceParcel($postData->parcels)) {
-                return $this->response->sendError(ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS);
+            $invoiceData['total'] = $total;
+
+            $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE));
+            if(!$result['success']){
+                Util::slackDebug("Invoice Not Create", "Invoice not created for ".$company->getRegNo().'Because '.$result['message']);
             }
-
-            InvoiceParcel::addParcels($postData->invoice_number, $postData->parcels);
-
-            return $this->response->sendSuccess();
         }
-        return $this->response->sendError(ResponseMessage::UNABLE_TO_CREATE_INVOICE);
+        return $this->response->sendSuccess();
     }
 
     /**
