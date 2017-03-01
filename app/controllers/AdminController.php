@@ -8,6 +8,7 @@ class AdminController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::SUPER_ADMIN]);
         //todo: validate phone number
 
+
         $role_id = $this->request->getPost('role_id');
         $branch_id = $this->request->getPost('branch_id');
         $staff_id = $this->request->getPost('staff_id');
@@ -76,10 +77,30 @@ class AdminController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN]);
         //todo: validate phone number
+        /*
+         * array(8) {
+  ["admin_id"]=>
+  string(2) "52"
+  ["role_id"]=>
+  string(2) "10"
+  ["branch_id"]=>
+  string(3) "110"
+  ["staff_id"]=>
+  string(8) "CSL/0360"
+  ["email"]=>
+  string(26) "a.adesi@courierplus-ng.com"
+  ["fullname"]=>
+  string(12) "aminat adesi"
+  ["phone"]=>
+  string(13) "2348163781325"
+  ["status"]=>
+  string(1) "1"
+}
+*/
 
         $admin_id = $this->request->getPost('admin_id');
         $role_id = $this->request->getPost('role_id');
-        $role_ids = $this->request->getPost('role_ids');
+        $role_ids = $this->request->getPost('role_ids') | [$role_id];
         $branch_id = $this->request->getPost('branch_id');
         $staff_id = $this->request->getPost('staff_id');
         $email = $this->request->getPost('email');
