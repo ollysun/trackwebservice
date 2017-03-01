@@ -48,6 +48,7 @@ class InvoiceController extends ControllerBase
     }
 
     public function createAllInvoiceAction(){
+        set_time_limit(-1);//to be removed
         $from_date = $this->request->getPost("from_date");
         $to_date = $this->request->getPost("to_date");
         if(in_array(null, [$from_date, $to_date])){
