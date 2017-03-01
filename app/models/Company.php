@@ -1089,6 +1089,28 @@ class Company extends EagerModel
     }
 
     /**
+     * Send notification to contact
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $contact
+     * @return bool
+     */
+    public function sendAccessToken($token)
+    {
+        $contact = PrimaryContact::getById(self::getPrimaryContactId());
+        return EmailMessage::send(
+            EmailMessage::COMPANY_API_ACCESS_NOTIFICATION,
+            [
+                'name' => $contact['firstname'] . ' ' . $contact['lastname'],
+                'company_name' => ucwords($this->name),
+                'reg_no' => $this->getRegNo(),
+                'token' => $token
+            ],
+            'Courier Plus',
+            $contact['email']
+        );
+    }
+
+    /**
      * Get company user login data
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $user_auth_id

@@ -526,6 +526,8 @@ class ParcelController extends ControllerBase
         $with_rtd_teller = $this->request->getQuery('with_rtd_teller');
         $with_edit_access = 1;
 
+        dd($this->request->get('start_created_date'));
+
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
 
