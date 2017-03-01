@@ -62,6 +62,8 @@ class InvoiceController extends ControllerBase
                 'end_created_date' => $to_date, 'company_id' => $company->getId()], []);
             if(!$parcels) continue;
 
+            dd($parcels);
+
             /*tmpObj = new InvoiceObject();
             tmpObj.company_id = packets[d][0].company_id;
                 tmpObj.address = packets[d][0].company_name + ',' + "\n" + address;
