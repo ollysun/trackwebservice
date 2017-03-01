@@ -13,7 +13,7 @@ class InvoiceController extends ControllerBase
         }
 
         // Generate Invoice Number
-        $data->invoice_number = Invoice::generateInvoiceNumber($data['company_id']);
+        $data->invoice_number = Invoice::generateInvoiceNumber($data->company_id);
 
         $invoice = Invoice::generate((array)$data);
 
