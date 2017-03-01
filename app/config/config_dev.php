@@ -17,8 +17,8 @@ return new \Phalcon\Config([
         'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
         'password' => 'thelcmof8is2',
-        //'dbname' => 'tnt',
-        'dbname' => 'trackplus',
+        'dbname' => 'tnt',
+        //'dbname' => 'trackplus',
         'charset' => 'utf8',
     ],*/
    'database' => [
