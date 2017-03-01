@@ -60,7 +60,7 @@ class InvoiceController extends ControllerBase
         foreach($companies as $company){
             $filter_by = ['payment_type' => '1', 'start_created_date' => $from_date,
                 'end_created_date' => $to_date, 'company_id' => $company->getId()];
-            $parcels = Parcel::fetchAll(0, 0, $filter_by, []);
+            $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
             if(!$parcels) continue;
             dd($parcels);
 
