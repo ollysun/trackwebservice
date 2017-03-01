@@ -58,11 +58,12 @@ class InvoiceController extends ControllerBase
         /** @var Company[] $companies */
         $companies = Company::find();
         foreach($companies as $company){
-            $parcels = Parcel::fetchAll(0, 0, ['payment_type' => '1', 'start_created_date' => $from_date,
-                'end_created_date' => $to_date, 'company_id' => $company->getId()], []);
+            $filter_by = ['payment_type' => '1', 'start_created_date' => $from_date,
+                'end_created_date' => $to_date, 'company_id' => $company->getId()];
+            dd($filter_by);
+            $parcels = Parcel::fetchAll(0, 0, $filter_by, []);
             if(!$parcels) continue;
 
-            dd($parcels);
 
             /*tmpObj = new InvoiceObject();
             tmpObj.company_id = packets[d][0].company_id;
