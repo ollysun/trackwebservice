@@ -13,7 +13,7 @@ class InvoiceController extends ControllerBase
         }
 
         // Generate Invoice Number
-        $data->invoice_number = Invoice::generateInvoiceNumber();
+        $data->invoice_number = Invoice::generateInvoiceNumber($data['company_id']);
 
         $invoice = Invoice::generate((array)$data);
 
@@ -75,8 +75,8 @@ class InvoiceController extends ControllerBase
 
 
             $invoiceData = [
-                'company_id' => $company->getId(), 'address' => $company->getName() . ',\n' . $company->getAddress(),
-                'to_address' => $company->getName() . ',\n' . $company->getAddress(), 'stamp_duty' => 0,
+                'company_id' => $company->getId(), 'address' => $company->getName() . ', ' . $company->getAddress(),
+                'to_address' => $company->getName() . ', ' . $company->getAddress(), 'stamp_duty' => 0,
                 'account_number' => $company->getRegNo(), 'company_name' => $company->getName(), 'currency' => 'NGN'
             ];
             $total = 0;
