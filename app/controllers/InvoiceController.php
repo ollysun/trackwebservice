@@ -48,6 +48,7 @@ class InvoiceController extends ControllerBase
     }
 
     public function createAllInvoiceAction(){
+        ini_set('memory_limit', -1);//to be removed
         set_time_limit(-1);//to be removed
         $from_date = $this->request->getPost("from_date");
         $to_date = $this->request->getPost("to_date");
@@ -81,7 +82,8 @@ class InvoiceController extends ControllerBase
 
             foreach($parcels as $parcel){
                 $total += $parcel['amount_due'];
-                $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'], 'net_amount' => $parcel['amount_due']];
+                $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'],
+                    'net_amount' => $parcel['amount_due'], 'discount' => 0];
                 $invoiceData['reference'] = $parcel['reference_number']|$parcel['waybill_number'];
             }
 
