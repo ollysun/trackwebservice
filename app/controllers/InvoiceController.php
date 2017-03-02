@@ -47,6 +47,39 @@ class InvoiceController extends ControllerBase
         return $result['success']?$this->response->sendSuccess():$this->response->sendError($result['message']);
     }
 
+    /**
+     * @param $from_date
+     * @param $to_date
+     * @param Company $company
+     */
+    public function createInvoiceForCompany($from_date, $to_date, $company){
+        $filter_by = ['payment_type' => '1', 'start_created_date' => $from_date,
+            'end_created_date' => $to_date, 'company_id' => $company->getId(), 'send_all' => 1];
+        $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
+        if(!$parcels) return;
+
+        $invoiceData = [
+            'company_id' => $company->getId(), 'address' => $company->getName() . ', ' . $company->getAddress(),
+            'to_address' => $company->getName() . ', ' . $company->getAddress(), 'stamp_duty' => 0,
+            'account_number' => $company->getRegNo(), 'company_name' => $company->getName(), 'currency' => 'NGN'
+        ];
+        $total = 0;
+
+        foreach($parcels as $parcel){
+            $total += $parcel['amount_due'];
+            $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'],
+                'net_amount' => $parcel['amount_due'], 'discount' => 0];
+            $invoiceData['reference'] = $parcel['reference_number']|$parcel['waybill_number'];
+        }
+
+        $invoiceData['total'] = $total;
+
+        $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE));
+        if(!$result['success']){
+            Util::slackDebug("Invoice Not Create", "Invoice not created for ".$company->getRegNo().'Because '.$result['message']);
+        }
+    }
+
     public function createAllInvoiceAction(){
         ini_set('memory_limit', -1);//to be removed
         set_time_limit(-1);//to be removed
@@ -58,44 +91,19 @@ class InvoiceController extends ControllerBase
         /** @var Company[] $companies */
         $companies = Company::find();
         foreach($companies as $company){
-            $filter_by = ['payment_type' => '1', 'start_created_date' => $from_date,
-                'end_created_date' => $to_date, 'company_id' => $company->getId(), 'send_all' => 1];
-            $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
-            if(!$parcels) continue;
-
-            /*tmpObj = new InvoiceObject();
-            tmpObj.company_id = packets[d][0].company_id;
-                tmpObj.address = packets[d][0].company_name + ',' + "\n" + address;
-                tmpObj.to_address = tmpObj.address;
-                tmpObj.reference = packets[d][0].reference_number;
-                tmpObj.parcels = getParcelsWaybill(packets[d]);
-                tmpObj.stamp_duty = 0;
-                tmpObj.account_number = packets[d][0].account_number;
-                tmpObj.company_name = packets[d][0].company_name;*/
-
-
-            $invoiceData = [
-                'company_id' => $company->getId(), 'address' => $company->getName() . ', ' . $company->getAddress(),
-                'to_address' => $company->getName() . ', ' . $company->getAddress(), 'stamp_duty' => 0,
-                'account_number' => $company->getRegNo(), 'company_name' => $company->getName(), 'currency' => 'NGN'
-            ];
-            $total = 0;
-
-            foreach($parcels as $parcel){
-                $total += $parcel['amount_due'];
-                $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'],
-                    'net_amount' => $parcel['amount_due'], 'discount' => 0];
-                $invoiceData['reference'] = $parcel['reference_number']|$parcel['waybill_number'];
-            }
-
-            $invoiceData['total'] = $total;
-
-            $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE));
-            if(!$result['success']){
-                Util::slackDebug("Invoice Not Create", "Invoice not created for ".$company->getRegNo().'Because '.$result['message']);
-            }
+            $this->createInvoiceForCompany($from_date, $to_date, $company);
         }
         return $this->response->sendSuccess();
+    }
+
+    public function createInvoiceForCompanyAction(){
+        $registration_number = $this->request->get('registration_number');
+        $from_date = $this->request->getPost('from_date');
+        $to_date = $this->request->getPost('to_date');
+
+        $company = Company::getByRegistrationNumber($registration_number);
+        $this->createInvoiceForCompany($from_date, $to_date, $company);
+        return $this->response->sendSuccess('done');
     }
 
     /**

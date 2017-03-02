@@ -295,7 +295,6 @@ class ParcelController extends ControllerBase
         );
 
         dd('here');*/
-
         //$this->auth->allowOnly([Role::COMPANY_ADMIN]);
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
@@ -307,7 +306,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = $company->getBillingPlan();
+        $billing_plan = BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN;// $company->getBillingPlan();
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
