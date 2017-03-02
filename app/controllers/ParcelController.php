@@ -306,7 +306,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = BillingPlan::fetchById(2567);// $company->getBillingPlan();
+        $billing_plan = $company->getBillingPlan();// BillingPlan::fetchById(2567);//
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
