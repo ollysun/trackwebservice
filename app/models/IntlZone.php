@@ -220,7 +220,7 @@ class IntlZone extends \Phalcon\Mvc\Model
             return ['success' => false, 'message' => 'Invalid country id'];
         }
 
-        if($parcel_type_id == ShippingType::INTL_ECONOMY_EXPRESS){
+        if($parcel_type_id == ShippingType::INTL_TRANSCRIPT_EXPORT){
             //if the country is in the special countries, use its special price
             if($special_intl_tariff = IntlSpecialCountryTariff::findFirst(['country_id = :country_id:',
                 'bind' => ['country_id' => $country_id]])){
