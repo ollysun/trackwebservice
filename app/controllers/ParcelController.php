@@ -295,7 +295,6 @@ class ParcelController extends ControllerBase
         );
 
         dd('here');*/
-
         //$this->auth->allowOnly([Role::COMPANY_ADMIN]);
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
@@ -307,7 +306,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = $company->getBillingPlan();
+        $billing_plan = BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
@@ -525,6 +524,7 @@ class ParcelController extends ControllerBase
         $with_cod_teller = $this->request->getQuery('with_cod_teller');
         $with_rtd_teller = $this->request->getQuery('with_rtd_teller');
         $with_edit_access = 1;
+
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -2221,6 +2221,14 @@ exit();
             }
         }
 
+        //check if the way bill is exported
+        $parcel = Parcel::isWaybillNumber($filter_by['waybill_number'])?Parcel::getByWaybillNumber($filter_by['waybill_number']):
+            Parcel::getByReferenceOrOrderNumber($filter_by['waybill_number']);
+        if($parcel){
+            $export_record = ExportedParcel::findFirst(['parcel_id = :parcel_id:', 'bind' => ['parcel_id' => $parcel->getId()]]);
+            if($export_record)
+                return $this->response->sendSuccess($export_record);
+        }
 
         $fetch_with = [];
         foreach ($fetch_params as $param) {

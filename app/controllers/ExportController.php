@@ -9,11 +9,13 @@
 class ExportController extends ControllerBase
 {
     public function getAgentsAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
         $agents = ExportAgent::find();
         return $this->response->sendSuccess($agents);
     }
 
     public function getExportedParcelsAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
         $agent_id = $this->request->get('agent_id');
         $start_created_date = $this->request->get('start_created_date');
         $end_created_date = $this->request->get('end_created_date');
@@ -38,6 +40,7 @@ class ExportController extends ControllerBase
     }
 
     public function getUnmappedExportedParcels(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
         $start_created_date = $this->request->get('start_created_date');
         $end_created_date = $this->request->get('end_created_date');
         $waybill_number = $this->request->get('waybill_number');

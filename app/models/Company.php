@@ -123,6 +123,42 @@ class Company extends EagerModel
      */
     protected $extra_info;
 
+    protected $region;
+
+    protected $territory;
+
+    protected $business_manager;
+
+    public function getBusinessManager()
+    {
+        return $this->business_manager;
+    }
+
+    public function getTerritory()
+    {
+        return $this->territory;
+    }
+
+    public function getRegion()
+    {
+        return $this->region;
+    }
+
+    public function setBusinessManager($business_manager)
+    {
+        $this->business_manager = $business_manager;
+    }
+
+    public function setTerritory($territory)
+    {
+        $this->territory = $territory;
+    }
+
+    public function setRegion($region)
+    {
+        $this->region = $region;
+    }
+
     /**
      * Method to set the value of field id
      *
@@ -586,7 +622,10 @@ class Company extends EagerModel
             'modified_date' => 'modified_date',
             'status' => 'status',
             'account_type_id' => 'account_type_id',
-            'extra_info' => 'extra_info'
+            'extra_info' => 'extra_info',
+            'business_manager' => 'business_manager',
+            'territory' => 'territory',
+            'region' => 'region'//region
         );
     }
 
@@ -611,7 +650,10 @@ class Company extends EagerModel
             'modified_date' => $this->getModifiedDate(),
             'status' => $this->getStatus(),
             'account_type_id' => $this->getAccountTypeId(),
-            'extra_info' => $this->getExtraInfo()
+            'extra_info' => $this->getExtraInfo(),
+            'business_manager' => $this->getBusinessManager(),
+            'territory' => $this->getTerritory(),
+            'region' => $this->getRegion()
         );
     }
 
@@ -777,7 +819,7 @@ class Company extends EagerModel
         $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setBusinessZoneId($business_zone_id);
         $this->setStatus($status_id);
-        $this->setExtraNote($extra_info);
+        $this->setExtraInfo($extra_info);
 
         $this->setModifiedDate(date('Y-m-d H:i:s'));
     }
@@ -1040,6 +1082,28 @@ class Company extends EagerModel
                 'password' => $contact['password'],
                 'link' => Di::getDefault()->getConfig()->fe_base_url . '/site/changePassword?ican=' . md5($contact['id']) . '&salt=' . $contact['id'],
                 'year' => date('Y')
+            ],
+            'Courier Plus',
+            $contact['email']
+        );
+    }
+
+    /**
+     * Send notification to contact
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     * @param $contact
+     * @return bool
+     */
+    public function sendAccessToken($token)
+    {
+        $contact = PrimaryContact::getById(self::getPrimaryContactId());
+        return EmailMessage::send(
+            EmailMessage::COMPANY_API_ACCESS_NOTIFICATION,
+            [
+                'name' => $contact['firstname'] . ' ' . $contact['lastname'],
+                'company_name' => ucwords($this->name),
+                'reg_no' => $this->getRegNo(),
+                'token' => $token
             ],
             'Courier Plus',
             $contact['email']

@@ -1,9 +1,9 @@
 <?php
 
-class ExportedParcelController extends ControllerBase {
+class ExportedparcelController extends ControllerBase {
 
     public function getAllAction(){
-        $this->auth->allowOnly(Role::ADMIN);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
 
         $agent_id = $this->request->get('agent_id');
 
@@ -29,9 +29,9 @@ class ExportedParcelController extends ControllerBase {
 
         return $this->response->sendSuccess($result);
     }
-    public function getAllUnassignedAction(){
 
-        $this->auth->allowOnly(Role::ADMIN);
+    public function getAllUnassignedAction(){
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
 
         $start_created_date = $this->request->get('start_created_date');
 
@@ -59,6 +59,7 @@ class ExportedParcelController extends ControllerBase {
 
     public function addAction()
     {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER]);
         $parcel_id = $this->request->getPost('parcel_id');
         $agent_id = $this->request->getPost('agent_id');
         $agent_tracking_number= $this->request->getPost('agent_tracking_number');

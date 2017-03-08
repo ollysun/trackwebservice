@@ -2737,6 +2737,13 @@ class Parcel extends \Phalcon\Mvc\Model
         ]);
     }
 
+    public static function getByReferenceOrOrderNumber($reference_number){
+        return Parcel::findFirst([
+            'reference_number = :reference_number: OR order_number = :reference_number:',
+            'bind' => ['reference_number' => trim(strtoupper($reference_number))]
+        ]);
+    }
+
     public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false,
                                                   $fetch_with = null, $where_id_reference_number = false)
     {

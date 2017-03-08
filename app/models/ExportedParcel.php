@@ -182,6 +182,15 @@ class ExportedParcel extends \Phalcon\Mvc\Model
         );
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'parcel_id' => $this->getParcelId(),
+            'export_agent_id' => $this->getExportAgentId(),
+            'agent_tracking_number' => $this->getAgentTrackingNumber()
+        );
+    }
+
     public static function fetchAll($offset, $count, $filter_by, $fetch_with, $paginate){
         $builder = new \Phalcon\Mvc\Model\Query\Builder();
         $builder->addFrom('ExportedParcel', 'ExportedParcel')
@@ -212,6 +221,7 @@ class ExportedParcel extends \Phalcon\Mvc\Model
                 $bind['start_created_date'] = $filter_by['start_created_date'];
             }
         }
+
         if(isset($filter_by['waybill_number'])){
             $builder->where('Parcel.waybill_number = :waybill_number:');
             $bind['waybill_number'] = $filter_by['waybill_number'];

@@ -10,6 +10,10 @@ class ShippingType extends \Phalcon\Mvc\Model
     const INTL_EXPRESS_DOCUMENT = 5;
     const INTL_EXPRESS_NON_DOCUMENT = 6;
     const INTL_ECONOMY_EXPRESS= 7;
+    const INTL_IMPORT_EXPRESS_DOCUMENT = 8;
+    const INTL_IMPORT_EXPRESS_NON_DOCUMENT = 9;
+    const INTL_IMPORT_ECONOMY_EXPRESS= 10;
+    const INTL_TRANSCRIPT_EXPORT = 11;
 
     /**
      *

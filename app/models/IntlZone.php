@@ -220,11 +220,16 @@ class IntlZone extends \Phalcon\Mvc\Model
             return ['success' => false, 'message' => 'Invalid country id'];
         }
 
-        //if the country is in the special countries, use its special price
-        if($special_intl_tariff = IntlSpecialCountryTariff::findFirst(['country_id = :country_id:',
-            'bind' => ['country_id' => $country_id]])){
-            return ['success' => true, 'amount' => $special_intl_tariff->getPrice()];
+        if($parcel_type_id == ShippingType::INTL_TRANSCRIPT_EXPORT){
+            //if the country is in the special countries, use its special price
+            if($special_intl_tariff = IntlSpecialCountryTariff::findFirst(['country_id = :country_id:',
+                'bind' => ['country_id' => $country_id]])){
+                return ['success' => true, 'amount' => $special_intl_tariff->getPrice()];
+            }else{
+                return ['message' => 'Transit Tariff not available for the selected country', 'success' => false];
+            }
         }
+
 
         /** @var IntlZoneCountryMap $zone */
         $zone_map = IntlZoneCountryMap::findFirst(['conditions' => 'country_id = :country_id:', 'bind' => ['country_id' => $country_id]]);
@@ -249,10 +254,44 @@ class IntlZone extends \Phalcon\Mvc\Model
         AND weight_range_id = :weight_range_id:',
             'bind' => ['zone_id' => $zone_map->getZoneId(), 'parcel_type_id' => $parcel_type_id,
                 'weight_range_id' => $weight_range->getId()]]);
+
+        $amount = $tariff->getBaseAmount();
+
         if(!$tariff){
-            return ['success' => false, 'message' => 'Tariff not found'];
+            //calculate extra
+            //$sum = Robots::maximum(array("type='mechanical'", 'column' => 'id'));
+            // A raw SQL statement
+            $zone_id = $zone_map->getZoneId();
+            $sql = "select tariff.base_amount, tariff.weight_range_id, intl_weight_range.max_weight, intl_weight_range.min_weight
+                    from intl_tariff as tariff
+                    join intl_weight_range on tariff.weight_range_id = intl_weight_range.id
+                    where tariff.zone_id = $zone_id AND tariff.parcel_type_id = $parcel_type_id AND tariff.base_amount = (select max(base_amount)
+                    from intl_tariff where zone_id = $zone_id AND parcel_type_id = $parcel_type_id)";
+
+            // Base model
+            $max_tariff_obj = new IntlZone();
+
+            // Execute the query
+            $max_tariff = $max_tariff_obj->getReadConnection()->query($sql, null);
+            $max_weight = $max_tariff['min_weight'];
+            if($weight < $max_weight)
+                return ['success' => false, 'message' => 'Tariff not found'];
+            $diff = $weight - $max_weight;
+            //get the zone extras
+            $zone_extra = IntlExtraKg::findFirst(['zone_id = :zone_id: AND parcel_id = :parcel_id:', 'bind' =>[
+                'zone_id' => $zone_id, 'parcel_type_id' => $parcel_type_id
+            ]]);
+            if(!$zone_extra)
+                return ['success' => false, 'message' => 'Tariff not found'];
+            //calculate the extra amount
+            $extra_amount = $zone_extra['base_amount'] * $diff;
+            $amount = $max_tariff['base_amount'] + $extra_amount;
+            //return  ['success' => true, 'amount' => $max_tariff['base_amount'] + $extra_amount];
         }
-        return  ['success' => true, 'amount' => $tariff->getBaseAmount()];
+
+        $fsc = 0.15 * $amount;
+        $amount = $amount + $fsc;
+        return  ['success' => true, 'amount' => $amount];
     }
 
 }
