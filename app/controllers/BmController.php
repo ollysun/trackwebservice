@@ -35,6 +35,7 @@ class BmController extends ControllerBase
 
         $staff_id = $this->request->getPost('staff_id');
         $region_id = $this->request->getPost('region_id');
+        $business_zone_id = $this->request->getPost('business_zone_id');
 
         if(in_array(null, [$staff_id, $region_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -57,7 +58,8 @@ class BmController extends ControllerBase
         }
 
         $bm = new BusinessManager();
-        $bm->init(['status' => Status::ACTIVE, 'staff_id' => $staff_id, 'region_id' => $region_id, 'region_name' => $region->getName(), 'name' => $admin->getFullname()]);
+        $bm->init(['status' => Status::ACTIVE, 'staff_id' => $staff_id, 'region_id' => $region_id,
+            'region_name' => $region->getName(), 'name' => $admin->getFullname(), 'business_zone_id' => $business_zone_id]);
         if($bm->save()){
             return $this->response->sendSuccess();
         }
