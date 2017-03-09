@@ -2,6 +2,7 @@
 
 class Country extends \Phalcon\Mvc\Model
 {
+    const DEFAULT_COUNTRY_ID = 1;
 
     /**
      *

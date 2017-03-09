@@ -29,11 +29,12 @@ class Invoice extends EagerModel
     /**
      * Generates the invoice number
      * @author Adegoke Obasa <goke@cottacush.com>
+     * @param $company_id
      * @return string
      */
-    public static function generateInvoiceNumber()
+    public static function generateInvoiceNumber($company_id = '')
     {
-        $invoiceNumber = 'IN-' . date('Ymd-His') . '-' . rand(0, 10);
+        $invoiceNumber = 'IN-' . date('Ymd-His') . '-' . $company_id . rand(0, 10);
         return $invoiceNumber;
     }
 

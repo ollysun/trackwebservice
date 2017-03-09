@@ -31,7 +31,8 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN, Role::SALES_AGENT, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
+            Role::SALES_AGENT, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
         $sender_address = (isset($payload['sender_address'])) ? $payload['sender_address'] : null;
@@ -70,7 +71,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN){
+        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlan()){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
@@ -81,6 +82,16 @@ class ParcelController extends ControllerBase
             if(!$billing_link){
                 return $this->response->sendError(ResponseMessage::INVALID_BILLING_PLAN);
             }
+        }
+
+        //if this is cash on delivery and no company is selected, return
+        if($parcel['cash_on_delivery']){
+            if(!$parcel['company_id']) return $this->response->sendError('You must select a company for COD transaction');
+        }
+
+        //if parcel is not for a corporate customer and payment is deferred, reject
+        if(!$parcel['company_id'] && $parcel['payment_type'] == 4){
+            return $this->response->sendError('Deferred payment is not allowed for cash sale');
         }
 
         $auth_data = $this->auth->getData();
@@ -191,7 +202,8 @@ class ParcelController extends ControllerBase
                 }
             }
 
-            $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'], $sender, $sender_address, $receiver, $receiver_address,
+            $waybill_numbers = $parcel_obj->saveForm($this->auth->isCooperateUser()?$nearest_branch_id:$auth_data['branch']['id'],
+                $sender, $sender_address, $receiver, $receiver_address,
                 $bank_account, $parcel, $to_branch_id, $created_by, $this->auth->isCooperateUser());
             if (isset($parcel['id'])) {
                 $parcel_edit_history->parcel_id = $parcel['id'];
@@ -283,7 +295,6 @@ class ParcelController extends ControllerBase
         );
 
         dd('here');*/
-
         //$this->auth->allowOnly([Role::COMPANY_ADMIN]);
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
@@ -295,7 +306,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = $company->getBillingPlan();
+        $billing_plan = BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
@@ -467,7 +478,7 @@ class ParcelController extends ControllerBase
             'created_branch_id', 'route_id', 'history_status', 'history_start_created_date',
             'history_end_created_date', 'history_from_branch_id', 'history_to_branch_id', 'request_type', 'billing_type',
             'company_id', 'report', 'remove_cancelled_shipments', 'show_both_parent_and_splits', 'show_removed',
-            'delivery_branch_id', 'no_cod_teller'
+            'delivery_branch_id', 'no_cod_teller', 'is_billing_overridden'
         ];
 
         $filter_by = [];
@@ -490,8 +501,6 @@ class ParcelController extends ControllerBase
     public function getAllAction()
     {
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
-
-
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
@@ -515,6 +524,7 @@ class ParcelController extends ControllerBase
         $with_cod_teller = $this->request->getQuery('with_cod_teller');
         $with_rtd_teller = $this->request->getQuery('with_rtd_teller');
         $with_edit_access = 1;
+
 
         $with_total_count = $this->request->getQuery('with_total_count');
         $send_all = $this->request->getQuery('send_all');
@@ -2129,7 +2139,8 @@ exit();
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
-            } else if ($enforce_action != '1' &&  !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
+            } else if ($enforce_action != '1' &&
+                !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
                 $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
@@ -2139,7 +2150,6 @@ exit();
             }else{
                 $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
             }
-
 
 
             if (!$check) {
@@ -2211,6 +2221,14 @@ exit();
             }
         }
 
+        //check if the way bill is exported
+        $parcel = Parcel::isWaybillNumber($filter_by['waybill_number'])?Parcel::getByWaybillNumber($filter_by['waybill_number']):
+            Parcel::getByReferenceOrOrderNumber($filter_by['waybill_number']);
+        if($parcel){
+            $export_record = ExportedParcel::findFirst(['parcel_id = :parcel_id:', 'bind' => ['parcel_id' => $parcel->getId()]]);
+            if($export_record)
+                return $this->response->sendSuccess($export_record);
+        }
 
         $fetch_with = [];
         foreach ($fetch_params as $param) {

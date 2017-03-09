@@ -42,6 +42,18 @@ class ExportAgent extends \Phalcon\Mvc\Model
     protected $email;
 
     /**
+     *
+     * @var string
+     */
+    protected $agentapi;
+
+    /**
+     *
+     * @var string
+     */
+    protected $hasapi;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -107,6 +119,32 @@ class ExportAgent extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field email
+     *
+     * @param string $email
+     * @return $this
+     */
+    public function setAgentApi($agentapi)
+    {
+        $this->agentapi = $agentapi;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field email
+     *
+     * @param string $email
+     * @return $this
+     */
+    public function setHasApi($hasapi)
+    {
+        $this->hasapi = $hasapi;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -154,6 +192,26 @@ class ExportAgent extends \Phalcon\Mvc\Model
     public function getEmail()
     {
         return $this->email;
+    }
+
+    /**
+     * Returns the value of field email
+     *
+     * @return string
+     */
+    public function getAgentApi()
+    {
+        return $this->agentapi;
+    }
+
+    /**
+     * Returns the value of field email
+     *
+     * @return string
+     */
+    public function getHasApi()
+    {
+        return $this->hasapi;
     }
 
     /**
@@ -232,8 +290,55 @@ class ExportAgent extends \Phalcon\Mvc\Model
             'name' => 'name',
             'website' => 'website',
             'phone_number' => 'phone_number',
-            'email' => 'email'
+            'email' => 'email',
+            'agentapi' => 'agentapi',
+            'hasapi' => 'hasapi'
         );
     }
 
+    /**
+     * @param $offset
+     * @param $count
+     * @param $filter_by
+     * @param $fetch_with
+     * @param bool|false $paginate bhh
+     * @return array
+     */
+    public static function fetchAll($offset, $count, $filter_by, $fetch_with, $paginate = false){
+        $builder = new \Phalcon\Mvc\Model\Query\Builder();
+        $builder->addFrom('ExportAgent');
+        $columns = ['ExportAgent.*'];
+        $bind = [];
+        if ($paginate) {
+            $builder = $builder->limit($count, $offset);
+        }
+
+        $builder->columns($columns);
+
+
+        if(isset($filter_by['export_agent_id'])){
+            $builder->where("ExportParcel.export_agent_id = :export_agent_id:");
+            $bind['export_agent_id'] = $filter_by['export_agent_id'];
+        }
+
+        if(isset($fetch_with['with_exported_parcel'])){
+            $builder->innerJoin('ExportedParcel', 'ExportedParcel.id = ExportedAgent.id', 'ExportedParcel');
+            $builder->innerJoin('Parcel', 'ExportedParcel.parcel_id = Parcel.id', 'Parcel');
+        }
+
+
+
+//        if(isset($fetch_with['with_staff'])){
+//            $builder->innerJoin('Admin', 'Admin.staff_id = BmCentre.staff_id', 'Admin');
+//        }
+
+        $data = $builder->getQuery()->execute($bind);
+
+
+        $zones = [];
+        foreach ($data as $item) {
+            $zones[] = $item->toArray();
+        }
+        return $zones;
+    }
 }

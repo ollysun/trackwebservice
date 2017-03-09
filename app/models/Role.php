@@ -82,7 +82,6 @@ class Role extends \Phalcon\Mvc\Model
     {
         $this->hasMany('id', 'Admin', 'role_id', array('alias' => 'Admin'));
     }
-
     /**
      * @return Role[]
      */

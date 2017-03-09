@@ -18,7 +18,7 @@ class Util
      */
     public static function slackDebug($tag, $text)
     {
-        if($tag == 'Email Not Sent'){
+       /* if($tag == 'Email Not Sent'){
             return;
         }
         //xoxb-55390846452-E4AmK4St8uQBvR21WDqtMhx9

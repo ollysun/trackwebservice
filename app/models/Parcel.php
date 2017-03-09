@@ -2051,6 +2051,12 @@ class Parcel extends \Phalcon\Mvc\Model
             else $where[] = 'CodTellerParcel.id IS NOT NULL';
         }
 
+        //is_billing_overridden
+        if(isset($filter_by['is_billing_overridden'])){
+            $where[] = 'Parcel.is_billing_overridden = :is_billing_overridden:';
+            $bind['is_billing_overridden'] = $filter_by['is_billing_overridden'];
+        }
+
         if (!isset($filter_by['show_removed'])) {
             $where[] = 'Parcel.status !=' . Status::REMOVED;
         }
@@ -2413,14 +2419,23 @@ class Parcel extends \Phalcon\Mvc\Model
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
         if($parcel_data['billing_type'] != 'manual') {
-            $amountDue = Zone::calculateBilling(
-                $receiverCity->getBranchId(),
-                $senderCity->getBranchId(),
-                $parcel_data['weight'],
-                $parcel_data['weight_billing_plan'],
-                $receiverCity->getId(),
-                $parcel_data['onforwarding_billing_plan']
-            );
+            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
+                $result = IntlZone::calculateBilling($parcel_data['weight'], $receiver_addr_obj->getCountryId(), $parcel_data['shipping_type']);
+                if(!$result['success']) throw new Exception($result['message']);
+                $amountDue = $result['amount'];
+            }else{
+                $amountDue = Zone::calculateBilling(
+                    $receiverCity->getBranchId(),
+                    $senderCity->getBranchId(),
+                    $parcel_data['weight'],
+                    $parcel_data['weight_billing_plan'],
+                    $receiverCity->getId(),
+                    $parcel_data['onforwarding_billing_plan']
+                );
+            }
+            $vat = $amountDue * 0.05;
+            $amountDue = $vat + $amountDue;
+
         }else{
             $amountDue = $parcel_data['amount_due'];
         }
@@ -2718,6 +2733,13 @@ class Parcel extends \Phalcon\Mvc\Model
     public static function getByReferenceNumber($reference_number){
         return Parcel::findFirst([
             'reference_number = :reference_number:',
+            'bind' => ['reference_number' => trim(strtoupper($reference_number))]
+        ]);
+    }
+
+    public static function getByReferenceOrOrderNumber($reference_number){
+        return Parcel::findFirst([
+            'reference_number = :reference_number: OR order_number = :reference_number:',
             'bind' => ['reference_number' => trim(strtoupper($reference_number))]
         ]);
     }

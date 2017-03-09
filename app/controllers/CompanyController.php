@@ -331,7 +331,9 @@ class CompanyController extends ControllerBase
 
 
         if(!$company_access){
-            CompanyAccess::createOne($registration_number, $allow_portal_login, $allow_api_call, $auth_username, $company->getId());
+            $company_access = CompanyAccess::createOne($registration_number, $allow_portal_login,
+                $allow_api_call, $auth_username, $company->getId());
+            //send token and reg no to company
         }else{
             $company_access->setAllowApiCall($allow_api_call);
             $company_access->setAllowPortalLogin($allow_portal_login);

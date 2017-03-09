@@ -102,7 +102,10 @@ class BulkParcelCreationJob extends BaseJob
         if ($onforwarding_charge == false) {
             throw new Exception(ResponseMessage::CALC_BILLING_ONFORWARDING);
         }
-        $parcelData['amount_due'] = $calc_weight_billing + $onforwarding_charge->getAmount();
+        $vat = 0.05 * ($calc_weight_billing + $onforwarding_charge->getAmount());
+        $parcelData['amount_due'] = $calc_weight_billing + $onforwarding_charge->getAmount() + $vat;
+
+
         if(isset($parcelData['cash_on_delivery_amount']) && $parcelData['cash_on_delivery_amount'] > 0){
             $parcelData['cash_on_delivery'] = 1;
         }else{
