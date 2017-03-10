@@ -440,6 +440,60 @@ class ParcelController extends ControllerBase
     }
 
     public function repriceAction(){
+        $waybill_number = $this->request->getPost('waybill_number');
+        $parcel = Parcel::fetchAll(0, 1, ['waybill_number' => $waybill_number], ['with_sender_address' => true, 'with_receiver_address' => true]);
+        if(!$parcel){
+            Util::slackDebug('Error re-pricing', "Cannot re-price $waybill_number. Invalid waybill number");
+            return false;
+        }
+        //calculate the new price
+        $from_branch_id = $parcel['sender_address']['city']['branch_id'];
+        $to_branch_id = $parcel['receiver_address']['city']['branch_id'];
+        $from_country_id = $parcel['sender_address']['state']['country_id'];
+        $to_country_id = $parcel['receiver_address']['state']['country_id'];
+        $city_id = $parcel['sender_address']['city']['id'];
+        $weight = $parcel['weight'];
+        $company_id = $parcel['company_id'];//for discount calc
+        $shipping_type = $parcel['shipping_type'];
+        $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $company_id]]);
+        if($company){
+            $weight_billing_plan_id = $company->getBillingPlan()->getId();
+            if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlan())
+                $onforwarding_billing_plan_id = $weight_billing_plan_id;
+            else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+        }else{
+            $weight_billing_plan_id = BillingPlan::getDefaultBillingPlan();
+            $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+        }
+
+        if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
+            ($from_country_id && $from_country_id != Country::DEFAULT_COUNTRY_ID)){
+            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID?$to_country_id:$from_country_id;
+
+
+            $result = IntlZone::calculateBilling($weight, $country_id, $shipping_type);
+            if($result['success']){
+                $amountDue = $result['amount'];
+                $vat = 0.05 * $amountDue;
+                $amountDue = $amountDue + $vat;
+            }else{
+                Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
+                return $this->response->sendError();
+            }
+        }
+
+
+        try {
+            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                $city_id, $onforwarding_billing_plan_id, $company_id);
+
+            $vat = $amountDue * 0.05;
+            $amountDue = $amountDue + $vat;
+            return $amountDue;
+        } catch (Exception $ex) {
+            Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
+            return false;
+        }
 
     }
 
