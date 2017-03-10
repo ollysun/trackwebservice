@@ -299,10 +299,17 @@ class ParcelController extends ControllerBase
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
 
-        $company_id = $this->auth->getCompanyId();
+        $company_registration_number = $parcelData['registration_number'];
+        if(!$company_registration_number){
+            return $this->response->sendError('Unable to resolve custoemr account');
+        }
+        $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $company_registration_number]]);
+
+        //$company_id = $this->auth->getCompanyId();
         /** @var Company $company */
-        $company = Company::findFirst($company_id);
+        //$company = Company::findFirst($company_id);
         if(!$company){
+            Util::slackDebug('API error', 'Unable to resolve customer account');
             return $this->response->sendError('Unable to resolve customer account');
         }
 
@@ -432,6 +439,9 @@ class ParcelController extends ControllerBase
 
     }
 
+    public function repriceAction(){
+
+    }
 
     public function getOneAction()
     {
