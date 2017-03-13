@@ -453,6 +453,7 @@ class ParcelController extends ControllerBase
 
         $error_parcels = [];
         $success_count = 0;
+        dd($parcels);
         foreach ($parcels as $parcel) {
             if($parcel['entity_type'] == 3) continue;
 
