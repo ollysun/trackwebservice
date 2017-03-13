@@ -71,7 +71,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlan()){
+        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlanId()){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
@@ -313,7 +313,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = $company->getBillingPlanId();// BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
+        $billing_plan = $company->getBillingPlan();// BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
@@ -450,6 +450,7 @@ class ParcelController extends ControllerBase
         $filter_by['payment_type'] = 4;
         $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+
         $error_parcels = [];
         $success_count = 0;
         foreach ($parcels as $parcel) {
@@ -477,15 +478,15 @@ class ParcelController extends ControllerBase
         $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $company_id]]);
 
         if($company){
-            $planId = $company->getBillingPlanId();
-            if(!$planId) return $this->response->sendError('Plan not found');
-            $weight_billing_plan_id = $planId;
-            if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlan())
+            $plan = $company->getBillingPlan();
+            if(!$plan) return $this->response->sendError('Plan not found');
+            $weight_billing_plan_id = $plan->Id;
+            if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlanId())
                 $onforwarding_billing_plan_id = $weight_billing_plan_id;
-            else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+            else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfordingId();
         }else{
-            $weight_billing_plan_id = BillingPlan::getDefaultBillingPlan();
-            $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+            $weight_billing_plan_id = BillingPlan::getDefaultBillingPlanId();
+            $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfordingId();
         }
 
         if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
@@ -518,8 +519,8 @@ class ParcelController extends ControllerBase
         $discount = $base_price * ($percentageDiscount/100);
         $base_price -= $discount;
         //add the vat
-        $vat = 0.05 * $base_price;
-        $base_price += $vat;
+       /* $vat = 0.05 * $base_price;
+        $base_price += $vat;*/
 
         $parcelObj = Parcel::getByWaybillNumber($waybill_number);
         $extra_charges = $parcelObj->getAmountDue() - $parcelObj->getBasePrice();
