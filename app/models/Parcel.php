@@ -2419,8 +2419,13 @@ class Parcel extends \Phalcon\Mvc\Model
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
         if($parcel_data['billing_type'] != 'manual') {
-            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
-                $result = IntlZone::calculateBilling($parcel_data['weight'], $receiver_addr_obj->getCountryId(), $parcel_data['shipping_type']);
+            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID ||
+                $sender_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
+                $country_id = $receiver_addr_obj->getCountryId() == Country::DEFAULT_COUNTRY_ID?
+                    $sender_addr_obj->getCountryId():$receiver_addr_obj->getCountryId();
+
+                $result = IntlZone::calculateBilling($parcel_data['weight'], $country_id, $parcel_data['shipping_type']);
+
                 if(!$result['success']) throw new Exception($result['message']);
                 $amountDue = $result['amount'];
             }else{

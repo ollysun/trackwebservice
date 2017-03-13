@@ -441,11 +441,13 @@ class ParcelController extends ControllerBase
 
     public function repriceAction(){
         $waybill_number = $this->request->getPost('waybill_number');
-        $parcel = Parcel::fetchAll(0, 1, ['waybill_number' => $waybill_number], ['with_sender_address' => true, 'with_receiver_address' => true]);
+        $parcel = Parcel::fetchAll(0, 1, ['waybill_number' => $waybill_number],
+            ['with_sender_address' => true, 'with_receiver_address' => true]);
         if(!$parcel){
             Util::slackDebug('Error re-pricing', "Cannot re-price $waybill_number. Invalid waybill number");
-            return false;
+            return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
         }
+        $parcel = $parcel[0];
         //calculate the new price
         $from_branch_id = $parcel['sender_address']['city']['branch_id'];
         $to_branch_id = $parcel['receiver_address']['city']['branch_id'];
@@ -455,9 +457,13 @@ class ParcelController extends ControllerBase
         $weight = $parcel['weight'];
         $company_id = $parcel['company_id'];//for discount calc
         $shipping_type = $parcel['shipping_type'];
+        /** @var Company $company */
         $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $company_id]]);
+
         if($company){
-            $weight_billing_plan_id = $company->getBillingPlan()->getId();
+            $plan = $company->getBillingPlan()->getId();
+            if(!$plan) return $this->response->sendError('Plan not found');
+            $weight_billing_plan_id = $plan->getId();
             if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlan())
                 $onforwarding_billing_plan_id = $weight_billing_plan_id;
             else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
@@ -474,27 +480,40 @@ class ParcelController extends ControllerBase
             $result = IntlZone::calculateBilling($weight, $country_id, $shipping_type);
             if($result['success']){
                 $amountDue = $result['amount'];
-                $vat = 0.05 * $amountDue;
-                $amountDue = $amountDue + $vat;
             }else{
                 Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
                 return $this->response->sendError();
             }
+        }else
+        {
+            try {
+
+                $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                    $city_id, $onforwarding_billing_plan_id, $company_id);
+
+            } catch (Exception $ex) {
+                Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
+                return $this->response->sendError();
+            }
         }
 
+        //take out the discount
+        $percentageDiscount = $company->getDiscount();
+        $discount = $amountDue * ($percentageDiscount/100);
+        $amountDue -= $discount;
+        //add the vat
+        $vat = 0.05 * $amountDue;
+        $amountDue += $vat;
 
-        try {
-            $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
-                $city_id, $onforwarding_billing_plan_id, $company_id);
+        $parcelObj = Parcel::getByWaybillNumber($waybill_number);
+        $extra_charges = $parcelObj->getAmountDue() - $parcelObj->getBasePrice();
 
-            $vat = $amountDue * 0.05;
-            $amountDue = $amountDue + $vat;
-            return $amountDue;
-        } catch (Exception $ex) {
-            Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
-            return false;
-        }
-
+        $parcelObj->setAmountDue(($amountDue + $extra_charges));
+        $parcelObj->setBasePrice($amountDue);
+        $parcelObj->setWeightBillingPlanId($weight_billing_plan_id);
+        $parcelObj->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
+        $parcelObj->save();
+        return $this->response->sendSuccess();
     }
 
     public function getOneAction()
