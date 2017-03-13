@@ -53,6 +53,7 @@ class InvoiceController extends ControllerBase
      * @param Company $company
      */
     public function createInvoiceForCompany($from_date, $to_date, $company){
+
         $filter_by = [/*'payment_type' => '1', */'start_created_date' => $from_date,
             'end_created_date' => $to_date, 'company_id' => $company->getId(), 'send_all' => 1];
         $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);

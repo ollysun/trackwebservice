@@ -1243,9 +1243,9 @@ class Company extends EagerModel
     }
 
     /**
-     * @return BillingPlan
+     * @return int
      */
-    public function getBillingPlan(){
+    public function getBillingPlanId(){
         $plans = CompanyBillingPlan::fetchPlansForCompany(['company_id' => $this->getId()]);
         if(count($plans) > 0){
             return BillingPlan::findFirstById($plans[0]['id']);
