@@ -271,8 +271,9 @@ class IntlZone extends \Phalcon\Mvc\Model
 
             // Execute the query
             $max_tariff = $max_tariff_obj->getReadConnection()->query($sql, null);
-            dd($max_tariff);
+
             $max_weight = $max_tariff->min_weight;
+            dd($max_weight);
             if($weight < $max_weight)
                 return ['success' => false, 'message' => 'Tariff not found'];
             $diff = $weight - $max_weight;
