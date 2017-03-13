@@ -516,9 +516,13 @@ class ParcelController extends ControllerBase
         }
 
         //take out the discount
-        $percentageDiscount = $company->getDiscount();
-        $discount = $base_price * ($percentageDiscount/100);
-        $base_price -= $discount;
+        if($company){
+            $percentageDiscount = $company->getDiscount();
+            $discount = $base_price * ($percentageDiscount/100);
+            $base_price -= $discount;
+        }else{
+            Util::slackDebug('No Company', "$waybill_number has deferred payment but without company");
+        }
         //add the vat
         /*$vat = 0.05 * $base_price;
         $base_price += $vat;*/
