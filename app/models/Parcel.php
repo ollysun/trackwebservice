@@ -2438,8 +2438,11 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['onforwarding_billing_plan']
                 );
             }
-            $vat = $amountDue * 0.05;
-            $amountDue = $vat + $amountDue;
+            //if payment type is not defered, add vat
+            if($parcel_data['payment_type'] != 4){
+                $vat = $amountDue * 0.05;
+                $amountDue = $vat + $amountDue;
+            }
 
         }else{
             $amountDue = $parcel_data['amount_due'];
