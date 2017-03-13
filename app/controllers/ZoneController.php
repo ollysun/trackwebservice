@@ -351,8 +351,13 @@ class ZoneController extends ControllerBase
         $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
             Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
-        $country_id = $this->request->getPost('to_country_id');
-        if($country_id && $country_id != Country::DEFAULT_COUNTRY_ID){
+        $to_country_id = $this->request->getPost('to_country_id');
+        $from_country_id = $this->request->getPost('from_country_id');
+
+        if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
+            ($from_country_id && $from_country_id != Country::DEFAULT_COUNTRY_ID)){
+            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID?$to_country_id:$from_country_id;
+
             $weight = $this->request->getPost('weight');
             $parcel_type_id = $this->request->getPost('parcel_type_id');
 
@@ -360,7 +365,7 @@ class ZoneController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             }
 
-            $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id);
+            $result = IntlZone::calculateBilling($weight, $to_country_id, $parcel_type_id);
             if($result['success']){
                 $amountDue = $result['amount'];
                 $vat = 0.05 * $amountDue;
@@ -369,6 +374,8 @@ class ZoneController extends ControllerBase
             }
             return $this->response->sendError($result['message']);
         }
+
+
 
         $from_branch_id = $this->request->getPost('from_branch_id');
         $to_branch_id = $this->request->getPost('to_branch_id');

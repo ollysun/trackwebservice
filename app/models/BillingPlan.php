@@ -14,6 +14,9 @@ class BillingPlan extends \Phalcon\Mvc\Model
         return getenv('DEFAULT_WEIGHT_RANGE_PLAN') !== false ? getenv('DEFAULT_WEIGHT_RANGE_PLAN') : self::DEFAULT_WEIGHT_RANGE_PLAN;
     }
 
+    public static function getDefaultOnfording(){
+        return getenv('DEFAULT_ON_FORWARDING_PLAN') !== false ? getenv('DEFAULT_ON_FORWARDING_PLAN') : self::DEFAULT_ON_FORWARDING_PLAN;
+    }
     /**
      *
      * @var integer

@@ -299,10 +299,17 @@ class ParcelController extends ControllerBase
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
 
-        $company_id = $this->auth->getCompanyId();
+        $company_registration_number = $parcelData['registration_number'];
+        if(!$company_registration_number){
+            return $this->response->sendError('Unable to resolve custoemr account');
+        }
+        $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $company_registration_number]]);
+
+        //$company_id = $this->auth->getCompanyId();
         /** @var Company $company */
-        $company = Company::findFirst($company_id);
+        //$company = Company::findFirst($company_id);
         if(!$company){
+            Util::slackDebug('API error', 'Unable to resolve customer account');
             return $this->response->sendError('Unable to resolve customer account');
         }
 
@@ -432,6 +439,82 @@ class ParcelController extends ControllerBase
 
     }
 
+    public function repriceAction(){
+        $waybill_number = $this->request->getPost('waybill_number');
+        $parcel = Parcel::fetchAll(0, 1, ['waybill_number' => $waybill_number],
+            ['with_sender_address' => true, 'with_receiver_address' => true]);
+        if(!$parcel){
+            Util::slackDebug('Error re-pricing', "Cannot re-price $waybill_number. Invalid waybill number");
+            return $this->response->sendError(ResponseMessage::PARCEL_NOT_EXISTING);
+        }
+        $parcel = $parcel[0];
+        //calculate the new price
+        $from_branch_id = $parcel['sender_address']['city']['branch_id'];
+        $to_branch_id = $parcel['receiver_address']['city']['branch_id'];
+        $from_country_id = $parcel['sender_address']['state']['country_id'];
+        $to_country_id = $parcel['receiver_address']['state']['country_id'];
+        $city_id = $parcel['sender_address']['city']['id'];
+        $weight = $parcel['weight'];
+        $company_id = $parcel['company_id'];//for discount calc
+        $shipping_type = $parcel['shipping_type'];
+        /** @var Company $company */
+        $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $company_id]]);
+
+        if($company){
+            $plan = $company->getBillingPlan()->getId();
+            if(!$plan) return $this->response->sendError('Plan not found');
+            $weight_billing_plan_id = $plan->getId();
+            if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlan())
+                $onforwarding_billing_plan_id = $weight_billing_plan_id;
+            else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+        }else{
+            $weight_billing_plan_id = BillingPlan::getDefaultBillingPlan();
+            $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfording();
+        }
+
+        if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
+            ($from_country_id && $from_country_id != Country::DEFAULT_COUNTRY_ID)){
+            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID?$to_country_id:$from_country_id;
+
+
+            $result = IntlZone::calculateBilling($weight, $country_id, $shipping_type);
+            if($result['success']){
+                $amountDue = $result['amount'];
+            }else{
+                Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
+                return $this->response->sendError();
+            }
+        }else
+        {
+            try {
+
+                $amountDue = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                    $city_id, $onforwarding_billing_plan_id, $company_id);
+
+            } catch (Exception $ex) {
+                Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
+                return $this->response->sendError();
+            }
+        }
+
+        //take out the discount
+        $percentageDiscount = $company->getDiscount();
+        $discount = $amountDue * ($percentageDiscount/100);
+        $amountDue -= $discount;
+        //add the vat
+        $vat = 0.05 * $amountDue;
+        $amountDue += $vat;
+
+        $parcelObj = Parcel::getByWaybillNumber($waybill_number);
+        $extra_charges = $parcelObj->getAmountDue() - $parcelObj->getBasePrice();
+
+        $parcelObj->setAmountDue(($amountDue + $extra_charges));
+        $parcelObj->setBasePrice($amountDue);
+        $parcelObj->setWeightBillingPlanId($weight_billing_plan_id);
+        $parcelObj->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
+        $parcelObj->save();
+        return $this->response->sendSuccess();
+    }
 
     public function getOneAction()
     {
