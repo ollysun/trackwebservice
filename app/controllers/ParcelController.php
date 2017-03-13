@@ -520,8 +520,8 @@ class ParcelController extends ControllerBase
         $discount = $base_price * ($percentageDiscount/100);
         $base_price -= $discount;
         //add the vat
-        $vat = 0.05 * $base_price;
-        $base_price += $vat;
+        /*$vat = 0.05 * $base_price;
+        $base_price += $vat;*/
 
         $parcelObj = Parcel::getByWaybillNumber($waybill_number);
         $extra_charges = $parcelObj->getAmountDue() - $parcelObj->getBasePrice();
