@@ -500,7 +500,7 @@ class ParcelController extends ControllerBase
                 $base_price = $result['amount'];
             }else{
                 Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
-                return ['message' => ResponseMessage::INTERNAL_ERROR];
+                return ['message' => 'Re-price error', "$waybill_number was not re-priced ".$result['message']];
             }
         }else
         {
@@ -511,7 +511,7 @@ class ParcelController extends ControllerBase
 
             } catch (Exception $ex) {
                 Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
-                return ['message' => ResponseMessage::INTERNAL_ERROR];
+                return ['message' => 'Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage()];
             }
         }
 
