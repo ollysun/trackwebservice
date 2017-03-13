@@ -502,8 +502,7 @@ class ParcelController extends ControllerBase
                 Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
                 return ['message' => "$waybill_number was not re-priced ".$result['message']];
             }
-        }else
-        {
+        }else{
             try {
 
                 $base_price = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,

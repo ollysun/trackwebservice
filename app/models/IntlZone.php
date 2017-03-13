@@ -255,8 +255,6 @@ class IntlZone extends \Phalcon\Mvc\Model
             'bind' => ['zone_id' => $zone_map->getZoneId(), 'parcel_type_id' => $parcel_type_id,
                 'weight_range_id' => $weight_range->getId()]]);
 
-        $amount = $tariff->getBaseAmount();
-
         if(!$tariff){
             //calculate extra
             //$sum = Robots::maximum(array("type='mechanical'", 'column' => 'id'));
@@ -287,7 +285,8 @@ class IntlZone extends \Phalcon\Mvc\Model
             $extra_amount = $zone_extra['base_amount'] * $diff;
             $amount = $max_tariff['base_amount'] + $extra_amount;
             //return  ['success' => true, 'amount' => $max_tariff['base_amount'] + $extra_amount];
-        }
+        }else
+            $amount = $tariff->getBaseAmount();
 
         $fsc = 0.15 * $amount;
         $amount = $amount + $fsc;
