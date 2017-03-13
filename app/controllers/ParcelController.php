@@ -448,6 +448,7 @@ class ParcelController extends ControllerBase
 
         $filter_by = $this->getFilterParams();
         $filter_by['payment_type'] = 4;
+        $filter_by['send_all'] = 1;
         $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
         $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
 
