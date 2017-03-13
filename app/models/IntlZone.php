@@ -277,8 +277,8 @@ class IntlZone extends \Phalcon\Mvc\Model
                 return ['success' => false, 'message' => 'Tariff not found'];
             $diff = $weight - $max_weight;
             //get the zone extras
-            $zone_extra = IntlExtraKg::findFirst(['zone_id = :zone_id: AND parcel_id = :parcel_id:', 'bind' =>[
-                'zone_id' => $zone_id, 'parcel_type_id' => $parcel_type_id
+            $zone_extra = IntlExtraKg::findFirst(['zone_id = :zone_id: AND shipping_type_id = :shipping_type_id:', 'bind' =>[
+                'zone_id' => $zone_id, 'shipping_type_id' => $parcel_type_id
             ]]);
             if(!$zone_extra)
                 return ['success' => false, 'message' => 'Tariff not found'];
