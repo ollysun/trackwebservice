@@ -480,7 +480,10 @@ class ParcelController extends ControllerBase
 
         if($company){
             $plan = $company->getBillingPlan();
-            if(!$plan) return $this->response->sendError('Plan not found');
+            if(!$plan){
+                Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".'Plan not found');
+                return ['message' => "$waybill_number was not re-priced ".'Plan not found'];
+            }
             $weight_billing_plan_id = $plan->Id;
             if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlanId())
                 $onforwarding_billing_plan_id = $weight_billing_plan_id;
