@@ -838,7 +838,7 @@ class ParcelController extends ControllerBase
 
     public function countAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE,
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,
             Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
 
         $filter_by = $this->getFilterParams();
@@ -853,7 +853,7 @@ class ParcelController extends ControllerBase
 
     public function groupCountAction(){
         $start_time = date('d-M-y h:i:s');
-        $this->auth->allowOnly([Role::ADMIN,  Role::BILLING, Role::FINANCE,
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,  Role::BILLING, Role::FINANCE,
             Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $stat_keys = ['created','for_sweep', 'for_sweep_ecommerce', 'for_delivery', 'received', 'groundsman', 'sorted', 'transit_to_customer', 'sorted_still_at_hub', 'delivered', 'ready_for_sorting'];
