@@ -40,7 +40,7 @@ class InvoiceController extends ControllerBase
      */
     public function addAction()
     {
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE]);
         $postData = $this->request->getJsonRawBody();
 
         $result = $this->createInvoice($postData);
