@@ -2435,7 +2435,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['weight'],
                     $parcel_data['weight_billing_plan'],
                     $receiverCity->getId(),
-                    $parcel_data['onforwarding_billing_plan']
+                    $parcel_data['onforwarding_billing_plan'], $parcel_data['company_id'], $parcel_data['shipping_type']
                 );
             }
             //if payment type is not defered, add vat
