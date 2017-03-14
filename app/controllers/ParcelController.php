@@ -301,9 +301,10 @@ class ParcelController extends ControllerBase
 
         $company_registration_number = $parcelData['registration_number'];
         if(!$company_registration_number){
-            return $this->response->sendError('Unable to resolve custoemr account');
+            return $this->response->sendError('Unable to resolve customer account');
         }
-        $company = Company::findFirst(['reg_no = :reg_no:', 'bind' => ['reg_no' => $company_registration_number]]);
+        $company = Company::getByRegistrationNumber($company_registration_number);
+
 
         //$company_id = $this->auth->getCompanyId();
         /** @var Company $company */
