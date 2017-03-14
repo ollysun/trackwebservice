@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
             Role::SALES_AGENT, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
@@ -543,7 +543,8 @@ class ParcelController extends ControllerBase
 
     public function getOneAction()
     {
-        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::BILLING, Role::FINANCE,
+            Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
         $id = $this->request->getQuery('id');
         $waybill_number = $this->request->getQuery('waybill_number');
@@ -608,7 +609,7 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER,
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER,
             Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT,
             Role::BUSINESS_MANAGER, Role::REGIONAL_MANAGER]);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
@@ -837,7 +838,8 @@ class ParcelController extends ControllerBase
 
     public function countAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE,
+            Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
 
         $filter_by = $this->getFilterParams();
 
@@ -851,7 +853,8 @@ class ParcelController extends ControllerBase
 
     public function groupCountAction(){
         $start_time = date('d-M-y h:i:s');
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN,  Role::BILLING, Role::FINANCE,
+            Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $stat_keys = ['created','for_sweep', 'for_sweep_ecommerce', 'for_delivery', 'received', 'groundsman', 'sorted', 'transit_to_customer', 'sorted_still_at_hub', 'delivered', 'ready_for_sorting'];
 
