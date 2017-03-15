@@ -16,13 +16,25 @@ use Pheanstalk\Pheanstalk;
 /**
  * Database connection is created based in the parameters defined in the configuration file
  */
-$di->set('db', function () use ($config) {
+/*$di->set('db', function () use ($config) {
     $connection = new DbAdapter(array(
         'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
         'dbname' => $config->database->dbname,
         "charset" => $config->database->charset,
+        'persistent' => true
+    ));
+    return $connection;
+});*/
+
+$di->set('db', function () use ($config) {
+    $connection = new DbAdapter(array(
+        'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
+        'username' => 'root',
+        'password' => 'thelcmof8is2',
+        'dbname' => 'trackplus',
+        "charset" => 'utf8',
         'persistent' => true
     ));
     return $connection;
