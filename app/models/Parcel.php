@@ -3248,7 +3248,7 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     public static function isWaybillNumber($waybill_number)
     {
-        return preg_match('/^\d[A-Z](\d|\-)+[\d]$/i', $waybill_number);
+        return preg_match('/^\d?[A-Z](\d|\-)+[\d]$/i', $waybill_number);
     }
 
     /**
