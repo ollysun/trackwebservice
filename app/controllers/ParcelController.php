@@ -468,6 +468,7 @@ class ParcelController extends ControllerBase
                 if(!isset($result['success'])) $error_parcels[$parcel['waybill_number']] = $result['message'];
                 else $success_count += 1;
             }
+            Util::slackDebug('Reprice completed', "Reprice completed for ".$company->getName());
         }
 
         Util::slackDebug('Reprice Completed', "$success_count success ".count($error_parcels).' errors');
