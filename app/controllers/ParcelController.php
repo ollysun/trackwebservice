@@ -470,7 +470,7 @@ class ParcelController extends ControllerBase
             }
         }
 
-
+        Util::slackDebug('Reprice Completed', "$success_count success ".count($error_parcels).' errors');
         return $this->response->sendSuccess(['success_count' => $success_count, 'bad' => $error_parcels]);
     }
 
