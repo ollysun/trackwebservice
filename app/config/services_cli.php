@@ -77,13 +77,10 @@ $di->set('s3Client', function () use ($config) {
 });
  */
 
-define( 'AWSAccessKeyId', 'AKIAJFG642ALS2CEVSAA' );
-define( 'AWSSecretKey', 'AgsO3Mg+gzmKkcSRidCU4+0CWOzJe0nubcD8Ho3mupUk' );
-
 $di->set('s3Client', function () use ($config) {
     return new S3Client(
-        AWSAccessKeyId,//'AKIAJ57TMSWZMAIY3QOQ',//$config->aws->aws_key,
-        AWSSecretKey,//'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',//$config->aws->aws_secret,
+        'AKIAI2IB5PBN5J7LULAA',//$config->aws->aws_key,
+        'sUdWukVQ4p8EjmVgjc0opXRJDxJSDaFdxynDE14E',//$config->aws->aws_secret,
         'us-east-1',
         'tnt-storage',//$config->aws->s3->bucket,
         'staging'//$config->aws->s3->namespace
