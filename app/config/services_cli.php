@@ -82,7 +82,7 @@ $di->set('s3Client', function () use ($config) {
         'AKIAI2IB5PBN5J7LULAA',//$config->aws->aws_key,
         'sUdWukVQ4p8EjmVgjc0opXRJDxJSDaFdxynDE14E',//$config->aws->aws_secret,
         'us-east-1',
-        'tnt-storage',//$config->aws->s3->bucket,
+        'trackplus-storage',//$config->aws->s3->bucket,
         'staging'//$config->aws->s3->namespace
     );
 });
