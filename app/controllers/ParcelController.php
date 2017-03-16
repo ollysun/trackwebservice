@@ -451,17 +451,26 @@ class ParcelController extends ControllerBase
         $filter_by['payment_type'] = 4;
         $filter_by['send_all'] = 1;
         $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
-        $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+
+        $companies = Company::find();
 
         $error_parcels = [];
         $success_count = 0;
-        foreach ($parcels as $parcel) {
-            if($parcel['entity_type'] == 3) continue;
 
-            $result = $this->reprice($parcel);
-            if(!isset($result['success'])) $error_parcels[$parcel['waybill_number']] = $result['message'];
-            else $success_count += 1;
+        foreach($companies as $company){
+            $filter_by['company_id'] = $company->getId();
+            $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+
+            foreach ($parcels as $parcel) {
+                if($parcel['entity_type'] == 3) continue;
+
+                $result = $this->reprice($parcel);
+                if(!isset($result['success'])) $error_parcels[$parcel['waybill_number']] = $result['message'];
+                else $success_count += 1;
+            }
         }
+
+
         return $this->response->sendSuccess(['success_count' => $success_count, 'bad' => $error_parcels]);
     }
 
@@ -506,6 +515,7 @@ class ParcelController extends ControllerBase
                 Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
                 return ['message' => "$waybill_number was not re-priced ".$result['message']];
             }
+            $intl = true;
         }else{
             try {
 
@@ -516,13 +526,16 @@ class ParcelController extends ControllerBase
                 Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
                 return ['message' => "$waybill_number not re-priced ".$ex->getMessage()];
             }
+            $intl = false;
         }
 
         //take out the discount
         if($company){
-            $percentageDiscount = $company->getDiscount();
-            $discount = $base_price * ($percentageDiscount/100);
-            $base_price -= $discount;
+            if($intl){
+                $percentageDiscount = $company->getDiscount();
+                $discount = $base_price * ($percentageDiscount/100);
+                $base_price -= $discount;
+            }
         }else{
             Util::slackDebug('No Company', "$waybill_number has deferred payment but without company");
         }
