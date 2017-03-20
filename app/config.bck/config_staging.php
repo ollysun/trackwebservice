@@ -17,6 +17,7 @@ return new \Phalcon\Config(array(
         'pluginsDir' => __DIR__ . '/../../app/plugins/',
         'libraryDir' => __DIR__ . '/../../app/library/',
         'validationsDir' => __DIR__ . '/../../app/validations/',
+        'traitsDir' => __DIR__ . '/../../app/traits/',
         'cacheDir' => __DIR__ . '/../../app/cache/',
         'tasksDir'        => __DIR__ . '/../../app/tasks/',
         'workersDir'        => __DIR__ . '/../../app/workers/',
@@ -28,31 +29,34 @@ return new \Phalcon\Config(array(
     'params' => array(
 
         //TODO change to production config
-        'mailer' => array(
+        'mailer' => [
             'mandrill_username' => 'yemexx1@gmail.com',
             'mandrill_password' => 'fakh_1NtNOd6Vq3J5CvHCQ',
-            'default_from' => ['sys@traceandtrack.com' => 'Courier Plus'],
-            'smtp_host' => 'smtp.mandrillapp.com',
+            'ses_username' => 'AKIAJ6NFQVK5GD4JHGZQ',
+            'ses_password' => 'AmFS3R7LwHCSqynaB5HMFYAIy+A96CkTEY5eVRReGrnO',
+            'default_from' => ['trackplus@openbulksms.com' => 'Courier Plus'],
+            'smtp_host' => 'email-smtp.us-east-1.amazonaws.com',
             'smtp_port' => 587
-        ),
+        ]
     ),
 
 
-    'fe_base_url' => 'http://prod-tnt.cottacush.com',
-
-    'isCli' => true,
-
-    'beanstalkd' => [
-        'host' => getenv('BEANSTALKD_HOST'),
-        'port' => getenv('BEANSTALKD_PORT')
-    ],
+    'fe_base_url' => 'http://staging-courierplusng.cottacush.com',
 
     'aws' => [
         'aws_key' => getenv('AWS_KEY'),
         'aws_secret' => getenv('AWS_SECRET'),
         's3' => [
-            'namespace' => (getenv('APPLICATION_ENV')) ? getenv('APPLICATION_ENV') : 'local',
+            'bucket' => 'tnt-delivery-receipts',
+            'namespace' => 'staging',
             'region' => 'us-west-2'
-        ],
+        ]
     ],
+
+    'isCli' => false,
+
+    'beanstalkd' => [
+        'host' => getenv('BEANSTALKD_HOST'),
+        'port' => getenv('BEANSTALKD_PORT')
+    ]
 ));
