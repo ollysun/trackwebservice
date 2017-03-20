@@ -67,8 +67,8 @@ $di->set('s3Client', function () use ($config) {
 
 $di->set('s3Client', function () use ($config) {
     return new S3Client(
-        'AKIAJ57TMSWZMAIY3QOQ',//$config->aws->aws_key,
-        'cDOLlR6Fa2tOe/ZUK5/lOEUrp7UccXlhQf9Xbk30',//$config->aws->aws_secret,
+        /*'AKIAJ57TMSWZMAIY3QOQ',*/ $config->aws->aws_key,
+        /*'cDOLlR6Fa2tOe/ZUK5/lOEUrp7UccXlhQf9Xbk30',*/ $config->aws->aws_secret,
         'us-east-1',
         'tnt-storage',//$config->aws->s3->bucket,
         'staging'//$config->aws->s3->namespace
