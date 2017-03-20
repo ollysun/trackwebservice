@@ -75,6 +75,7 @@ $di->set('s3Client', function () use ($config) {
     );
 });*/
 
+echo '80/UHPjsCIlLN34HGm2lQK64i+YxJPnNPrZ/48Y1';die();
 $di->set('s3Client', function () use ($config) {
     return new S3Client(
         'AKIAJY7IWB3RZMOKSW2Q',
