@@ -355,6 +355,7 @@ class ParcelController extends ControllerBase
         $sender['lastname'] = null;
         $sender['email'] = empty($parcelData['sender_email'])? $company->getEmail(): $parcelData['sender_email'];
 
+        $parcelData['sender_city'] = trim($parcelData['sender_city']);
         $sender_city = empty($parcelData['sender_city']) ? City::findFirst($company->getCityId()): City::findFirstByName($parcelData['sender_city']);
         if(!$sender_city){
             return $this->response->sendError($parcelData['sender_city']. ' is not a valid city name. Please check ref/cities for a list of valid city name');
@@ -365,6 +366,7 @@ class ParcelController extends ControllerBase
         $parcelData['sender_country'] = $sender_state->getCountryId();
         $parcelData['sender_address_1'] = isset($parcelData['sender_address_1'])?$company->getAddress():$parcelData['sender_address_1'];
 
+        $parcelData['receiver_city'] = trim($parcelData['receiver_city']);
         /** @var City $receiver_city */
         $receiver_city = City::findFirstByName($parcelData['receiver_city']);
         if(!$receiver_city){
