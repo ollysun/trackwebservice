@@ -16,3 +16,5 @@ function dd($data, $message = ''){
     var_dump($data);
     die($message);
 }
+
+\Phalcon\Mvc\Model::setup(['ignoreUnknownColumns' => true]);
