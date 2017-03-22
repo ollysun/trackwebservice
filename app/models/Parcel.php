@@ -2562,11 +2562,11 @@ class Parcel extends \Phalcon\Mvc\Model
             $invoice_parcel = InvoiceParcel::findFirst(['waybill_number = :number:',
                 'bind' => ['number' => $parcel_data['waybill_number']]]);
             if($invoice_parcel){
-                $diff = $total_charge - $invoice_parcel->getNetAmount();
+                $diff = 0;// $total_charge - $invoice_parcel->getNetAmount();
                 if($diff > 0){
                     /** @var Invoice $invoice */
-                    $invoice = Invoice::findFirstById($invoice_parcel->getId());
-                    $invoice_parcel->setNetAmount($invoice_parcel->getNetAmount() + $diff);
+                    //$invoice = Invoice::findFirstById($invoice_parcel->getId());
+                    //$invoice_parcel->setNetAmount($invoice_parcel->getNetAmount() + $diff);
                 }
             }
             return $waybill_number;

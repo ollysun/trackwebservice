@@ -81,6 +81,18 @@ class InvoiceController extends ControllerBase
         }
     }
 
+    public function recreateCompanyInvoiceAction(){
+        $from_date = $this->request->get('from_date');
+        $to_date = $this->request->get('to_date');
+        $company_id = $this->request->get('company_id');
+        $invoice_number = $this->request->get('invoice_number');
+        //delete the already existing invoice
+        $sql = "DELETE from invoice_parcel WHERE invoice_number = '$invoice_number';
+                DELETE FROM invoice WHERE invoice_number = '$invoice_number'";
+
+        $company = Company::findFirst(['id = :id:', ['id' => $company_id]]);
+    }
+
     public function createAllInvoiceAction(){
         ini_set('memory_limit', -1);//to be removed
         set_time_limit(-1);//to be removed

@@ -304,6 +304,7 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Unable to resolve customer account');
         }
         $company = Company::getByRegistrationNumber($company_registration_number);
+        $company_id = $company->getId();
 
 
         //$company_id = $this->auth->getCompanyId();
