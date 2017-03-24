@@ -6,14 +6,14 @@ use Phalcon\Mvc\Model\Resultset;
  */
 class InvoiceController extends ControllerBase
 {
-    protected function createInvoice($data){
+    protected function createInvoice($data, $invoice_number = null){
         $invoiceRequestValidator = new InvoiceValidation($data);
         if (!$invoiceRequestValidator->validate()) {
             return $this->response->sendError($invoiceRequestValidator->getMessages());
         }
 
         // Generate Invoice Number
-        $data->invoice_number = Invoice::generateInvoiceNumber($data->company_id);
+        $data->invoice_number = $invoice_number | Invoice::generateInvoiceNumber($data->company_id);
 
         $invoice = Invoice::generate((array)$data);
 
@@ -81,16 +81,39 @@ class InvoiceController extends ControllerBase
         }
     }
 
-    public function recreateCompanyInvoiceAction(){
-        $from_date = $this->request->get('from_date');
-        $to_date = $this->request->get('to_date');
-        $company_id = $this->request->get('company_id');
-        $invoice_number = $this->request->get('invoice_number');
-        //delete the already existing invoice
-        $sql = "DELETE from invoice_parcel WHERE invoice_number = '$invoice_number';
-                DELETE FROM invoice WHERE invoice_number = '$invoice_number'";
+    public function recreateInvoiceAction(){
+       $invoice_number = $this->request->get('invoice_number');
+        if(!$invoice_number){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        $invoice = Invoice::fetchOne(['invoice_number' => $invoice_number], []);
+        if(!$invoice){
+            return $this->response->sendError('Invalid invoice number');
+        }
+        $invoice_parcels = InvoiceParcel::fetchAll(0, 0, [], ['invoice_number' => $invoice_number, 'no_paginate' => 1]);
+        $sql = "DELETE FROM invoice_parcel WHERE invoice_number = '$invoice_number';
+              DELETE FROM invoice WHERE invoice_number = '$invoice_number'";
+        //execute the delete query
+        $modelManage = (new Invoice())->getModelsManager();
+        $modelManage->createQuery($sql)->execute();
 
-        $company = Company::findFirst(['id = :id:', ['id' => $company_id]]);
+        $total = 0.00;
+        $invoiceData['reference'] = $invoice['reference'];
+        foreach($invoice_parcels as $invoice_parcel){
+            $parcel = Parcel::getByWaybillNumber($invoice_parcel['waybill_number']);
+            if(!$parcel) continue;
+            $total += $parcel->getAmountDue();
+            $invoiceData['parcels'][] = ['waybill_number' => $parcel->getWaybillNumber(),
+                'net_amount' => $parcel->getAmountDue(), 'discount' => 0];
+        }
+
+        $invoiceData['total'] = $total;
+
+        $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE), $invoice_number);
+        if(!$result['success']){
+            Util::slackDebug("Invoice Not Create", "Invoice not created for ".$invoice_number.'Because '.$result['message']);
+        }
+
     }
 
     public function createAllInvoiceAction(){

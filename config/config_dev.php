@@ -10,15 +10,14 @@ define( 'FROM_ADDRESS', 'trackplus@courierplus-ng.com' );
 // Set the correct endpoint. http://docs.aws.amazon.com/general/latest/gr/rande.html#ses_region
 define( 'AWSSESEndpoint', 'https://email.us-east-1.amazonaws.com/' );
 
-
 return new \Phalcon\Config([
     'database' => [
         'adapter' => 'Mysql',
         'host' => 'trackplusdbserver.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
         'username' => 'root',
         'password' => 'thelcmof8is2',
-        'dbname' => 'tnt',
-        //'dbname' => 'trackplus',
+        //'dbname' => 'tnt',
+        'dbname' => 'trackplus',
         'charset' => 'utf8',
     ],
     /*'database' => [
