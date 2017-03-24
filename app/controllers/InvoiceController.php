@@ -90,10 +90,11 @@ class InvoiceController extends ControllerBase
         if(!$invoice){
             return $this->response->sendError('Invalid invoice number');
         }
+        //keep all parcels in memory before deleting them
         $invoice_parcels = InvoiceParcel::fetchAll(0, 0, [], ['invoice_number' => $invoice_number, 'no_paginate' => 1]);
         $sql = "DELETE FROM invoice_parcels WHERE invoice_number = '$invoice_number';
               DELETE FROM invoices WHERE invoice_number = '$invoice_number'";
-        //execute the delete query
+        //execute the delete query dsaffd
         $modelManage = (new Invoice())->getModelsManager();
         $modelManage->createQuery($sql)->execute();
 
