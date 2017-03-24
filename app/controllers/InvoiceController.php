@@ -91,7 +91,7 @@ class InvoiceController extends ControllerBase
             return $this->response->sendError('Invalid invoice number');
         }
         $invoice_parcels = InvoiceParcel::fetchAll(0, 0, [], ['invoice_number' => $invoice_number, 'no_paginate' => 1]);
-        $sql = "DELETE FROM invoice_number WHERE invoice_number = '$invoice_number';
+        $sql = "DELETE FROM invoice_parcels WHERE invoice_number = '$invoice_number';
               DELETE FROM invoices WHERE invoice_number = '$invoice_number'";
         //execute the delete query
         $modelManage = (new Invoice())->getModelsManager();
