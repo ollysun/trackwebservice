@@ -82,6 +82,7 @@ class InvoiceController extends ControllerBase
     }
 
     public function recreateInvoiceAction(){
+        $this->auth->allowOnly(Role::ADMIN);
         set_time_limit(60);
        $invoice_number = $this->request->get('invoice_number');
         if(!$invoice_number){
