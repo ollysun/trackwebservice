@@ -104,6 +104,13 @@ class InvoiceController extends ControllerBase
 
         $total = 0.00;
         $invoiceData['reference'] = $invoice['reference'];
+        $invoiceData = [
+            'reference' => $invoice['reference'],
+            'company_id' => $invoice['company_id'], 'address' => $invoice['address'],
+            'to_address' => $invoice['to_address'], 'stamp_duty' => 0,
+            'account_number' => ['account_number'], 'company_name' => ['company_name'], 'currency' => 'NGN'
+        ];
+
         foreach($invoice_parcels as $invoice_parcel){
             //delete the invoice parcel
             $invoice_parcel_obj = InvoiceParcel::find($invoice_parcel['id']);
