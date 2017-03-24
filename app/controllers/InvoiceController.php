@@ -9,7 +9,7 @@ class InvoiceController extends ControllerBase
     protected function createInvoice($data, $invoice_number = null){
         $invoiceRequestValidator = new InvoiceValidation($data);
         if (!$invoiceRequestValidator->validate()) {
-            return $this->response->sendError($invoiceRequestValidator->getMessages());
+            return ['success' => false, 'message' => $invoiceRequestValidator->getMessages()];
         }
 
         // Generate Invoice Number
@@ -82,6 +82,7 @@ class InvoiceController extends ControllerBase
     }
 
     public function recreateInvoiceAction(){
+        set_time_limit(60);
        $invoice_number = $this->request->get('invoice_number');
         if(!$invoice_number){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -92,19 +93,21 @@ class InvoiceController extends ControllerBase
         }
         //keep all parcels in memory before deleting themads
         $invoice_parcels = InvoiceParcel::fetchAll(0, 0, [], ['invoice_number' => $invoice_number, 'no_paginate' => 1]);
-        $sql = "DELETE FROM invoice_parcels WHERE invoice_number = '$invoice_number';";
-        //execute the delete query dsaffd
-        $modelManage = (new Invoice())->getModelsManager();
-        $modelManage->createQuery($sql)->execute();
 
-        $sql = "DELETE FROM invoices WHERE invoice_number = '$invoice_number';";
+
+        /*$sql = "DELETE FROM invoice_parcels WHERE invoice_number = :invoice_number:; DELETE FROM invoices WHERE invoice_number = :invoice_number:;";
         //execute the delete query dsaffd
         $modelManage = (new Invoice())->getModelsManager();
-        $modelManage->createQuery($sql)->execute();
+        $modelManage->createQuery($sql)->execute(['invoice_number' => $invoice_number]);*/
+
 
         $total = 0.00;
         $invoiceData['reference'] = $invoice['reference'];
         foreach($invoice_parcels as $invoice_parcel){
+            //delete the invoice parcel
+            $invoice_parcel_obj = InvoiceParcel::find($invoice_parcel['id']);
+            $invoice_parcel_obj->delete();
+
             $parcel = Parcel::getByWaybillNumber($invoice_parcel['waybill_number']);
             if(!$parcel) continue;
             $total += $parcel->getAmountDue();
@@ -114,10 +117,15 @@ class InvoiceController extends ControllerBase
 
         $invoiceData['total'] = $total;
 
+        //Delete the invoice
+        $old_invoice = Invoice::findFirstByInvoiceNumber($invoice_number);
+        $old_invoice->delete();
         $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE), $invoice_number);
         if(!$result['success']){
             Util::slackDebug("Invoice Not Create", "Invoice not created for ".$invoice_number.'Because '.$result['message']);
+            return $this->response->sendError($result['message']);
         }
+        return $this->response->sendSuccess();
 
     }
 
