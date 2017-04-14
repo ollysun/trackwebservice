@@ -1816,8 +1816,12 @@ class Parcel extends \Phalcon\Mvc\Model
 
         //filters
         if (isset($filter_by['return_reason_comment'])) {
-            $where[] = 'ParcelComment.comment = :return_status_comment:';
-            $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+	    if($filter_by['return_reason_comment'] == '0'){
+		$where[] = 'ParcelComment.id IS NOT NULL';
+	    }else{
+                $where[] = 'ParcelComment.comment = :return_status_comment:';
+                $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+	    }
         }
 
         if (isset($filter_by['held_by_id'])) {
@@ -2438,8 +2442,8 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['onforwarding_billing_plan'], $parcel_data['company_id'], $parcel_data['shipping_type']
                 );
             }
-            //if payment type is not defered, add vat
-            if($parcel_data['payment_type'] != 4){
+             //if payment type is not defered and this is not intl transcript, add vat
+            if($parcel_data['payment_type'] != 4 && $parcel_data['shipping_type'] != ShippingType::INTL_TRANSCRIPT_EXPORT){
                 $vat = $amountDue * 0.05;
                 $amountDue = $vat + $amountDue;
             }
