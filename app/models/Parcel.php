@@ -3643,6 +3643,8 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_sender_address'])) {
             $columns[] = 'SenderAddress.*';
             $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $columns[] = 'SenderAddressCountry.*';
+            $builder->leftJoin('SenderAddressCountry', 'SenderAddressCountry.id = SenderAddress.country_id', 'SenderAddressCountry');
             $columns[] = 'SenderAddressState.*';
             $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
             $columns[] = 'SenderAddressCity.*';
@@ -3651,6 +3653,8 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_receiver_address'])) {
             $columns[] = 'ReceiverAddress.*';
             $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $columns[] = 'ReceiverAddressCountry.*';
+            $builder->leftJoin('ReceiverAddressCountry', 'ReceiverAddressCountry.id = ReceiverAddress.country_id', 'ReceiverAddressCountry');
             $columns[] = 'ReceiverAddressState.*';
             $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
             $columns[] = 'ReceiverAddressCity.*';
