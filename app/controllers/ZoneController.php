@@ -366,10 +366,14 @@ class ZoneController extends ControllerBase
             }
 
             $result = IntlZone::calculateBilling($weight, $to_country_id, $parcel_type_id);
-            if($result['success']){
+           if($result['success']){
                 $amountDue = $result['amount'];
-                $vat = 0.05 * $amountDue;
-                $amountDue = $amountDue + $vat;
+                //if this is not transcript, add vat
+                if($parcel_type_id != ShippingType::INTL_TRANSCRIPT_EXPORT){
+                    $vat = 0.05 * $amountDue;
+                    $amountDue = $amountDue + $vat;
+                }
+
                 return $this->response->sendSuccess($amountDue);
             }
             return $this->response->sendError($result['message']);

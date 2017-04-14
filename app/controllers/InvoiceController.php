@@ -52,10 +52,10 @@ class InvoiceController extends ControllerBase
      * @param $to_date
      * @param Company $company
      */
-    public function createInvoiceForCompany($from_date, $to_date, $company){
+    public function createInvoiceForCompany($from_date, $to_date, $company, $invoice_number = null){
 
         $filter_by = [/*'payment_type' => '1', */'start_created_date' => $from_date,
-            'end_created_date' => $to_date, 'company_id' => $company->getId(), 'send_all' => 1];
+            'end_created_date' => $to_date, 'company_id' => $company->getId(), 'remove_cancelled_shipments' => 1,  'send_all' => 1];
         $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
         if(!$parcels) return;
 
@@ -75,7 +75,7 @@ class InvoiceController extends ControllerBase
 
         $invoiceData['total'] = $total;
 
-        $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE));
+        $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE), $invoice_number);
         if(!$result['success']){
             Util::slackDebug("Invoice Not Create", "Invoice not created for ".$company->getRegNo().'Because '.$result['message']);
         }
@@ -102,12 +102,15 @@ class InvoiceController extends ControllerBase
         $modelManage->createQuery($sql)->execute(['invoice_number' => $invoice_number]);*/
 
 
-        $total = 0.00;
+         $total = 0.00;
         $invoiceData['reference'] = $invoice['reference'];
+        /** @var Company $company */
+        $company = Company::findFirst(['conditions' => 'id = :id:', 'bind' => ['id' => $invoice['company_id']]]);
+
         $invoiceData = [
             'reference' => $invoice['reference'],
-            'company_id' => $invoice['company_id'], 'address' => $invoice['address'],
-            'to_address' => $invoice['to_address'], 'stamp_duty' => 0,
+            'company_id' => $invoice['company_id'], 'address' => $company->getName() . ', ' . $company->getAddress(),
+            'to_address' => $company->getName() . ', ' . $company->getAddress(), 'stamp_duty' => 0,
             'account_number' => ['account_number'], 'company_name' => ['company_name'], 'currency' => 'NGN'
         ];
 
@@ -154,12 +157,13 @@ class InvoiceController extends ControllerBase
     }
 
     public function createInvoiceForCompanyAction(){
-        $registration_number = $this->request->get('registration_number');
+        $registration_number = $this->request->get('registration_number');        
+	$invoice_number = $this->request->get('invoice_number');
         $from_date = $this->request->getPost('from_date');
         $to_date = $this->request->getPost('to_date');
 
         $company = Company::getByRegistrationNumber($registration_number);
-        $this->createInvoiceForCompany($from_date, $to_date, $company);
+        $this->createInvoiceForCompany($from_date, $to_date, $company, $invoice_number);
         return $this->response->sendSuccess('done');
     }
 

@@ -415,7 +415,8 @@ class ParcelController extends ControllerBase
         $parcelData['handling_charge'] = 0;
         $parcelData['cost_of_crating'] = 0;
         $parcelData['storage_demurrage'] = 0;
-        $parcelData['others'] = 0;
+        $parcelData['others'] = 0;        
+	$parcelData['other_info'] = $parcelData['description_1']. '. '.$parcelData['description_2'];
 
 
         $sender_address = [];
@@ -444,6 +445,49 @@ class ParcelController extends ControllerBase
     }
 
 
+     public function repriceByCompanyAction(){
+        $registration_number = $this->get('reg_no');
+        $invoice_number = $this->get('invoice_number');
+        if($registration_number == null){
+            if($invoice_number){
+                $invoice = Invoice::fetchOne(['invoice_number' => $invoice_number], []);
+                if($invoice){
+                    /** @var Company $company */
+                    $company = Company::findFirst(['conditions' => 'id = :id:', 'bind' => ['id' => $invoice['company_id']]]);
+                    $registration_number = $company->getRegNo();
+                }else
+                    return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+            }else
+                return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        $company = Company::getByRegistrationNumber($registration_number);
+        if(!$company){
+            return $this->response->sendError('Invalid registration number');
+        }
+
+
+        $filter_by = $this->getFilterParams();
+        //$filter_by['payment_type'] = 4;
+        $filter_by['send_all'] = 1;
+        $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
+
+        $error_parcels = [];
+        $success_count = 0;
+
+        $filter_by['company_id'] = $company->getId();
+        $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+
+
+        foreach ($parcels as $parcel) {
+            if($parcel['entity_type'] == 3) continue;
+
+            $result = $this->reprice($parcel);
+            if(!isset($result['success'])) $error_parcels[$parcel['waybill_number']] = $result['message'];
+            else $success_count += 1;
+        }
+        Util::slackDebug('Reprice completed', "Reprice completed for ".$company->getName());
+        return $this->response->sendSuccess();
+    }
 
     public function repriceAction()
     {
