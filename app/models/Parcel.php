@@ -2419,8 +2419,13 @@ class Parcel extends \Phalcon\Mvc\Model
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
         if($parcel_data['billing_type'] != 'manual') {
-            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
-                $result = IntlZone::calculateBilling($parcel_data['weight'], $receiver_addr_obj->getCountryId(), $parcel_data['shipping_type']);
+            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID ||
+                $sender_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
+                $country_id = $receiver_addr_obj->getCountryId() == Country::DEFAULT_COUNTRY_ID?
+                    $sender_addr_obj->getCountryId():$receiver_addr_obj->getCountryId();
+
+                $result = IntlZone::calculateBilling($parcel_data['weight'], $country_id, $parcel_data['shipping_type']);
+
                 if(!$result['success']) throw new Exception($result['message']);
                 $amountDue = $result['amount'];
             }else{
@@ -2430,11 +2435,14 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['weight'],
                     $parcel_data['weight_billing_plan'],
                     $receiverCity->getId(),
-                    $parcel_data['onforwarding_billing_plan']
+                    $parcel_data['onforwarding_billing_plan'], $parcel_data['company_id'], $parcel_data['shipping_type']
                 );
             }
-            $vat = $amountDue * 0.05;
-            $amountDue = $vat + $amountDue;
+            //if payment type is not defered, add vat
+            if($parcel_data['payment_type'] != 4){
+                $vat = $amountDue * 0.05;
+                $amountDue = $vat + $amountDue;
+            }
 
         }else{
             $amountDue = $parcel_data['amount_due'];
@@ -2549,6 +2557,18 @@ class Parcel extends \Phalcon\Mvc\Model
                 }
             }
             $transactionManager->commit();
+            //check if there is an invoice for this parcel and update
+            /** @var InvoiceParcel $invoice_parcel */
+            $invoice_parcel = InvoiceParcel::findFirst(['waybill_number = :number:',
+                'bind' => ['number' => $parcel_data['waybill_number']]]);
+            if($invoice_parcel){
+                $diff = 0;// $total_charge - $invoice_parcel->getNetAmount();
+                if($diff > 0){
+                    /** @var Invoice $invoice */
+                    //$invoice = Invoice::findFirstById($invoice_parcel->getId());
+                    //$invoice_parcel->setNetAmount($invoice_parcel->getNetAmount() + $diff);
+                }
+            }
             return $waybill_number;
         } else {
             Util::slackDebug("Parcel not created", "Unable to save parcel history");
@@ -3240,7 +3260,7 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     public static function isWaybillNumber($waybill_number)
     {
-        return preg_match('/^\d[A-Z](\d|\-)+[\d]$/i', $waybill_number);
+        return preg_match('/^\d?[A-Z](\d|\-)+[\d]$/i', $waybill_number);
     }
 
     /**

@@ -255,8 +255,6 @@ class IntlZone extends \Phalcon\Mvc\Model
             'bind' => ['zone_id' => $zone_map->getZoneId(), 'parcel_type_id' => $parcel_type_id,
                 'weight_range_id' => $weight_range->getId()]]);
 
-        $amount = $tariff->getBaseAmount();
-
         if(!$tariff){
             //calculate extra
             //$sum = Robots::maximum(array("type='mechanical'", 'column' => 'id'));
@@ -273,13 +271,16 @@ class IntlZone extends \Phalcon\Mvc\Model
 
             // Execute the query
             $max_tariff = $max_tariff_obj->getReadConnection()->query($sql, null);
+            $max_tariff = $max_tariff->fetchAll();
+            if(!count($max_tariff))
+                return ['success' => false, 'message' => 'Tariff not found'];
             $max_weight = $max_tariff['min_weight'];
             if($weight < $max_weight)
                 return ['success' => false, 'message' => 'Tariff not found'];
             $diff = $weight - $max_weight;
             //get the zone extras
-            $zone_extra = IntlExtraKg::findFirst(['zone_id = :zone_id: AND parcel_id = :parcel_id:', 'bind' =>[
-                'zone_id' => $zone_id, 'parcel_type_id' => $parcel_type_id
+            $zone_extra = IntlExtraKg::findFirst(['zone_id = :zone_id: AND shipping_type_id = :shipping_type_id:', 'bind' =>[
+                'zone_id' => $zone_id, 'shipping_type_id' => $parcel_type_id
             ]]);
             if(!$zone_extra)
                 return ['success' => false, 'message' => 'Tariff not found'];
@@ -287,7 +288,8 @@ class IntlZone extends \Phalcon\Mvc\Model
             $extra_amount = $zone_extra['base_amount'] * $diff;
             $amount = $max_tariff['base_amount'] + $extra_amount;
             //return  ['success' => true, 'amount' => $max_tariff['base_amount'] + $extra_amount];
-        }
+        }else
+            $amount = $tariff->getBaseAmount();
 
         $fsc = 0.15 * $amount;
         $amount = $amount + $fsc;

@@ -48,6 +48,7 @@ try {
     echo $application->handle()->getContent();
 
 } catch (\Exception $e) {
+    $e = $e->getPrevious()?$e->getPrevious():$e;
     Util::slackDebug('EXCEPTION LOG', $e->getMessage() . " TRACE: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([

@@ -13,7 +13,7 @@ class IntlSpecialCountryTariffTable extends AbstractMigration
             `weight` DOUBLE NOT NULL DEFAULT '0',
             `price` DOUBLE NOT NULL DEFAULT '0',
             PRIMARY KEY (`id`),
-            CONSTRAINT `FK__country` FOREIGN KEY (`country_id`) REFERENCES `country` (`id`)
+            CONSTRAINT `FK__intl_special_country_tariff_country` FOREIGN KEY (`country_id`) REFERENCES `country` (`id`)
         )";
         $this->execute($install_sql);
     }

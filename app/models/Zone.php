@@ -354,6 +354,8 @@ class Zone extends \Phalcon\Mvc\Model
      * @param $billing_plan_id
      * @param $city_id
      * @param $onforwarding_billing_plan_id
+     * @param $company_id
+     * @param $shipping_type
      * @return bool|float|int
      * @throws Exception
      */
@@ -363,7 +365,7 @@ class Zone extends \Phalcon\Mvc\Model
         $weight,
         $billing_plan_id,
         $city_id,
-        $onforwarding_billing_plan_id, $company_id = null
+        $onforwarding_billing_plan_id, $company_id = null, $shipping_type = null
     ) {
         $billing_plan = BillingPlan::findFirst($billing_plan_id);
 

@@ -610,7 +610,7 @@ class Branch extends \Phalcon\Mvc\Model
 
         $columns = ['Branch.*', 'State.*'];
 
-        if($fetch_with['with_region']){
+        if(isset($fetch_with['with_region']) && $fetch_with['with_region']){
             $builder->innerJoin('Region', 'Region.id = State.region_id', 'Region');
             $columns[] = 'Region.*';
         }

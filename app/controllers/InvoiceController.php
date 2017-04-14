@@ -6,14 +6,14 @@ use Phalcon\Mvc\Model\Resultset;
  */
 class InvoiceController extends ControllerBase
 {
-    protected function createInvoice($data){
+    protected function createInvoice($data, $invoice_number = null){
         $invoiceRequestValidator = new InvoiceValidation($data);
         if (!$invoiceRequestValidator->validate()) {
-            return $this->response->sendError($invoiceRequestValidator->getMessages());
+            return ['success' => false, 'message' => $invoiceRequestValidator->getMessages()];
         }
 
         // Generate Invoice Number
-        $data->invoice_number = Invoice::generateInvoiceNumber($data->company_id);
+        $data->invoice_number = $invoice_number != null? $invoice_number: Invoice::generateInvoiceNumber($data->company_id);
 
         $invoice = Invoice::generate((array)$data);
 
@@ -40,7 +40,7 @@ class InvoiceController extends ControllerBase
      */
     public function addAction()
     {
-        $this->auth->allowOnly([Role::ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE]);
         $postData = $this->request->getJsonRawBody();
 
         $result = $this->createInvoice($postData);
@@ -53,6 +53,7 @@ class InvoiceController extends ControllerBase
      * @param Company $company
      */
     public function createInvoiceForCompany($from_date, $to_date, $company){
+
         $filter_by = [/*'payment_type' => '1', */'start_created_date' => $from_date,
             'end_created_date' => $to_date, 'company_id' => $company->getId(), 'send_all' => 1];
         $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
@@ -78,6 +79,62 @@ class InvoiceController extends ControllerBase
         if(!$result['success']){
             Util::slackDebug("Invoice Not Create", "Invoice not created for ".$company->getRegNo().'Because '.$result['message']);
         }
+    }
+
+    public function recreateInvoiceAction(){
+        $this->auth->allowOnly(Role::ADMIN);
+        set_time_limit(60);
+       $invoice_number = $this->request->get('invoice_number');
+        if(!$invoice_number){
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
+        $invoice = Invoice::fetchOne(['invoice_number' => $invoice_number], []);
+        if(!$invoice){
+            return $this->response->sendError('Invalid invoice number');
+        }
+        //keep all parcels in memory before deleting themads
+        $invoice_parcels = InvoiceParcel::fetchAll(0, 0, [], ['invoice_number' => $invoice_number, 'no_paginate' => 1]);
+
+
+        /*$sql = "DELETE FROM invoice_parcels WHERE invoice_number = :invoice_number:; DELETE FROM invoices WHERE invoice_number = :invoice_number:;";
+        //execute the delete query dsaffd
+        $modelManage = (new Invoice())->getModelsManager();
+        $modelManage->createQuery($sql)->execute(['invoice_number' => $invoice_number]);*/
+
+
+        $total = 0.00;
+        $invoiceData['reference'] = $invoice['reference'];
+        $invoiceData = [
+            'reference' => $invoice['reference'],
+            'company_id' => $invoice['company_id'], 'address' => $invoice['address'],
+            'to_address' => $invoice['to_address'], 'stamp_duty' => 0,
+            'account_number' => ['account_number'], 'company_name' => ['company_name'], 'currency' => 'NGN'
+        ];
+
+        foreach($invoice_parcels as $invoice_parcel){
+            //delete the invoice parcel
+            $invoice_parcel_obj = InvoiceParcel::find($invoice_parcel['id']);
+            $invoice_parcel_obj->delete();
+
+            $parcel = Parcel::getByWaybillNumber($invoice_parcel['waybill_number']);
+            if(!$parcel) continue;
+            $total += $parcel->getAmountDue();
+            $invoiceData['parcels'][] = ['waybill_number' => $parcel->getWaybillNumber(),
+                'net_amount' => $parcel->getAmountDue(), 'discount' => 0];
+        }
+
+        $invoiceData['total'] = $total;
+
+        //Delete the invoice
+        $old_invoice = Invoice::findFirstByInvoiceNumber($invoice_number);
+        $old_invoice->delete();
+        $result = $this->createInvoice(json_decode(json_encode($invoiceData), FALSE), $invoice_number);
+        if(!$result['success']){
+            Util::slackDebug("Invoice Not Create", "Invoice not created for ".$invoice_number.'Because '.$result['message']);
+            return $this->response->sendError($result['message']);
+        }
+        return $this->response->sendSuccess();
+
     }
 
     public function createAllInvoiceAction(){

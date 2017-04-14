@@ -1,12 +1,19 @@
 <?php
-
 return new \Phalcon\Config(array(
-    'database' => array(
+   /* 'database' => array(
         'adapter'     => 'Mysql',
         'host'        => getenv(TNT_DB_HOST),
         'username'    => getenv(TNT_DB_USERNAME),
         'password'    => getenv(TNT_DB_PASSWORD),
         'dbname'      => getenv(TNT_DBNAME),
+        'charset'     => 'utf8',
+    ),*/
+    'database' => array(
+        'adapter'     => 'Mysql',
+        'host'        => 'localhost',
+        'username'    => 'root',
+        'password'    => '',
+        'dbname'      => 'tracplus',
         'charset'     => 'utf8',
     ),
     'application' => array(

@@ -31,7 +31,7 @@ class ParcelController extends ControllerBase
     public function addAction()
     {
         //todo: must be tied to an EC Officer only
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::COMPANY_ADMIN,
             Role::SALES_AGENT, Role::COMPANY_OFFICER]);
         $payload = $this->request->getJsonRawBody(true);
         $sender = (isset($payload['sender'])) ? $payload['sender'] : null;
@@ -71,7 +71,7 @@ class ParcelController extends ControllerBase
 
 
         //if this is for a cooporate, check that the billing_plan is correct
-        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlan()){
+        if($parcel['weight_billing_plan'] != BillingPlan::getDefaultBillingPlanId()){
             if(!$parcel['company_id'])
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             $billing_link = CompanyBillingPlan::findFirst(['company_id = :company_id: AND billing_plan_id = :billing_plan_id:',
@@ -299,14 +299,23 @@ class ParcelController extends ControllerBase
 
         $parcelData = empty($this->request->getPost('no_of_package'))?$this->request->getJsonRawBody(true): $this->request->getPost();
 
-        $company_id = $this->auth->getCompanyId();
+        $company_registration_number = $parcelData['registration_number'];
+        if(!$company_registration_number){
+            return $this->response->sendError('Unable to resolve customer account');
+        }
+        $company = Company::getByRegistrationNumber($company_registration_number);
+        $company_id = $company->getId();
+
+
+        //$company_id = $this->auth->getCompanyId();
         /** @var Company $company */
-        $company = Company::findFirst($company_id);
+        //$company = Company::findFirst($company_id);
         if(!$company){
+            Util::slackDebug('API error', 'Unable to resolve customer account');
             return $this->response->sendError('Unable to resolve customer account');
         }
 
-        $billing_plan = BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
+        $billing_plan = $company->getBillingPlan();// BillingPlan::fetchById(BillingPlan::DEFAULT_WEIGHT_RANGE_PLAN);// BillingPlan::fetchById(2567);//
         if(!$billing_plan){
             return $this->response->sendError('Error in resolving billing plan. Please contact CourierPlus billing manager for help');
         }
@@ -347,6 +356,7 @@ class ParcelController extends ControllerBase
         $sender['lastname'] = null;
         $sender['email'] = empty($parcelData['sender_email'])? $company->getEmail(): $parcelData['sender_email'];
 
+        $parcelData['sender_city'] = trim($parcelData['sender_city']);
         $sender_city = empty($parcelData['sender_city']) ? City::findFirst($company->getCityId()): City::findFirstByName($parcelData['sender_city']);
         if(!$sender_city){
             return $this->response->sendError($parcelData['sender_city']. ' is not a valid city name. Please check ref/cities for a list of valid city name');
@@ -357,6 +367,7 @@ class ParcelController extends ControllerBase
         $parcelData['sender_country'] = $sender_state->getCountryId();
         $parcelData['sender_address_1'] = isset($parcelData['sender_address_1'])?$company->getAddress():$parcelData['sender_address_1'];
 
+        $parcelData['receiver_city'] = trim($parcelData['receiver_city']);
         /** @var City $receiver_city */
         $receiver_city = City::findFirstByName($parcelData['receiver_city']);
         if(!$receiver_city){
@@ -433,9 +444,124 @@ class ParcelController extends ControllerBase
     }
 
 
+
+    public function repriceAction()
+    {
+        ini_set('memory_limit', -1);//to be removed
+        set_time_limit(-1);//to be removed
+
+        $filter_by = $this->getFilterParams();
+        $filter_by['payment_type'] = 4;
+        $filter_by['send_all'] = 1;
+        $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
+
+        $companies = Company::find();
+
+        $error_parcels = [];
+        $success_count = 0;
+
+        foreach($companies as $company){
+            $filter_by['company_id'] = $company->getId();
+            $parcels = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+
+            foreach ($parcels as $parcel) {
+                if($parcel['entity_type'] == 3) continue;
+
+                $result = $this->reprice($parcel);
+                if(!isset($result['success'])) $error_parcels[$parcel['waybill_number']] = $result['message'];
+                else $success_count += 1;
+            }
+            Util::slackDebug('Reprice completed', "Reprice completed for ".$company->getName());
+        }
+
+        Util::slackDebug('Reprice Completed', "$success_count success ".count($error_parcels).' errors');
+        return $this->response->sendSuccess(['success_count' => $success_count, 'bad' => $error_parcels]);
+    }
+
+    public function reprice(array $parcel){
+        $waybill_number = $parcel['waybill_number'];
+        //calculate the new price
+        $from_branch_id = $parcel['sender_address']['city']['branch_id'];
+        $to_branch_id = $parcel['receiver_address']['city']['branch_id'];
+        $from_country_id = $parcel['sender_address']['state']['country_id'];
+        $to_country_id = $parcel['receiver_address']['state']['country_id'];
+        $city_id = $parcel['sender_address']['city']['id'];
+        $weight = $parcel['weight'];
+        $company_id = $parcel['company_id'];//for discount calc
+        $shipping_type = $parcel['shipping_type'];
+        /** @var Company $company */
+        $company = Company::findFirst(['id = :id:', 'bind' => ['id' => $company_id]]);
+
+        if($company){
+            $plan = $company->getBillingPlan();
+            if(!$plan){
+                Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".'Plan not found');
+                return ['message' => "$waybill_number was not re-priced ".'Plan not found'];
+            }
+            $weight_billing_plan_id = $plan->Id;
+            if($weight_billing_plan_id != BillingPlan::getDefaultBillingPlanId())
+                $onforwarding_billing_plan_id = $weight_billing_plan_id;
+            else $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfordingId();
+        }else{
+            $weight_billing_plan_id = BillingPlan::getDefaultBillingPlanId();
+            $onforwarding_billing_plan_id = BillingPlan::getDefaultOnfordingId();
+        }
+
+        if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
+            ($from_country_id && $from_country_id != Country::DEFAULT_COUNTRY_ID)){
+            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID?$to_country_id:$from_country_id;
+
+
+            $result = IntlZone::calculateBilling($weight, $country_id, $shipping_type);
+            if($result['success']){
+                $base_price = $result['amount'];
+            }else{
+                Util::slackDebug('Re-price error', "$waybill_number was not re-priced ".$result['message']);
+                return ['message' => "$waybill_number was not re-priced ".$result['message']];
+            }
+            $intl = true;
+        }else{
+            try {
+
+                $base_price = Zone::calculateBilling($from_branch_id, $to_branch_id, $weight, $weight_billing_plan_id,
+                    $city_id, $onforwarding_billing_plan_id, $company_id);
+
+            } catch (Exception $ex) {
+                Util::slackDebug('Error re-pricing', "$waybill_number not re-priced ".$ex->getMessage());
+                return ['message' => "$waybill_number not re-priced ".$ex->getMessage()];
+            }
+            $intl = false;
+        }
+
+        //take out the discount
+        if($company){
+            if($intl){
+                $percentageDiscount = $company->getDiscount();
+                $discount = $base_price * ($percentageDiscount/100);
+                $base_price -= $discount;
+            }
+        }else{
+            Util::slackDebug('No Company', "$waybill_number has deferred payment but without company");
+        }
+        //add the vat
+        /*$vat = 0.05 * $base_price;
+        $base_price += $vat;*/
+
+        $parcelObj = Parcel::getByWaybillNumber($waybill_number);
+        $extra_charges = $parcelObj->getAmountDue() - $parcelObj->getBasePrice();
+
+        $parcelObj->setAmountDue(($base_price + $extra_charges));
+        $parcelObj->setBasePrice($base_price);
+        $parcelObj->setWeightBillingPlanId($weight_billing_plan_id);
+        $parcelObj->setOnforwardingBillingPlanId($onforwarding_billing_plan_id);
+        $parcelObj->save();
+        return ['success' => true];
+    }
+
     public function getOneAction()
     {
-        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $this->auth->allowOnly([Role::DISPATCHER, Role::SWEEPER, Role::ADMIN, Role::BILLING, Role::FINANCE,
+            Role::OFFICER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
 
         $id = $this->request->getQuery('id');
         $waybill_number = $this->request->getQuery('waybill_number');
@@ -500,7 +626,9 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER,
+            Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT,
+            Role::BUSINESS_MANAGER, Role::REGIONAL_MANAGER]);
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
 
@@ -727,7 +855,8 @@ class ParcelController extends ControllerBase
 
     public function countAction()
     {
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,
+            Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, ROLE::COMPANY_OFFICER]);
 
         $filter_by = $this->getFilterParams();
 
@@ -741,7 +870,8 @@ class ParcelController extends ControllerBase
 
     public function groupCountAction(){
         $start_time = date('d-M-y h:i:s');
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
+        $this->auth->allowOnly([Role::ADMIN, Role::REGIONAL_MANAGER, Role::BUSINESS_MANAGER,  Role::BILLING, Role::FINANCE,
+            Role::OFFICER, Role::SWEEPER, Role::DISPATCHER, Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER]);
 
         $stat_keys = ['created','for_sweep', 'for_sweep_ecommerce', 'for_delivery', 'received', 'groundsman', 'sorted', 'transit_to_customer', 'sorted_still_at_hub', 'delivered', 'ready_for_sorting'];
 
