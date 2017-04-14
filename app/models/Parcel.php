@@ -2888,7 +2888,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
                     if (isset($fetch_with['with_sender_address'])) {
                         $parcel['sender_address'] = $item->senderAddress->getData();
-                        $parcel['sender_address']['country'] = $item->senderAddressCountry->getData();
+                        $parcel['sender_address']['country'] = $item->senderAddressCountry->getData(); //new addition to help printall show country
                         $parcel['sender_address']['state'] = $item->senderAddressState->getData();
                         $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
                     }
