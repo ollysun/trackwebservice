@@ -670,6 +670,7 @@ class ParcelController extends ControllerBase
      */
     public function getAllAction()
     {
+        //getall now used for printing as well
         $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE, Role::OFFICER, Role::SWEEPER, Role::DISPATCHER,
             Role::GROUNDSMAN, Role::COMPANY_ADMIN, Role::COMPANY_OFFICER, Role::SALES_AGENT,
             Role::BUSINESS_MANAGER, Role::REGIONAL_MANAGER]);
