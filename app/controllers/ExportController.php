@@ -23,7 +23,7 @@ class ExportController extends ControllerBase
 
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
-        $paginate = $this->request->getQuery('paginate', null, false);
+        $paginate = true;// $this->request->getQuery('paginate', null, false);
 
         $filter_by = [];
         if($agent_id) $filter_by['agent_id' ] = $agent_id;

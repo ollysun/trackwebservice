@@ -4,6 +4,10 @@ class Country extends \Phalcon\Mvc\Model
 {
     const DEFAULT_COUNTRY_ID = 1;
 
+    static function getDefaultCountryId(){
+        return getenv('DEFAULT_COUNTRY_ID') | Country::DEFAULT_COUNTRY_ID;
+    }
+
     /**
      *
      * @var integer

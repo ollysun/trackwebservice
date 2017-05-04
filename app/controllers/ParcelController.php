@@ -2283,12 +2283,11 @@ exit();
      */
     public function cancelAction()
     {
-        $this->auth->allowOnly([Role::OFFICER, Role::ADMIN, Role::COMPANY_ADMIN]);
+        $this->auth->allowOnly([Role::ADMIN, Role::COMPANY_ADMIN]);
 
         $waybill_numbers = $this->request->getPost('waybill_numbers');
         $enforce_action = $this->request->getPost('enforce_action');
         $admin_id = $this->auth->getPersonId();
-
         if (!isset($waybill_numbers, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }

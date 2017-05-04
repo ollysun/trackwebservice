@@ -59,6 +59,8 @@ class InvoiceController extends ControllerBase
         $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
         if(!$parcels) return;
 
+	//dd($parcels);
+
         $invoiceData = [
             'company_id' => $company->getId(), 'address' => $company->getName() . ', ' . $company->getAddress(),
             'to_address' => $company->getName() . ', ' . $company->getAddress(), 'stamp_duty' => 0,
@@ -150,6 +152,8 @@ class InvoiceController extends ControllerBase
         }
         /** @var Company[] $companies */
         $companies = Company::find();
+	
+	
         foreach($companies as $company){
             $this->createInvoiceForCompany($from_date, $to_date, $company);
         }
