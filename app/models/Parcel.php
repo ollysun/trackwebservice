@@ -1816,8 +1816,12 @@ class Parcel extends \Phalcon\Mvc\Model
 
         //filters
         if (isset($filter_by['return_reason_comment'])) {
-            $where[] = 'ParcelComment.comment = :return_status_comment:';
-            $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+	    if($filter_by['return_reason_comment'] == '0'){
+		$where[] = 'ParcelComment.id IS NOT NULL';
+	    }else{
+                $where[] = 'ParcelComment.comment = :return_status_comment:';
+                $bind['return_status_comment'] = $filter_by['return_reason_comment'];
+	    }
         }
 
         if (isset($filter_by['held_by_id'])) {
@@ -2107,12 +2111,14 @@ class Parcel extends \Phalcon\Mvc\Model
                 if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
                 if (isset($fetch_with['with_sender_address'])) {
                     $parcel['sender_address'] = $item->senderAddress->getData();
+                    $parcel['sender_address']['country'] = $item->senderAddressCountry->getData();
                     $parcel['sender_address']['state'] = $item->senderAddressState->getData();
                     $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
                 }
                 if (isset($fetch_with['with_receiver'])) $parcel['receiver'] = $item->receiver->getData();
                 if (isset($fetch_with['with_receiver_address'])) {
                     $parcel['receiver_address'] = $item->receiverAddress->getData();
+                    $parcel['receiver_address']['country'] = $item->receiverAddressCountry->getData();
                     $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
                     $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
                 }
@@ -2419,9 +2425,9 @@ class Parcel extends \Phalcon\Mvc\Model
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
 
         if($parcel_data['billing_type'] != 'manual') {
-            if($receiver_addr_obj->getCountryId() != Country::getDefaultCountryId() ||
-                $sender_addr_obj->getCountryId() != Country::getDefaultCountryId()){
-                $country_id = $receiver_addr_obj->getCountryId() == Country::getDefaultCountryId()?
+            if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID ||
+                $sender_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
+                $country_id = $receiver_addr_obj->getCountryId() == Country::DEFAULT_COUNTRY_ID?
                     $sender_addr_obj->getCountryId():$receiver_addr_obj->getCountryId();
 
                 $result = IntlZone::calculateBilling($parcel_data['weight'], $country_id, $parcel_data['shipping_type']);
@@ -2438,7 +2444,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     $parcel_data['onforwarding_billing_plan'], $parcel_data['company_id'], $parcel_data['shipping_type']
                 );
             }
-            //if payment type is not defered and this is not intl transcript, add vat
+             //if payment type is not defered and this is not intl transcript, add vat
             if($parcel_data['payment_type'] != 4 && $parcel_data['shipping_type'] != ShippingType::INTL_TRANSCRIPT_EXPORT){
                 $vat = $amountDue * 0.05;
                 $amountDue = $vat + $amountDue;
@@ -2605,6 +2611,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     return true;
                 }
             }
+return false;
         } catch (Exception $e) {
             Util::slackDebug("EXCEPTION LOG", $e->getMessage());
         }
@@ -2765,18 +2772,16 @@ class Parcel extends \Phalcon\Mvc\Model
     }
 
     public static function getByWaybillNumberList(array $waybill_number_arr, $make_assoc = false,
-                                                  $fetch_with = null, $where_in_reference_number = false)
+                                                  $fetch_with = null, $where_id_reference_number = false)
     {
         $waybill_csv = "'" . implode("','", $waybill_number_arr). "'";
         $obj = new Parcel();
         $builder = $obj->getModelsManager()->createBuilder()
             ->from('Parcel')
             ->inWhere('waybill_number', $waybill_number_arr);
-        if($where_in_reference_number){
+        if($where_id_reference_number){
             $builder = $builder->orWhere("Parcel.reference_number IN ($waybill_csv)");
         }
-
-
 
 
         if($fetch_with){
@@ -2796,6 +2801,8 @@ class Parcel extends \Phalcon\Mvc\Model
             if (isset($fetch_with['with_sender_address'])) {
                 $columns[] = 'SenderAddress.*';
                 $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+                $columns[] = 'SenderAddressCountry';
+                $builder->leftJoin('SenderAddressCountry', 'SenderAddressCountry.id = SenderAddress.country_id', 'SenderAddressCountry');
                 $columns[] = 'SenderAddressState.*';
                 $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
                 $columns[] = 'SenderAddressCity.*';
@@ -2804,6 +2811,8 @@ class Parcel extends \Phalcon\Mvc\Model
             if (isset($fetch_with['with_receiver_address'])) {
                 $columns[] = 'ReceiverAddress.*';
                 $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+                $columns[] = 'ReceiverAddressCountry';
+                $builder->leftJoin('ReceiverAddressCountry', 'ReceiverAddressCountry.id = ReceiverAddress.country_id', 'ReceiverAddressCountry');
                 $columns[] = 'ReceiverAddressState.*';
                 $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
                 $columns[] = 'ReceiverAddressCity.*';
@@ -2882,12 +2891,14 @@ class Parcel extends \Phalcon\Mvc\Model
                     if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
                     if (isset($fetch_with['with_sender_address'])) {
                         $parcel['sender_address'] = $item->senderAddress->getData();
+                        $parcel['sender_address']['country'] = $item->senderAddressCountry->getData(); //new addition to help printall show country
                         $parcel['sender_address']['state'] = $item->senderAddressState->getData();
                         $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
                     }
                     if (isset($fetch_with['with_receiver'])) $parcel['receiver'] = $item->receiver->getData();
                     if (isset($fetch_with['with_receiver_address'])) {
                         $parcel['receiver_address'] = $item->receiverAddress->getData();
+                        $parcel['receiver_address']['country'] = $item->receiverAddressCountry->getData(); //new addition to help printall show country
                         $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
                         $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
                     }
@@ -3628,9 +3639,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $columns[] = 'FromBranchState.*';
             $builder->innerJoin('FromBranchState', 'FromBranchState.id = FromBranch.state_id', 'FromBranchState');
         }
+
+
         if (isset($fetch_with['with_sender_address'])) {
             $columns[] = 'SenderAddress.*';
             $builder->leftJoin('SenderAddress', 'SenderAddress.id = Parcel.sender_address_id', 'SenderAddress');
+            $columns[] = 'SenderAddressCountry.*';
+            $builder->leftJoin('SenderAddressCountry', 'SenderAddressCountry.id = SenderAddress.country_id', 'SenderAddressCountry');
             $columns[] = 'SenderAddressState.*';
             $builder->leftJoin('SenderAddressState', 'SenderAddressState.id = SenderAddress.state_id', 'SenderAddressState');
             $columns[] = 'SenderAddressCity.*';
@@ -3639,6 +3654,8 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($fetch_with['with_receiver_address'])) {
             $columns[] = 'ReceiverAddress.*';
             $builder->leftJoin('ReceiverAddress', 'ReceiverAddress.id = Parcel.receiver_address_id', 'ReceiverAddress');
+            $columns[] = 'ReceiverAddressCountry.*';
+            $builder->leftJoin('ReceiverAddressCountry', 'ReceiverAddressCountry.id = ReceiverAddress.country_id', 'ReceiverAddressCountry');
             $columns[] = 'ReceiverAddressState.*';
             $builder->leftJoin('ReceiverAddressState', 'ReceiverAddressState.id = ReceiverAddress.state_id', 'ReceiverAddressState');
             $columns[] = 'ReceiverAddressCity.*';

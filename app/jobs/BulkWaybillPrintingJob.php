@@ -57,16 +57,21 @@ class BulkWaybillPrintingJob extends BaseJob
         $html_content = Util::replaceTemplate($waybill_layout, ['content' => $waybills_html]);
         $pdf->addPage($html_content);
 
-        if (!$this->savePdfToS3($pdf)) {
+        $filename = __DIR__.'/../../public/waybills/'
+            .'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf';
+        if(!$pdf->saveAs($filename)){
             return false;
         }
+        /*if (!$this->savePdfToS3($pdf)) {
+            return false;
+        }*/
 
         print 'Uploaded Bulk Waybill to S3' . "\n";
 
         EmailMessage::send(EmailMessage::BULK_WAYBILL_PRINTING, [
             'name' => ucwords($this->data->creator->fullname),
             'task_number' => $this->data->bulk_shipment_task_id,
-            'link' => $this->getS3BaseUrl() . 'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf'],
+            'link' => $_SERVER['HTTP_HOST'].'/waybills/waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf' /*$this->getS3BaseUrl() . 'waybills_task_' . $this->data->bulk_shipment_task_id . '.pdf'*/],
             'Courier Plus - Bulk Waybill Printing',
             $this->data->creator->email
         );
