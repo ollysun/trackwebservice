@@ -794,7 +794,7 @@ class ParcelController extends ControllerBase
             unset($filter_by['status']);
             $waybill_numbers = Parcel::sanitizeWaybillNumbers($filter_by['waybill_number_arr']);
             return $this->response->sendSuccess(
-                Parcel::getByWaybillNumberList($waybill_numbers, false, $fetch_with, true)
+                Parcel::getForDirectDelivery($waybill_numbers, false, $fetch_with, true)
             );
         }
         //*/
