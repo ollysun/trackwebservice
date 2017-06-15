@@ -356,7 +356,9 @@ class ZoneController extends ControllerBase
 
         if(($to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID) ||
             ($from_country_id && $from_country_id != Country::DEFAULT_COUNTRY_ID)){
-            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID?$to_country_id:$from_country_id;
+            $is_import = ($from_country_id != Country::DEFAULT_COUNTRY_ID) &&
+                         ($to_country_id == Country::DEFAULT_COUNTRY_ID);
+            $country_id = $to_country_id && $to_country_id != Country::DEFAULT_COUNTRY_ID ? $to_country_id : $from_country_id;
 
             $weight = $this->request->getPost('weight');
             $parcel_type_id = $this->request->getPost('parcel_type_id');
@@ -365,7 +367,7 @@ class ZoneController extends ControllerBase
                 return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
             }
 
-            $result = IntlZone::calculateBilling($weight, $to_country_id, $parcel_type_id);
+            $result = IntlZone::calculateBilling($weight, $country_id, $parcel_type_id, $is_import);
            if($result['success']){
                 $amountDue = $result['amount'];
                 //if this is not transcript, add vat

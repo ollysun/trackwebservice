@@ -28,6 +28,12 @@ class IntlZone extends \Phalcon\Mvc\Model
     protected $description;
 
     /**
+     *
+     * @var double
+     */
+    protected $extra_percent_on_import;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -148,7 +154,8 @@ class IntlZone extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'code' => 'code',
-            'description' => 'description'
+            'description' => 'description',
+            'extra_percent_on_import' => 'extra_percent_on_import'
         );
     }
 
@@ -213,7 +220,19 @@ class IntlZone extends \Phalcon\Mvc\Model
     }
 
 
-    public static function calculateBilling($weight, $country_id, $parcel_type_id){
+  /**
+   * A function for calculating the shipping fee between International Countries
+   *
+   * @param float $weight
+   * @param int $country_id
+   * @param int $parcel_type_id
+   * @param bool $is_import
+   *  The variable allows us to know if the shipment is coming in from an outside country
+   *   into Nigeria/Default Country.
+   *
+   * @return array
+   */
+  public static function calculateBilling($weight, $country_id, $parcel_type_id, $is_import = false){
         /** @var Country $country */
         $country = Country::findFirstById($country_id);
         if(!$country){
@@ -293,7 +312,28 @@ class IntlZone extends \Phalcon\Mvc\Model
 
         $fsc = 0.15 * $amount;
         $amount = $amount + $fsc;
+
+        if($is_import) {
+          $amount = self::getAmountForImport($zone_map->getZoneId(), $amount);
+        }
         return  ['success' => true, 'amount' => $amount];
     }
 
+    /**
+     * Import fees from an outside country into Nigeria/Default country is same
+     * fee the other way round (i.e from Nigeria to that particular country) multiplied
+     * by a certain percentage and added to the original amount.
+     * In other words if Nigeria to Liberia is in Zone 9 and the fee is 1000
+     * Liberia to Nigeria might be 1000 + 15% of 1000 depending on the pre-determined percentage.
+     *
+     * @param int $zone_id
+     * @param float $amount
+     *
+     * @return float
+     */
+    private static function getAmountForImport($zone_id, $amount) {
+        $zone = self::findFirstById($zone_id);
+        $extra_percentage = $zone->extra_percent_on_import;
+        return $amount + ($extra_percentage/100 * $amount);
+    }
 }
