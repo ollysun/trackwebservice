@@ -179,9 +179,9 @@ class IntlZone extends \Phalcon\Mvc\Model
 
         $builder->columns($columns);
 
-        if(isset($filter_by['name'])){
-            $builder->where("IntlZone.name like %:name:%");
-            $bind['name'] = $filter_by['name'];
+        if(isset($filter_by['id'])){
+            $builder->where("IntlZone.id = :id:");
+            $bind['id'] = $filter_by['id'];
         }
 
         $data = $builder->getQuery()->execute($bind);
