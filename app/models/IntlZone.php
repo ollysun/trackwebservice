@@ -1,5 +1,7 @@
 <?php
 
+use Phalcon\Mvc\Model\Message;
+
 /**
  * IntlZone
  * 
@@ -157,6 +159,13 @@ class IntlZone extends \Phalcon\Mvc\Model
             'description' => 'description',
             'extra_percent_on_import' => 'extra_percent_on_import'
         );
+    }
+
+    public function validation() {
+      if(!is_float($this->extra_percent_on_import)) {
+        $message = new Message('Invalid value for extra percentage', 'extra_percentage', 'InvalidValue');
+        $this->appendMessage($message);
+      }
     }
 
 
