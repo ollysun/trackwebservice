@@ -17,11 +17,10 @@ class IntlController extends ControllerBase
   public function updateZoneAction(){
         $this->auth->allowOnly(Role::ADMIN);
         $postData = (array) $this->request->getJsonRawBody();
-        if(!IntlZone::findFirstById(!empty($postData['id']) ? $postData['id'] : '')){
+        if(!$zone = IntlZone::findFirstById(!empty($postData['id']) ? $postData['id'] : '')){
           return $this->response->sendError('Zone does not exist');
         }
 
-        $zone = new IntlZone();
         if($zone->save($postData)){
           return $this->response->sendSuccess($postData);
         }
