@@ -32,13 +32,13 @@ class IntlController extends ControllerBase
         $paginate = $this->request->getQuery('paginate', null, false);
         $with_region = $this->request->getQuery('with_counties');
 
-        $name = $this->request->getQuery('name');
+        $id = $this->request->getQuery('id');
 
         $filter_by = [];
         $fetch_with = [];
 
-        if($name){
-            $filter_by['name'] = $name;
+        if($id){
+            $filter_by['id'] = $id;
         }
 
         if($with_region){
