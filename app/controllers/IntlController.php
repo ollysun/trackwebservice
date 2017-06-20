@@ -20,6 +20,7 @@ class IntlController extends ControllerBase
         $code = $this->request->getPost('code');
         $description = $this->request->getPost('description');
         $extra = $this->request->getPost('percent');
+        $sign = $this->request->getPost('sign');
 
         if(!$zone = IntlZone::findFirstById(!empty($id) ? $id : '')){
           return $this->response->sendError('Zone does not exist');
@@ -29,6 +30,7 @@ class IntlController extends ControllerBase
           [
             'code' => $code,
             'description' => $description,
+            'sign' => $sign,
             'extra_percent_on_import' => $extra])){
           return $this->response->sendSuccess('Zone saved successfully');
         }

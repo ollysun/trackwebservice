@@ -334,6 +334,8 @@ class IntlZone extends \Phalcon\Mvc\Model
      * by a certain percentage and added to the original amount.
      * In other words if Nigeria to Liberia is in Zone 9 and the fee is 1000
      * Liberia to Nigeria might be 1000 + 15% of 1000 depending on the pre-determined percentage.
+     * The sign column allows either to add the extra or deduct the extra from the
+     * original amount.
      *
      * @param int $zone_id
      * @param float $amount
@@ -343,6 +345,14 @@ class IntlZone extends \Phalcon\Mvc\Model
     private static function getAmountForImport($zone_id, $amount) {
         $zone = self::findFirstById($zone_id);
         $extra_percentage = $zone->extra_percent_on_import;
-        return $amount + ($extra_percentage/100 * $amount);
+        $sign = $zone->sign;
+        $extra_amount = $extra_percentage/100 * $amount;
+
+        if ($sign) {
+          $amount += $extra_amount;
+        }else{
+          $amount -= $extra_amount;
+        }
+        return $amount;
     }
 }

@@ -8,6 +8,7 @@ class AddImportExtraPercentageField extends AbstractMigration
     {
       $table = $this->table('intl_zone');
       $table->addColumn('extra_percent_on_import', 'float')
-            ->update();
+      ->addColumn('sign', 'boolean')
+      ->update();
     }
 }
