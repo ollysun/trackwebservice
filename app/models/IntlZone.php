@@ -36,6 +36,12 @@ class IntlZone extends \Phalcon\Mvc\Model
     protected $extra_percent_on_import;
 
     /**
+     *
+     * @var boolean
+     */
+    protected $sign;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -157,7 +163,8 @@ class IntlZone extends \Phalcon\Mvc\Model
             'id' => 'id',
             'code' => 'code',
             'description' => 'description',
-            'extra_percent_on_import' => 'extra_percent_on_import'
+            'extra_percent_on_import' => 'extra_percent_on_import',
+            'sign' => 'sign'
         );
     }
 
