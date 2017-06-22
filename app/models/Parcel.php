@@ -326,7 +326,54 @@ class Parcel extends \Phalcon\Mvc\Model
      */
     protected $notification_status;
 
+    /**
+     * @var float
+     *   This field stores the discounted amount after which an additional
+     *   discount is applied on amount due via bulk upload by a finance officer
+     */
+    protected $discounted_amount_due;
+
+    /**
+     * @var float
+     *   This field stores the initial/company discount that was applied to the shipping charge
+     *   as at the time of waybill generation. It is used to get back the original price before the
+     *   discount was applied from the base price.
+     */
+    protected $initial_discount;
+
     protected $is_bulk_shipment;
+
+
+    /**
+     * @param float $discounted_amount_due
+     */
+    public function setDiscountedAmountDue($discounted_amount_due)
+    {
+      $this->discounted_amount_due = $discounted_amount_due;
+    }
+    /**
+     * @param float $initial_discount
+     */
+    public function setInitialDiscount($initial_discount)
+    {
+      $this->initial_discount = $initial_discount;
+    }
+
+    /**
+     * @return float
+     */
+    public function getInitialDiscount()
+    {
+      return $this->initial_discount;
+    }
+
+    /**
+     * @return float
+     */
+    public function getDiscountedAmountDue()
+    {
+      return $this->discounted_amount_due;
+    }
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
@@ -381,7 +428,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
     /**
      * @author Babatunde Otaru <tunde@cottacush.com>
-     * @return string
+     * @return float
      */
     public function getInsurance()
     {
@@ -1529,7 +1576,9 @@ class Parcel extends \Phalcon\Mvc\Model
             'pickup_date' => 'pickup_date',
             'notification_status' => 'notification_status',
             'is_bulk_shipment' => 'is_bulk_shipment',
-            'company_id' => 'company_id'
+            'company_id' => 'company_id',
+            'initial_discount' => 'initial_discount',
+            'discounted_amount_due' => 'discounted_amount_due'
         );
     }
 
@@ -2454,6 +2503,13 @@ class Parcel extends \Phalcon\Mvc\Model
             $amountDue = $parcel_data['amount_due'];
         }
 
+      if($parcel_data['company_id']){
+        $company = Company::fetchOne(['id' => $parcel_data['company_id']], []);
+        if($company){
+          $discount_percentage = $company['discount'];
+        }
+      }
+
         $total_charge = $amountDue;
         $total_charge += $parcel_data['insurance'];
         $total_charge += $parcel_data['duty_charge'];
@@ -2474,6 +2530,10 @@ class Parcel extends \Phalcon\Mvc\Model
                 $parcel_data['weight_billing_plan'], $parcel_data['onforwarding_billing_plan'], $parcel_data['is_freight_included'], $parcel_data['qty_metrics'],
                 $parcel_data['insurance'], $parcel_data['duty_charge'], $parcel_data['handling_charge'], $parcel_data['cost_of_crating'],
                 $parcel_data['storage_demurrage'], $parcel_data['others'], $amountDue);
+
+
+            $this->setInitialDiscount($discount_percentage ? $discount_percentage : 0);
+            $this->setDiscountedAmountDue(0);
 
             $this->setOrderNumber($parcel_data['order_number']);
             if(isset($parcel_data['company_id'])){
