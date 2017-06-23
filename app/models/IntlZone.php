@@ -324,14 +324,15 @@ class IntlZone extends \Phalcon\Mvc\Model
             $amount = $max_tariff['base_amount'] + $extra_amount;
             //return  ['success' => true, 'amount' => $max_tariff['base_amount'] + $extra_amount];
         }else
-            $amount = $tariff->getBaseAmount();
-
-        $fsc = 0.15 * $amount;
-        $amount = $amount + $fsc;
+        $amount = $tariff->getBaseAmount();
 
         if($is_import) {
           $amount = self::getAmountForImport($zone_map->getZoneId(), $amount);
         }
+
+        $fsc = 0.15 * $amount;
+        $amount = $amount + $fsc;
+
         return  ['success' => true, 'amount' => $amount];
     }
 
