@@ -3410,6 +3410,8 @@ exit();
           $parcel->setDiscountedAmountDue($discounted_amount_due);
           $parcel->save();
         }
+
+        return $this->response->sendSuccess($flagged);
     }
 
     /**
