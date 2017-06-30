@@ -1636,7 +1636,8 @@ class Parcel extends \Phalcon\Mvc\Model
             'pickup_date' => $this->getPickupDate(),
             'notification_status' => $this->getNotificationStatus(),
             'is_bulk_shipment' => $this->getIsBulkShipment(),
-            'company_id' => $this->getCompanyId()
+            'company_id' => $this->getCompanyId(),
+            'discounted_amount_due' => $this->getDiscountedAmountDue()
         );
     }
 
