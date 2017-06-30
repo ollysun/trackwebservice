@@ -95,6 +95,13 @@ class Status extends \Phalcon\Mvc\Model
         return $this->name;
     }
 
+    public function getData(){
+        return array(
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+        );
+    }
+
     /**
      * Initialize method for model.
      */
@@ -143,6 +150,28 @@ class Status extends \Phalcon\Mvc\Model
             'id' => 'id',
             'name' => 'name'
         );
+    }
+
+    public static function fetchAll()
+    {
+        $obj = new Status();
+        $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['Status.*','StatusNotificationMessage.*'])
+            ->leftJoin('StatusNotificationMessage', 'StatusNotificationMessage.status_id = Status.id')
+            ->from('Status');
+
+        $data = $builder->getQuery()->execute();
+        $results=[];
+        foreach ($data as $datum) {
+            $result = $datum->status->getData();
+            $result['message_id'] = $datum->statusNotificationMessage->getData();
+            $result['email'] = $datum->statusNotificationMessage->getEmailMessage();
+            $result['text'] = $datum->statusNotificationMessage->getTextMessage();
+
+            $results[]=$result;
+        }
+
+        return $results;
     }
 
 }

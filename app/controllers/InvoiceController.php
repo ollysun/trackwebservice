@@ -290,4 +290,5 @@ class InvoiceController extends ControllerBase
         $task['details'] = $taskDetails->toArray();
         return $this->response->sendSuccess($task);
     }
+
 }
