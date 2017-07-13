@@ -2284,6 +2284,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
 
+
         //saving the receiver's user info
         if ($check) {
             $receiver_obj = User::fetchByData($receiver);
@@ -2299,6 +2300,7 @@ class Parcel extends \Phalcon\Mvc\Model
             Util::slackDebug("Parcel not created", $sender_obj->getMessages());
             return false;
         }
+
 
         //saving the sender's address
         $sender_addr_obj = new Address();
@@ -2339,6 +2341,7 @@ class Parcel extends \Phalcon\Mvc\Model
             return false;
         }
 
+
         //saving the receiver's address
         $receiver_addr_obj = new Address();
         $is_existing = false;
@@ -2376,6 +2379,7 @@ class Parcel extends \Phalcon\Mvc\Model
             Util::slackDebug("Parcel not created", $sender_addr_obj->getMessages());
             return false;
         }
+
 
         //saving a bank account if any was provided
         $bank_account_obj = new BankAccount();
@@ -2417,12 +2421,13 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         $entity_type = ($parcel_data['no_of_package'] > 1) ? self::ENTITY_TYPE_PARENT : self::ENTITY_TYPE_NORMAL;
 
-        /** @var ReceiverAddressCity $receiverAddress */
+        /** @var ReceiverAddressCity $receiverAddress */ 
         $receiverCity = ReceiverAddressCity::findFirst($receiver_addr_obj->getCityId());
         /** @var SenderAddressCity $receiverAddress */
         $senderCity = SenderAddressCity::findFirst($sender_addr_obj->getCityId());
+        
 
-        if($parcel_data['billing_type'] != 'manual') {
+		if($parcel_data['billing_type'] != 'manual') {
             if($receiver_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID ||
                 $sender_addr_obj->getCountryId() != Country::DEFAULT_COUNTRY_ID){
                 $country_id = $receiver_addr_obj->getCountryId() == Country::DEFAULT_COUNTRY_ID?
@@ -2433,6 +2438,8 @@ class Parcel extends \Phalcon\Mvc\Model
                 if(!$result['success']) throw new Exception($result['message']);
                 $amountDue = $result['amount'];
             }else{
+				if(isset($parcel_data['is_bulk_shipment']) && $parcel_data['is_bulk_shipment']){
+		}
                 $amountDue = Zone::calculateBilling(
                     $receiverCity->getBranchId(),
                     $senderCity->getBranchId(),
@@ -2441,16 +2448,22 @@ class Parcel extends \Phalcon\Mvc\Model
                     $receiverCity->getId(),
                     $parcel_data['onforwarding_billing_plan'], $parcel_data['company_id'], $parcel_data['shipping_type']
                 );
-            }
+				if(isset($parcel_data['is_bulk_shipment']) && $parcel_data['is_bulk_shipment']){
+		}
+            } 
              //if payment type is not defered and this is not intl transcript, add vat
             if($parcel_data['payment_type'] != 4 && $parcel_data['shipping_type'] != ShippingType::INTL_TRANSCRIPT_EXPORT){
                 $vat = $amountDue * 0.05;
                 $amountDue = $vat + $amountDue;
             }
+			if(!$parcel_data['payment_type']){
+                $parcel_data['payment_type'] = 4;
+            }
 
         }else{
             $amountDue = $parcel_data['amount_due'];
         }
+		
 
         $total_charge = $amountDue;
         $total_charge += $parcel_data['insurance'];
@@ -2488,6 +2501,7 @@ class Parcel extends \Phalcon\Mvc\Model
             if(isset($parcel_data['notification_status']))
                 $this->setNotificationStatus($parcel_data['notification_status']);
             $check = $this->save();
+
 
         } else {
             if ($bank_account != null) {
@@ -2552,6 +2566,7 @@ class Parcel extends \Phalcon\Mvc\Model
             $check = $parcel_history->save();
         }
 
+
         if ($check) {
             if (is_null($this->getReferenceNumber())) {
                 $this->setReferenceNumber($this->getWaybillNumber());
@@ -2573,6 +2588,7 @@ class Parcel extends \Phalcon\Mvc\Model
                     //$invoice_parcel->setNetAmount($invoice_parcel->getNetAmount() + $diff);
                 }
             }
+
             return $waybill_number;
         } else {
             Util::slackDebug("Parcel not created", "Unable to save parcel history");
@@ -3556,6 +3572,8 @@ class Parcel extends \Phalcon\Mvc\Model
         }
 
         $columns = ['Parcel.*'];
+        //no duplicate waybill number
+        //$builder->distinct('Parcel.waybill_number');
 
 
 
