@@ -11,14 +11,14 @@ define( 'AWSSESEndpoint', 'https://email.us-east-1.amazonaws.com/' );
 
 
 return new \Phalcon\Config([
-    'database' => array(
-      'adapter'     => 'Mysql',
-      'host'        => getenv(TNT_DB_HOST),
-      'username'    => getenv(TNT_DB_USERNAME),
-      'password'    => getenv(TNT_DB_PASSWORD),
-      'dbname'      => getenv(TNT_DBNAME),
-      'charset'     => 'utf8',
-    ),
+    'database' => [
+        'adapter' => 'Mysql',
+        'host' => 'tnt-new.cqnljhscd9gz.eu-central-1.rds.amazonaws.com',
+        'username' => 'root',
+        'password' => 'thelcmof8is2',
+        'dbname' => 'tnt',
+        'charset' => 'utf8',
+    ],
    /* 'database' => [
         'adapter' => 'Mysql',
         'host' => 'localhost',
