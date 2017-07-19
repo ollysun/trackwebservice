@@ -227,25 +227,4 @@ class AdminController extends ControllerBase
         }
         return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
     }
-
-    function getStatusAction(){
-        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
-        $data= $this->request->getPost();
-        $status_data= Status::fetchAll();
-
-        if(isset($data["task"])){
-            $message = StatusNotificationMessage::findFirst(['conditions' => 'id = :status_id:',
-            'bind' => ['status_id' => $data["status_id"]]]);
-//
-            if($message->save(['email_message'=>$data["emaildata"],'text_message'=>$data["textdata"]])){
-                return $this->response->sendSuccess($status_data);
-            }
-            else
-            return $this->response->sendError($message);
-        }
-        if ($status_data != false) {
-            return $this->response->sendSuccess($status_data);
-        }
-        return $this->response->sendError(ResponseMessage::RECORD_DOES_NOT_EXIST);
-    }
 }

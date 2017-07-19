@@ -27,6 +27,12 @@ class StatusNotificationMessage extends \Phalcon\Mvc\Model
      */
     protected $text_message;
 
+    /**
+     *
+     * @var string
+     */
+    protected $subject;
+
 
     /**
      * Method to set the value of field id
@@ -81,6 +87,20 @@ class StatusNotificationMessage extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field subject
+     *
+     * @param string $subject
+     * @return $this
+     */
+    public function setSubject($subject)
+    {
+      $this->subject = $subject;
+
+      return $this;
+    }
+
+
+  /**
      * Returns the value of field id
      *
      * @return integer
@@ -120,6 +140,16 @@ class StatusNotificationMessage extends \Phalcon\Mvc\Model
         return $this->text_message;
     }
 
+    /**
+     * Returns the value of field subject
+     *
+     * @return string
+     */
+    public function getSubject()
+    {
+      return $this->subject;
+    }
+
 
     /**
      * Initialize method for model.
@@ -155,7 +185,7 @@ class StatusNotificationMessage extends \Phalcon\Mvc\Model
             'status_id' => 'status_id',
             'email_message' => 'email_message',
             'text_message' => 'text_message',
-
+            'subject' => 'subject'
         );
     }
 
