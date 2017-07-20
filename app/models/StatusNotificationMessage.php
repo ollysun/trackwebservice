@@ -200,6 +200,14 @@ class StatusNotificationMessage extends \Phalcon\Mvc\Model
     }
 
 
+    public static function fetchById($id)
+    {
+        return StatusNotificationMessage::findFirst(array(
+            'id = :id:',
+            'bind' => ['id' => $id]
+        ));
+    }
+
     public static function fetchOne($status_id)
     {
         return StatusNotificationMessage::findFirst([

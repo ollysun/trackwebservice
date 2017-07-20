@@ -167,6 +167,7 @@ class Status extends \Phalcon\Mvc\Model
             $result['message_id'] = $datum->statusNotificationMessage->getData();
             $result['email'] = $datum->statusNotificationMessage->getEmailMessage();
             $result['text'] = $datum->statusNotificationMessage->getTextMessage();
+            $result['subject'] = $datum->statusNotificationMessage->getSubject();
 
             $results[]=$result;
         }
