@@ -8,6 +8,36 @@
  */
 class IntlController extends ControllerBase
 {
+
+  /**
+   * Update a Zone
+   *
+   * @return object
+   */
+  public function updateZoneAction(){
+        $this->auth->allowOnly(Role::ADMIN);
+        $id = $this->request->getPost('zone');
+        $code = $this->request->getPost('code');
+        $description = $this->request->getPost('description');
+        $extra = $this->request->getPost('percent');
+        $sign = $this->request->getPost('sign');
+
+        if(!$zone = IntlZone::findFirstById(!empty($id) ? $id : '')){
+          return $this->response->sendError('Zone does not exist');
+        }
+
+        if($zone->save(
+          [
+            'code' => $code,
+            'description' => $description,
+            'sign' => $sign,
+            'extra_percent_on_import' => $extra])){
+          return $this->response->sendSuccess('Zone saved successfully');
+        }
+
+        $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
+    }
+
     public function addZoneAction(){
         $this->auth->allowOnly(Role::ADMIN);
         $code = $this->request->getPost('code');
@@ -32,13 +62,13 @@ class IntlController extends ControllerBase
         $paginate = $this->request->getQuery('paginate', null, false);
         $with_region = $this->request->getQuery('with_counties');
 
-        $name = $this->request->getQuery('name');
+        $id = $this->request->getQuery('id');
 
         $filter_by = [];
         $fetch_with = [];
 
-        if($name){
-            $filter_by['name'] = $name;
+        if($id){
+            $filter_by['id'] = $id;
         }
 
         if($with_region){

@@ -1,5 +1,7 @@
 <?php
 
+use Phalcon\Mvc\Model\Message;
+
 /**
  * IntlZone
  * 
@@ -26,6 +28,18 @@ class IntlZone extends \Phalcon\Mvc\Model
      * @var string
      */
     protected $description;
+
+    /**
+     *
+     * @var double
+     */
+    protected $extra_percent_on_import;
+
+    /**
+     *
+     * @var boolean
+     */
+    protected $sign;
 
     /**
      * Method to set the value of field id
@@ -148,8 +162,17 @@ class IntlZone extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'code' => 'code',
-            'description' => 'description'
+            'description' => 'description',
+            'extra_percent_on_import' => 'extra_percent_on_import',
+            'sign' => 'sign'
         );
+    }
+
+    public function validation() {
+      if(!is_float($this->extra_percent_on_import)) {
+        $message = new Message('Invalid value for extra percentage', 'extra_percentage', 'InvalidValue');
+        $this->appendMessage($message);
+      }
     }
 
 
@@ -172,9 +195,9 @@ class IntlZone extends \Phalcon\Mvc\Model
 
         $builder->columns($columns);
 
-        if(isset($filter_by['name'])){
-            $builder->where("IntlZone.name like %:name:%");
-            $bind['name'] = $filter_by['name'];
+        if(isset($filter_by['id'])){
+            $builder->where("IntlZone.id = :id:");
+            $bind['id'] = $filter_by['id'];
         }
 
         $data = $builder->getQuery()->execute($bind);
@@ -213,7 +236,19 @@ class IntlZone extends \Phalcon\Mvc\Model
     }
 
 
-    public static function calculateBilling($weight, $country_id, $parcel_type_id){
+  /**
+   * A function for calculating the shipping fee between International Countries
+   *
+   * @param float $weight
+   * @param int $country_id
+   * @param int $parcel_type_id
+   * @param bool $is_import
+   *  The variable allows us to know if the shipment is coming in from an outside country
+   *   into Nigeria/Default Country.
+   *
+   * @return array
+   */
+  public static function calculateBilling($weight, $country_id, $parcel_type_id, $is_import = false){
         /** @var Country $country */
         $country = Country::findFirstById($country_id);
         if(!$country){
@@ -289,11 +324,43 @@ class IntlZone extends \Phalcon\Mvc\Model
             $amount = $max_tariff['base_amount'] + $extra_amount;
             //return  ['success' => true, 'amount' => $max_tariff['base_amount'] + $extra_amount];
         }else
-            $amount = $tariff->getBaseAmount();
+        $amount = $tariff->getBaseAmount();
+
+        if($is_import) {
+          $amount = self::getAmountForImport($zone_map->getZoneId(), $amount);
+        }
 
         $fsc = 0.15 * $amount;
         $amount = $amount + $fsc;
+
         return  ['success' => true, 'amount' => $amount];
     }
 
+    /**
+     * Import fees from an outside country into Nigeria/Default country is same
+     * fee the other way round (i.e from Nigeria to that particular country) multiplied
+     * by a certain percentage and added to the original amount.
+     * In other words if Nigeria to Liberia is in Zone 9 and the fee is 1000
+     * Liberia to Nigeria might be 1000 + 15% of 1000 depending on the pre-determined percentage.
+     * The sign column allows either to add the extra or deduct the extra from the
+     * original amount.
+     *
+     * @param int $zone_id
+     * @param float $amount
+     *
+     * @return float
+     */
+    private static function getAmountForImport($zone_id, $amount) {
+        $zone = self::findFirstById($zone_id);
+        $extra_percentage = $zone->extra_percent_on_import;
+        $sign = $zone->sign;
+        $extra_amount = $extra_percentage/100 * $amount;
+
+        if ($sign) {
+          $amount += $extra_amount;
+        }else{
+          $amount -= $extra_amount;
+        }
+        return $amount;
+    }
 }

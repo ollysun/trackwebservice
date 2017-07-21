@@ -69,9 +69,10 @@ class InvoiceController extends ControllerBase
         $total = 0;
 
         foreach($parcels as $parcel){
-            $total += $parcel['amount_due'];
+            $parcel_amount_due = $this->getAmountDue($parcel);
+            $total += $parcel_amount_due;
             $invoiceData['parcels'][] = ['waybill_number' => $parcel['waybill_number'],
-                'net_amount' => $parcel['amount_due'], 'discount' => 0];
+                'net_amount' => $parcel_amount_due, 'discount' => 0];
             $invoiceData['reference'] = $parcel['reference_number']|$parcel['waybill_number'];
         }
 
@@ -289,5 +290,17 @@ class InvoiceController extends ControllerBase
         $task = $task->toArray();
         $task['details'] = $taskDetails->toArray();
         return $this->response->sendSuccess($task);
+    }
+
+    /**
+     * Gets the Amount due by checking if the parcel has a discounted Amount value
+     * If it has, It is returned in favour of the amount due.
+     *
+     * @param array $parcel
+     *
+     * @return float
+     */
+    private function getAmountDue($parcel) {
+        return !empty($parcel['discounted_amount_due']) ? $parcel['discounted_amount_due'] : $parcel['amount_due'];
     }
 }

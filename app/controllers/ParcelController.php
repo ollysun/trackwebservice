@@ -3351,5 +3351,103 @@ exit();
         return $this->response->sendSuccess($info);
 
     }
+
+    /**
+     * This function processes parcels and applies additional discount to each one
+     * based on a percentage or a fixed rate. It allows the initial discount(company discount) attached to a parcel
+     * to be overridden or additional discount applied on the parcel's base amount.
+     * Overridden means that the original amount before the base price was arrived at will be re-generated based on the
+     * discount applied as at parcel creation and then the new discount will be applied on this re-generated amount.
+     *
+     * If its not to be Overridden, the new discount is applied on the base price as it is.
+     * Sample data expected:
+     * [
+     *   'data' => [
+     *     [
+     *       0 => 2N00100001477, //waybill number
+     *       1 => 10, //percentage
+     *       2 => 6000 //fixed amount
+     *     ]
+     *   ],
+     *   'override => 0
+     * ]
+     *
+     */
+    public function applyDiscountAction() {
+        $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE]);
+        $post_data = $this->request->getJsonRawBody();
+        $csv_data = $post_data->data;
+        $override  = $post_data->override;
+        $IN = $to_be_processed = $flagged = [];
+
+        foreach($csv_data as $parcel_info) {
+          $info = array_filter($parcel_info);
+          //means all three columns are filled. waybill_number, percentage and fixed amount
+          //we can't allow this to go through. Save the waybill number in an array
+          if(count($info) == 3) {
+            $flagged[] = $parcel_info[0];
+          }
+
+          if(count($info) == 2 && !empty($parcel_info[0])) {
+            $to_be_processed[$parcel_info[0]]['percentage_discount'] = $parcel_info[1];
+            $to_be_processed[$parcel_info[0]]['fixed_amount'] = $parcel_info[2];
+            $IN[] = $parcel_info[0];
+          }
+        }
+
+        $parcels = Parcel::find([
+          "conditions" => "waybill_number IN ({waybill_numbers:array})",
+          "bind"=>["waybill_numbers"=>$IN]
+        ]);
+
+        foreach($parcels as $parcel){
+          $discounted_amount_due = $this->calculateDiscountedAmount(
+            $parcel,
+            $to_be_processed[$parcel->getWaybillNumber()]['percentage_discount'],
+            $to_be_processed[$parcel->getWaybillNumber()]['fixed_amount'],
+            $override
+           );
+          $parcel->setDiscountedAmountDue($discounted_amount_due);
+          $parcel->save();
+        }
+
+        return $this->response->sendSuccess($flagged);
+    }
+
+    /**
+     * Returns the newly calculated discounted amount per waybill.
+     *
+     * @param Parcel $parcel
+     * @param float $percentage
+     * @param float $discounted_amount
+     * @param bool $override
+     *
+     * @return float|int
+     */
+    private function calculateDiscountedAmount($parcel, $percentage, $discounted_amount, $override) {
+        $base_amount = $parcel->getBasePrice();
+        $discounted_amount_due = 0;
+
+        if($override) {
+          $base_amount = $base_amount/(1 - ($parcel->getInitialDiscount()/100));
+        }
+
+        if($percentage) {
+          $discounted_amount_due = $base_amount - ($percentage/100 * $base_amount);
+        }
+
+        if($discounted_amount) {
+          $discounted_amount_due = $discounted_amount;
+        }
+
+        $discounted_amount_due += $parcel->getInsurance();
+        $discounted_amount_due += $parcel->getDutyCharge();
+        $discounted_amount_due += $parcel->getHandlingCharge();
+        $discounted_amount_due += $parcel->getCostOfCrating();
+        $discounted_amount_due += $parcel->getStorageDemurrage();
+        $discounted_amount_due += $parcel->getOthers();
+
+        return $discounted_amount_due;
+      }
 }
 
