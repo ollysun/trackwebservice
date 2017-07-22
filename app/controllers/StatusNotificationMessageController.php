@@ -58,11 +58,4 @@ class  StatusNotificationMessageController extends ControllerBase {
 
 
       }
-
-  function getAction() {
-    $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
-    $status_data = Status::fetchAll();
-    return $this->response->sendSuccess($status_data);
-  }
-
 }
