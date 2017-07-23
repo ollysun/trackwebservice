@@ -38,11 +38,8 @@ class SettingController extends ControllerBase {
 
   function getAction() {
     $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
-    $setting_name = $this->request->getQuery('setting_name');
 
-    $setting = Setting::findFirst(['name = :name:',
-      'bind' => ['name' => $setting_name]
-    ]);
+    $setting = Setting::find();
 
     if($setting) {
       return $this->response->sendSuccess($setting);
@@ -50,4 +47,20 @@ class SettingController extends ControllerBase {
 
     return $this->response->sendError('Setting Not Found!');
   }
+
+    function getOldAction() {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $setting_name = $this->request->getQuery('setting_name');
+
+        $setting = Setting::findFirst(['name = :name:',
+            'bind' => ['name' => $setting_name]
+        ]);
+
+
+        if($setting) {
+            return $this->response->sendSuccess($setting);
+        }
+
+        return $this->response->sendError('Setting Not Found!');
+    }
 }
