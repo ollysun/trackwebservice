@@ -64,6 +64,24 @@ class Company extends EagerModel
      *
      * @var double
      */
+    protected $credit_balance;
+
+    /**
+     *
+     * @var boolean
+     */
+    protected $override_credit;
+
+    /**
+     *
+     * @var string
+     */
+    protected $credit_reset_at;
+
+    /**
+     *
+     * @var double
+     */
     protected $discount;
 
     /**
@@ -264,6 +282,43 @@ class Company extends EagerModel
     }
 
     /**
+     * Method to set the value of field credit_reset_at
+     *
+     * @return $this
+     */
+    public function setCreditResetAt()
+    {
+      $this->credit_reset_at = date('Y-m-d H:i:s');
+
+      return $this;
+    }
+
+    /**
+     * Method to set the value of field credit_limit
+     *
+     * @param double $credit_balance
+     * @return $this
+     */
+    public function setCreditBalance($credit_balance)
+    {
+      $this->credit_balance = $credit_balance;
+
+      return $this;
+    }
+
+    /**
+     * Method to set the value of field override_credit
+     *
+     * @param boolean $override_credit
+     * @return $this
+     */
+    public function setOverrideCredit($override_credit)
+    {
+      $this->override_credit = $override_credit;
+
+      return $this;
+    }
+    /**
      * Method to set the value of field discount
      *
      * @param double $discount
@@ -456,6 +511,36 @@ class Company extends EagerModel
     }
 
     /**
+     * Returns the value of field credit_balance
+     *
+     * @return double
+     */
+    public function getCreditBalance()
+    {
+      return $this->credit_balance;
+    }
+
+    /**
+     * Returns the value of field override_credit
+     *
+     * @return boolean
+     */
+    public function getOverrideCredit()
+    {
+      return $this->override_credit;
+    }
+
+    /**
+     * Returns the value of field credit_reset_at
+     *
+     * @return string
+     */
+    public function getCreditResetAt()
+    {
+      return $this->credit_reset_at;
+    }
+
+    /**
      * Returns the value of field discount
      *
      * @return double
@@ -625,7 +710,10 @@ class Company extends EagerModel
             'extra_info' => 'extra_info',
             'business_manager' => 'business_manager',
             'territory' => 'territory',
-            'region' => 'region'//region
+            'region' => 'region',
+            'credit_balance' => 'credit_balance',
+            'credit_reset_at' => 'credit_reset_at',
+            'override_credit' => 'override_credit'
         );
     }
 
