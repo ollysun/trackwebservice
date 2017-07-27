@@ -38,13 +38,10 @@ class SettingController extends ControllerBase {
 
   function getAction() {
     $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
-
     $setting = Setting::find();
-
     if($setting) {
       return $this->response->sendSuccess($setting);
     }
-
     return $this->response->sendError('Setting Not Found!');
   }
 

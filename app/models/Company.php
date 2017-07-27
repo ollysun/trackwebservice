@@ -741,7 +741,9 @@ class Company extends EagerModel
             'extra_info' => $this->getExtraInfo(),
             'business_manager' => $this->getBusinessManager(),
             'territory' => $this->getTerritory(),
-            'region' => $this->getRegion()
+            'region' => $this->getRegion(),
+            'credit_balance' => $this->getCreditBalance(),
+            'override_credit' => $this->getOverrideCredit()
         );
     }
 
