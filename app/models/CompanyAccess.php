@@ -274,5 +274,33 @@ class CompanyAccess extends \Phalcon\Mvc\Model
         $company_access->save();
         return $company_access;
     }
+	
+	/**
+     * @param $company_id
+     * @return Admin|bool
+     */
+    public static function getFakeAdmin($company_id){
+        $company = Company::findFirst(['id = :number:', 'bind' => ['number' => $company_id]]);
+        if(!$company){
+            Util::slackDebug('Company not loaded', 'Company not loaded by id in company access. Company id:' . $company_id);
+            return false;
+        }
+        $companyAccess = CompanyAccess::findFirst(['registration_number = :number:', 'bind' => ['number' => $company->getRegNo()]]);
+        if(!$companyAccess){
+            Util::slackDebug('bulks shipment issue', 'company have no access');
+            return false;
+        }
+        $auth = UserAuth::findFirst(['email = :username:', 'bind' => ['username' => $companyAccess->getAuthUsername()]]);
+        if(!$auth){
+            Util::slackDebug('Auth not found', 'Auth not found for a company access. Company Id:'.$company_id);
+            return false;
+        }
+        $admin = Admin::findFirst(['user_auth_id = :user_auth_id:', 'bind' => ['user_auth_id' => $auth->getId()]]);
+        if(!$admin){
+            Util::slackDebug('Admin not found', 'Auth data to company have not admin info. Company Id:' . $company_id);
+            return false;
+        }
+        return $admin;
+    }
 
 }

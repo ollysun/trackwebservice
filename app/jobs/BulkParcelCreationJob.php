@@ -152,7 +152,8 @@ class BulkParcelCreationJob extends BaseJob
 
         print 'Processing:: ' . json_encode($parcelData) . "\n";
         $status = $parcel_obj->saveForm($creatorBranch->getId(), $sender, $sender_address, $receiver, $receiver_address,
-            '', $parcelData, $to_branch_id, $createdBy->getId());
+            '', $parcelData, $to_branch_id, $createdBy->getId(), $createdBy->getRoleId() == Role::COMPANY_ADMIN ||
+        $createdBy->getRoleId() == Role::COMPANY_OFFICER);
         return ($status) ? $parcel_obj : false;
     }
 }

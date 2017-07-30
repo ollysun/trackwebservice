@@ -3082,7 +3082,7 @@ exit();
      * Create bulk shipment task
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function createBulkShipmentTaskAction()
+    public function createBulkShipmentTaskAction2()
     {
        /* try{
 
@@ -3122,12 +3122,60 @@ exit();
         }
         return $this->response->sendSuccess($job_id);
     }
+	
+	 /**
+     * Create bulk shipment task
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function createBulkShipmentTaskAction()
+    {
+        $postData = $this->request->getJsonRawBody();
+
+        $validation = new BulkShipmentCreationValidation($postData);
+
+
+        if (!$validation->validate()) {
+            return $this->response->sendError($validation->getMessages());
+        }
+
+        if(!CompanyBillingPlan::findFirst(['billing_plan_id = :billing_plan_id: AND company_id = :company_id:',
+            'bind' => ['billing_plan_id' => $postData->billing_plan_id, 'company_id' => $postData->company_id]])){
+            return $this->response->sendError('Billing plan does not belong to company');
+        }
+
+
+        $postData->created_by = $this->auth->getPersonId();
+        $postData->creator = $this->auth->getData();
+        //for corporate user, use their ec and domy creator
+        if($this->auth->isCooperateUser()){
+
+            $admin = CompanyAccess::getFakeAdmin($postData->company_id);
+            if(!$admin){
+                return $this->response->sendError("Access Denied. Please contact courier plus intl");
+            }
+            $postData->created_by = $admin->getId();
+            $postData->creator = $admin;
+        }
+
+        $company = Company::findFirst($postData->company_id);
+        $billing_plan = BillingPlan::findFirst($postData->billing_plan_id);
+        $postData->company = $company->toArray();
+        $postData->billing_plan = $billing_plan->toArray();
+
+
+        $worker = new ParcelCreationWorker();
+        $job_id = $worker->addJob(json_encode($postData));
+        if (!$job_id) {
+            return $this->response->sendError('Could not create bulk shipment creation job. Please try again');
+        }
+        return $this->response->sendSuccess($job_id);
+    }
 
     /**
      * Get bulk shipment tasks
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function getBulkShipmentTasksAction()
+    public function getBulkShipmentTasks1Action()
     {
         $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
         $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
@@ -3135,6 +3183,31 @@ exit();
         /** @var Resultset $tasks */
         $tasks = Job::fetchAll(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION, $offset, $count);
         return $this->response->sendSuccess(['tasks' => $tasks->toArray(), 'total_count' => Job::getTotalCount(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION)]);
+    }
+	
+	  /**
+     * Get bulk shipment tasks
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
+     */
+    public function getBulkShipmentTasksAction()
+    {
+        $offset = $this->request->getQuery('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->getQuery('count', null, DEFAULT_COUNT);
+
+        $created_by = null;
+        //for corporate user, use their ec and domy creator
+        if($this->auth->isCooperateUser()){
+
+            $admin = CompanyAccess::getFakeAdmin($this->auth->getCompanyId());
+            if(!$admin){
+                return $this->response->sendError("Access Denied. Please contact courier plus intl");
+            }
+            $created_by = $admin->getId();
+        }
+        /** @var Resultset $tasks */
+        $tasks = Job::fetchAll(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION, $offset, $count, $created_by);
+        return $this->response->sendSuccess(['tasks' => $tasks->toArray(), 
+            'total_count' => Job::getTotalCount(ParcelCreationWorker::QUEUE_BULK_SHIPMENT_CREATION, $created_by)]);
     }
 
     /**
