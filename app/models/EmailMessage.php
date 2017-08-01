@@ -364,4 +364,51 @@ class EmailMessage extends \Phalcon\Mvc\Model
           }
         }
     }
+
+    /**
+     * Sends Email notifications to relevant stakeholders when a client reaches credit limit
+     *
+     * @param array $parcel_data
+     * @param object $setting_object
+     */
+    public static function sendCreditLimitNotification($parcel_data, $setting_object, $company) {
+      $recipients = array_map('trim', explode(',',$setting_object->alert_emails));
+
+      if ($setting_object->send_to_client) {
+        $recipients = array_merge($recipients, [$parcel_data['sender_email']]);
+      }
+
+      if ($setting_object->send_to_account_officer) {
+        $recipients = array_merge($recipients, $parcel_data['sender_email']);
+      }
+
+      $msg_params = [
+        'client_name' => $company->name,
+        'credit_limit' => $company->credit_limit,
+        'credit_balance' => $company->credit->balance,
+        'amount_due' => $parcel_data['amount_due'],
+        'last_reset' => $company->credit_reset_at,
+      ];
+
+      if ($setting_object->email_body) {
+        try {
+          $mailer = \Phalcon\Di::getDefault()->getMailer();
+          foreach ($recipients as $recipient) {
+            $mailer->send(
+              $setting_object->email_body,
+              $setting_object->email_body,
+              $setting_object->email_subject,
+              [$recipient => ''],
+              [self::DEFAULT_FROM_EMAIL => self::DEFAULT_FROM_NAME],
+              [],
+              [],
+              $msg_params
+            );
+          }
+        } catch (Exception $e) {
+          Util::slackDebug('Email Not Sent', $e->getMessage());
+        }
+      }
+
+    }
 }

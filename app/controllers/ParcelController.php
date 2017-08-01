@@ -94,6 +94,14 @@ class ParcelController extends ControllerBase
             return $this->response->sendError('Deferred payment is not allowed for cash sale');
         }
 
+        if(!empty($parcel['company_id'])) {
+          $credit_parcel_data = ['amount_due' => $parcel['amount_due'], 'sender_email' => $sender['email']];
+          $creditLimitReached = $this->creditLimitReached($parcel['company_id'], $credit_parcel_data);
+          if($creditLimitReached) {
+            return $this->response->sendError(ResponseMessage::AMOUNT_EXCEEDS_CREDIT_BALANCE);
+          }
+        }
+
         $auth_data = $this->auth->getData();
 
         //Ensuring the officer is an EC or HUB officer or an Admin or a cooperate officer
@@ -3449,5 +3457,69 @@ exit();
 
         return $discounted_amount_due;
       }
+
+    /**
+     * Runs some checks on whether the company is exempted from credit limit or
+     * not. If not exempted, some calculations are done to determine if the current
+     * transaction can go through or not based on the credit limit for the company.
+     * Also Emails are sent to relevant stakeholders if a company has used up her
+     * credit limit or has exceeded a certain percentage set by the Admin in general
+     * settings page.
+     *
+     * @param int $company_id
+     * @param array $parcel_data
+     *
+     * @return boolean
+     *   A return value of false means that the company passes the credit limit check
+     *   and transactions can proceed for company.
+     */
+    private function creditLimitReached($company_id, $parcel_data) {
+      $company = Company::findFirstById($company_id);
+      $amount_due = $parcel_data['amount_due'];
+      $send_mail = false;
+      $limit_reached = false;
+
+      //company is exempted from credit limit
+      if ($company->getOverrideCredit()) {
+        return false;
+      }
+
+      $setting = Setting::findFirst(["name = 'credit_limit'"]);
+      if(!$setting) {
+        return false;
+      }
+
+      $credit_balance = $company->getCreditBalance();
+      $credit_limit = $company->getCreditLimit();
+      $credit_setting = $setting->getValue();
+
+      //company does not have enough to complete transaction
+      //send a mail alert
+      if ($credit_balance - $amount_due < 0) {
+        $send_mail = true;
+        $limit_reached = true;
+      }
+
+      if(!$limit_reached){
+        $limit_percentage = $credit_setting->limit_percentage;
+        $amount_after_transaction = ($credit_balance - $amount_due);
+        $projected_percentage = abs((1 - (($amount_after_transaction)/$credit_limit)) * 100);
+        $company->setCreditBalance($amount_after_transaction);
+        $company->save();
+        if ($projected_percentage >= $limit_percentage) {
+          $send_mail = true;
+        }
+      }
+
+      if ($send_mail) {
+        EmailMessage::sendCreditLimitNotification($parcel_data, $credit_setting, $company);
+      }
+
+      if($limit_reached) {
+        return true;
+      }
+
+      return false;
+    }
 }
 
