@@ -309,6 +309,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
    * @return bool
    */
   public static function sendParcelNotification($parcel_id, $status_id) {
+    return;
         $status_notification = StatusNotificationMessage::findFirst(['status_id = :status_id:', 'bind' => ['status_id' => $status_id]]);
 
         if ($status_notification) {
@@ -378,14 +379,14 @@ class EmailMessage extends \Phalcon\Mvc\Model
         $recipients = array_merge($recipients, [$parcel_data['sender_email']]);
       }
 
-      if ($setting_object->send_to_account_officer) {
-        $recipients = array_merge($recipients, $parcel_data['sender_email']);
-      }
+//      if ($setting_object->send_to_account_officer) {
+//        $recipients = array_merge($recipients, $parcel_data['sender_email']);
+//      }
 
       $msg_params = [
         'client_name' => $company->name,
         'credit_limit' => $company->credit_limit,
-        'credit_balance' => $company->credit->balance,
+        'credit_balance' => $company->credit_balance,
         'amount_due' => $parcel_data['amount_due'],
         'last_reset' => $company->credit_reset_at,
       ];
