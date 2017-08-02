@@ -30,19 +30,24 @@ class Job extends BaseModel
         $this->setSource('jobs');
     }
 
-    /**
+   /**
      * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $queue
      * @param $offset
      * @param $count
+     * @param $created_by
      * @return mixed
      */
-    public static function fetchAll($queue, $offset, $count)
+    public static function fetchAll($queue, $offset, $count, $created_by = null)
     {
         $obj = new self();
         $columns = ['Job.*'];
         $builder = $obj->getModelsManager()->createBuilder()->from('Job');
-        $builder->where('queue = :queue:', ['queue' => $queue]);
+        if($created_by){
+            $builder->where('queue = :queue: AND created_by = :created_by:', ['queue' => $queue, 'created_by' => $created_by]);
+        }else{
+            $builder->where('queue = :queue:', ['queue' => $queue]);
+        }
         $builder->columns($columns)->offset($offset)->limit($count);
         $builder->orderBy('Job.created_at DESC');
         return $builder->getQuery()->execute();
@@ -53,12 +58,16 @@ class Job extends BaseModel
      * @param $queue
      * @return mixed
      */
-    public static function getTotalCount($queue)
+       public static function getTotalCount($queue, $created_by = null)
     {
         $obj = new self();
         $columns = ['COUNT(*) as count'];
         $builder = $obj->getModelsManager()->createBuilder()->from('Job');
-        $builder->where('queue = :queue:', ['queue' => $queue]);
+        if($created_by){
+            $builder->where('queue = :queue: AND created_by = :created_by:', ['queue' => $queue, 'created_by' => $created_by]);
+        }else{
+            $builder->where('queue = :queue:', ['queue' => $queue]);
+        }
         $count = $builder->columns($columns)->getQuery()->getSingleResult();
         return $count['count'];
     }
