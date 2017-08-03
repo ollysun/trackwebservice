@@ -20,7 +20,8 @@ class SettingController extends ControllerBase {
       'email_subject' => $data['email_subject'],
       'email_body' => $data['email_body'],
       'alert_emails' => $data['alert_emails'],
-      'send_to_client' => $data['send_to_client']
+      'send_to_client' => $data['send_to_client'],
+      'send_to_rm' => $data['send_to_rm']
     ];
 
     $setting->setName($data['setting_name']);
