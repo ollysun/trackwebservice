@@ -805,6 +805,7 @@ class Company extends EagerModel
                 $company_data['relations_officer_id'],
                 $company_data['business_manager_staff_id'],
                 $company_data['business_zone_id'],
+                $company_data['override_credit'],
                 $company_data['extra_info']);
             if ($company->save()) {
                 return $company;
@@ -844,7 +845,7 @@ class Company extends EagerModel
      * @param $extra_info
      */
     public function updateData($name, $reg_no, $email, $phone_number, $address, $city_id, $credit_limit, $discount,
-                               $relations_officer_id, $business_manager_staff_id, $business_zone_id, $extra_info)
+                               $relations_officer_id, $business_manager_staff_id, $business_zone_id, $override_credit, $extra_info)
     {
         $this->setName($name);
         $this->setRegNo($reg_no);
@@ -857,6 +858,7 @@ class Company extends EagerModel
         $this->setRelationsOfficerId($relations_officer_id);
         $this->setBusinessManagerStaffId($business_manager_staff_id);
         $this->setBusinessZoneId($business_zone_id);
+        $this->setOverrideCredit($override_credit);
         $this->setExtraInfo($extra_info);
 
         $now = date('Y-m-d H:i:s');
