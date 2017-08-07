@@ -20,10 +20,12 @@ class InvoiceController extends ControllerBase
         if ($invoice) {
             // Add Invoice Parcels
             if (!InvoiceParcel::validateParcels($data->parcels)) {
+                Invoice::deleteInvoice($data->invoice_number);
                 return ['success' => false, 'message' => ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST];
             }
 
             if (!InvoiceParcel::validateInvoiceParcel($data->parcels)) {
+                Invoice::deleteInvoice($data->invoice_number);
                 return ['success' => false, 'message' => ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS];
             }
 

@@ -15,6 +15,16 @@ class Invoice extends EagerModel
         $this->setSource('invoices');
     }
 
+    public static function deleteInvoice($number){
+        $invoice = Invoice::findFirst(['invoice_number = :invoice_number:',
+        'bind' => [
+            'invoice_number' => $number,
+        ]]);
+        if($invoice){
+            $invoice->delete();
+        }
+    }
+
     /**
      * Generates an invoice
      * @author Adegoke Obasa <goke@cottacush.com>
