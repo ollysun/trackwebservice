@@ -7,6 +7,8 @@ use Phalcon\Mvc\Model\Resultset;
 class InvoiceController extends ControllerBase
 {
     protected function createInvoice($data, $invoice_number = null){
+        $this->db->begin();
+
         $invoiceRequestValidator = new InvoiceValidation($data);
         if (!$invoiceRequestValidator->validate()) {
             return ['success' => false, 'message' => $invoiceRequestValidator->getMessages()];
@@ -20,17 +22,18 @@ class InvoiceController extends ControllerBase
         if ($invoice) {
             // Add Invoice Parcels
             if (!InvoiceParcel::validateParcels($data->parcels)) {
-                Invoice::deleteInvoice($data->invoice_number);
+                $this->db->rollback();
                 return ['success' => false, 'message' => ResponseMessage::ONE_OF_THE_PARCEL_DOES_NOT_EXIST];
             }
 
             if (!InvoiceParcel::validateInvoiceParcel($data->parcels)) {
-                Invoice::deleteInvoice($data->invoice_number);
+                $this->db->rollback();
                 return ['success' => false, 'message' => ResponseMessage::INVOICE_ALREADY_EXISTS_FOR_ONE_OF_THE_PARCELS];
             }
 
             InvoiceParcel::addParcels($data->invoice_number, $data->parcels);
 
+            $this->db->commit();
             return ['success' => true];
         }
         return ['success' => false, 'message' => ResponseMessage::UNABLE_TO_CREATE_INVOICE];
