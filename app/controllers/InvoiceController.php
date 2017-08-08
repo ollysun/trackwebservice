@@ -58,7 +58,8 @@ class InvoiceController extends ControllerBase
 
         $filter_by = [/*'payment_type' => '1', */'start_created_date' => $from_date,
             'end_created_date' => $to_date, 'company_id' => $company->getId(), 'remove_cancelled_shipments' => 1,  'send_all' => 1];
-        $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
+        // $parcels = Parcel::fetchAll(0, 1000, $filter_by, []);
+        $parcels = Parcel::fetchAllForInvoice($filter_by);
         if(!$parcels) return;
 
 	//dd($parcels);

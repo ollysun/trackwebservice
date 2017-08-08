@@ -2118,6 +2118,85 @@ class Parcel extends \Phalcon\Mvc\Model
         return ['where' => $where, 'bind' => $bind];
     }
 
+    public static function fetchAllForInvoice($filter_by){
+        //filters
+        $filter_cond = self::filterConditions($filter_by);
+        $where = $filter_cond['where'];
+        $bind = $filter_cond['bind'];
+
+        $where[] = 'InvoiceParcel.id is null';
+        $builder = self::getAllParcelBuilder(0, 99999, [], null, $where, $bind, $filter_by);
+        $builder->leftJoin("InvoiceParcel", "Parcel.waybill_number = InvoiceParcel.waybill_number");
+
+        $data = $builder->getQuery()->execute();
+
+        $result = [];
+        foreach ($data as $item) {
+            if (!property_exists($item, 'parcel')) {
+                $parcel = $item->getData();
+            } else {
+                $parcel = $item->parcel->getData();
+                if (isset($fetch_with['with_holder'])) {
+                    $parcel['holder'] = $item->admin->getData();
+                }
+                if (isset($fetch_with['with_to_branch'])) {
+                    $parcel['to_branch'] = $item->toBranch->getData();
+                    $parcel['to_branch']['state'] = $item->toBranchState->getData();
+                }
+                if (isset($fetch_with['with_from_branch'])) {
+                    $parcel['from_branch'] = $item->fromBranch->getData();
+                    $parcel['from_branch']['state'] = $item->fromBranchState->getData();
+                }
+                if (isset($fetch_with['with_sender'])) $parcel['sender'] = $item->sender->getData();
+                if (isset($fetch_with['with_sender_address'])) {
+                    $parcel['sender_address'] = $item->senderAddress->getData();
+                    $parcel['sender_address']['country'] = $item->senderAddressCountry->getData();
+                    $parcel['sender_address']['state'] = $item->senderAddressState->getData();
+                    $parcel['sender_address']['city'] = $item->senderAddressCity->getData();
+                }
+                if (isset($fetch_with['with_receiver'])) $parcel['receiver'] = $item->receiver->getData();
+                if (isset($fetch_with['with_receiver_address'])) {
+                    $parcel['receiver_address'] = $item->receiverAddress->getData();
+                    $parcel['receiver_address']['country'] = $item->receiverAddressCountry->getData();
+                    $parcel['receiver_address']['state'] = $item->receiverAddressState->getData();
+                    $parcel['receiver_address']['city'] = $item->receiverAddressCity->getData();
+                }
+                if (isset($fetch_with['with_bank_account'])) {
+                    $parcel['bank_account'] = $item->bankAccount->getData();
+                    $parcel['bank_account']['bank'] = $item->bank->getData();
+                }
+                if (isset($fetch_with['with_created_branch'])) {
+                    $parcel['created_branch'] = $item->createdBranch->getData();
+                    $parcel['created_branch']['state'] = $item->createdBranchState->getData();
+                }
+                if (isset($fetch_with['with_route'])) {
+                    $parcel['route'] = $item->Routes->getData();
+                }
+                if (isset($fetch_with['with_created_by'])) {
+                    $parcel['created_by'] = $item->createdBy->getData();
+                }
+                if (isset($fetch_with['with_delivery_receipt'])) {
+                    $parcel['delivery_receipt'] = $item->deliveryReceipt->toArray();
+                }
+                if (isset($fetch_with['with_payment_type'])) {
+                    $parcel['payment_type'] = $item->paymentType->toArray();
+                }
+                if (isset($fetch_with['with_company'])) {
+                    $parcel['company'] = $item->company->toArray();
+                    $parcel['billing_plan'] = $item->billingPlan->toArray();
+                }
+                if (isset($fetch_with['with_invoice_parcel'])) {
+                    $parcel['invoice_parcel'] = $item->invoiceParcel->toArray();
+                }
+                if (isset($fetch_with['with_parcel_comment'])) {
+                    $parcel['return_reason'] = $item->parcelComment->toArray();
+                }
+            }
+            $result[] = $parcel;
+        }
+        return $result;
+    }
+
     public static function fetchAll($offset, $count, $filter_by, $fetch_with, $order_by_clause = null)
     {
         /**
@@ -2142,7 +2221,6 @@ class Parcel extends \Phalcon\Mvc\Model
 
         $result = [];
         foreach ($data as $item) {
-            $parcel = [];
             if (!property_exists($item, 'parcel')) {
                 $parcel = $item->getData();
             } else {
@@ -2210,6 +2288,8 @@ class Parcel extends \Phalcon\Mvc\Model
         }
         return $result;
     }
+
+
 
     public static function parcelCount($filter_by)
     {
