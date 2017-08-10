@@ -3458,8 +3458,9 @@ exit();
         $this->auth->allowOnly([Role::ADMIN, Role::BILLING, Role::FINANCE]);
         $post_data = $this->request->getJsonRawBody();
         $csv_data = $post_data->data;
-        $override  = $post_data->override;
-        $IN = $to_be_processed = $flagged = [];
+        $override = $post_data->override;
+        $update_invoice = $post_data->update_invoice;
+        $IN = $to_be_processed = $flagged = $invoice_numbers = [];
 
         foreach($csv_data as $parcel_info) {
           $info = array_filter($parcel_info);
@@ -3490,6 +3491,21 @@ exit();
            );
           $parcel->setDiscountedAmountDue($discounted_amount_due);
           $parcel->save();
+
+          if($update_invoice) {
+            $invoice_parcel = InvoiceParcel::findFirst([
+              'waybill_number = :waybill_number:',
+              'bind' => ['waybill_number' => $parcel->getWaybillNumber()]
+            ]);
+
+            $invoice_parcel->net_amount = $parcel->getDiscountedAmountDue();
+            $invoice_parcel->save();
+            $invoice_numbers[$invoice_parcel->invoice_number] = $invoice_parcel->invoice_number;
+          }
+        }
+
+        if ($update_invoice) {
+          $this->updateInvoiceTotal($invoice_numbers);
         }
 
         return $this->response->sendSuccess($flagged);
@@ -3593,6 +3609,24 @@ exit();
       }
 
       return false;
+    }
+
+  /**
+   * It re-calculates the invoice total since some of the parcel now
+   * have different amount due based on the csv bulk upload.
+   *
+   * @param $invoice_numbers
+   */
+  private function updateInvoiceTotal($invoice_numbers) {
+      foreach ($invoice_numbers as $invoice_number) {
+        $invoice_total = Invoice::getInvoiceTotal($invoice_number);
+        $invoice = Invoice::findFirst([
+          'invoice_number = :invoice_number:',
+          'bind' => ['invoice_number' => $invoice_number]
+        ]);
+        $invoice->total = $invoice_total;
+        $invoice->save();
+      }
     }
 }
 
