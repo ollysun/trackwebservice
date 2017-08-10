@@ -3498,9 +3498,11 @@ exit();
               'bind' => ['waybill_number' => $parcel->getWaybillNumber()]
             ]);
 
-            $invoice_parcel->net_amount = $parcel->getDiscountedAmountDue();
-            $invoice_parcel->save();
-            $invoice_numbers[$invoice_parcel->invoice_number] = $invoice_parcel->invoice_number;
+            if ($invoice_parcel) {
+              $invoice_parcel->net_amount = $parcel->getDiscountedAmountDue();
+              $invoice_parcel->save();
+              $invoice_numbers[$invoice_parcel->invoice_number] = $invoice_parcel->invoice_number;
+            }
           }
         }
 
