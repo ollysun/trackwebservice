@@ -305,11 +305,6 @@ class ParcelHistory extends \Phalcon\Mvc\Model
         );
     }
 
-    public function afterSave()
-    {
-        EmailMessage::sendParcelNotification($this->getParcelId(), $this->getStatus());
-    }
-
     public function initData($parcel_id, $from_branch_id, $description, $admin_id, $status, $to_branch_id)
     {
         $this->setParcelId($parcel_id);
