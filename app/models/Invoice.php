@@ -204,4 +204,27 @@ class Invoice extends EagerModel
             ]
         ];
     }
+
+  /**
+   * Calculates the Total value for an invoice based on the summation
+   * of all individual parcel in the invoice's net_amounts
+   *
+   * @param $invoiceNumber
+   *
+   * @return int
+   */
+  public static function getInvoiceTotal($invoiceNumber) {
+        $obj = new InvoiceParcel();
+        $builder = $obj->getModelsManager()->createBuilder()
+          ->from('InvoiceParcel')
+          ->columns(['SUM(InvoiceParcel.net_amount) as total'])
+          ->where('invoice_number = :invoice_number:');
+        $result = $builder->getQuery()->execute(['invoice_number' => $invoiceNumber]);
+
+        foreach ($result as $data) {
+            return $data->total;
+        }
+
+        return 0;
+      }
 }

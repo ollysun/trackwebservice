@@ -916,6 +916,35 @@ class CompanyController extends ControllerBase
         $result = CorporateAccountType::getAll();
         return $this->response->sendSuccess($result);
     }
+
+    /**
+     * This function refreshes the credit_balance column on the company table
+     * with the credit_limit value.
+     */
+    public function resetCreditAction() {
+      $this->auth->allowOnly([Role::ADMIN]);
+      $data = $this->request->getJsonRawBody(true);
+
+      $requiredFields = ['company_id','status'];
+      $requestValidator = new RequestValidation($data);
+      $requestValidator->setRequiredFields($requiredFields);
+        if (!$requestValidator->validate()) {
+            return $this->response->sendError($requestValidator->getMessages());
+        }
+
+      $company_id = isset($data['company_id']) ? $data['company_id'] : '';
+      $company = Company::findFirstById($company_id);
+
+      if($company) {
+        $credit_limit = $company->getCreditLimit();
+        $company->setCreditBalance($credit_limit);
+        $company->setCreditResetAt();
+        $company->save();
+        return $this->response->sendSuccess($credit_limit);
+      }
+
+      return $this->response->sendError('COMPANY DOES NOT EXIST');
+    }
 }
 
 

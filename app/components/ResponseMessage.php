@@ -179,4 +179,5 @@ class ResponseMessage
     const INVALID_WEIGHT_BILLING_PLAN = 'Invalid weight billing plan supplied';
     const INVALID_ONFORWARDING_BILLING_PLAN = 'Invalid onforwarding billing plan supplied';
     const WEIGHT_EXCEEDS_SET_LIMIT = 'Parcel weight exceeds set limit. Please contact administrator';
+    const AMOUNT_EXCEEDS_CREDIT_BALANCE = 'Transaction Amount Exceeds Credit Balance';
 }
