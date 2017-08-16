@@ -650,6 +650,19 @@ class Company extends EagerModel
         return $this->extra_info;
     }
 
+    public function beforeValidationOnCreate() {
+      if (!$this->credit_reset_at) {
+        $this->credit_reset_at = date('Y-m-d H:i:s');
+      }
+
+      if (!$this->override_credit) {
+        $this->override_credit = 1;
+      }
+
+      if (!$this->credit_balance) {
+        $this->credit_balance = 0;
+      }
+    }
 
     /**
      * Initialize method for model.
