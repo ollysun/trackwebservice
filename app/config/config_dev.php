@@ -21,10 +21,10 @@ return new \Phalcon\Config([
     ],*/
     'database' => [
         'adapter' => 'Mysql',
-        'host' => getenv(TNT_DB_HOST_L),
-        'username' => getenv(TNT_DB_USERNAME_L),
-        'password' => getenv(TNT_DB_PASSWORD_L),
-        'dbname' => getenv(TNT_DBNAME_L),
+        'host' => getenv('TNT_DB_HOST_L'),
+        'username' => getenv('TNT_DB_USERNAME_L'),
+        'password' => getenv('TNT_DB_PASSWORD_L'),
+        'dbname' => getenv('TNT_DBNAME_L'),
         'charset' => 'utf8',
     ],
     'application' => [
