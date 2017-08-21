@@ -9,7 +9,7 @@ class AuthController extends ControllerBase
 {
 
     /** @author Ademu Anthony E */
-    private function login($identifier, $password){
+    private function login($identifier, $password, $company_id = null){
         /** @var UserAuth $authUser */
         $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {
@@ -47,6 +47,10 @@ class AuthController extends ControllerBase
 
                 $authUser->setLastLoginTime(time());
                 $authUser->save();
+
+                if ($company_id){
+                    $userData['company_id'] = $company_id;
+                }
 
                 return $this->response->sendSuccess($userData);
             }
@@ -130,7 +134,9 @@ class AuthController extends ControllerBase
             return $this->response->sendError('Invalid API credentials');
         }
 
-        return $this->login($apiToken->getAuthUsername(), CompanyAccess::PASSWORD);
+        $company = Company::getByRegistrationNumber($registration_number);
+
+        return $this->login($apiToken->getAuthUsername(), CompanyAccess::PASSWORD, $company->getId());
 
     }
 

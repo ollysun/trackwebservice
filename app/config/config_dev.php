@@ -11,22 +11,22 @@ define( 'FROM_ADDRESS', 'trackplus@courierplus-ng.com' );
 define( 'AWSSESEndpoint', 'https://email.us-east-1.amazonaws.com/' );
 
 return new \Phalcon\Config([
-    'database' => [
+    /*'database' => [
         'adapter' => 'Mysql',
         'host' => getenv(TNT_DB_HOST),
         'username' => getenv(TNT_DB_USERNAME),
         'password' => getenv(TNT_DB_PASSWORD),
         'dbname' => getenv(TNT_DBNAME),
         'charset' => 'utf8',
-    ],
-/*'database' => [
-        'adapter' => 'Mysql',
-        'host' => 'localhost',
-        'username' => 'root',
-        'password' => '',
-        'dbname' => 'trackplus',
-        'charset' => 'utf8',
     ],*/
+    'database' => [
+        'adapter' => 'Mysql',
+        'host' => getenv(TNT_DB_HOST_L),
+        'username' => getenv(TNT_DB_USERNAME_L),
+        'password' => getenv(TNT_DB_PASSWORD_L),
+        'dbname' => getenv(TNT_DBNAME_L),
+        'charset' => 'utf8',
+    ],
     'application' => [
         'componentsDir' => __DIR__ . '/../../app/components/',
         'controllersDir' => __DIR__ . '/../../app/controllers/',

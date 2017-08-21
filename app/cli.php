@@ -41,6 +41,12 @@ define('TNT_DB_USERNAME', 'TNT_DB_USERNAME');
 define('TNT_DB_PASSWORD', 'TNT_DB_PASSWORD');
 define('TNT_DBNAME', 'TNT_DBNAME');
 
+
+define('TNT_DB_HOST_L', 'TNT_DB_HOST_L');
+define('TNT_DB_USERNAME_L', 'TNT_DB_USERNAME_L');
+define('TNT_DB_PASSWORD_L', 'TNT_DB_PASSWORD_L');
+define('TNT_DBNAME_L', 'TNT_DBNAME_L');
+
 /**
  * Process the console arguments
  */
