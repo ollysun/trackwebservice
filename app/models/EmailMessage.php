@@ -6,6 +6,7 @@ class EmailMessage extends \Phalcon\Mvc\Model
 {
     //const DEFAULT_FROM_EMAIL = 'sys@traceandtrack.com';
     const DEFAULT_FROM_EMAIL = 'trackplus@courierplus-ng.com';// 'info@openbulksms.com';
+    const DEFAULT_FROM_NAME = 'Track Plus';
     const CORPORATE_LEAD = 'marketing_opportunity';
     const USER_ACCOUNT_CREATION = 'staff_account_creation';
     const COMPANY_USER_ACCOUNT_CREATION = 'company_user_account_creation';
@@ -298,5 +299,117 @@ class EmailMessage extends \Phalcon\Mvc\Model
         }
     }
 
+  /**
+   * Sends the requires SMS/Email notification for a status as long as
+   * the status has it configured in the DB.
+   *
+   * @param int $parcel_id
+   * @param int $status_id
+   *
+   * @return bool
+   */
+  public static function sendParcelNotification($parcel_id, $status_id) {
+    return;
+        $status_notification = StatusNotificationMessage::findFirst(['status_id = :status_id:', 'bind' => ['status_id' => $status_id]]);
 
+        if ($status_notification) {
+          $parcel = Parcel::findFirstById($parcel_id);
+          $sender_data = $parcel->sender->getData();
+          $receiver_data = $parcel->receiver->getData();
+
+          $msg_params = [
+            'waybill_number' => $parcel->waybill_number,
+            'amount_due' => $parcel->amount_due,
+            'sender_phone' => $sender_data['phone'],
+            'sender_email' => $sender_data['email'],
+            'receiver_phone' => $receiver_data['phone'],
+            'receiver_email' => $receiver_data['email'],
+            'sender_name' => ucfirst($sender_data['firstname']) .' '. ucfirst($sender_data['lastname']),
+            'receiver_name' => ucfirst($receiver_data['firstname']) .' '. ucfirst($receiver_data['lastname']),
+          ];
+
+          if ($status_notification->getEmailMessage()) {
+              try {
+                $recipients = [$sender_data['email'], $receiver_data['email']];
+                $mailer = \Phalcon\Di::getDefault()->getMailer();
+                foreach ($recipients as $recipient) {
+                    $mailer->send(
+                      $status_notification->getEmailMessage(),
+                      $status_notification->getEmailMessage(),
+                      $status_notification->getSubject(),
+                      [$recipient => ''],
+                      [self::DEFAULT_FROM_EMAIL => self::DEFAULT_FROM_NAME],
+                      [],
+                      [],
+                      $msg_params
+                  );
+                }
+              } catch (Exception $e) {
+                Util::slackDebug('Email Not Sent', $e->getMessage());
+              }
+          }
+
+          if ($status_notification->getTextMessage()) {
+            $recipients = [$sender_data['phone'], $receiver_data['phone']];
+            foreach ($recipients as $recipient) {
+              if($recipient){
+                try{
+                  SmsMessage::send($recipient, 'Courierplus', $status_notification->getTextMessage());
+                }
+                catch(Exception $e) {
+                  Util::slackDebug('SMS Not Sent', $e->getMessage());
+                }
+
+              }
+            }
+          }
+        }
+    }
+
+    /**
+     * Sends Email notifications to relevant stakeholders when a client reaches credit limit
+     *
+     * @param array $parcel_data
+     * @param object $setting_object
+     */
+    public static function sendCreditLimitNotification($parcel_data, $setting_object, $company) {
+      $recipients = array_map('trim', explode(',',$setting_object->alert_emails));
+
+      if ($setting_object->send_to_client) {
+        $recipients = array_merge($recipients, [$parcel_data['sender_email']]);
+      }
+
+//      if ($setting_object->send_to_account_officer) {
+//        $recipients = array_merge($recipients, $parcel_data['sender_email']);
+//      }
+
+      $msg_params = [
+        'client_name' => $company->name,
+        'credit_limit' => $company->credit_limit,
+        'credit_balance' => $company->credit_balance,
+        'amount_due' => $parcel_data['amount_due'],
+        'last_reset' => $company->credit_reset_at,
+      ];
+
+      if ($setting_object->email_body) {
+        try {
+          $mailer = \Phalcon\Di::getDefault()->getMailer();
+          foreach ($recipients as $recipient) {
+            $mailer->send(
+              $setting_object->email_body,
+              $setting_object->email_body,
+              $setting_object->email_subject,
+              [$recipient => ''],
+              [self::DEFAULT_FROM_EMAIL => self::DEFAULT_FROM_NAME],
+              [],
+              [],
+              $msg_params
+            );
+          }
+        } catch (Exception $e) {
+          Util::slackDebug('Email Not Sent', $e->getMessage());
+        }
+      }
+
+    }
 }
