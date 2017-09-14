@@ -90,7 +90,7 @@ Add the following line to your hosts file
 Create `tnt` database
 
 **Run Migration Commands**
-`php vendor/bin/phinx migrate`
+`php vendor/phpunit/phpunit/phpunit migrate`
 
 ### Workers
 - Parcel Creation Worker
