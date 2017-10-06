@@ -53,4 +53,13 @@ class BmcentresController extends ControllerBase
         if(!$bmCentre->save()) return $this->response->sendError();
         return $this->response->sendSuccess();
     }
+
+    public function centersForBmAction()
+    {
+        $this->auth->allowOnly(Role::ADMIN);
+        $staff_id = $this->request->getPost('staff_id');
+        $centerList=BmCentre::findFirst(['conditions' => 'staff_id = :staff_id:',
+            'bind' =>['staff_id' => $staff_id]]);
+        return $this->response->sendSuccess($centerList);
+    }
 }
