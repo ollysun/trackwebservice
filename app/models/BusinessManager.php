@@ -138,6 +138,7 @@ class BusinessManager extends Phalcon\Mvc\Model
             $bind['region_id'] = $filter_by['region_id'];
         }
 
+
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
         $data = $builder->getQuery()->execute($bind);

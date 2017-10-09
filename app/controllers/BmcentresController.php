@@ -40,12 +40,15 @@ class BmcentresController extends ControllerBase
         $staff = Admin::getById($staff_id);
         $branch = Branch::fetchById($branch_id);
 
-        if(!$staff) return $this->response->sendError('Staff not found');
+      //  if(!$staff) return $this->response->sendError('Staff not found');
         if(!$branch) return $this->response->sendError('Branch not found');
 
-        if(BmCentre::findFirst(['conditions' => 'staff_id = :staff_id: AND branch_id = :branch_id:',
-            'bind' =>['staff_id' => $staff_id, 'branch_id' => $branch_id]])){
-            return $this->response->sendError('Link exists');
+        if($exists=BmCentre::findFirst(['conditions' => 'branch_id = :branch_id:',
+            'bind' =>['branch_id' => $branch_id]])){
+            $exists->setStaffId($staff_id);
+            if($exists->save())
+                return $this->response->sendSuccess();
+            //return $this->response->sendError('Link exists');
         }
 
         $bmCentre = new BmCentre();
@@ -58,8 +61,9 @@ class BmcentresController extends ControllerBase
     {
         $this->auth->allowOnly(Role::ADMIN);
         $staff_id = $this->request->getPost('staff_id');
-        $centerList=BmCentre::findFirst(['conditions' => 'staff_id = :staff_id:',
+        $centerList=BmCentre::find(['conditions' => 'staff_id = :staff_id:',
             'bind' =>['staff_id' => $staff_id]]);
         return $this->response->sendSuccess($centerList);
     }
+
 }

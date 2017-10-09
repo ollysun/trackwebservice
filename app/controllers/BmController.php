@@ -26,8 +26,17 @@ class BmController extends ControllerBase
         $bms = BusinessManager::getAll($offset, $count, $filter_by, $paginate);
         $total_count = BusinessManager::getCount($filter_by);
 
+        foreach($bms as $bm){
+            $fetch_with=[];
+            $fetch_with['with_branch']=1;
+            $filter_by = [];
+            $filter_by['staff_id'] = $bm->staff_id;
+            $bmc[$bm->staff_id]=BmCentre::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate = false);
+        }
 
-        return $this->response->sendSuccess(['business_managers' => $bms, 'total_count' => $total_count]);
+        return $this->response->sendSuccess([
+            'bmc'=>$bmc,
+            'business_managers' => $bms, 'total_count' => $total_count]);
     }
 
     public function addAction(){
