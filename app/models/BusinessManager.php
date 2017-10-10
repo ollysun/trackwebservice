@@ -116,7 +116,7 @@ class BusinessManager extends Phalcon\Mvc\Model
         $this->setName($data['name']);
         $this->setRegionName($data['region_name']);
         $this->setStatus($data['status']);
-        $this->setBusinessZoneId($data['business_zone_id']);
+       // $this->setBusinessZoneId($data['business_zone_id']);
     }
 
     public static function getAll($offset, $count, $filter_by, $paginate = false){

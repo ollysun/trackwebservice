@@ -44,7 +44,7 @@ class BmController extends ControllerBase
 
         $staff_id = $this->request->getPost('staff_id');
         $region_id = $this->request->getPost('region_id');
-        $business_zone_id = $this->request->getPost('business_zone_id');
+        $business_zone_id = !empty($this->request->getPost('business_zone_id')) ? $this->request->getPost('business_zone_id'):1;
 
         if(in_array(null, [$staff_id, $region_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -72,6 +72,7 @@ class BmController extends ControllerBase
         if($bm->save()){
             return $this->response->sendSuccess();
         }
+
         return $this->response->sendError('Error in saving BM');
     }
 
