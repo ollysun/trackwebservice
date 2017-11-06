@@ -330,6 +330,20 @@ class IntlZone extends \Phalcon\Mvc\Model
           $amount = self::getAmountForImport($zone_map->getZoneId(), $amount);
         }
 
+      $increment = ($weight - $weight_range->getMinWeight());
+      $increment_steps = ($increment / $weight_range->getIncrement());
+
+      if ($increment_steps > intval($increment_steps)){
+          $increment_steps = intval($increment_steps) + 1;
+      }
+
+      $incr_billing = 0;
+      if($increment_steps > 0) {
+          $incr_billing = round($increment_steps * $tariff->getIncrement());
+      }
+
+      $amount += $incr_billing;
+
         $fsc = 0.15 * $amount;
         $amount = $amount + $fsc;
 

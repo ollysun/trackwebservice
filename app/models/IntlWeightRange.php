@@ -28,6 +28,11 @@ class IntlWeightRange extends \Phalcon\Mvc\Model
     protected $max_weight;
 
     /**
+     * @var double
+     */
+    protected $increment;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -97,6 +102,22 @@ class IntlWeightRange extends \Phalcon\Mvc\Model
     }
 
     /**
+     * @return float
+     */
+    public function getIncrement()
+    {
+        return $this->increment;
+    }
+
+    /**
+     * @param float $increment
+     */
+    public function setIncrement($increment)
+    {
+        $this->increment = $increment;
+    }
+
+    /**
      * Initialize method for model.
      */
     public function initialize()
@@ -147,7 +168,8 @@ class IntlWeightRange extends \Phalcon\Mvc\Model
         return array(
             'id' => 'id',
             'min_weight' => 'min_weight',
-            'max_weight' => 'max_weight'
+            'max_weight' => 'max_weight',
+            'increment' => 'increment'
         );
     }
 
