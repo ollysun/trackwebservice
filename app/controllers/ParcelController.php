@@ -281,7 +281,31 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError();
             }
         } catch (\Exception $ex) {
-            return $this->response->sendError($ex->getMessage());
+            return $this->response->sendError($ex);
+        }
+    }
+
+    public function updateByCompanyIdAction()
+    {
+        try{
+            $payload = $this->request->getJsonRawBody(true);
+            $id = $payload["id"];
+            $companyId = $payload["company_id"];
+            $parcel = Parcel::findFirst([
+                'id = :id:',
+                'bind' => ['id' => $id]
+            ]);
+            $parcel->setCompanyId($companyId);
+            $parcel->update();
+            if (!$parcel->update()) {
+                return $this->response->sendError('Could not save edit details');
+            }
+            Util::slackDebug('Transaction move completed', "Transaction completed for  waybill no ".$parcel->getWaybillNumber());
+            return $this->response->sendSuccess($parcel);
+        }catch (\Exception $ex)
+        {
+            Util::slackDebug('error', $ex);
+            return $this->response->sendError($ex);
         }
     }
 
