@@ -300,12 +300,11 @@ class ParcelController extends ControllerBase
             if (!$parcel->update()) {
                 return $this->response->sendError('Could not save edit details');
             }
-
             Util::slackDebug('Transaction move completed', "Transaction completed for  waybill no ".$parcel->getWaybillNumber());
             return $this->response->sendSuccess($parcel);
         }catch (\Exception $ex)
         {
-            Util::slackDebug('error', $ex);
+            //Util::slackDebug('error', $ex);
             return $this->response->sendError($ex);
         }
     }
