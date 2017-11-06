@@ -36,7 +36,8 @@ class Util
                 ]
             ]];
         //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
-        $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+        //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+        $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
 
         try{
 
