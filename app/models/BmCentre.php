@@ -181,21 +181,23 @@ class BmCentre extends \Phalcon\Mvc\Model
         $builder->columns($columns);
 
         if(isset($filter_by['branch_id'])){
-            $builder->where("BmCentre.branch_id = branch_id");
+            $builder->where("BmCentre.branch_id = :branch_id:");
             $bind['branch_id'] = $filter_by['branch_id'];
         }
         if(isset($filter_by['staff_id'])){
-            $builder->where("BmCentre.staff_id = staff_id");
+            $builder->where("BmCentre.staff_id = :staff_id:");
             $bind['staff_id'] = $filter_by['staff_id'];
         }
 
         if(isset($fetch_with['with_branch'])){
-            $builder->innerJoin('Branch', 'Branch.id = BmCentre.branch_id', 'Branch');
+            $columns[] = 'Branch.*';
+            $builder->innerJoin('Branch', 'Branch.id = BmCentre.branch_id');
         }
-        if(isset($fetch_with['with_staff'])){
+        if(!empty($fetch_with['with_staff'])){
             $builder->innerJoin('Admin', 'Admin.staff_id = BmCentre.staff_id', 'Admin');
         }
 
+        $builder->columns($columns);
         $data = $builder->getQuery()->execute($bind);
 
         $zones = [];

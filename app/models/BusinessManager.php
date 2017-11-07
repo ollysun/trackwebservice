@@ -116,7 +116,7 @@ class BusinessManager extends Phalcon\Mvc\Model
         $this->setName($data['name']);
         $this->setRegionName($data['region_name']);
         $this->setStatus($data['status']);
-        $this->setBusinessZoneId($data['business_zone_id']);
+       // $this->setBusinessZoneId($data['business_zone_id']);
     }
 
     public static function getAll($offset, $count, $filter_by, $paginate = false){
@@ -137,6 +137,7 @@ class BusinessManager extends Phalcon\Mvc\Model
             $where[] = 'BusinessManager.region_id = :region_id:';
             $bind['region_id'] = $filter_by['region_id'];
         }
+
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where));
