@@ -94,15 +94,14 @@ class CompanyController extends ControllerBase
     {
         $this->auth->allowOnly([Role::ADMIN]);
         $postData = $this->request->getJsonRawBody();
-
         if (!isset($postData->company)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $companyRequestValidator = new CompanyUpdateRequestValidation($postData, 'company');
-        if (!$companyRequestValidator->validate()) {
-            return $this->response->sendError($companyRequestValidator->getMessages());
-        }
+//        $companyRequestValidator = new CompanyUpdateRequestValidation($postData, 'company');
+//        if (!$companyRequestValidator->validate()) {
+//            return $this->response->sendError($companyRequestValidator->getMessages());
+//        }
 
         //validate bm
         if($postData->company->business_manager_staff_id &&
