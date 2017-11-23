@@ -298,8 +298,12 @@ class ParcelController extends ControllerBase
 //                return $this->response->sendError('Could not move transaction. Please try again');
 //            }
             //return $this->response->sendSuccess($job_id);
+
+            $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
+
             foreach ($waybillNumberArr as $wb) {
                 $parcel = Parcel::getByWaybillNumber($wb);
+                $filter_by['waybill_number'] = $wb;
                 if ($parcel === false) {
                     if(!Parcel::isWaybillNumber($wb)){
                         $parcel = Parcel::getByReferenceNumber($wb);
@@ -312,9 +316,16 @@ class ParcelController extends ControllerBase
                     continue;
                 }
                 $parcel->setCompanyId($companyId);
-                $parcel->update();
                 if (!$parcel->update()) {
                     $bad_parcel[$wb] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                }else{
+                    //Recalculate the price of the new
+                    //FetchAll return in collection
+                    $parcelCollection = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+                    foreach ($parcelCollection as $p) {
+                        $result = $this->reprice($p);
+                        if(!isset($result['success'])) $bad_parcel[$wb] = $result['message'];
+                    }
                 }
             }
             if ($bad_parcel) {
@@ -327,7 +338,6 @@ class ParcelController extends ControllerBase
             return $this->response->sendSuccess($parcel);
         }catch (\Exception $ex)
         {
-            //Util::slackDebug('error', $ex);
             return $this->response->sendError($ex->getMessage());
         }
     }
@@ -500,8 +510,11 @@ class ParcelController extends ControllerBase
     }
 
      public function repriceByCompanyAction(){
-        $registration_number = $this->get('reg_no');
-        $invoice_number = $this->get('invoice_number');
+         $payload = $this->request->getJsonRawBody();
+         //$registration_number = $this->get('reg_no');
+         $registration_number = $payload->regNo;
+        // $invoice_number = $this->get('invoice_number');
+         $invoice_number = $payload->invoiceNo;
         if($registration_number == null){
             if($invoice_number){
                 $invoice = Invoice::fetchOne(['invoice_number' => $invoice_number], []);
@@ -520,8 +533,10 @@ class ParcelController extends ControllerBase
         }
 
 
-        $filter_by = $this->getFilterParams();
+        //$filter_by = $this->getFilterParams();
         //$filter_by['payment_type'] = 4;
+         $filter_by['start_created_date'] = $payload->from;
+         $filter_by['end_created_date'] = $payload->to;
         $filter_by['send_all'] = 1;
         $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
 
