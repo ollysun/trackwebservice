@@ -316,11 +316,11 @@ class ParcelController extends ControllerBase
                     continue;
                 }
                 $parcel->setCompanyId($companyId);
-               // $parcel->update();
                 if (!$parcel->update()) {
                     $bad_parcel[$wb] = ResponseMessage::CANNOT_MOVE_PARCEL;
                 }else{
                     //Recalculate the price of the new
+                    //FetchAll return in collection
                     $parcelCollection = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
                     foreach ($parcelCollection as $p) {
                         $result = $this->reprice($p);
@@ -594,7 +594,7 @@ class ParcelController extends ControllerBase
     public function reprice(array $parcel){
         $waybill_number = $parcel['waybill_number'];
         //calculate the new price
-        $from_branch_id = $parcel["sender_address"]['city']['branch_id'];
+        $from_branch_id = $parcel['sender_address']['city']['branch_id'];
         $to_branch_id = $parcel['receiver_address']['city']['branch_id'];
         $from_country_id = $parcel['sender_address']['state']['country_id'];
         $to_country_id = $parcel['receiver_address']['state']['country_id'];
