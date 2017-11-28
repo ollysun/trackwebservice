@@ -59,7 +59,7 @@ $di->set('db', function () use ($config) {
 
     if (getenv('APPLICATION_ENV') == false) {
         $eventsManager = new Phalcon\Events\Manager();
-        $logger = new Phalcon\Logger\Adapter\File(dirname(__FILE__) . "/../logs/sql_debug.log");
+        $logger = new Phalcon\Logger\Adapter\File(dirname(__FILE__) . "logs/sql_debug.log");
         $eventsManager->attach('db', function ($event, $connection) use ($logger) {
             if ($event->getType() == 'beforeQuery') {
                 /** @var DbAdapter $connection */

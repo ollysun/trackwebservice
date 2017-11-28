@@ -980,9 +980,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @return $this
      */
     public function setCompanyId($company_id){
-        if($this->company_id > 0) return $this;
         $this->company_id = $company_id;
-        return $this;
     }
 
     /**

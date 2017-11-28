@@ -281,6 +281,63 @@ class ParcelController extends ControllerBase
                 return $this->response->sendError();
             }
         } catch (\Exception $ex) {
+            return $this->response->sendError($ex);
+        }
+    }
+
+    public function moveParcelAction()
+    {
+        try{
+            $payload = $this->request->getJsonRawBody();
+            $payload->created_by = $this->auth->getPersonId();
+            $companyId = $payload->toCompanyId;
+           $waybillNumberArr = Parcel::sanitizeWaybillNumbers($payload->waybills);
+//            $worker = new MoveTransactionWorker();
+//            $job_id = $worker->addJob(json_encode($payload));
+//            if (!$job_id) {
+//                return $this->response->sendError('Could not move transaction. Please try again');
+//            }
+            //return $this->response->sendSuccess($job_id);
+
+            $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
+
+            foreach ($waybillNumberArr as $wb) {
+                $parcel = Parcel::getByWaybillNumber($wb);
+                $filter_by['waybill_number'] = $wb;
+                if ($parcel === false) {
+                    if(!Parcel::isWaybillNumber($wb)){
+                        $parcel = Parcel::getByReferenceNumber($wb);
+                        if($parcel === false){
+                            $bad_parcel[$wb] = ResponseMessage::PARCEL_NOT_EXISTING;
+                            continue;
+                        }
+                    }
+                    $bad_parcel[$wb] = ResponseMessage::PARCEL_NOT_EXISTING;
+                    continue;
+                }
+                $parcel->setCompanyId($companyId);
+                if (!$parcel->update()) {
+                    $bad_parcel[$wb] = ResponseMessage::CANNOT_MOVE_PARCEL;
+                }else{
+                    //Recalculate the price of the new
+                    //FetchAll return in collection
+                    $parcelCollection = Parcel::fetchAll(0, 0, $filter_by, $fetch_with);
+                    foreach ($parcelCollection as $p) {
+                        $result = $this->reprice($p);
+                        if(!isset($result['success'])) $bad_parcel[$wb] = $result['message'];
+                    }
+                }
+            }
+            if ($bad_parcel) {
+                return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+            }else{
+                return $this->response->sendSuccess('All Shipment Successful Move');
+            }
+
+            Util::slackDebug('Transaction move completed', "Transaction completed for  waybill no ".$parcel->getWaybillNumber());
+            return $this->response->sendSuccess($parcel);
+        }catch (\Exception $ex)
+        {
             return $this->response->sendError($ex->getMessage());
         }
     }
@@ -452,10 +509,12 @@ class ParcelController extends ControllerBase
 
     }
 
-
      public function repriceByCompanyAction(){
-        $registration_number = $this->get('reg_no');
-        $invoice_number = $this->get('invoice_number');
+         $payload = $this->request->getJsonRawBody();
+         //$registration_number = $this->get('reg_no');
+         $registration_number = $payload->regNo;
+        // $invoice_number = $this->get('invoice_number');
+         $invoice_number = $payload->invoiceNo;
         if($registration_number == null){
             if($invoice_number){
                 $invoice = Invoice::fetchOne(['invoice_number' => $invoice_number], []);
@@ -474,8 +533,10 @@ class ParcelController extends ControllerBase
         }
 
 
-        $filter_by = $this->getFilterParams();
+        //$filter_by = $this->getFilterParams();
         //$filter_by['payment_type'] = 4;
+         $filter_by['start_created_date'] = $payload->from;
+         $filter_by['end_created_date'] = $payload->to;
         $filter_by['send_all'] = 1;
         $fetch_with = ['with_sender_address' => true, 'with_receiver_address' => true];
 
@@ -2293,41 +2354,48 @@ exit();
      */
     public function cancelAction()
     {
+        // TODO: Implement bulk shipment cancellation worker method.
         $this->auth->allowOnly([Role::ADMIN, Role::COMPANY_ADMIN]);
+        $payload = $this->request->getJsonRawBody();
+        $enforce_action = $payload->enforce_action;
+        $waybills = Parcel::sanitizeWaybillNumbers($payload->waybills);
 
-        $waybill_numbers = $this->request->getPost('waybill_numbers');
-        $enforce_action = $this->request->getPost('enforce_action');
         $admin_id = $this->auth->getPersonId();
-        if (!isset($waybill_numbers, $admin_id)) {
+        if (!isset($waybills, $admin_id)) {
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        $waybill_number_arr = Parcel::sanitizeWaybillNumbers($waybill_numbers);
         $auth_data = $this->auth->getData();
 
         $bad_parcel = [];
-        foreach ($waybill_number_arr as $waybill_number) {
-            $parcel = Parcel::getByWaybillNumber($waybill_number);
+        foreach ($waybills as $waybill) {
+            $parcel = Parcel::getByWaybillNumber($waybill);
             if ($parcel === false) {
-                if(!Parcel::isWaybillNumber($waybill_number)){
-                    $parcel = Parcel::getByReferenceNumber($waybill_number);
+                if(!Parcel::isWaybillNumber($waybill)){
+                    $parcel = Parcel::getByReferenceNumber($waybill);
                     if($parcel === false){
-                        $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                        $bad_parcel[$waybill] = ResponseMessage::PARCEL_NOT_EXISTING;
                         continue;
                     }
                 }
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_NOT_EXISTING;
+                $bad_parcel[$waybill] = ResponseMessage::PARCEL_NOT_EXISTING;
                 continue;
             }
 
             if ($parcel->getStatus() == Status::PARCEL_CANCELLED) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
+                $bad_parcel[$waybill] = ResponseMessage::PARCEL_ALREADY_CANCELLED;
                 continue;
             } else if ($enforce_action != '1' &&
                 !in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY])) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                $bad_parcel[$waybill] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                continue;
+            }else if(in_array($parcel->getStatus(), [Status::PARCEL_FOR_SWEEPER, Status::PARCEL_FOR_DELIVERY]))
+            {
+                $bad_parcel[$waybill] = ResponseMessage::PARCEL_ALREADY_FOR_DELIVERY . ' or ' .
+                    ResponseMessage::PARCEL_ALREADY_FOR_SWEEPER;
                 continue;
             }
+
 
             if($this->auth->isCooperateUser()){
                 $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $parcel->getCreatedBy(), ParcelHistory::MSG_CANCELLED, $parcel->getCreatedBranchId(), true);
@@ -2335,13 +2403,20 @@ exit();
                 $check = $parcel->changeStatus(Status::PARCEL_CANCELLED, $admin_id, ParcelHistory::MSG_CANCELLED, $auth_data['branch_id'], true);
             }
 
-
             if (!$check) {
-                $bad_parcel[$waybill_number] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
+                $bad_parcel[$waybill] = ResponseMessage::PARCEL_CANNOT_BE_CANCELLED;
                 continue;
             }
         }
-        return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+
+        if ($bad_parcel) {
+            return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        }else{
+            return $this->response->sendSuccess('Shipment Successful Cancelled');
+        }
+
+        //return $this->response->sendSuccess(['bad_parcels' => $bad_parcel]);
+        //return $this->response->sendSuccess($check);
     }
 
     /**
@@ -3140,9 +3215,7 @@ exit();
     public function createBulkShipmentTaskAction()
     {
         $postData = $this->request->getJsonRawBody();
-
         $validation = new BulkShipmentCreationValidation($postData);
-
 
         if (!$validation->validate()) {
             return $this->response->sendError($validation->getMessages());
@@ -3171,7 +3244,6 @@ exit();
         $billing_plan = BillingPlan::findFirst($postData->billing_plan_id);
         $postData->company = $company->toArray();
         $postData->billing_plan = $billing_plan->toArray();
-
 
         $worker = new ParcelCreationWorker();
         $job_id = $worker->addJob(json_encode($postData));
@@ -3255,7 +3327,6 @@ exit();
         if (!$validation->validate()) {
             return $this->response->sendError($validation->getMessages());
         }
-
         $waybill_numbers = BulkShipmentJobDetail::getWaybillNumberByJobId($postData->bulk_shipment_task_id);
         if (!$waybill_numbers) {
             return $this->response->sendError('Could not create bulk waybill printing task. There are no waybills to be printed in this task');
