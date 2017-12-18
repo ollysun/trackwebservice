@@ -72,7 +72,12 @@ abstract class BaseWorker
             }
 
             $workerJob->onComplete();
-            $this->server->delete($serverJob);
+            try {
+                $this->server->delete($serverJob);
+            }catch (\Exception $ex){
+                // not able to delete job
+            }
+
         }
     }
 
