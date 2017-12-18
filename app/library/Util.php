@@ -35,11 +35,10 @@ class Util
                     'text' => $text
                 ]
             ]];
-        //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
-        $httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
 
         try{
-
+            //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
+            //$httpClient->post('https://hooks.slack.com/services/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', json_encode($data));
         }catch (Exception $exception){
             //var_dump($exception);
         }

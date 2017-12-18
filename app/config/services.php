@@ -59,11 +59,12 @@ $di->set('db', function () use ($config) {
 
     if (getenv('APPLICATION_ENV') == false) {
         $eventsManager = new Phalcon\Events\Manager();
-        $logger = new Phalcon\Logger\Adapter\File(dirname(__FILE__) . "/../logs/sql_debug.log");
+        $logger = new Phalcon\Logger\Adapter\File(dirname(__DIR__) . "/logs/sql_debug.log");
         $eventsManager->attach('db', function ($event, $connection) use ($logger) {
             if ($event->getType() == 'beforeQuery') {
                 /** @var DbAdapter $connection */
-                $logger->log($connection->getSQLStatement(), Logger::DEBUG);
+                
+$logger->log($connection->getSQLStatement(), Logger::DEBUG);
             }
         });
         $connection->setEventsManager($eventsManager);
@@ -72,9 +73,11 @@ $di->set('db', function () use ($config) {
     return $connection;
 });
 
+
 /**
  * If the configuration specify the use of metadata adapter use it or use memory otherwise
  */
+
 $di->set('modelsMetadata', function () {
     return new MetaDataAdapter();
 });

@@ -26,8 +26,17 @@ class BmController extends ControllerBase
         $bms = BusinessManager::getAll($offset, $count, $filter_by, $paginate);
         $total_count = BusinessManager::getCount($filter_by);
 
+        foreach($bms as $bm){
+            $fetch_with=[];
+            $fetch_with['with_branch']=1;
+            $filter_by = [];
+            $filter_by['staff_id'] = $bm->staff_id;
+            $bmc[$bm->staff_id]=BmCentre::fetchAll($offset, $count, $filter_by, $fetch_with, $paginate = false);
+        }
 
-        return $this->response->sendSuccess(['business_managers' => $bms, 'total_count' => $total_count]);
+        return $this->response->sendSuccess([
+            'bmc'=>$bmc,
+            'business_managers' => $bms, 'total_count' => $total_count]);
     }
 
     public function addAction(){
@@ -35,7 +44,7 @@ class BmController extends ControllerBase
 
         $staff_id = $this->request->getPost('staff_id');
         $region_id = $this->request->getPost('region_id');
-        $business_zone_id = $this->request->getPost('business_zone_id');
+        $business_zone_id = !empty($this->request->getPost('business_zone_id')) ? $this->request->getPost('business_zone_id'):1;
 
         if(in_array(null, [$staff_id, $region_id])){
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
@@ -63,6 +72,7 @@ class BmController extends ControllerBase
         if($bm->save()){
             return $this->response->sendSuccess();
         }
+
         return $this->response->sendError('Error in saving BM');
     }
 

@@ -980,9 +980,7 @@ class Parcel extends \Phalcon\Mvc\Model
      * @return $this
      */
     public function setCompanyId($company_id){
-        if($this->company_id > 0) return $this;
         $this->company_id = $company_id;
-        return $this;
     }
 
     /**
@@ -1979,6 +1977,10 @@ class Parcel extends \Phalcon\Mvc\Model
         if (isset($filter_by['max_delivery_amount'])) {
             $where[] = 'Parcel.delivery_amount <= :max_delivery_amount:';
             $bind['max_delivery_amount'] = $filter_by['max_delivery_amount'];
+        }
+        if (isset($filter_by['discounted_amount_due'])) {
+            $where[] = 'Parcel.discounted_amount_due <= :discounted_amount_due:';
+            $bind['discounted_amount_due'] = $filter_by['discounted_amount_due'];
         }
         if (isset($filter_by['delivery_type'])) {
             $where[] = 'Parcel.delivery_type = :delivery_type:';
