@@ -190,8 +190,11 @@ class StatusHistory extends Model
     {
         $obj = new StatusHistory();
         $builder = $obj->getModelsManager()->createBuilder()
+            ->columns(['StatusHistory.comment', 'StatusHistory.waybill_number',
+                        'StatusHistory.extra_note','Admin.fullname'])
             ->from('StatusHistory')
-            ->orderBy('id DESC');
+            ->innerJoin('Admin', 'Admin.id = StatusHistory.created_by')
+            ->orderBy('StatusHistory.id DESC');
 
         if ($paginate) {
             $builder = $builder->limit($count, $offset);
@@ -202,20 +205,12 @@ class StatusHistory extends Model
             $bind['waybill_number'] = $filter_by['waybill_number'];
         }
 
-        $columns = ['StatusHistory.*'];
-        $builder->columns($columns);
         $builder->where(join(' AND ', $where));
         $results = $builder->getQuery()->execute($bind);
-        $result = [];
+        $result =[];
 
         foreach ($results as $item) {
-            $history = [];
-            if (!isset($item->status_history)) {
-                $history = $item->getData();
-            } else {
-                $history = $item->status_history->getData();
-            }
-            $result[] = $history;
+            $result[]  = $item->toArray();
         }
 
         return $result;

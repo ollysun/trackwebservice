@@ -10,6 +10,9 @@ class StatushistoryController extends \Phalcon\Mvc\Controller
         $paginate = $this->request->getQuery('paginate', null, false);
 
         $waybill = $this->request->getQuery('waybill_number');
+        if (is_null($waybill)) {
+            return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        }
 
         $filter_by = [];
         if (!is_null($waybill)) {
