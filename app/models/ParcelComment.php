@@ -19,4 +19,15 @@ class ParcelComment extends BaseModel
         $this->belongsTo('created_by', Admin::class, 'id', ['alias' => 'Creator']);
         $this->belongsTo('waybill_number', Parcel::class, 'waybill_number', ['alias' => 'Parcel']);
     }
+
+    public static function add($data)
+    {
+        $status = new StatusHistory();
+        $status->setComment($data['comment']);
+        $status->setWaybillNumber($data['waybill_number']);
+        $status->setExtraNote($data['extra_note']);
+        $status->setCreatedBy($data['created_by']);
+        $status->save();
+        parent::add($data);
+    }
 }

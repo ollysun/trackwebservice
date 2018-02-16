@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class MoveTransactions extends AbstractMigration
+class NegativeStatusHistory extends AbstractMigration
 {
     /**
      * Change Method.
@@ -27,17 +27,13 @@ class MoveTransactions extends AbstractMigration
      */
     public function change()
     {
-        $this->table('move_transactions')
-            ->addColumn('id', 'integer', ['null' => false])
-            ->addColumn('data', 'text')
-            ->addColumn('status', 'string', ['null' => false])
-            ->addColumn('company_id', 'string', ['null' => true])
-            ->addColumn('waybill_number', 'string', ['null' => true])
-            ->addColumn('started_at', 'datetime', ['null' => false])
-            ->addColumn('completed_at', 'datetime', ['null' => true])
-            ->addColumn('error_message', 'string', ['null' => true])
-            ->addForeignKey('job_id', 'jobs', 'id',
-                ['constraint' => 'fk_move_transactions_job_id'])
+        $this->table('status_history')
+            ->addColumn('extra_note', 'text')
+            ->addColumn('waybill_number', 'string', ['null' => false])
+            ->addColumn('comment', 'text')
+            ->addColumn('created_by', 'integer')
+            ->addForeignKey('created_by', 'admin', 'id',
+                ['constraint' => 'fk_status_history_created_by'])
             ->create();
     }
 }
