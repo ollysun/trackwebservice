@@ -160,6 +160,22 @@ class Auth
         return ($this->token == $token) ? self::STATUS_OK : self::STATUS_ACCESS_DENIED;
     }
 
+    public function checkCompanyAccess($reg, $key)
+    {
+        $company_access = CompanyAccess::findFirst(
+            ['registration_number = :reg_no: AND token = :tok:',
+                'bind' => [
+                    'reg_no' => $reg,
+                    'tok' => $key
+                ],
+            ]);
+        if ($company_access)
+        {
+            return $company_access;
+        }
+        return self::STATUS_ACCESS_DENIED;
+    }
+
     public function resetToken()
     {
         if ($this->client_id == null) {

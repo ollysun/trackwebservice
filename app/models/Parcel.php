@@ -2418,7 +2418,7 @@ class Parcel extends \Phalcon\Mvc\Model
 
 
 
-
+    try {
         //saving the receiver's user info
         if ($check) {
             $receiver_obj = User::fetchByData($receiver);
@@ -2430,10 +2430,15 @@ class Parcel extends \Phalcon\Mvc\Model
             $receiver_obj->initData($receiver['firstname'], $receiver['lastname'], $receiver['phone'], $receiver['email'], null, $is_receiver_existing);
             $check = $receiver_obj->save();
         } else {
+            throw new \Exception("parcel not created");
             Util::slackDebug("Parcel not created", "Unable to save sender's info");
             Util::slackDebug("Parcel not created", $sender_obj->getMessages());
             return false;
         }
+    }catch(\Exception $e)
+    {
+        Util::slackDebug("Parcel not created", $e->getTrace());
+    }
 
 
         //saving the sender's address

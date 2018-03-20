@@ -12,6 +12,9 @@ class ExportedparcelController extends ControllerBase {
         $waybill_number = $this->request->get('waybill_number');
         $with_total_count = $this->request->get('with_total_count');
 
+        $offset = $this->request->get('offset', null, DEFAULT_OFFSET);
+        $count = $this->request->get('count', null, DEFAULT_COUNT);
+
         $filter_by = [];
         $fetch_with = [];
 
@@ -20,8 +23,7 @@ class ExportedparcelController extends ControllerBase {
 
         if($with_Parcel) $fetch_with['with_Parcel'] = true;
         //if($with_staff) $fetch_with['with_staff'] = true;
-
-        $result = ExportedParcel::fetchAll(0, 0, $filter_by, $fetch_with, false);
+        $result = ExportedParcel::fetchAll($offset, $count, $filter_by, $fetch_with, true);
         if($with_total_count){
             $count = ExportedParcel::countExportedParcels($filter_by);
             $result = ['total_count' => $count, 'parcels' => $result];

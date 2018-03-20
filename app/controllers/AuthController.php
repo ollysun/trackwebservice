@@ -9,7 +9,7 @@ class AuthController extends ControllerBase
 {
 
     /** @author Ademu Anthony E */
-    private function login($identifier, $password, $company_id = null){
+    public function login($identifier, $password, $company_id = null){
         /** @var UserAuth $authUser */
         $authUser = UserAuth::getByIdentifier($identifier);
         if ($authUser != false) {

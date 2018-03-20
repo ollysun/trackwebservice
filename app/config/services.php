@@ -117,6 +117,14 @@ $di->set('auth', function () {
 }, true);
 
 /**
+ * Added AuthController functionality as a service
+ */
+$di->set('authController', function () {
+    $authController = new AuthController();
+    return $authController;
+}, true);
+
+/**
  *Register Mailer Service
  */
 $di->set('mailer', function () use ($config) {
@@ -167,6 +175,7 @@ $di->set('dispatcher', function () {
     $events_manager->attach("dispatch:beforeExecuteRoute", function ($event, $dispatcher) {
         $di = FactoryDefault::getDefault();
         $auth = $di['auth'];
+        $authController = $di['authController'];
         if (!$auth->skipAuth(array(
             array('controller' => 'ref'),
             array('controller' => 'auth', 'action' => 'resetPassword'),
@@ -179,12 +188,18 @@ $di->set('dispatcher', function () {
         ) {
             $i = $di['request']->getHeader('i');
             $a = $di['request']->getHeader('a');
+            $key = $di['request']->getHeader('private_key');
+            $reg = $di['request']->getHeader('registration_number');
 
             $auth->loadTokenData($i);
-
+            $company_check = $auth->checkCompanyAccess($reg,$key);
+            if ($company_check !== Auth::STATUS_ACCESS_DENIED)
+            {
+                $authController->login($company_check->getAuthUsername(), CompanyAccess::PASSWORD, $company_check->getCompanyId());
+            }
             $token_check = $auth->checkToken($a);
-            if ($token_check == Auth::STATUS_OK) {
-            } else if ($token_check == Auth::STATUS_ACCESS_DENIED) {
+            if ($token_check == Auth::STATUS_OK || $company_check == Auth::STATUS_OK) {
+            } else if ($token_check == Auth::STATUS_ACCESS_DENIED || $company_check == Auth::STATUS_ACCESS_DENIED) {
                 echo $di['response']->sendAccessDenied()->getContent();
                 exit();
             } else if ($token_check == Auth::STATUS_LOGIN_REQUIRED) {
