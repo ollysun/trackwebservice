@@ -81,8 +81,7 @@ class AuthController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        //return $this->login($identifier, $password);
-        $result = $this->login();
+        $result = $this->login($identifier, $password);
         if($result){
             return $this->response->sendSuccess($result);
         }else{
