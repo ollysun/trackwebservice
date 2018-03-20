@@ -22,7 +22,7 @@ class AuthController extends ControllerBase
                 }
 
                 if (empty($userData)) {
-                    return $this->response->sendError('Could not fetch user login data');
+                    return false;// $this->response->sendError('Could not fetch user login data');
                 }
 
                 if ($this->auth->clientTokenExists($authUser->getId())) {
@@ -52,10 +52,10 @@ class AuthController extends ControllerBase
                     $userData['company_id'] = $company_id;
                 }
 
-                return $this->response->sendSuccess($userData);
+                return $userData;// $this->response->sendSuccess($userData);
             }
         }
-        return $this->response->sendError(ResponseMessage::INVALID_CRED);
+        return false;// $this->response->sendError(ResponseMessage::INVALID_CRED);
     }
 
     /**
@@ -66,7 +66,12 @@ class AuthController extends ControllerBase
     public function loginAction()
     {
         if($this->request->getPost('api_login') == 1){
-            return $this->apiLogin();
+            $result = $this->apiLogin();
+            if($result){
+                return $this->response->sendSuccess($result);
+            }else{
+                $this->response->sendError($result);
+            }
         }
 
         $identifier = $this->request->getPost('identifier'); //email
@@ -76,7 +81,13 @@ class AuthController extends ControllerBase
             return $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
         }
 
-        return $this->login($identifier, $password);
+        //return $this->login($identifier, $password);
+        $result = $this->login();
+        if($result){
+            return $this->response->sendSuccess($result);
+        }else{
+            $this->response->sendError($result);
+        }
 
         /** @var UserAuth $authUser */
        /* $authUser = UserAuth::getByIdentifier($identifier);

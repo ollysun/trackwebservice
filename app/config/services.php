@@ -188,26 +188,40 @@ $di->set('dispatcher', function () {
         ) {
             $i = $di['request']->getHeader('i');
             $a = $di['request']->getHeader('a');
-            $key = $di['request']->getHeader('private_key');
-            $reg = $di['request']->getHeader('registration_number');
+            $key = $di['request']->getHeader('p');
+            $reg = $di['request']->getHeader('r');
 
-            $auth->loadTokenData($i);
-            $company_check = $auth->checkCompanyAccess($reg,$key);
-            if ($company_check !== Auth::STATUS_ACCESS_DENIED)
-            {
-                $authController->login($company_check->getAuthUsername(), CompanyAccess::PASSWORD, $company_check->getCompanyId());
-            }
-            $token_check = $auth->checkToken($a);
-            if ($token_check == Auth::STATUS_OK || $company_check == Auth::STATUS_OK) {
-            } else if ($token_check == Auth::STATUS_ACCESS_DENIED || $company_check == Auth::STATUS_ACCESS_DENIED) {
-                echo $di['response']->sendAccessDenied()->getContent();
-                exit();
-            } else if ($token_check == Auth::STATUS_LOGIN_REQUIRED) {
-                echo $di['response']->sendLoginRequired()->getContent();
-                exit();
-            } else {
-                echo $di['response']->sendError()->getContent();
-                exit();
+            if($i){
+                $auth->loadTokenData($i);
+                $token_check = $auth->checkToken($a);
+                if ($token_check == Auth::STATUS_OK) {
+                } else if ($token_check == Auth::STATUS_ACCESS_DENIED) {
+                    echo $di['response']->sendAccessDenied()->getContent();
+                    exit();
+                } else if ($token_check == Auth::STATUS_LOGIN_REQUIRED) {
+                    echo $di['response']->sendLoginRequired()->getContent();
+                    exit();
+                } else {
+                    echo $di['response']->sendError()->getContent();
+                    exit();
+                }
+            }else{
+                $company_check = $auth->checkCompanyAccess($reg,$key);
+                if ($company_check !== Auth::STATUS_ACCESS_DENIED)
+                {
+                    $result = $authController->login($company_check->getAuthUsername(), CompanyAccess::PASSWORD, $company_check->getCompanyId());
+                    if($result){
+                        //load token data for the id of this company bot
+                        $auth->loadTokenData($result['user_auth_id']);
+                        //return $this->response->sendSuccess($result);
+                    }else{
+                        echo $di['response']->sendLoginRequired()->getContent();
+                        exit();
+                    }
+                }else{
+                    echo $di['response']->sendLoginRequired()->getContent();
+                    exit();
+                }
             }
         }
 
