@@ -286,7 +286,7 @@ class IntlTariff extends \Phalcon\Mvc\Model
         }
 
         $data = $builder->getQuery()->execute($bind);
-
+        //dd($data);
         $zones = [];
         foreach ($data as $item) {
             $zone = $item->Tariff->toArray();
@@ -301,6 +301,7 @@ class IntlTariff extends \Phalcon\Mvc\Model
             }
             $zones[] = $zone;
         }
+
         return $zones;
     }
 

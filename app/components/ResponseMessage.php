@@ -29,6 +29,7 @@ class ResponseMessage
     const HUB_NOT_EXISTING = 'HUB not existing';
     const EC_NOT_EXISTING = 'EC not existing';
     const PARCEL_NOT_EXISTING = 'Parcel not existing';
+    const PARCEL_REF_NOT_EXISTING = 'Parcel with reference no not existing';
     const RELINK_NOT_POSSIBLE = 'EC not linked to HUB to be re-link';
     const CANNOT_MOVE_PARCEL = 'Parcel could not be moved';
     const PARCEL_NOT_FROM_ARRIVAL = 'Parcel not from arrivals';
@@ -46,6 +47,7 @@ class ResponseMessage
     const PARCEL_ALREADY_FOR_DELIVERY = 'Parcel already for delivery';
     const PARCEL_ALREADY_CANCELLED = 'Parcel already cancelled';
     const PARCEL_CANNOT_BE_CANCELLED = 'Parcel cannot be cancelled';
+    const PARCEL_RETURNED = 'Parcel return successfully';
     const RECORD_DOES_NOT_EXIST = 'Record does not exist';
     const REGION_DOES_NOT_EXIST = 'Region does not exist';
     const CITY_DOES_NOT_EXIST = 'City does not exist';

@@ -4085,6 +4085,7 @@ return false;
 
         $builder->columns($columns);
         $builder->where(join(' AND ', $where), $bind);
+        //dd($builder);
         return $builder;
     }
 

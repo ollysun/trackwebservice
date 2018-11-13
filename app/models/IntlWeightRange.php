@@ -173,13 +173,20 @@ class IntlWeightRange extends \Phalcon\Mvc\Model
         );
     }
 
+    public static function fetchById($id){
+        return IntlWeightRange::findFirst([
+            'id = :id:',
+            'bind' => ['id' => $id]
+        ]);
+    }
+
     /**
      * @param $offset
      * @param $count
-     * @param $filter_by
-     * @param $fetch_with
      * @param bool|false $paginate
      * @return array
+     * @internal param $filter_by
+     * @internal param $fetch_with
      */
     public static function fetchAll($offset, $count, $paginate = false){
         $builder = new \Phalcon\Mvc\Model\Query\Builder();

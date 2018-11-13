@@ -25,7 +25,7 @@ class Status extends \Phalcon\Mvc\Model
     const MANIFEST_CANCELLED = 21;
     const MANIFEST_HAS_ISSUE = 22;
     const PARCEL_RETURNED = 23;
-
+    const PARCEl_CLAIM = 28;
 
     const PARCEL_CREATED_BUT_WITH_CUSTOMER = 24;
 

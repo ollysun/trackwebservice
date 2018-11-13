@@ -149,7 +149,7 @@ class IntlController extends ControllerBase
         return $this->response->sendError(ResponseMessage::INTERNAL_ERROR);
     }
 
-    public function editWeightRange(){
+    public function editWeightRangeAction(){
         $this->auth->allowOnly(Role::ADMIN);
         $id = $this->request->getPost('id');
         $min_weight = $this->request->getPost('min_weight');
@@ -160,7 +160,8 @@ class IntlController extends ControllerBase
         }
         //add validations
 
-        $range = IntlWeightRange::findFirst(['id = :id"', 'bind' => ['id' => $id]]);
+        //$range = IntlWeightRange::findFirst(['id = :id"', 'bind' => ['id' => $id]]);
+        $range = IntlWeightRange::findFirst($id);
         if(!$range) return $this->response->sendError('Weight range not found');
         $range->setMinWeight($min_weight);
         $range->setMaxWeight($max_weight);
@@ -289,6 +290,60 @@ class IntlController extends ControllerBase
         if(!$tariff) return $this->response->sendError('Tariff Not Found');
         $tariff->delete();
         return $this->response->sendSuccess();
+    }
+
+    public function deleteAction()
+    {
+        $this->auth->allowOnly([Role::ADMIN, Role::OFFICER]);
+        $weight_range_id = $this->request->getPost('weight_range_id');
+        $weight_range_ids = $this->request->getPost('weight_range_ids');
+        $force_delete = $this->request->getPost('force_delete');
+
+        $response = $this->response->sendError(ResponseMessage::ERROR_REQUIRED_FIELDS);
+        if($weight_range_id){
+            $response = $this->delete($weight_range_id, $force_delete);
+        }elseif($weight_range_ids){
+            $weight_range_ids = explode(',', $weight_range_ids);
+            foreach ($weight_range_ids as $weight_range_id) {
+                $response = $this->delete($weight_range_id, $force_delete);
+            }
+        }
+        return $response;
+    }
+
+    private function delete($weight_range_id, $force_delete){
+        // Check if weight range is valid
+        $weightRange = IntlWeightRange::findFirst($weight_range_id);
+
+
+        if(!$weightRange) {
+            return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_DOES_NOT_EXIST);
+        }
+        //$fetch_with = ['with_zone' => true];
+        $fetch_with = [];
+
+        $filter_by = [];
+        $tariff = IntlTariff::find(['weight_range_id = :id:', 'bind' => ['id' => $weight_range_id]]);
+        $weightBillings = $tariff->toArray();
+
+        // Check if there's a pricing for the weight range
+        //$weightBillings = IntlTariff::fetchAll(DEFAULT_OFFSET, DEFAULT_COUNT,$filter_by, $fetch_with);
+        //dd(empty($weightBillings));
+        if(!empty($weightBillings)) {
+            if($force_delete == '1'){//if forcing the delete then delete the prices
+                foreach ($weightBillings as $weightBilling) {
+                    $billing = IntlTariff::findFirst(['id = :id:', 'bind' => ['id' => $weightBilling['id']]]);
+                    if ($billing != false) {
+                        $billing->delete();
+                    }
+                }
+            }else return $this->response->sendError(ResponseMessage::WEIGHT_RANGE_STILL_HAS_EXISTING_BILLING);
+        }
+
+        if($weightRange->delete()) {
+            return $this->response->sendSuccess();
+        }
+        return $this->response->sendError(ResponseMessage::UNABLE_TO_DELETE_WEIGHT_RANGE);
     }
 
 

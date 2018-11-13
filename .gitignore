@@ -2,8 +2,8 @@
 ### Phalcon template
 app/cache/*
 !/app/cache/empty
-.idea
-vendor
+/.idea
+/vendor
 app/logs/*
 deploy/servers.yml
 composer.lock
